@@ -1,24 +1,9 @@
 import React, { useState, useRef } from 'react';
+import { CHECKLIST_MOCK_DATA } from '../mocks/mockData.js';
 
 const ChecklistPage = () => {
     // 1. 기본 업무 리스트 상태 [cite: 9]
-    const [dataByLocation, setDataByLocation] = useState({
-        "1층 현관": [
-            { id: 1, text: '소화기 비치 상태 확인', completed: true },
-            { id: 2, text: '비상구 앞 적치물 제거', completed: true },
-            { id: 3, text: '방화문 폐쇄 상태 점검', completed: false },
-            { id: 4, text: '피난 유도등 점등 확인', completed: false },
-        ],
-        "2층 복도": [
-            { id: 5, text: '복도 적재물 이동 조치', completed: false },
-            { id: 6, text: '스프링클러 헤드 점검', completed: false },
-        ],
-        "지하 주차장": [
-            { id: 7, text: '소화전 앞 주차 금지 구역 확인', completed: true },
-            { id: 8, text: '화재 감지기 동작 테스트', completed: false },
-            { id: 9, text: '비상 벨 호출기 상태 점검', completed: false },
-        ]
-    });
+    const [dataByLocation, setDataByLocation] = useState(CHECKLIST_MOCK_DATA);
 
 
     const [selectedLocation, setSelectedLocation] = useState("1층 현관");

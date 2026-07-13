@@ -1,19 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { CHATBOT_MOCK_DATA } from '../mocks/mockData.js';
 
 const ChatbotPage = () => {
-    // 1. 추천 질문 리스트 데이터
-    const recommendedQuestions = [
-        "소방시설 설치 및 관리에 관한 법률 제12조",
-        "물류창고 화재안전 성능기준(NFPC 609)"
-    ];
-
-    // 2. 가짜 답변용 데이터베이스 (Mock API 대용)
-    const botReplies = {
-        "소방시설 설치 및 관리에 관한 법률 제12조": "소방시설법 제12조는 소방시설의 설치 및 관리에 관한 국가 및 지방자치단체의 책무를 규정하고 있으며, 특정소방대상물의 규모에 따른 소방시설 설치 기준을 명시하고 있습니다. 자세한 법안 조항은 법제처 국가법령정보센터에서 실시간으로 조회가 가능합니다.",
-        "물류창고 화재안전 성능기준(NFPC 609)": "NFPC 609 기준에 따라 물류창고는 초기 소화가 가능하도록 스프링클러 헤드의 배치 간격이 일반 건축물보다 촘촘해야 하며, 대규모 연쇄 화재를 막기 위한 방화구획 벽체 기준이 엄격하게 적용됩니다."
-    };
-
-    // 3. 상태 관리
+    const { recommendedQuestions, botReplies } = CHATBOT_MOCK_DATA;
     const [messages, setMessages] = useState([
         {
             type: 'bot',
