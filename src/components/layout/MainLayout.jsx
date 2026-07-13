@@ -7,7 +7,7 @@ const navigationItems = [
   { id: 'cctv', label: 'CCTV \uBAA8\uB2C8\uD130\uB9C1', icon: 'camera' },
   { id: 'checklist', label: '\uCCB4\uD06C\uB9AC\uC2A4\uD2B8', icon: 'checklist' },
   { id: 'actions', label: '\uC870\uCE58 \uC774\uB825', icon: 'history' },
-  { id: 'law', label: '\uBC95\uADDC Q&A', icon: 'help' },
+  { id: 'chatbot', label: '\uBC95\uADDC Q&A', icon: 'help' },
 ]
 
 function MainLayout({ children, setIsLoggedIn, activeItemId, setActiveItemId }) {

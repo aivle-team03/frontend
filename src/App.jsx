@@ -3,6 +3,7 @@ import MainLayout from './components/layout/MainLayout.jsx';
 import HomePage from './pages/HomePage.jsx';
 import LoginPage from './pages/LoginPage.jsx'; // 새로 만들 로그인 페이지 임포트
 import ChecklistPage from './pages/ChecklistPage.jsx';
+import ChatbotPage from './pages/ChatbotPage.jsx';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -19,8 +20,9 @@ function App() {
       case 'home':
         return <HomePage />;
       case 'checklist':
-        return <ChecklistPage />; // 체크리스트 클릭 시 변환
-      // cctv, actions, law 페이지 컴포넌트도 완성되는 대로 여기에 추가하면 됩니다.
+        return <ChecklistPage />;
+      case 'chatbot':
+        return <ChatbotPage />;
       default:
         return <HomePage />;
     }
