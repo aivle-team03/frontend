@@ -1,13 +1,7 @@
-import MainLayout from './components/layout/MainLayout.jsx'
-import HomePage from './pages/HomePage.jsx'
-import CCTVMonitoring from './pages/CCTVMonitoring.jsx'
+import AppRouter from './routes/AppRouter.jsx'
 
 function App() {
-  return (
-    <MainLayout>
-      <CCTVMonitoring />
-    </MainLayout>
-  )
+  return <AppRouter />
 }
 
 export default App
