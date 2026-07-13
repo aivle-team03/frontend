@@ -9,6 +9,9 @@
 - CSS
 
 ---
+## 🔗 임시 사이트 주소
+[BOSS 서비스 바로가기](https://drop-abcd2887-3b3.descriptive-sailboat.workers.dev/mypage)
+
 
 ## 주요 기능 
 (26.07.13 현재 백엔드 및 AI 모델 연동 전 단계라 Mock 데이터 기반으로 구성)
