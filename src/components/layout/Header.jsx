@@ -58,7 +58,7 @@ function Header({ items }) {
         </div>
       </div>
     </header>
-  )
+  );
 }
 
 export default Header
