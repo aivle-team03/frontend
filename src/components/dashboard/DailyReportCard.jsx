@@ -1,3 +1,4 @@
+import { Box, Card, Typography } from '@mui/material'
 import reportChartImage from '../../assets/report-chart.png'
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토']
@@ -12,19 +13,19 @@ function formatToday() {
   return `${year}년 ${month}월 ${date}일 (${weekday}) 기준`
 }
 
-function DailyReport() {
+function DailyReportCard() {
   return (
-    <section className="daily-report">
-      <div className="report-icon" aria-hidden="true">
-        AI
-      </div>
-      <div className="report-copy">
-        <h2>오늘의 리포트</h2>
-        <p>{formatToday()}</p>
+    <Card className="daily-report-card">
+      <div className="report-left">
+        <Box className="report-icon">AI</Box>
+        <div>
+          <Typography variant="h6">오늘의 리포트</Typography>
+          <Typography variant="body2">{formatToday()}</Typography>
+        </div>
       </div>
       <img className="report-chart-image" src={reportChartImage} alt="" aria-hidden="true" />
-    </section>
+    </Card>
   )
 }
 
-export default DailyReport
+export default DailyReportCard
