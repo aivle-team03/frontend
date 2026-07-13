@@ -7,17 +7,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-<<<<<<< HEAD
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-=======
 node_modules/
 dist/
 dist-ssr
@@ -29,7 +18,6 @@ dist-ssr
 # Editor directories and files
 .vscode/
 .idea/
->>>>>>> b2b5a9a5f804440b4afdbfa52d8d9845f65f0bd4
 .DS_Store
 *.suo
 *.ntvs*
