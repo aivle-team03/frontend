@@ -1,0 +1,75 @@
+.my-page-container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+  grid-template-areas:
+    "profile area"
+    "alarm edit"
+    "alarm log";
+  gap: 18px;
+}
+
+.my-page-card {
+  min-height: 132px;
+  padding: 22px;
+  border: 1px solid #dfe7f2;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+}
+
+.my-page-label {
+  display: block;
+  margin-bottom: 12px;
+  color: #2f64b7;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.my-page-card h2,
+.my-page-card strong {
+  display: block;
+  margin: 0;
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.my-page-card p {
+  margin: 8px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.my-info {
+  grid-area: profile;
+}
+
+.my-section {
+  grid-area: area;
+}
+
+.alert-setting {
+  grid-area: alarm;
+}
+
+.my-info-change {
+  grid-area: edit;
+}
+
+.recent-work-logs {
+  grid-area: log;
+}
+
+@media (max-width: 900px) {
+  .my-page-container {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "profile"
+      "area"
+      "alarm"
+      "edit"
+      "log";
+  }
+}
