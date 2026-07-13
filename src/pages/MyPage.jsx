@@ -1,4 +1,5 @@
 import Header from "../components/layout/Header";
+import "../styles/MyPage.css";
 
 function MyPage(){
     return (
