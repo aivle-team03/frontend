@@ -1,0 +1,111 @@
+
+.cctvemptyarea {
+    display: flex;
+    gap: 20px; 
+    min-height: 420px;
+
+    margin: 24px;
+    border: 1px dashed var(--color-main-muted);
+    border-radius: 8px;
+    background:
+        linear-gradient(180deg, rgba(245, 247, 250, 0.72), rgba(255, 255, 255, 0.9));
+}
+
+.cctvSection{
+    display: flex;
+    flex-direction:column;
+    width: 66.66%;
+    gap: 20px; 
+}
+
+
+.EventSection{
+    display: flex;
+    flex-direction:column;
+    width: 33.33%;
+    gap: 20px; 
+}
+
+.cctvmonitoringSection{
+
+    display: flex;
+    flex-direction: column; 
+    /* width: 66.66%; */
+    border:3px solid black;
+    align-items: center; 
+
+}
+
+.title {
+    margin: 20px 20px;
+    align-self: flex-start;
+}
+
+
+
+.videodashBoard{
+    
+    width: 95%;
+    background-color: rgba(182, 182, 182, 0);
+    height:500px;
+    align-items: center;
+    margin: 20px 10px;
+
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    align-content: space-evenly;
+}
+
+.videochangedashBoard{
+    display: flex;
+    width: 90%;
+    height: 50%; 
+    /* background-color: black; */
+    /* margin: 20px 10px; */
+    justify-content: space-between;
+}
+
+
+.video{
+
+    width: 46%;
+    height: 45%; 
+    background-color: black;
+}
+
+.videoChange{
+    display: flex;
+    flex-direction: column; 
+    /* width: 33.33%; */
+    border:3px solid black;
+    align-items: center;
+    min-height: 370px;
+    
+}
+
+.videoChangeFrame{
+
+    width: 22%;
+    height: 100%; 
+    background-color: rgb(0, 0, 0);
+    margin-top: 30px;
+    
+}
+
+.liveEvent{
+
+    display: flex;
+    flex-direction: column; 
+    min-height: 600px;
+    border:3px solid black;
+    align-items: center; 
+}
+
+.emptyBox{
+    display: flex;
+    flex-direction: column; 
+    min-height: 390px;
+    border:3px solid black;
+    align-items: center; 
+}
