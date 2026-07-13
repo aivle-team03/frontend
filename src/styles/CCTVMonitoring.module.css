@@ -63,33 +63,36 @@
     height: 50%; 
     /* background-color: black; */
     /* margin: 20px 10px; */
-    justify-content: space-between;
+    justify-content: space-evenly;
+    align-items: center;
+    
 }
 
 
 .video{
 
-    width: 46%;
-    height: 45%; 
+    width: 40%;
+    height: 40%; 
     background-color: black;
 }
 
 .videoChange{
     display: flex;
     flex-direction: column; 
-    /* width: 33.33%; */
+    height: 33.33%;
     border:3px solid black;
     align-items: center;
     min-height: 370px;
+    
     
 }
 
 .videoChangeFrame{
 
-    width: 22%;
-    height: 100%; 
+    width: 15%;
+    aspect-ratio: 1 / 1;
     background-color: rgb(0, 0, 0);
-    margin-top: 30px;
+    /* margin-top: 30px; */
     
 }
 

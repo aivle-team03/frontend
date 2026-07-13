@@ -23,6 +23,7 @@ return (
                         <div className={CCTVpage.videoChangeFrame}>2</div>
                         <div className={CCTVpage.videoChangeFrame}>3</div>
                         <div className={CCTVpage.videoChangeFrame}>4</div>
+                        <div className={CCTVpage.videoChangeFrame}>5</div>
                     </div>
                 </div>
             </div>
