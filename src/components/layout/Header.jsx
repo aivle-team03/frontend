@@ -8,7 +8,7 @@ const extraPageTitles = {
   '/mypage': '마이페이지',
 }
 
-function Header({ items }) {
+function Header({ items, setIsLoggedIn }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
@@ -20,6 +20,11 @@ function Header({ items }) {
     navigate('/mypage')
     setIsProfileOpen(false)
   }
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn'); // 세션 비우기
+    setIsLoggedIn(false); // 로그인 폼으로 튕겨내기
+  };
 
   return (
     <header className="app-header">
@@ -50,7 +55,7 @@ function Header({ items }) {
               <button className="dropdown-item" type="button" role="menuitem" onClick={handleMoveToMyPage}>
                 마이페이지
               </button>
-              <button className="dropdown-item" type="button" role="menuitem">
+              <button className="dropdown-item" type="button" role="menuitem" onClick={() => setIsLoggedIn(false)}>
                 로그아웃
               </button>
             </div>

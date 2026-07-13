@@ -11,7 +11,7 @@ const navigationItems = [
   { path: '/law-qa', label: '법규 Q&A', icon: 'help' },
 ]
 
-function MainLayout() {
+function MainLayout({ setIsLoggedIn }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
   return (
@@ -22,7 +22,7 @@ function MainLayout() {
         onToggle={() => setIsSidebarCollapsed((currentValue) => !currentValue)}
       />
       <div className="app-content">
-        <Header items={navigationItems} />
+        <Header items={navigationItems} setIsLoggedIn={setIsLoggedIn} />
         <main className="app-main">
           <Outlet />
         </main>
