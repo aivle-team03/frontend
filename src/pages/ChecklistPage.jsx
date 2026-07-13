@@ -8,7 +8,6 @@ const ChecklistPage = () => {
         { id: 3, text: '해야할 일 3' },
     ]);
 
-    // ⭐ [중요] 이 부분이 에러의 원인입니다! 아래 4줄이 누락되었는지 꼭 확인하세요.
     const [beforeImg, setBeforeImg] = useState(null); // 'beforeImg' 변수가 여기서 선언되어야 합니다.
     const [afterImg, setAfterImg] = useState(null);
     const beforeInputRef = useRef(null);
