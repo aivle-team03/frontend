@@ -1,3 +1,4 @@
+import { userData, safetyReports, notifications } from "../data/myPageData";
 import Header from "../components/layout/Header";
 import "../styles/MyPage.css";
 
