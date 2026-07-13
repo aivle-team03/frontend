@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import Header from './Header.jsx'
 import Sidebar from './Sidebar.jsx'
+import MyPage from '../../pages/MyPage.jsx'
+import HomePage from '../../pages/HomePage.jsx'
 
 const navigationItems = [
   { id: 'home', label: '\uD648', icon: 'home' },
@@ -26,8 +28,12 @@ function MainLayout({ children }) {
         onToggle={() => setIsSidebarCollapsed((currentValue) => !currentValue)}
       />
       <div className="app-content">
-        <Header title={activeItem.label} />
-        <main className="app-main">{children}</main>
+        <Header title={activeItem.label}
+        onSelect = {setActiveItemId} />
+        <main className="app-main">
+          {activeItemId === 'home' && <HomePage />}
+          {activeItemId === 'mypage' && <MyPage />}
+        </main>
       </div>
     </div>
   )

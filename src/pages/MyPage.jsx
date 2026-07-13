@@ -1,8 +1,8 @@
+import Header from "../components/layout/Header";
 
 function MyPage(){
     return (
         <div className="my-page-container">
-            <Header title="마이페이지" />
             <div className="my-info">
                 내 정보
             </div>

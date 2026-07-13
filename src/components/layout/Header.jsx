@@ -1,9 +1,8 @@
 import React, { useState } from "react";
 import "../../styles/Header.css";
 
-function Header({ title }) {
-  const [isOpen, setIsOpen] = useState(false);
-
+function Header({ title, onSelect }) {
+  const [isOpen, setIsOpen] = useState(false); // 드롭다운 메뉴에서 사용하는 useState
   return (
     <header className="app-header">
       <h1>{title}</h1>
@@ -22,7 +21,10 @@ function Header({ title }) {
           {isOpen && (
             // isOpen이 true일때 다음내용을 보여줘라
           <div className="dropdown">
-            <div className="dropdown-item">
+            <div className="dropdown-item"
+            onClick={() => {
+              onSelect('mypage')}}
+            >
               <div>마이페이지</div>
             </div>
             <div className="dropdown-item">
