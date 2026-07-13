@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Header from './Header.jsx'
 import Sidebar from './Sidebar.jsx'
+import MyPage from '../../pages/MyPage.jsx'
+import HomePage from '../../pages/HomePage.jsx'
 
 const navigationItems = [
   { path: '/', label: '홈', icon: 'home' },
