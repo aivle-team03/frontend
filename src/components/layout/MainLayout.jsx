@@ -10,9 +10,9 @@ const navigationItems = [
   { id: 'law', label: '\uBC95\uADDC Q&A', icon: 'help' },
 ]
 
-function MainLayout({ children }) {
+function MainLayout({ children, setIsLoggedIn, activeItemId, setActiveItemId }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [activeItemId, setActiveItemId] = useState('home')
+
   const activeItem =
     navigationItems.find((item) => item.id === activeItemId) ?? navigationItems[0]
 
@@ -22,11 +22,12 @@ function MainLayout({ children }) {
         activeItemId={activeItemId}
         isCollapsed={isSidebarCollapsed}
         items={navigationItems}
-        onSelect={setActiveItemId}
+        onSelect={setActiveItemId} // 사이드바 클릭 시 App.jsx의 상태가 바뀝니다.
         onToggle={() => setIsSidebarCollapsed((currentValue) => !currentValue)}
       />
       <div className="app-content">
-        <Header title={activeItem.label} />
+        {/* Header에 setIsLoggedIn을 프롭 드릴링으로 전달합니다 */}
+        <Header title={activeItem.label} setIsLoggedIn={setIsLoggedIn} />
         <main className="app-main">{children}</main>
       </div>
     </div>
