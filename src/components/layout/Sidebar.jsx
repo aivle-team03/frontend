@@ -1,4 +1,5 @@
 import bossLogo from '../../assets/boss-logo.png'
+import { NavLink } from 'react-router-dom'
 
 function SidebarIcon({ name }) {
   const commonProps = {
@@ -53,32 +54,29 @@ function SidebarIcon({ name }) {
   )
 }
 
-function Sidebar({ activeItemId, isCollapsed, items, onSelect, onToggle }) {
+function Sidebar({ isCollapsed, items, onToggle }) {
   return (
     <aside className="app-sidebar" aria-label="Primary navigation">
       <div className="sidebar-logo">
         <img src={bossLogo} alt="BOSS" />
       </div>
       <nav className="sidebar-nav" aria-label="Main menu">
-        {items.map((item) => {
-          const isActive = item.id === activeItemId
-
-          return (
-            <button
-              className={isActive ? 'sidebar-tab is-active' : 'sidebar-tab'}
-              key={item.id}
-              type="button"
-              title={isCollapsed ? item.label : undefined}
-              aria-current={isActive ? 'page' : undefined}
-              onClick={() => onSelect(item.id)}
-            >
-              <span className="sidebar-icon-box">
-                <SidebarIcon name={item.icon} />
-              </span>
-              <span className="sidebar-label">{item.label}</span>
-            </button>
-          )
-        })}
+        {items.map((item) => (
+          <NavLink
+            className={({ isActive }) =>
+              isActive ? 'sidebar-tab is-active' : 'sidebar-tab'
+            }
+            end={item.path === '/'}
+            key={item.path}
+            title={isCollapsed ? item.label : undefined}
+            to={item.path}
+          >
+            <span className="sidebar-icon-box">
+              <SidebarIcon name={item.icon} />
+            </span>
+            <span className="sidebar-label">{item.label}</span>
+          </NavLink>
+        ))}
       </nav>
       <button
         className="sidebar-toggle"
