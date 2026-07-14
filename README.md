@@ -10,7 +10,7 @@
 
 ---
 ## 🔗 임시 사이트 주소
-[BOSS 서비스 바로가기](https://drop-abcd2887-3b3.descriptive-sailboat.workers.dev)
+[BOSS 서비스 바로가기](https://drop-f4bbf959-87d.gaudy-dancer.workers.dev)
 
 
 ## 주요 기능 
