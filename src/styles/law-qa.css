@@ -1,0 +1,213 @@
+.law-qa-page {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  height: calc(100vh - 160px);
+  border: 1px solid #dfe7f2;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+  overflow: hidden;
+}
+
+.law-qa-sidebar {
+  padding: 24px;
+  border-right: 1px solid #dfe7f2;
+  background: #eef6ff;
+  overflow-y: auto;
+}
+
+.law-qa-sidebar h2,
+.chat-panel-header h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.law-qa-sidebar p,
+.chat-panel-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.recommend-question-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.recommend-question-list button {
+  padding: 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  color: #334155;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.recommend-question-list button:hover {
+  border-color: #9bbcf1;
+  background: #f8fbff;
+}
+
+.law-qa-chat {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  background: #f8fafc;
+  height: 100%;
+  overflow: hidden;
+}
+
+.chat-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 24px;
+  border-bottom: 1px solid #dfe7f2;
+  background: #ffffff;
+}
+
+.chat-title-icon,
+.bot-avatar {
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  background: #2f64b7;
+}
+
+.chat-title-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+}
+
+.chat-message-list {
+  flex: 1;
+  padding: 24px;
+  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.chat-row {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+}
+
+.chat-row.user {
+  justify-content: flex-end;
+}
+
+.bot-avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+}
+
+.bubble-wrap {
+  display: flex;
+  max-width: min(680px, 72%);
+  flex-direction: column;
+}
+
+.chat-bubble,
+.typing-bubble {
+  padding: 13px 16px;
+  border: 1px solid #dfe7f2;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.chat-row.user .chat-bubble {
+  border-color: #2f64b7;
+  color: #ffffff;
+  background: #2f64b7;
+}
+
+.chat-time {
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.chat-row.user .chat-time {
+  text-align: right;
+}
+
+.typing-bubble {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.typing-bubble span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+
+.chat-input-area {
+  display: flex;
+  gap: 10px;
+  padding: 18px 24px;
+  border-top: 1px solid #dfe7f2;
+  background: #ffffff;
+}
+
+.chat-input-area input {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  color: #0f172a;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.chat-input-area input:focus {
+  border-color: #2f64b7;
+  box-shadow: 0 0 0 1px #2f64b7;
+}
+
+.chat-input-area button {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #2f64b7;
+  cursor: pointer;
+}
+
+@media (max-width: 920px) {
+  .law-qa-page {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .law-qa-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid #dfe7f2;
+  }
+}

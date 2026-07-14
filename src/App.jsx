@@ -1,12 +1,7 @@
-import MainLayout from './components/layout/MainLayout.jsx'
-import HomePage from './pages/HomePage.jsx'
+import AppRouter from './routes/AppRouter.jsx'
 
 function App() {
-  return (
-    <MainLayout>
-      <HomePage />
-    </MainLayout>
-  )
+  return <AppRouter />
 }
 
-export default App
+export default App;
