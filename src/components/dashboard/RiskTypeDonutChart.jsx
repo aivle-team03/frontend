@@ -1,4 +1,4 @@
-import { Box, Stack, Typography } from '@mui/material'
+import { Box, Typography } from '@mui/material'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 const colors = ['#e7b0b5', '#f1d19b', '#b8cbe0', '#8eb6df']
@@ -19,17 +19,17 @@ function RiskTypeDonutChart({ data }) {
           </PieChart>
         </ResponsiveContainer>
       </Box>
-      <Stack className="donut-legend" spacing={1}>
+      <div className="donut-legend">
         {data.map((item, index) => (
-          <Stack direction="row" alignItems="center" justifyContent="space-between" key={item.name}>
+          <div className="donut-legend-item" key={item.name}>
             <span>
               <i style={{ backgroundColor: colors[index % colors.length] }}></i>
               {item.name}
             </span>
             <strong>{item.value}%</strong>
-          </Stack>
+          </div>
         ))}
-      </Stack>
+      </div>
     </Box>
   )
 }

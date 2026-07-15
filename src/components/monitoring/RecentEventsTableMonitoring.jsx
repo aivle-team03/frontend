@@ -11,7 +11,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  
 } from '@mui/material'
 
 function EventTypeIcon({ type }) {
@@ -22,24 +21,19 @@ function EventTypeIcon({ type }) {
 
 function RecentEventsTableMonitoring({ events }) {
   return (
-    <>
-        <TableContainer className="events-table-wrap">
-          <Table size="small" aria-label="최근 이상 발생 리스트">
-            <TableHead>
-              <TableRow>
-                <TableCell>시간</TableCell>
-                <TableCell>위치</TableCell>
-                <TableCell>유형</TableCell>
-                <TableCell>상태</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {events.map((event) => (
-                <TableRow
-                  hover
-                  key={event.id}
-                  className="event-row"
-                >
+    <TableContainer className="events-table-wrap">
+      <Table size="small" aria-label="최근 이상 발생 리스트">
+        <TableHead>
+          <TableRow>
+            <TableCell>시간</TableCell>
+            <TableCell>위치</TableCell>
+            <TableCell>유형</TableCell>
+            <TableCell>상태</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {events.map((event) => (
+            <TableRow hover key={event.id} className="event-row">
                   <TableCell>{event.time}</TableCell>
                   <TableCell>{event.location}</TableCell>
                   <TableCell>
@@ -59,15 +53,11 @@ function RecentEventsTableMonitoring({ events }) {
                       className="status-chip"
                     />
                   </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-    
-
-  
-    </>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   )
 }
 

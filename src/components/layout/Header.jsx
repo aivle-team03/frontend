@@ -12,7 +12,6 @@ import '../../styles/Header.css'
 
 const extraPageTitles = {
   '/mypage': '마이페이지',
-  '/monitoringdetail': '상세 CCTV',
 }
 
 const pageHeaderMeta = {
@@ -29,9 +28,10 @@ function Header({ items }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
-  const currentItem = items.find((item) => item.path === location.pathname)
-  const title = currentItem?.label ?? extraPageTitles[location.pathname] ?? 'BOSS'
-  const headerMeta = pageHeaderMeta[location.pathname]
+  const headerPath = location.pathname === '/monitoringdetail' ? '/monitoring' : location.pathname
+  const currentItem = items.find((item) => item.path === headerPath)
+  const title = currentItem?.label ?? extraPageTitles[headerPath] ?? 'BOSS'
+  const headerMeta = pageHeaderMeta[headerPath]
   const HeaderIcon = headerMeta?.icon
 
   const handleMoveToMyPage = () => {
@@ -44,8 +44,8 @@ function Header({ items }) {
       <div className="header-title">
         <div className="header-title-row">
           <h1>
-          {HeaderIcon && <HeaderIcon className="header-title-icon" />}
-          {title}
+            {HeaderIcon && <HeaderIcon className="header-title-icon" />}
+            {title}
           </h1>
         </div>
         {headerMeta?.description && <p>{headerMeta.description}</p>}
@@ -81,7 +81,7 @@ function Header({ items }) {
         </div>
       </div>
     </header>
-  );
+  )
 }
 
 export default Header

@@ -1,17 +1,17 @@
-import styles from '../styles/CCTVMonitoring.module.css'
-import {recentEvents} from '../data/dashboardMock.js'
-import RecentEventsTable from '../components/monitoring/RecentEventsTableMonitoring.jsx'
 import { useNavigate } from 'react-router-dom'
+import { recentEvents } from '../data/dashboardMock.js'
+import RecentEventsTable from '../components/monitoring/RecentEventsTableMonitoring.jsx'
+import styles from '../styles/CCTVMonitoring.module.css'
+
 const cameraSlots = ['1', '2', '3', '4']
 
-
-
-
 function MonitoringPage() {
-  const navigate=useNavigate();
+  const navigate = useNavigate()
+
   const handleMoveToMonitoringDetail = () => {
-  navigate('/monitoringdetail')
+    navigate('/monitoringdetail')
   }
+
   return (
     <section className={styles.dashboardFrame} aria-label="BOSS CCTV monitoring workspace">
       <div className={styles.cctvemptyarea}>
@@ -20,7 +20,7 @@ function MonitoringPage() {
             <h2 className={styles.title}>실시간 CCTV 모니터링</h2>
             <div className={styles.videodashBoard}>
               {cameraSlots.map((slot) => (
-                <button className={styles.video} onClick={handleMoveToMonitoringDetail} key={slot}>
+                <button className={styles.video} onClick={handleMoveToMonitoringDetail} key={slot} type="button">
                   {slot}
                 </button>
               ))}
@@ -42,11 +42,7 @@ function MonitoringPage() {
         <div className={styles.EventSection}>
           <div className={styles.liveEvent}>
             <h2 className={styles.title}>실시간 알람</h2>
-            
-                <RecentEventsTable
-                  events={recentEvents}
-                />
-
+            <RecentEventsTable events={recentEvents} />
           </div>
 
           <div className={styles.emptyBox}>
