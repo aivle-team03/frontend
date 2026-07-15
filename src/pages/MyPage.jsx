@@ -1,6 +1,19 @@
 import '../styles/MyPage.css'
+import React, { useState, useEffect } from 'react';
 
 function MyPage() {
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    // 💡 로그인 시 저장했던 'userName'을 꺼내옵니다.
+    const storedName = localStorage.getItem('userRole');
+    if (storedName) {
+      setUserName(storedName);
+    } else {
+      setUserName('게스트'); // 로그인 정보가 없을 때 예외 처리
+    }
+  }, []);
+
   return (
     <section className="my-page-container" aria-label="마이페이지">
       <article className="my-page-card my-info">
@@ -22,6 +35,7 @@ function MyPage() {
       <article className="my-page-card my-info-change">
         <span className="my-page-label">내 정보 변경</span>
         <p>계정 정보 수정 기능은 준비 중입니다.</p>
+        <p>{userName}</p>
       </article>
 
       <article className="my-page-card recent-work-logs">

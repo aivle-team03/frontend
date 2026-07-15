@@ -21,9 +21,21 @@ function Header({ items, setIsLoggedIn }) {
     setIsProfileOpen(false)
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn'); // 세션 비우기
-    setIsLoggedIn(false); // 로그인 폼으로 튕겨내기
+  const handleLogout = async () => {
+    try {
+      await fetch('http://127.0.0.1:8000/api/auth/logout', { method: 'POST' });
+      localStorage.removeItem('token');
+
+      // 2. 기존 로그인 세션 정보 지우기
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userUid');
+      localStorage.removeItem('companyCode');
+      setIsLoggedIn(false);
+    } catch (error) {
+      setIsLoggedIn(false);
+    }
   };
 
   return (
@@ -55,7 +67,7 @@ function Header({ items, setIsLoggedIn }) {
               <button className="dropdown-item" type="button" role="menuitem" onClick={handleMoveToMyPage}>
                 마이페이지
               </button>
-              <button className="dropdown-item" type="button" role="menuitem" onClick={() => setIsLoggedIn(false)}>
+              <button className="dropdown-item" type="button" role="menuitem" onClick={handleLogout}>
                 로그아웃
               </button>
             </div>

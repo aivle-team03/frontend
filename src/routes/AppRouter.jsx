@@ -8,6 +8,7 @@ import MonitoringPage from '../pages/MonitoringPage.jsx'
 import MyPage from '../pages/MyPage.jsx'
 import React, { useState, useEffect } from 'react';
 import LoginPage from '../pages/LoginPage.jsx'
+import SignupPage from '../pages/SignupPage.jsx'
 
 function AppRouter() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -35,7 +36,11 @@ function AppRouter() {
             <Route path="*" element={<Navigate replace to="/" />} />
           </Route>
         ) : (
-          <Route path="*" element={<LoginPage setIsLoggedIn={setIsLoggedIn} />} />
+          <>
+            <Route path="*" element={<LoginPage setIsLoggedIn={setIsLoggedIn} />} />
+            <Route path="signup" element={<SignupPage />} />
+            <Route path="*" element={<Navigate replace to="/login" />} />
+          </>
         )}
       </Routes>
     </BrowserRouter>
