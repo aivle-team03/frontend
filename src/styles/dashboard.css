@@ -321,23 +321,39 @@
 .statistics-chart-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.86fr);
+  align-items: stretch;
   gap: 18px;
 }
 
 .chart-card {
-  min-height: 330px;
+  display: flex;
+  height: 340px;
+  min-height: 340px;
+  flex-direction: column;
   padding: 16px;
+  box-sizing: border-box;
 }
 
 .chart-body {
+  flex: 0 0 200px;
   margin-top: 6px;
 }
 
+.trend-chart-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  align-items: center;
+}
+
 .donut-chart-body {
-  margin-bottom: -16px;
+  margin-bottom: -8px;
 }
 
 .donut-legend {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 24px;
   margin-top: 0;
 }
 
@@ -350,11 +366,43 @@
   font-weight: 700;
 }
 
+.donut-legend > .MuiStack-root {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 32px;
+  align-items: center !important;
+  gap: 12px;
+  padding: 3px 0;
+  justify-content: initial !important;
+}
+
+.donut-legend strong {
+  min-width: 42px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: right;
+}
+
+.donut-legend span {
+  line-height: 1.2;
+}
+
 .donut-legend i {
   display: inline-block;
   width: 8px;
   height: 8px;
   border-radius: 999px;
+}
+
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.recharts-sector:focus,
+.recharts-bar-rectangle:focus,
+.recharts-wrapper *:focus {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .daily-report-card {
@@ -475,6 +523,10 @@
 
   .period-toggle {
     justify-content: flex-start;
+  }
+
+  .donut-legend {
+    grid-template-columns: 1fr;
   }
 
   .daily-report-card {
