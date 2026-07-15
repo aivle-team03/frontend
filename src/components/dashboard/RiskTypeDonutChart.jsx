@@ -1,16 +1,16 @@
 import { Box, Stack, Typography } from '@mui/material'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
-const colors = ['#ef4444', '#f59e0b', '#64748b', '#2f64b7']
+const colors = ['#e7b0b5', '#f1d19b', '#b8cbe0', '#8eb6df']
 
 function RiskTypeDonutChart({ data }) {
   return (
     <Box className="chart-card">
       <Typography variant="h6">위험 유형 비율</Typography>
       <Box className="chart-body donut-chart-body">
-        <ResponsiveContainer width="100%" height={260}>
+        <ResponsiveContainer width="100%" height={200}>
           <PieChart>
-            <Pie data={data} dataKey="value" nameKey="name" innerRadius={56} outerRadius={88} paddingAngle={3}>
+            <Pie data={data} dataKey="value" nameKey="name" innerRadius={56} outerRadius={88} paddingAngle={3} isAnimationActive animationBegin={180} animationDuration={1100} animationEasing="ease-out">
               {data.map((entry, index) => (
                 <Cell key={entry.name} fill={colors[index % colors.length]} />
               ))}

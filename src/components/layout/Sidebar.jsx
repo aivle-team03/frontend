@@ -45,6 +45,15 @@ function SidebarIcon({ name }) {
     )
   }
 
+  if (name === 'education') {
+    return (
+      <svg {...commonProps}>
+        <path d="m3 9 9-5 9 5-9 5-9-5Z" />
+        <path d="M6 11.2V16c2.4 2.2 9.6 2.2 12 0v-4.8M21 9v6" />
+      </svg>
+    )
+  }
+
   return (
     <svg {...commonProps}>
       <path d="M9.2 9a3 3 0 1 1 4.7 2.45c-.95.62-1.4 1.14-1.4 2.05" />

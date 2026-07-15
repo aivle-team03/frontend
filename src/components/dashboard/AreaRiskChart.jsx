@@ -11,9 +11,9 @@ import {
 } from 'recharts'
 
 function getRiskColor(value) {
-  if (value >= 70) return '#ef4444'
-  if (value >= 40) return '#f59e0b'
-  return '#16a34a'
+  if (value >= 70) return '#e1aeb2'
+  if (value >= 40) return '#f0d09a'
+  return '#a9c9e8'
 }
 
 function AreaRiskChart({ risks, selectedArea, onSelectArea }) {
@@ -27,7 +27,7 @@ function AreaRiskChart({ risks, selectedArea, onSelectArea }) {
             <XAxis type="number" domain={[0, 100]} />
             <YAxis dataKey="area" type="category" width={50} />
             <Tooltip formatter={(value) => [`${value}`, '위험도']} />
-            <Bar dataKey="value" radius={[0, 8, 8, 0]} onClick={(data) => onSelectArea(data.area)}>
+            <Bar dataKey="value" radius={[0, 8, 8, 0]} isAnimationActive animationBegin={120} animationDuration={1100} animationEasing="ease-out" onClick={(data) => onSelectArea(data.area)}>
               {risks.map((risk) => (
                 <Cell
                   cursor="pointer"

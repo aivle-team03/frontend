@@ -214,6 +214,13 @@
   line-height: 1.25;
 }
 
+.header-title-icon {
+  margin-right: 8px;
+  color: #3974c6;
+  font-size: 27px !important;
+  vertical-align: middle;
+}
+
 .app-header p {
   margin: 6px 0 0;
   color: #64748b;
