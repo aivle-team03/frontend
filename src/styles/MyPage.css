@@ -38,7 +38,7 @@
   margin: 8px 0 0;
   color: #64748b;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1.55;
 }
 
@@ -49,17 +49,35 @@
 .my-section {
   grid-area: area;
 }
-
-.alert-setting {
-  grid-area: alarm;
+.alert-setting p {
+  color: #475569;
+  font-size: 14px;
 }
 
+.recent-work-logs p {
+  margin: 6px 0;
+  color: #334155;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.alert-setting small,
+.recent-work-logs small {
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 500;
+}
 .my-info-change {
   grid-area: edit;
 }
 
-.recent-work-logs {
-  grid-area: log;
+.recent-work-logs strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 @media (max-width: 900px) {
