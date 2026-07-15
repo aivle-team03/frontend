@@ -1,5 +1,6 @@
 import styles from '../styles/CCTVMonitoring.module.css'
-
+import {recentEvents} from '../data/dashboardMock.js'
+import RecentEventsTable from '../components/monitoring/RecentEventsTableMonitoring.jsx'
 const cameraSlots = ['1', '2', '3', '4']
 
 function MonitoringPage() {
@@ -34,7 +35,11 @@ function MonitoringPage() {
         <div className={styles.EventSection}>
           <div className={styles.liveEvent}>
             <h2 className={styles.title}>실시간 알람</h2>
-              <div className={styles.blankAreaBlank} />
+            
+                <RecentEventsTable
+                  events={recentEvents}
+                />
+
           </div>
 
           <div className={styles.emptyBox}>
