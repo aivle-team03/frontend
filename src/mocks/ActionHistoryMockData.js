@@ -1,0 +1,42 @@
+export const ACTION_HISTORY_DATA = [
+  {
+    id: 1,
+    time: "2026-07-03 11:19:25",
+    location: "A동 2층 201-2121 복도",
+    type: "적치물 감지",
+    status: "조치 완료",
+    manager: "관리자",
+  },
+  {
+    id: 2,
+   time: "2026-07-01 14:20:11",
+    location: "A동 1층 입구",
+    type: "소화기 미탐지",
+    status: "조치 완료",
+    manager: "관리자",
+  },
+  {
+    id: 3,
+    time: "2026-06-30 08:45:32",
+    location: "B동 지하 1층 비상구",
+    type: "방화문 개방",
+    status: "조치 중",
+    manager: "김안전",
+  },
+  {
+    id: 4,
+    time: "2026-06-29 16:37:18",
+    location: "C동 3층 창고",
+    type: "연기 감지",
+    status: "조치 중",
+    manager: "이담당",
+  },
+  {
+    id: 5,
+    time: "2026-06-28 09:12:05",
+    location: "A동 5층 전기실",
+    type: "과열 감지",
+    status: "미조치",
+    manager: "-",
+  },
+];
