@@ -3,6 +3,7 @@ import styles from '../styles/CCTVMonitoring.module.css'
 const cameraSlots = ['1', '2', '3', '4']
 
 function MonitoringPage() {
+
   return (
     <section className={styles.dashboardFrame} aria-label="BOSS CCTV monitoring workspace">
       <div className={styles.cctvemptyarea}>
@@ -33,7 +34,7 @@ function MonitoringPage() {
         <div className={styles.EventSection}>
           <div className={styles.liveEvent}>
             <h2 className={styles.title}>실시간 알람</h2>
-            <div className={styles.blankAreaBlank} />
+              <div className={styles.blankAreaBlank} />
           </div>
 
           <div className={styles.emptyBox}>
