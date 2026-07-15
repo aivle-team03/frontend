@@ -6,6 +6,7 @@ import '../../styles/Header.css'
 
 const extraPageTitles = {
   '/mypage': '마이페이지',
+  '/monitoringdetail': '상세 CCTV',
 }
 
 function Header({ items }) {
