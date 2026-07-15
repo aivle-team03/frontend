@@ -1,7 +1,10 @@
 import '../styles/monitoringdetail.css'
+import { useLocation } from 'react-router-dom'
 
 function MonitoringDetailPage() {
 
+const location = useLocation();
+const currentCctv = location.state?.cctvData;
 return(
     <>   
     <div className="page-Layout">
@@ -13,16 +16,16 @@ return(
                     </span>
                     <div className="cctv-main-Info">
                         <span>
-                            A동
+                            {currentCctv.section}
                         </span>
                         <span>
-                            2층
+                            {currentCctv.floor}
                         </span>
                         <span>
-                            201-212 복도
+                            {currentCctv.location}
                         </span>
                         <span>
-                            11:00:00
+                            {currentCctv.time}
                         </span>
                     </div> 
                 </div>

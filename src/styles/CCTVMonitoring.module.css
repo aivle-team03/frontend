@@ -88,13 +88,47 @@
 
 
 .video {
+    position: relative;
+    overflow: hidden;
     width: 46%;
     height: 45%;
-    background-color: black;
+    background-color: rgb(96, 47, 233);
     color: #ffffff;
     display: grid;
     place-items: center;
     border-radius: 15px;
+    border:none;
+}
+
+.cctvHeaderBadge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.7); 
+    padding: 6px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(4px); 
+    z-index: 5;
+    pointer-events: none; 
+}
+
+/* 2. 위치 텍스트 스타일 */
+.cctvLocationText {
+    color: #ffffff;
+    font-size: 13px;
+}
+
+/* 3. LIVE 표시등 */
+.liveBadge {
+    background-color: #10b981; 
+    color: #ffffff;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
 }
 
 .videoChange {

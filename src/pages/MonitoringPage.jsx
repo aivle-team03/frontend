@@ -2,15 +2,18 @@ import { useNavigate } from 'react-router-dom'
 import { recentEvents } from '../data/dashboardMock.js'
 import RecentEventsTable from '../components/monitoring/RecentEventsTableMonitoring.jsx'
 import styles from '../styles/CCTVMonitoring.module.css'
+import { CCTV_INFO_MOCKUP_DATA } from '../mocks/mockData.js'
 
 const cameraSlots = ['1', '2', '3', '4']
 
 function MonitoringPage() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const handleMoveToMonitoringDetail = () => {
-    navigate('/monitoringdetail')
+  const handleMoveToMonitoringDetail = (cctv) => {
+    navigate('/monitoringdetail',{state : {cctvData:cctv}})
   }
+  const cctvList = CCTV_INFO_MOCKUP_DATA ? CCTV_INFO_MOCKUP_DATA.slice(0, 4):[];
+
 
   return (
     <section className={styles.dashboardFrame} aria-label="BOSS CCTV monitoring workspace">
@@ -19,11 +22,24 @@ function MonitoringPage() {
           <div className={styles.cctvmonitoringSection}>
             <h2 className={styles.title}>실시간 CCTV 모니터링</h2>
             <div className={styles.videodashBoard}>
-              {cameraSlots.map((slot) => (
-                <button className={styles.video} onClick={handleMoveToMonitoringDetail} key={slot} type="button">
-                  {slot}
+                {cctvList.map((cctv) => (
+                <button 
+                    className={styles.video} 
+                    onClick={() => handleMoveToMonitoringDetail(cctv)}
+                    key={cctv.id} 
+                    type="button"
+                >
+                  <div className={styles.cctvHeaderBadge}>
+                    <span className={styles.cctvLocationText}>
+                      {cctv.section} {cctv.location} {cctv.floor}
+                    </span>
+                    <span className={styles.liveBadge}>
+                      LIVE
+                    </span>
+                  </div>
                 </button>
               ))}
+              
             </div>
           </div>
 

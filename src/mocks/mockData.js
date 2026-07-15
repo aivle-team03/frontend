@@ -154,3 +154,51 @@ export const ACTION_HISTORY_MOCK_DATA = [
     manager: '-',
   },
 ]
+
+export const CCTV_INFO_MOCKUP_DATA=[
+
+  {
+  id:1,
+  section:"A동",
+  floor:"1층",
+  location:'강당',
+  time: '01:00:00',
+  videoUrl:"/미정"
+  },
+  
+  {
+    id:2,
+    section:"A동",
+    floor:"2층",
+    location:'복도',
+    time: '03:00:00',
+    videoUrl:"/미정"
+  },
+
+  {
+    id:3,
+    section:"C동",
+    floor:"3층",
+    location:'복도',
+    time: '03:00:00',
+    videoUrl:"/미정"
+  },
+
+  {
+    id:4,
+    section:"B동",
+    floor:"4층",
+    location:'창고',
+    time: '04:00:00',
+    videoUrl:"/미정"
+  },
+
+  {
+    id:5,
+    section:"C동",
+    floor:"5층",
+    location:'상가',
+    time: '05:00:00',
+    videoUrl:"/미정"
+  }
+]
