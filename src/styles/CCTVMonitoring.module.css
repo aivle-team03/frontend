@@ -1,4 +1,9 @@
-
+.card{
+    border: 1px solid #dfe7f2;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+}
 .dashboardFrame {
     min-height: calc(100vh - 176px);
 }
@@ -45,8 +50,12 @@
 .cctvmonitoringSection {
     display: flex;
     flex-direction: column;
-    border: 3px solid black;
+    /* border: 3px solid black; */
     align-items: center;
+    border: 1px solid #dfe7f2;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
 }
 
 .title {
@@ -57,6 +66,7 @@
 .videodashBoard {
     width: 95%;
     background-color: rgba(182, 182, 182, 0);
+    
     height: 500px;
     align-items: center;
     margin: 20px 10px;
@@ -72,6 +82,8 @@
     width: 90%;
     height: 50%;
     justify-content: space-between;
+
+    
 }
 
 
@@ -82,14 +94,18 @@
     color: #ffffff;
     display: grid;
     place-items: center;
+    border-radius: 15px;
 }
 
 .videoChange {
     display: flex;
     flex-direction: column;
-    border: 3px solid black;
     align-items: center;
     min-height: 370px;
+    border: 1px solid #dfe7f2;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
 }
 
 .videoChangeFrame {
@@ -100,22 +116,30 @@
     color: #ffffff;
     cursor: pointer;
     margin-top: 30px;
+    border-radius: 12px;
+    
 }
 
 .liveEvent {
     display: flex;
     flex-direction: column;
     min-height: 600px;
-    border: 3px solid black;
     align-items: center;
+    border: 1px solid #dfe7f2;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
 }
 
 .emptyBox {
     display: flex;
     flex-direction: column;
     min-height: 390px;
-    border: 3px solid black;
     align-items: center;
+    border: 1px solid #dfe7f2;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
 }
 
 @media (max-width: 1024px) {
