@@ -10,13 +10,16 @@
   display: flex;
   flex: 0 0 240px;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+
   padding: 28px 16px 22px;
   background: var(--color-sidebar);
   border-right: 1px solid var(--color-sidebar-border);
   transition:
     flex-basis 180ms ease,
     width 180ms ease;
+
+  overflow-y: auto;
 }
 
 .sidebar-logo {
