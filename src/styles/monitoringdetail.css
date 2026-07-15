@@ -3,6 +3,9 @@
     border-radius: 12px;
     background: #ffffff;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+
+    overflow: hidden;
+    height: 100%
 }
 .page-Layout{
     display: grid;
@@ -18,10 +21,34 @@
     gap: 10px;
     height: 100%;
 
-
+    
 }
 
+.cctv-main-Header{
+    display: flex;
+    height: 100%;
+    align-items: stretch;
+}
 
+.cctv-main-Live{
+    display: flex;
+    width: 200px;
+    background-color: #2f63b7;
+    color: white;
+
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.cctv-main-Info{
+    display: flex;
+    flex-grow: 1;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+
+}
 .detection-main-Layout{
     display:grid;
     grid-template-columns: 1fr 1fr;  
@@ -38,3 +65,52 @@
 
 }
 
+.detection-Object{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px;
+    height: 100%;
+}
+
+.detection-object-Title{
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #ffffff;
+    background-color: #2f63b7;
+
+    margin-bottom: 24px;
+}
+
+.detection-object-info-Section{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px;
+    height: 100%;
+}
+
+.detection-object-info-button-Section{
+    display: flex;
+    flex-direction: column;
+    margin-top: auto;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.detection-Button{
+    font-size:10px;
+    padding: 15px 60px;
+    color: #ffffff;
+    background-color: #2f63b7;
+    border: none;
+    border-radius: 12px;
+}
+
+.detection-Button:hover{
+
+    background-color: #78a2e7;
+
+}
