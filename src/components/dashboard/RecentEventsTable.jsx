@@ -35,6 +35,7 @@ function RecentEventsTable({ events, selectedEvent, onSelectEvent, onClose }) {
                 <TableCell>시간</TableCell>
                 <TableCell>위치</TableCell>
                 <TableCell>유형</TableCell>
+                <TableCell>담당자</TableCell>
                 <TableCell>상태</TableCell>
               </TableRow>
             </TableHead>
@@ -56,6 +57,7 @@ function RecentEventsTable({ events, selectedEvent, onSelectEvent, onClose }) {
                       <span>{event.type}</span>
                     </Stack>
                   </TableCell>
+                  <TableCell>{event.manager}</TableCell>
                   <TableCell>
                     <Chip
                       label={event.status}
@@ -86,6 +88,7 @@ function RecentEventsTable({ events, selectedEvent, onSelectEvent, onClose }) {
               <Detail label="위치" value={selectedEvent.location} />
               <Detail label="위험 유형" value={selectedEvent.type} />
               <Detail label="현재 상태" value={selectedEvent.status} />
+              <Detail label="담당자" value={selectedEvent.manager} />
             </Stack>
           )}
         </Box>

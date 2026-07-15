@@ -24,12 +24,12 @@ function MyPage() {
 
       <article className="my-page-card my-section">
         <span className="my-page-label">담당구역</span>
-        <strong>전체 구역</strong>
+        <strong>{area}</strong>
       </article>
 
       <article className="my-page-card alert-setting">
         <span className="my-page-label">알림 설정</span>
-        <p>위험 감지 및 조치 상태 알림 설정 영역입니다.</p>
+        <p>{message}</p>
       </article>
 
       <article className="my-page-card my-info-change">
@@ -39,7 +39,14 @@ function MyPage() {
 
       <article className="my-page-card recent-work-logs">
         <span className="my-page-label">최근 작업 로그</span>
-        <p>최근 작업 이력은 추후 연동 예정입니다.</p>
+
+        {myLogs.map((log) => (
+          <div key={log.id}>
+            <strong>{log.action}</strong>
+            <p>{log.detail}</p>
+            <small>{log.time}</small>
+          </div>
+        ))}
       </article>
     </section>
   )
