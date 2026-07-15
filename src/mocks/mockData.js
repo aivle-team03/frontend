@@ -66,3 +66,91 @@ export const EDUCATION_MOCK_DATA = {
     risks: ['충돌, 끼임, 낙하', '화재, 폭발', '감전, 추락', '미끄러짐, 전도'],
   },
 }
+
+export const MY_PAGE_MOCK_DATA = {
+  user: {
+    userId: 'user001',
+    name: '김에이블러',
+    department: '안전관리팀',
+    role: '관리자',
+    profileImage: '/images/profile.png',
+    email: 'kim@aivle.com',
+    area: '12 구역',
+  },
+  workLogs: [
+    {
+      id: 1,
+      userId: 'user001',
+      userName: '김에이블러',
+      action: '위험요소 조치 완료',
+      detail: '방화문 개방 상태 조치 완료',
+      time: '2026-07-15 09:45',
+    },
+    {
+      id: 2,
+      userId: 'user002',
+      userName: '이안전',
+      action: '소화기 점검',
+      detail: '3층 창고 소화기 점검 완료',
+      time: '2026-07-15 08:30',
+    },
+    {
+      id: 3,
+      userId: 'user001',
+      userName: '김에이블러',
+      action: 'AI 위험 알림 확인',
+      detail: '적재물 과다 적재 알림 확인',
+      time: '2026-07-14 17:20',
+    },
+  ],
+  notifications: [
+    {
+      id: 1,
+      message: '담당 구역 점검 일정이 등록되었습니다.',
+      time: '10분 전',
+    },
+  ],
+}
+
+export const ACTION_HISTORY_MOCK_DATA = [
+  {
+    id: 1,
+    time: '2026-07-03 11:19:25',
+    location: 'A동 2층 201-2121 복도',
+    type: '적치물 감지',
+    status: '조치 완료',
+    manager: '관리자',
+  },
+  {
+    id: 2,
+    time: '2026-07-01 14:20:11',
+    location: 'A동 1층 입구',
+    type: '소화기 미탐지',
+    status: '조치 완료',
+    manager: '관리자',
+  },
+  {
+    id: 3,
+    time: '2026-06-30 08:45:32',
+    location: 'B동 지하 1층 비상구',
+    type: '방화문 개방',
+    status: '조치 중',
+    manager: '홍혁재',
+  },
+  {
+    id: 4,
+    time: '2026-06-29 16:37:18',
+    location: 'C동 3층 창고',
+    type: '연기 감지',
+    status: '조치 중',
+    manager: '유다현',
+  },
+  {
+    id: 5,
+    time: '2026-06-28 09:12:05',
+    location: 'A동 5층 전기실',
+    type: '과열 감지',
+    status: '미조치',
+    manager: '-',
+  },
+]

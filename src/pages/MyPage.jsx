@@ -1,29 +1,27 @@
-import { userData, workLogs, notifications } from "../data/myPageData";
-import Header from "../components/layout/Header";
-import "../styles/MyPage.css";
+import { MY_PAGE_MOCK_DATA } from '../mocks/mockData.js'
+import '../styles/MyPage.css'
 
 function MyPage() {
-    const { userId, name, email, role, area} = userData;
-    const {id, message, time} = notifications[0];
-    const myLogs = workLogs.filter(
-        (log) => log.userId === userData.userId
-    );
-    return (
+  const { user, workLogs, notifications } = MY_PAGE_MOCK_DATA
+  const myLogs = workLogs.filter((log) => log.userId === user.userId)
+  const notification = notifications[0]
+
+  return (
     <section className="my-page-container" aria-label="마이페이지">
       <article className="my-page-card my-info">
-        <span className="my-page-label">{role}</span>
-        <h2>{name}</h2>
-        <p>{email}</p>
+        <span className="my-page-label">{user.role}</span>
+        <h2>{user.name}</h2>
+        <p>{user.email}</p>
       </article>
 
       <article className="my-page-card my-section">
         <span className="my-page-label">담당구역</span>
-        <strong>{area}</strong>
+        <strong>{user.area}</strong>
       </article>
 
       <article className="my-page-card alert-setting">
         <span className="my-page-label">알림 설정</span>
-        <p>{message}</p>
+        <p>{notification.message}</p>
       </article>
 
       <article className="my-page-card my-info-change">
@@ -35,13 +33,13 @@ function MyPage() {
         <span className="my-page-label">최근 작업 로그</span>
 
         {myLogs.map((log) => (
-            <div key={log.id}>
-                <strong>{log.action}</strong>
-                <p>{log.detail}</p>
-                <small>{log.time}</small>
-                </div>
-            ))}
-            </article>
+          <div key={log.id}>
+            <strong>{log.action}</strong>
+            <p>{log.detail}</p>
+            <small>{log.time}</small>
+          </div>
+        ))}
+      </article>
     </section>
   )
 }

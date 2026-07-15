@@ -30,11 +30,11 @@ export const summaryCards = [
 ]
 
 export const recentEvents = [
-  { id: 1, time: '00:00:00', location: '1구역', type: '화재 발생', manager: "-",status: '조치 대기' },
-  { id: 2, time: '00:30:13', location: '1구역', type: '화재 발생', manager: "김안전",status: '조치 완료' },
-  { id: 3, time: '01:00:00', location: '2구역', type: '적재물', manager: "-", status: '조치 대기' },
-  { id: 4, time: '01:00:20', location: '2구역', type: '적재물', manager: "이안전", status: '조치 완료' },
-  { id: 5, time: '03:00:00', location: '3구역', type: '연기', manager: "-", status: '조치 대기' },
+  { id: 1, time: '00:00:00', location: '1구역', type: '화재 발생', manager: '-', status: '조치 대기' },
+  { id: 2, time: '00:30:13', location: '1구역', type: '화재 발생', manager: '신지함', status: '조치 완료' },
+  { id: 3, time: '01:00:00', location: '2구역', type: '적재물', manager: '-', status: '조치 대기' },
+  { id: 4, time: '01:00:20', location: '2구역', type: '적재물', manager: '박동준', status: '조치 완료' },
+  { id: 5, time: '03:00:00', location: '3구역', type: '연기', manager: '-', status: '조치 대기' },
 ]
 
 export const areaRisks = [

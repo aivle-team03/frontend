@@ -80,3 +80,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+.report-panel .period-toggle {
+  width: 100%;
+  flex-wrap: nowrap;
+  justify-content: stretch;
+}
+
+.report-panel .period-toggle .MuiToggleButton-root {
+  min-width: 0;
+  flex: 1 1 0;
+  padding: 5px 6px;
+  font-size: 12px;
+  white-space: nowrap;
+}
