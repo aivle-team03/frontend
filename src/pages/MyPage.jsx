@@ -24,12 +24,12 @@ function MyPage() {
 
       <article className="my-page-card my-section">
         <span className="my-page-label">담당구역</span>
-        <strong>{area}</strong>
+        <strong>area</strong>
       </article>
 
       <article className="my-page-card alert-setting">
         <span className="my-page-label">알림 설정</span>
-        <p>{message}</p>
+        <p>message</p>
       </article>
 
       <article className="my-page-card my-info-change">
