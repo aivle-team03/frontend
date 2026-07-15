@@ -1,6 +1,7 @@
 import bossLogo from '../../assets/boss-logo.png'
 import { NavLink } from 'react-router-dom'
 
+
 function SidebarIcon({ name }) {
   const commonProps = {
     className: 'sidebar-icon',
