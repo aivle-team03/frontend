@@ -1,22 +1,27 @@
+import { MY_PAGE_MOCK_DATA } from '../mocks/mockData.js'
 import '../styles/MyPage.css'
 
 function MyPage() {
+  const { user, workLogs, notifications } = MY_PAGE_MOCK_DATA
+  const myLogs = workLogs.filter((log) => log.userId === user.userId)
+  const notification = notifications[0]
+
   return (
     <section className="my-page-container" aria-label="마이페이지">
       <article className="my-page-card my-info">
-        <span className="my-page-label">내 정보</span>
-        <h2>관리자</h2>
-        <p>산업안전 관리 플랫폼 운영 계정</p>
+        <span className="my-page-label">{user.role}</span>
+        <h2>{user.name}</h2>
+        <p>{user.email}</p>
       </article>
 
       <article className="my-page-card my-section">
         <span className="my-page-label">담당구역</span>
-        <strong>전체 구역</strong>
+        <strong>{user.area}</strong>
       </article>
 
       <article className="my-page-card alert-setting">
         <span className="my-page-label">알림 설정</span>
-        <p>위험 감지 및 조치 상태 알림 설정 영역입니다.</p>
+        <p>{notification.message}</p>
       </article>
 
       <article className="my-page-card my-info-change">
@@ -26,7 +31,14 @@ function MyPage() {
 
       <article className="my-page-card recent-work-logs">
         <span className="my-page-label">최근 작업 로그</span>
-        <p>최근 작업 이력은 추후 연동 예정입니다.</p>
+
+        {myLogs.map((log) => (
+          <div key={log.id}>
+            <strong>{log.action}</strong>
+            <p>{log.detail}</p>
+            <small>{log.time}</small>
+          </div>
+        ))}
       </article>
     </section>
   )

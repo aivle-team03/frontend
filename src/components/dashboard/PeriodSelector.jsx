@@ -12,9 +12,9 @@ import {
 } from '@mui/material'
 import { useState } from 'react'
 
-const periodOptions = ['오늘', '최근 7일', '이번 달', '지난 달', '직접 설정']
+const defaultPeriodOptions = ['오늘', '최근 7일', '이번 달', '지난 달', '직접 설정']
 
-function PeriodSelector({ selectedPeriod, onSelectPeriod }) {
+function PeriodSelector({ selectedPeriod, onSelectPeriod, options = defaultPeriodOptions }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleChange = (_, value) => {
@@ -35,7 +35,7 @@ function PeriodSelector({ selectedPeriod, onSelectPeriod }) {
         aria-label="기간 선택"
         className="period-toggle"
       >
-        {periodOptions.map((option) => (
+        {options.map((option) => (
           <ToggleButton key={option} value={option}>
             {option === '직접 설정' && <CalendarMonthIcon fontSize="small" />}
             {option}

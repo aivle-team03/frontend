@@ -9,6 +9,7 @@ const navigationItems = [
   { path: '/checklists', label: '체크리스트', icon: 'checklist' },
   { path: '/actions', label: '조치 이력', icon: 'history' },
   { path: '/law-qa', label: '법규 Q&A', icon: 'help' },
+  { path: '/education', label: '안전 교육', icon: 'education' },
 ]
 
 function MainLayout() {

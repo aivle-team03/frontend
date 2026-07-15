@@ -1,0 +1,40 @@
+.subCard{
+    border: 1px solid #dfe7f2;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+}
+.page-Layout{
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    height: 100%;
+
+}
+
+.cctv-main-Layout{
+    display:grid;
+    grid-template-rows: 50px 1fr 200px;  
+    gap: 10px;
+    height: 100%;
+
+
+}
+
+
+.detection-main-Layout{
+    display:grid;
+    grid-template-columns: 1fr 1fr;  
+    gap: 10px;
+    height: 100%;
+
+}
+
+.detection-Section{
+    display:grid;
+    grid-template-rows: 1fr 1fr;  
+    gap: 10px;
+    height: 100%;
+
+}
+

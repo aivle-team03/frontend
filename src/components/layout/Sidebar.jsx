@@ -1,5 +1,6 @@
 import bossLogo from '../../assets/boss-logo.png'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
+
 
 function SidebarIcon({ name }) {
   const commonProps = {
@@ -45,6 +46,15 @@ function SidebarIcon({ name }) {
     )
   }
 
+  if (name === 'education') {
+    return (
+      <svg {...commonProps}>
+        <path d="m3 9 9-5 9 5-9 5-9-5Z" />
+        <path d="M6 11.2V16c2.4 2.2 9.6 2.2 12 0v-4.8M21 9v6" />
+      </svg>
+    )
+  }
+
   return (
     <svg {...commonProps}>
       <path d="M9.2 9a3 3 0 1 1 4.7 2.45c-.95.62-1.4 1.14-1.4 2.05" />
@@ -55,17 +65,22 @@ function SidebarIcon({ name }) {
 }
 
 function Sidebar({ isCollapsed, items, onToggle }) {
+  const location = useLocation()
+
   return (
     <aside className="app-sidebar" aria-label="Primary navigation">
       <div className="sidebar-logo">
-        <img src={bossLogo} alt="BOSS" />
+        <Link to="/" aria-label="Home">
+          <img src={bossLogo} alt="BOSS" />
+        </Link>
       </div>
       <nav className="sidebar-nav" aria-label="Main menu">
         {items.map((item) => (
           <NavLink
-            className={({ isActive }) =>
-              isActive ? 'sidebar-tab is-active' : 'sidebar-tab'
-            }
+            className={({ isActive }) => {
+              const isMonitoringDetail = item.path === '/monitoring' && location.pathname === '/monitoringdetail'
+              return isActive || isMonitoringDetail ? 'sidebar-tab is-active' : 'sidebar-tab'
+            }}
             end={item.path === '/'}
             key={item.path}
             title={isCollapsed ? item.label : undefined}
@@ -87,7 +102,7 @@ function Sidebar({ isCollapsed, items, onToggle }) {
       >
         <span aria-hidden="true"></span>
       </button>
-    </aside>
+    </aside >
   )
 }
 

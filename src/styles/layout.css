@@ -10,13 +10,16 @@
   display: flex;
   flex: 0 0 240px;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+
   padding: 28px 16px 22px;
   background: var(--color-sidebar);
   border-right: 1px solid var(--color-sidebar-border);
   transition:
     flex-basis 180ms ease,
     width 180ms ease;
+
+  overflow-y: auto;
 }
 
 .sidebar-logo {
@@ -212,6 +215,13 @@
   font-size: 26px;
   font-weight: 900;
   line-height: 1.25;
+}
+
+.header-title-icon {
+  margin-right: 8px;
+  color: #3974c6;
+  font-size: 27px !important;
+  vertical-align: middle;
 }
 
 .app-header p {
