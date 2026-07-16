@@ -40,13 +40,13 @@ function MyPage() {
       <article className="my-page-card recent-work-logs">
         <span className="my-page-label">최근 작업 로그</span>
 
-        {myLogs.map((log) => (
+        {/* {myLogs.map((log) => (
           <div key={log.id}>
             <strong>{log.action}</strong>
             <p>{log.detail}</p>
             <small>{log.time}</small>
           </div>
-        ))}
+        ))} */}
       </article>
     </section>
   )
