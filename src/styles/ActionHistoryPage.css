@@ -1,6 +1,6 @@
 .action-history-layout {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr 360px;
   gap: 24px;
 }
 
@@ -83,14 +83,51 @@
 
 .report-panel .period-toggle {
   width: 100%;
-  flex-wrap: nowrap;
-  justify-content: stretch;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .report-panel .period-toggle .MuiToggleButton-root {
   min-width: 0;
-  flex: 1 1 0;
-  padding: 5px 6px;
+  width: 100%;
+  padding: 5px 8px;
   font-size: 12px;
   white-space: nowrap;
+}
+
+.date-field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.date-field-label {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.date-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #0f172a;
+  background: #fff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.date-input:focus {
+  border-color: #2563eb;
+  outline: 2px solid rgba(37, 99, 235, 0.16);
+  outline-offset: 0;
+}
+
+.date-field-error {
+  color: #dc2626;
+  font-size: 12px;
 }
