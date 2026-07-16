@@ -7,8 +7,9 @@ import '../styles/ActionHistoryPage.css'
 function ActionHistoryPage() {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [selectedPeriod, setSelectedPeriod] = useState('전체')
+  const [customPeriod, setCustomPeriod] = useState(null)
   const filteredData = ACTION_HISTORY_MOCK_DATA.filter((item) => {
-    const itemDate = new Date(item.time.split(' ')[0].replaceAll('.', '-'))
+    const itemDate = new Date(item.time.replace(' ', 'T'))
     const today = new Date()
 
     if (selectedPeriod === '이번 달') {
@@ -26,6 +27,13 @@ function ActionHistoryPage() {
         itemDate.getMonth() === lastMonth.getMonth() &&
         itemDate.getFullYear() === lastMonth.getFullYear()
       )
+    }
+
+    if (selectedPeriod === '직접 설정' && customPeriod) {
+      const startDate = new Date(`${customPeriod.startDate}T00:00:00`)
+      const endDate = new Date(`${customPeriod.endDate}T23:59:59.999`)
+
+      return itemDate >= startDate && itemDate <= endDate
     }
 
     return true
@@ -54,6 +62,7 @@ function ActionHistoryPage() {
       <PeriodSelector
         selectedPeriod={selectedPeriod}
         onSelectPeriod={setSelectedPeriod}
+        onApplyCustomPeriod={setCustomPeriod}
         options={['전체', '이번 달', '지난 달', '직접 설정']}
       />
       <div className="report-summary">
