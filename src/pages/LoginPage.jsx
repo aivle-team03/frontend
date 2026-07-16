@@ -34,10 +34,10 @@ function LoginPage({ setIsLoggedIn }) {
         // 2. 로그인 성공 시 백엔드가 주는 'user_info' 구조에 맞춰 세션 저장
         localStorage.setItem('token', data.access_token);
         localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('userName', data.user_info.name);
-        localStorage.setItem('userRole', data.user_info.role);
-        localStorage.setItem('userUid', data.user_info.uid); // DB 고유 PK 값
-        localStorage.setItem('companyCode', data.user_info.company_code); // 회사 코드
+        // localStorage.setItem('userName', data.user_info.name);
+        // localStorage.setItem('userRole', data.user_info.role);
+        // localStorage.setItem('userUid', data.user_info.uid); // DB 고유 PK 값
+        // localStorage.setItem('companyCode', data.user_info.company_code); // 회사 코드
 
         setIsLoggedIn(true);
       } else {

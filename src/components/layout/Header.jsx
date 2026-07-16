@@ -22,19 +22,27 @@ function Header({ items, setIsLoggedIn }) {
   }
 
   const handleLogout = async () => {
-    try {
-      await fetch('http://127.0.0.1:8000/api/auth/logout', { method: 'POST' });
-      localStorage.removeItem('token');
+    const token = localStorage.getItem('token'); // 저장된 토큰 가져오기
 
-      // 2. 기존 로그인 세션 정보 지우기
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userName');
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userUid');
-      localStorage.removeItem('companyCode');
-      setIsLoggedIn(false);
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // ⚠️ 이 부분이 누락되었거나 오타가 있으면 401 에러가 납니다!
+          'Authorization': `Bearer ${token}`
+        },
+      });
+
+      if (response.ok) {
+        // 로컬 스토리지 비우고 로그인 페이지로 이동 등
+        localStorage.clear();
+        setIsLoggedIn(false);
+      } else if (response.status === 401) {
+        console.error("인증 실패: 토큰이 없거나 만료되었습니다.");
+      }
     } catch (error) {
-      setIsLoggedIn(false);
+      console.error("로그아웃 중 오류 발생:", error);
     }
   };
 
