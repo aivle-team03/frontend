@@ -106,8 +106,30 @@ export const MY_PAGE_MOCK_DATA = {
   notifications: [
     {
       id: 1,
+      title: '점검 일정 등록',
       message: '담당 구역 점검 일정이 등록되었습니다.',
       time: '10분 전',
+      category: 'schedule',
+      path: '/checklists',
+      read: false,
+    },
+    {
+      id: 2,
+      title: '위험 요소 감지',
+      message: '2구역에서 적재물 과다 적재가 감지되었습니다.',
+      time: '24분 전',
+      category: 'danger',
+      path: '/monitoring',
+      read: false,
+    },
+    {
+      id: 3,
+      title: '조치 완료',
+      message: '1구역 방화문 개방 항목의 조치가 완료되었습니다.',
+      time: '1시간 전',
+      category: 'complete',
+      path: '/actions',
+      read: true,
     },
   ],
 }
