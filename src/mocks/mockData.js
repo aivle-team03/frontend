@@ -200,5 +200,23 @@ export const CCTV_INFO_MOCKUP_DATA=[
     location:'상가',
     time: '05:00:00',
     videoUrl:"/미정"
+  },
+
+  {
+    id:6,
+    section:"E동",
+    floor:"6층",
+    location:'사무실',
+    time: '06:00:00',
+    videoUrl:"/미정"
+  },
+
+  {
+    id:7,
+    section:"F동",
+    floor:"6층",
+    location:'사무실',
+    time: '07:00:00',
+    videoUrl:"/미정"
   }
 ]

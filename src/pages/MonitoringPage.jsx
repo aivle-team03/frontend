@@ -3,16 +3,34 @@ import { recentEvents } from '../data/dashboardMock.js'
 import RecentEventsTable from '../components/monitoring/RecentEventsTableMonitoring.jsx'
 import styles from '../styles/CCTVMonitoring.module.css'
 import { CCTV_INFO_MOCKUP_DATA } from '../mocks/mockData.js'
+import { useState } from 'react';
 
 const cameraSlots = ['1', '2', '3', '4']
 
+
 function MonitoringPage() {
+  const [page, setPage] = useState(0);
   const navigate = useNavigate();
 
   const handleMoveToMonitoringDetail = (cctv) => {
     navigate('/monitoringdetail',{state : {cctvData:cctv}})
   }
-  const cctvList = CCTV_INFO_MOCKUP_DATA ? CCTV_INFO_MOCKUP_DATA.slice(0, 4):[];
+
+  
+
+   const IncreasePage=  ()=>{
+      setPage(prev => {
+        const next = prev + 1;
+        return next * 4 < CCTV_INFO_MOCKUP_DATA.length ? next : prev;
+  });
+
+  }
+
+  const DecreasePage = () => {
+  setPage(prev => (prev > 0 ? prev - 1 : prev));
+};
+
+  const cctvList = CCTV_INFO_MOCKUP_DATA ? CCTV_INFO_MOCKUP_DATA.slice(page*4, 4*page+4):[];
 
 
   return (
@@ -21,10 +39,19 @@ function MonitoringPage() {
         <div className={styles.cctvSection}>
           <div className={styles.cctvmonitoringSection}>
             <h2 className={styles.title}>실시간 CCTV 모니터링</h2>
-            <div className={styles.videodashBoard}>
-                {cctvList.map((cctv) => (
-                <button 
-                    className={styles.video} 
+
+             <div className={styles.videodashBoardWrapper}>
+              <button 
+                className={styles.arrowButton}
+                onClick={() => DecreasePage()}
+              >
+                &lt;
+              </button>
+              <div 
+                className={styles.videodashBoard}>
+                  {cctvList.map((cctv) => (
+                  <button 
+                    className={styles.video}
                     onClick={() => handleMoveToMonitoringDetail(cctv)}
                     key={cctv.id} 
                     type="button"
@@ -39,7 +66,14 @@ function MonitoringPage() {
                   </div>
                 </button>
               ))}
-              
+              </div>
+               <button 
+                className={styles.arrowButton}
+                onClick={() => IncreasePage()}
+               >
+                &gt;
+              </button>
+
             </div>
           </div>
 

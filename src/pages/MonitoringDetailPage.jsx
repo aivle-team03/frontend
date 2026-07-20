@@ -44,25 +44,25 @@ return(
             <div className="detection-Section">
                 <div className="subCard">
                     <div className="detection-Object">
-                        <div className="detection-object-Title"> 
-                            탐지 객체
-                        </div>
+                       
+                           <h2 className="section-title">탐지 개체</h2>
+                       
                     </div>
                 </div>
                 <div className="subCard">
                     <div className="detection-Object">
-                        <div className="detection-object-Title"> 
-                            이상 항목
-                        </div>
+                       
+                            <h3 className="section-title">이상 항목</h3>
+                        
                     </div>
                 </div>
             </div>
             <div className="subCard">
                 <div className="detection-object-info-Section">
                     <div className="detection-Object">
-                        <div className="detection-object-Title"> 
-                            선택 구격 탐지 정보
-                        </div>
+                       
+                            <h3 className="section-title">선택구역 탐지 정보</h3>
+                       
 
                         <div className="detection-object-info-button-Section">
                             <button className="detection-Button detection-Button:hover">
