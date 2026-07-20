@@ -1,5 +1,7 @@
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
 import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import { useMemo, useState } from 'react'
@@ -32,8 +34,10 @@ let approvalRecordsCache = APPROVAL_HISTORY_MOCK_DATA
 function ActionHistoryPage() {
   const [records, setRecords] = useState(approvalRecordsCache)
   const [selectedRecord, setSelectedRecord] = useState(null)
+  const [photoPreviewRecord, setPhotoPreviewRecord] = useState(null)
   const [selectedPeriod, setSelectedPeriod] = useState('전체')
   const [customPeriod, setCustomPeriod] = useState(null)
+  const [reportSnapshot, setReportSnapshot] = useState(null)
 
   const filteredRecords = useMemo(() => records.filter((record) => {
     const recordDate = new Date(record.completedAt.replace(' ', 'T'))
@@ -73,7 +77,51 @@ function ActionHistoryPage() {
     ))
     approvalRecordsCache = nextRecords
     setRecords(nextRecords)
+    setReportSnapshot(null)
     setSelectedRecord(null)
+  }
+
+  const createReport = () => {
+    // TODO: 백엔드 연동 시 서버에서 생성한 리포트 파일 정보를 사용합니다.
+    setReportSnapshot({
+      records: filteredRecords,
+      period: selectedPeriod === '직접 설정' && customPeriod
+        ? `${customPeriod.startDate} ~ ${customPeriod.endDate}`
+        : selectedPeriod,
+      generatedAt: new Date(),
+    })
+  }
+
+  const downloadReport = () => {
+    if (!reportSnapshot) return
+
+    const rows = [
+      ['조치 완료 승인 리포트'],
+      ['조회 기간', reportSnapshot.period],
+      ['생성 일시', reportSnapshot.generatedAt.toLocaleString('ko-KR')],
+      [],
+      ['완료 일시', '위치', '유형', '조치 담당자', '사진 첨부', '승인 상태', '승인자', '승인 일시'],
+      ...reportSnapshot.records.map((record) => [
+        record.completedAt,
+        record.location,
+        record.type,
+        record.assignee,
+        '첨부 완료',
+        record.approvalStatus === 'approved' ? '승인 완료' : '승인 대기',
+        record.approver ?? '-',
+        record.approvedAt ?? '-',
+      ]),
+    ]
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n')
+    const file = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })
+    const downloadUrl = URL.createObjectURL(file)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = '조치완료_승인리포트.csv'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(downloadUrl)
   }
 
   return (
@@ -111,6 +159,20 @@ function ActionHistoryPage() {
               options={['전체', '이번 달', '지난달', '직접 설정']}
             />
             <span className="approval-history-count">{filteredRecords.length}건</span>
+            <div className="approval-report-actions">
+              <button className="approval-report-generate" type="button" onClick={createReport}>
+                <DescriptionOutlinedIcon /> 리포트 생성
+              </button>
+              <button
+                className="approval-report-download"
+                type="button"
+                onClick={downloadReport}
+                disabled={!reportSnapshot}
+                title={reportSnapshot ? '생성된 리포트 다운로드' : '먼저 리포트를 생성해 주세요'}
+              >
+                <DownloadRoundedIcon /> 다운로드
+              </button>
+            </div>
           </div>
         </div>
 
@@ -136,11 +198,18 @@ function ActionHistoryPage() {
                   <td><span className="approval-type"><TaskAltRoundedIcon />{record.type}</span></td>
                   <td>{record.assignee}</td>
                   <td>
-                    <img
-                      className="approval-photo-thumbnail"
-                      src={actionPhotos[record.id]}
-                      alt={`${record.location} 조치 사진`}
-                    />
+                    <button
+                      className="approval-photo-button"
+                      type="button"
+                      onClick={() => setPhotoPreviewRecord(record)}
+                      aria-label={`${record.location} 조치 사진 크게 보기`}
+                    >
+                      <img
+                        className="approval-photo-thumbnail"
+                        src={actionPhotos[record.id]}
+                        alt=""
+                      />
+                    </button>
                   </td>
                   <td>
                     <span className={`approval-status ${record.approvalStatus}`}>
@@ -195,6 +264,27 @@ function ActionHistoryPage() {
               <button className="approval-modal-cancel" type="button" onClick={() => setSelectedRecord(null)}>취소</button>
               <button className="approval-modal-confirm" type="button" onClick={() => approveRecord(selectedRecord.id)}>조치 완료 승인</button>
             </div>
+          </section>
+        </div>
+      )}
+
+      {photoPreviewRecord && (
+        <div className="photo-preview-backdrop" role="presentation" onMouseDown={() => setPhotoPreviewRecord(null)}>
+          <section
+            className="photo-preview-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="photo-preview-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="photo-preview-header">
+              <div>
+                <span>조치 사진</span>
+                <h2 id="photo-preview-title">{photoPreviewRecord.location}</h2>
+              </div>
+              <button type="button" aria-label="닫기" onClick={() => setPhotoPreviewRecord(null)}><CloseRoundedIcon /></button>
+            </div>
+            <img className="photo-preview-image" src={actionPhotos[photoPreviewRecord.id]} alt={`${photoPreviewRecord.location} 조치 사진`} />
           </section>
         </div>
       )}
