@@ -395,6 +395,7 @@
 
 .profile-dropdown-overview {
   display: flex;
+  align-items: center;
   gap: 13px;
   padding: 19px;
   background: linear-gradient(145deg, #f7faff, #ffffff);
@@ -412,7 +413,39 @@
 
 .profile-dropdown-overview > div {
   display: grid;
+  flex: 1;
   min-width: 0;
+}
+
+.profile-logout-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 8px;
+  border: 1px solid #f3c6cb;
+  border-radius: 8px;
+  color: #c43f49;
+  background: #fff8f8;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.profile-logout-button:hover {
+  background: #fff0f1;
+}
+
+.profile-logout-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.profile-logout-button span {
+  margin-top: 0;
+  color: inherit;
+  font-size: 11px;
+  font-weight: 900;
 }
 
 .profile-dropdown-overview strong {

@@ -9,6 +9,7 @@ import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded'
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined'
+import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined'
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
@@ -216,6 +217,11 @@ function Header({ items }) {
                   <span>{user.department} · {user.role}</span>
                   <small>{user.email}</small>
                 </div>
+                {/* TODO(auth): Connect this control to the logout endpoint/session cleanup flow. */}
+                <button className="profile-logout-button" type="button" role="menuitem" aria-label="로그아웃">
+                  <LogoutOutlinedIcon />
+                  <span>로그아웃</span>
+                </button>
               </div>
               <button className="profile-dropdown-link" type="button" role="menuitem" onClick={handleMoveToMyPage}>
                 <ManageAccountsOutlinedIcon />

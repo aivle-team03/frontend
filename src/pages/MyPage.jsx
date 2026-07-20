@@ -1,9 +1,12 @@
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded'
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
+import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined'
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import { useEffect, useState } from 'react'
 import { MY_PAGE_MOCK_DATA } from '../mocks/mockData.js'
 import '../styles/MyPage.css'
@@ -26,7 +29,12 @@ function getStoredNotificationSettings() {
 }
 
 function MyPage() {
-  const { user, workLogs, notifications } = MY_PAGE_MOCK_DATA
+  const { user: defaultUser, workLogs, notifications } = MY_PAGE_MOCK_DATA
+  const [user, setUser] = useState(defaultUser)
+  const [draftProfile, setDraftProfile] = useState(() => ({ name: user.name, email: user.email }))
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [profileError, setProfileError] = useState({})
+  const [profileSaved, setProfileSaved] = useState(false)
   const [notificationSettings, setNotificationSettings] = useState(getStoredNotificationSettings)
   const myLogs = workLogs.filter((log) => log.userId === user.userId)
   const unreadNotificationCount = notifications.filter((notification) => !notification.read).length
@@ -47,6 +55,48 @@ function MyPage() {
       ...currentSettings,
       [setting]: !currentSettings[setting],
     }))
+  }
+
+  const startProfileEdit = () => {
+    setDraftProfile({ name: user.name, email: user.email })
+    setProfileError({})
+    setProfileSaved(false)
+    setIsEditingProfile(true)
+  }
+
+  const cancelProfileEdit = () => {
+    setDraftProfile({ name: user.name, email: user.email })
+    setProfileError({})
+    setIsEditingProfile(false)
+  }
+
+  const handleProfileChange = (event) => {
+    const { name, value } = event.target
+    setDraftProfile((currentProfile) => ({ ...currentProfile, [name]: value }))
+    setProfileError((currentError) => ({ ...currentError, [name]: '' }))
+  }
+
+  const saveProfile = (event) => {
+    event.preventDefault()
+    const nextError = {}
+    const trimmedName = draftProfile.name.trim()
+    const trimmedEmail = draftProfile.email.trim()
+
+    if (!trimmedName) nextError.name = '이름을 입력해 주세요.'
+    if (!trimmedEmail) nextError.email = '이메일을 입력해 주세요.'
+    else if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) nextError.email = '이메일 형식을 확인해 주세요.'
+
+    if (Object.keys(nextError).length) {
+      setProfileError(nextError)
+      return
+    }
+
+    const nextUser = { ...user, name: trimmedName, email: trimmedEmail }
+    // TODO: 백엔드 연동 시 서버 저장 성공 후 화면 상태를 갱신합니다.
+    setUser(nextUser)
+    setDraftProfile({ name: trimmedName, email: trimmedEmail })
+    setIsEditingProfile(false)
+    setProfileSaved(true)
   }
 
   return (
@@ -73,6 +123,77 @@ function MyPage() {
             <strong>{unreadNotificationCount}건</strong>
           </div>
         </div>
+      </article>
+
+      <article className="my-page-card profile-settings-card">
+        <div className="my-card-heading profile-settings-heading">
+          <div className="profile-settings-title">
+            <span className="my-card-icon"><AccountCircleRoundedIcon /></span>
+            <div>
+              <h3>내 정보</h3>
+              <p>이름과 이메일 등 계정 기본 정보를 관리합니다.</p>
+            </div>
+          </div>
+          {!isEditingProfile && (
+            <button className="profile-edit-button" type="button" onClick={startProfileEdit}>
+              <EditOutlinedIcon /> 정보 수정
+            </button>
+          )}
+        </div>
+
+        <form className="profile-settings-form" onSubmit={saveProfile}>
+          <div className="profile-form-field">
+            <label htmlFor="profile-name">이름</label>
+            {isEditingProfile ? (
+              <>
+                <input
+                  id="profile-name"
+                  name="name"
+                  type="text"
+                  value={draftProfile.name}
+                  onChange={handleProfileChange}
+                  aria-invalid={Boolean(profileError.name)}
+                  aria-describedby={profileError.name ? 'profile-name-error' : undefined}
+                  autoComplete="name"
+                />
+                {profileError.name && <small id="profile-name-error" className="profile-field-error">{profileError.name}</small>}
+              </>
+            ) : <strong>{user.name}</strong>}
+          </div>
+          <div className="profile-form-field">
+            <label htmlFor="profile-email">이메일</label>
+            {isEditingProfile ? (
+              <>
+                <input
+                  id="profile-email"
+                  name="email"
+                  type="email"
+                  value={draftProfile.email}
+                  onChange={handleProfileChange}
+                  aria-invalid={Boolean(profileError.email)}
+                  aria-describedby={profileError.email ? 'profile-email-error' : undefined}
+                  autoComplete="email"
+                />
+                {profileError.email && <small id="profile-email-error" className="profile-field-error">{profileError.email}</small>}
+              </>
+            ) : <strong>{user.email}</strong>}
+          </div>
+          <div className="profile-form-field profile-readonly-field">
+            <span>소속 / 권한</span>
+            <strong>{user.department} · {user.role}</strong>
+          </div>
+          {isEditingProfile && (
+            <div className="profile-form-actions">
+              <button className="profile-cancel-button" type="button" onClick={cancelProfileEdit}>
+                <CloseRoundedIcon /> 취소
+              </button>
+              <button className="profile-save-button" type="submit">
+                <SaveOutlinedIcon /> 변경 사항 저장
+              </button>
+            </div>
+          )}
+          {profileSaved && <p className="profile-save-message" role="status">내 정보가 저장되었습니다.</p>}
+        </form>
       </article>
 
       <div className="my-page-content-grid">
