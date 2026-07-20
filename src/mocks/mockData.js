@@ -176,3 +176,14 @@ export const ACTION_HISTORY_MOCK_DATA = [
     manager: '-',
   },
 ]
+
+export const APPROVAL_HISTORY_MOCK_DATA = [
+  { id: 1, completedAt: '2026-07-15 09:45', location: 'A동 2층 201-2121 복도', type: '적치물 감지', assignee: '박지훈', approvalStatus: 'pending' },
+  { id: 2, completedAt: '2026-07-15 09:18', location: 'B동 1층 출입구', type: '소화기 미탐지', assignee: '소현민', approvalStatus: 'pending' },
+  { id: 3, completedAt: '2026-07-14 16:32', location: 'C동 3층 창고', type: '방화문 개방', assignee: '이정훈', approvalStatus: 'pending' },
+  { id: 4, completedAt: '2026-07-14 13:05', location: 'A동 1층 하역장', type: '피난로 장애물', assignee: '장민석', approvalStatus: 'pending' },
+  { id: 5, completedAt: '2026-07-13 15:07', location: 'B동 4층 물류 창고', type: '적치물 감지', assignee: '김도현', approvalStatus: 'approved', approver: '김에이블러', approvedAt: '2026-07-13 15:21' },
+  { id: 6, completedAt: '2026-07-13 11:29', location: 'C동 1층 사무실 복도', type: '소화기 미탐지', assignee: '권혁준', approvalStatus: 'approved', approver: '김에이블러', approvedAt: '2026-07-13 11:35' },
+  { id: 7, completedAt: '2026-07-12 17:55', location: 'A동 3층 회의실 앞', type: '방화문 개방', assignee: '최서윤', approvalStatus: 'approved', approver: '김에이블러', approvedAt: '2026-07-12 18:02' },
+  { id: 8, completedAt: '2026-07-12 09:44', location: 'B동 지하 1층 주차장', type: '피난로 장애물', assignee: '윤태성', approvalStatus: 'approved', approver: '김에이블러', approvedAt: '2026-07-12 09:52' },
+]
