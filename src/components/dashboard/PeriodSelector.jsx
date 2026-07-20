@@ -12,17 +12,41 @@ import {
 } from '@mui/material'
 import { useState } from 'react'
 
-const periodOptions = ['오늘', '최근 7일', '이번 달', '지난 달', '직접 설정']
+const defaultPeriodOptions = ['오늘', '최근 7일', '이번 달', '지난 달', '직접 설정']
 
-function PeriodSelector({ selectedPeriod, onSelectPeriod }) {
+function PeriodSelector({
+  selectedPeriod,
+  onSelectPeriod,
+  onApplyCustomPeriod,
+  options = defaultPeriodOptions,
+}) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [dateError, setDateError] = useState('')
 
   const handleChange = (_, value) => {
     if (!value) return
     onSelectPeriod(value)
     if (value === '직접 설정') {
+      setDateError('')
       setIsDialogOpen(true)
     }
+  }
+
+  const handleApply = () => {
+    if (!startDate || !endDate) {
+      setDateError('시작일과 종료일을 모두 선택해 주세요.')
+      return
+    }
+
+    if (startDate > endDate) {
+      setDateError('종료일은 시작일보다 빠를 수 없습니다.')
+      return
+    }
+
+    onApplyCustomPeriod?.({ startDate, endDate })
+    setIsDialogOpen(false)
   }
 
   return (
@@ -35,10 +59,20 @@ function PeriodSelector({ selectedPeriod, onSelectPeriod }) {
         aria-label="기간 선택"
         className="period-toggle"
       >
-        {periodOptions.map((option) => (
-          <ToggleButton key={option} value={option}>
-            {option === '직접 설정' && <CalendarMonthIcon fontSize="small" />}
-            {option}
+        {options.map((option) => (
+          <ToggleButton
+            key={option}
+            value={option}
+            aria-label={option}
+            title={option}
+            onClick={() => {
+              if (option === '직접 설정') {
+                setDateError('')
+                setIsDialogOpen(true)
+              }
+            }}
+          >
+            {option === '직접 설정' ? <CalendarMonthIcon fontSize="small" /> : option}
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
@@ -46,13 +80,14 @@ function PeriodSelector({ selectedPeriod, onSelectPeriod }) {
         <DialogTitle>직접 설정</DialogTitle>
         <DialogContent>
           <Stack spacing={2.2} sx={{ mt: 1 }}>
-            <DateField label="시작일" />
-            <DateField label="종료일" />
+            <DateField label="시작일" value={startDate} onChange={setStartDate} />
+            <DateField label="종료일" value={endDate} onChange={setEndDate} />
+            {dateError && <Typography className="date-field-error">{dateError}</Typography>}
           </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsDialogOpen(false)}>닫기</Button>
-          <Button variant="contained" onClick={() => setIsDialogOpen(false)}>
+          <Button variant="contained" onClick={handleApply}>
             적용
           </Button>
         </DialogActions>
@@ -61,13 +96,19 @@ function PeriodSelector({ selectedPeriod, onSelectPeriod }) {
   )
 }
 
-function DateField({ label }) {
+function DateField({ label, value, onChange }) {
   return (
     <div className="date-field">
       <Typography component="label" className="date-field-label">
         {label}
       </Typography>
-      <input type="date" className="date-input" aria-label={label} />
+      <input
+        type="date"
+        className="date-input"
+        aria-label={label}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
     </div>
   )
 }

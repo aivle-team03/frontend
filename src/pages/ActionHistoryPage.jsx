@@ -1,4 +1,3 @@
-import { ACTION_HISTORY_DATA } from "../mocks/ActionHistoryMockData";
 import "../styles/ActionHistoryPage.css";
 import { useState, useEffect } from "react";
 import RecentEventstable from "../components/dashboard/RecentEventsTable";
@@ -59,7 +58,7 @@ function ActionHistoryPage() {
       return (
         itemDate.getMonth() === today.getMonth() &&
         itemDate.getFullYear() === today.getFullYear()
-      );
+      )
     }
 
     if (selectedPeriod === "지난 달") {
@@ -68,11 +67,18 @@ function ActionHistoryPage() {
       return (
         itemDate.getMonth() === lastMonth.getMonth() &&
         itemDate.getFullYear() === lastMonth.getFullYear()
-      );
+      )
     }
 
-    return true;
-  });
+    if (selectedPeriod === '직접 설정' && customPeriod) {
+      const startDate = new Date(`${customPeriod.startDate}T00:00:00`)
+      const endDate = new Date(`${customPeriod.endDate}T23:59:59.999`)
+
+      return itemDate >= startDate && itemDate <= endDate
+    }
+
+    return true
+  })
   const events = filteredData.map((item) => ({
     id: item.checklist_id,
     time: item.date,
@@ -99,6 +105,7 @@ function ActionHistoryPage() {
         <PeriodSelector
           selectedPeriod={selectedPeriod}
           onSelectPeriod={setSelectedPeriod}
+          options={['전체', '이번 달', '지난 달', '직접 설정']}
         />
         <div className="report-summary">
           <span>조회 결과</span>
@@ -111,8 +118,7 @@ function ActionHistoryPage() {
         <button className="download-btn">다운로드</button>
       </aside>
     </div>
-  );
+  )
 }
 
-
-export default ActionHistoryPage;
+export default ActionHistoryPage
