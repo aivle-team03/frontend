@@ -10,6 +10,7 @@ const navigationItems = [
   { path: '/actions', label: '조치 이력', icon: 'history' },
   { path: '/law-qa', label: '법규 Q&A', icon: 'help' },
   { path: '/education', label: '안전 교육', icon: 'education' },
+  { path: '/riskmanagementpage', label: '위험도 관리', icon: 'education' },
 ]
 
 function MainLayout() {

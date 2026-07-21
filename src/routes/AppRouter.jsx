@@ -8,7 +8,7 @@ import LawQaPage from '../pages/LawQaPage.jsx'
 import MonitoringPage from '../pages/MonitoringPage.jsx'
 import MyPage from '../pages/MyPage.jsx'
 import MonitoringDetailPage from '../pages/MonitoringDetailPage.jsx'
-
+import RiskManagementPage from '../pages/RiskManagementPage.jsx'
 function AppRouter() {
   return (
     <BrowserRouter>
@@ -22,6 +22,7 @@ function AppRouter() {
           <Route path="education" element={<EducationPage />} />
           <Route path="mypage" element={<MyPage />} />
           <Route path="monitoringdetail" element={<MonitoringDetailPage />} />
+          <Route path="riskmanagementpage" element={<RiskManagementPage />} />
           <Route path="*" element={<Navigate replace to="/" />} />
         </Route>
       </Routes>
