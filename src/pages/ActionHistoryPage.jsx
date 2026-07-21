@@ -9,6 +9,7 @@ function ActionHistoryPage() {
   const [loading, setLoading] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState("최근 7일");
+  const [customPeriod, setCustomPeriod] = useState(null)
 
   useEffect(() => {
     fetchActionHistory();
@@ -86,6 +87,7 @@ function ActionHistoryPage() {
     type: item.content || "정기 조치 점검",
     status: item.status,
     manager: item.uid ? `${item.uid}` : "미지정",
+    imageUrl: item.image_url || "https://via.placeholder.com/150",
   }));
 
   if (loading) return <div className="loading-container">조치 이력을 가져오는 중...</div>;
@@ -105,6 +107,7 @@ function ActionHistoryPage() {
         <PeriodSelector
           selectedPeriod={selectedPeriod}
           onSelectPeriod={setSelectedPeriod}
+          onApplyCustomPeriod={setCustomPeriod}
           options={['전체', '이번 달', '지난 달', '직접 설정']}
         />
         <div className="report-summary">

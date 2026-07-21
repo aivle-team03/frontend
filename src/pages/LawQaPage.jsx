@@ -1,7 +1,6 @@
 import SendIcon from '@mui/icons-material/Send'
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined'
 import { useEffect, useRef, useState } from 'react'
-import { CHATBOT_MOCK_DATA } from '../mocks/mockData.js'
 import '../styles/law-qa.css'
 
 function getCurrentTime() {
@@ -23,17 +22,33 @@ function createInitialMessage() {
 }
 
 function LawQaPage() {
-  const { recommendedQuestions, botReplies } = CHATBOT_MOCK_DATA
   const [messages, setMessages] = useState(() => [createInitialMessage()])
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+
+  const [recommendedQuestions, setRecommendedQuestions] = useState([])
   const chatEndRef = useRef(null)
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/api/chatbot/recommendations');
+        if (response.ok) {
+          const data = await response.json();
+          setRecommendedQuestions(data.questions);
+        }
+      } catch (error) {
+        console.error('추천 질문 로딩 실패:', error);
+      }
+    };
+    fetchRecommendations();
+  }, [])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
 
-  const sendMessage = (textToSend) => {
+  const sendMessage = async (textToSend) => {
     const trimmedText = textToSend.trim()
     if (!trimmedText) return
 
@@ -44,17 +59,45 @@ function LawQaPage() {
     setInputValue('')
     setIsTyping(true)
 
-    window.setTimeout(() => {
-      const replyText =
-        botReplies[trimmedText] ??
-        `'${trimmedText}'에 대한 안전관리 기준을 확인했습니다. 현장 상황과 관련 법규를 함께 검토한 뒤 조치 여부를 판단해 주세요.`
+    const historyPayload = messages
+      .filter((_, index) => index > 0) // 첫 인사말 제외
+      .map((msg) => `${msg.type === 'user' ? '사용자' : '챗봇'}: ${msg.text}`)
 
-      setIsTyping(false)
+    try {
+      // API 호출
+      const response = await fetch('http://127.0.0.1:8000/api/chatbot/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // 필요 시 토큰 추가: 'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          question_text: trimmedText,
+          history: historyPayload
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // 🚀 백엔드에서 온 진짜(목업) 답변을 화면에 추가
+        setMessages((currentMessages) => [
+          ...currentMessages,
+          { type: 'bot', text: data.answer, time: getCurrentTime() },
+        ]);
+      } else {
+        throw new Error('API 응답 에러');
+      }
+    } catch (error) {
+      console.error('챗봇 질의 실패:', error);
+      // 에러 발생 시 안내 메시지
       setMessages((currentMessages) => [
         ...currentMessages,
-        { type: 'bot', text: replyText, time: getCurrentTime() },
-      ])
-    }, 700)
+        { type: 'bot', text: '서버와 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.', time: getCurrentTime() },
+      ]);
+    } finally {
+      setIsTyping(false)
+    }
   }
 
   const handleKeyDown = (event) => {
@@ -84,7 +127,7 @@ function LawQaPage() {
           </div>
           <div>
             <h2>소방안전 법규 Q&A 비서</h2>
-            <p>Mock 답변 기반의 임시 질의응답 화면입니다.</p>
+            <p>법규 검색 API 연동이 완료된 화면입니다.</p>
           </div>
         </div>
 

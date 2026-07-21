@@ -1,9 +1,10 @@
-.card{
+.card {
     border: 1px solid #dfe7f2;
     border-radius: 12px;
     background: #ffffff;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
 }
+
 .dashboardFrame {
     min-height: calc(100vh - 176px);
 }
@@ -66,7 +67,7 @@
 .videodashBoard {
     width: 95%;
     background-color: rgba(182, 182, 182, 0);
-    
+
     height: 500px;
     align-items: center;
     margin: 20px 10px;
@@ -83,18 +84,21 @@
     height: 50%;
     justify-content: space-between;
 
-    
+
 }
 
 
 .video {
-    width: 46%;
-    height: 45%;
+    width: 48%;
+    aspect-ratio: 16 / 9;
     background-color: black;
     color: #ffffff;
-    display: grid;
-    place-items: center;
-    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    border: none;
+    padding: 0;
+    cursor: pointer;
 }
 
 .videoChange {
@@ -117,7 +121,7 @@
     cursor: pointer;
     margin-top: 30px;
     border-radius: 12px;
-    
+
 }
 
 .liveEvent {

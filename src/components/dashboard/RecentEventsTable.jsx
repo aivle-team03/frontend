@@ -89,6 +89,7 @@ function RecentEventsTable({ events, selectedEvent, onSelectEvent, onClose }) {
               <Detail label="위험 유형" value={selectedEvent.type} />
               <Detail label="현재 상태" value={selectedEvent.status} />
               <Detail label="담당자" value={selectedEvent.manager} />
+              <Detail label="관련 이미지" value={<img src={selectedEvent.imageUrl} alt="관련 이미지" className="event-image" style={{ width: "100%", maxHeight: "300px", objectFit: "contain" }} />} />
             </Stack>
           )}
         </Box>
