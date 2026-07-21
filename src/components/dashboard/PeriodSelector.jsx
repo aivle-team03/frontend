@@ -14,7 +14,8 @@ import { useState } from 'react'
 
 const defaultPeriodOptions = ['오늘', '최근 7일', '이번 달', '지난 달', '직접 설정']
 
-function PeriodSelector({ selectedPeriod, onSelectPeriod, options = defaultPeriodOptions }) {
+function PeriodSelector({ selectedPeriod, onSelectPeriod,    selectedDate = { start: '', end: '' },
+  onDateChange = () => {} ,options = defaultPeriodOptions }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleChange = (_, value) => {
@@ -44,12 +45,27 @@ function PeriodSelector({ selectedPeriod, onSelectPeriod, options = defaultPerio
       </ToggleButtonGroup>
       <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} fullWidth maxWidth="xs">
         <DialogTitle>직접 설정</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2.2} sx={{ mt: 1 }}>
-            <DateField label="시작일" />
-            <DateField label="종료일" />
-          </Stack>
-        </DialogContent>
+        <DateField
+          label="시작일"
+          value={selectedDate.start || ''}
+          onChange={(value) =>
+            onDateChange({
+              ...selectedDate,
+              start: value,
+            })
+          }
+        />
+
+        <DateField
+          label="종료일"
+          value={selectedDate.end || ''}
+          onChange={(value) =>
+            onDateChange({
+              ...selectedDate,
+              end: value,
+            })
+          }
+        />
         <DialogActions>
           <Button onClick={() => setIsDialogOpen(false)}>닫기</Button>
           <Button variant="contained" onClick={() => setIsDialogOpen(false)}>
@@ -61,13 +77,19 @@ function PeriodSelector({ selectedPeriod, onSelectPeriod, options = defaultPerio
   )
 }
 
-function DateField({ label }) {
+function DateField({ label, value, onChange }) {
   return (
     <div className="date-field">
       <Typography component="label" className="date-field-label">
         {label}
       </Typography>
-      <input type="date" className="date-input" aria-label={label} />
+
+      <input
+        type="date"
+        className="date-input"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </div>
   )
 }
