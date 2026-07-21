@@ -1,7 +1,93 @@
-.risk-page-Layout{
+.risk-page-layout{
+
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    height: 100%;
+    gap:24px;
+    padding: 20px;
+
+    border:3px solid black;
+    
+}
+
+.risk-top-layout{
+
+    display : grid;
+    grid-template-columns:  1fr 3fr;
+    gap :24px;
+}
+
+.risk-bottom-layout{
+
+    display : grid;
+    grid-template-columns:  5fr 1fr;
+    gap :24px;
+}
+.risk-grpah-layout,
+.risk-count-layout{
+    display:grid;
+    grid-template-rows: 24px 1fr;
+    padding: 5px;
+    gap: 30px;
+}
+
+.count-icon-text{
+    display: flex;
+    gap :20px;
+    align-items: center;
+     justify-content:center;
+}
+.count-icon-box{
+    height: 100px;
+    width:100px;
+}
+
+.count-text-box{
+   display : flex;
+   flex-direction: column;
+   align-items: center;
+
+}
+.risk-list,
+.risk-list-button,
+.count-graph,
+.count-card{
+    border: 1px solid #dfe7f2;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+    padding: 24px;
+    min-height: 250px;
+}
+
+.risk-list{
+    height: 700px;
+}
+
+.risk-list-button{
+    max-height: 250px;
+}
+
+.risk-button-layout{
+    display : flex;
+    flex-direction:  column;
+    align-items:center;
+    justify-content:center;
+    gap: 50px;
+    height:100%;
+}
+
+.risk-add-button{
+   
+    padding: 14px;
+    border: 0;
+    border-radius: 9px;
+    color: #ffffff;
+    background: #2f64b7;
+    cursor: pointer;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 900;
+    width: 100%;
+    
 
 }

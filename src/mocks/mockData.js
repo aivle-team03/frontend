@@ -220,3 +220,75 @@ export const CCTV_INFO_MOCKUP_DATA=[
     videoUrl:"/미정"
   }
 ]
+
+export const EVENT_CATEGORY_MOCKUP_DATA=[
+
+{
+  id:1,
+  type:"소방",
+  item : "화재",
+  risk :"상",
+  severity: 8,
+  frequency :1
+},
+{
+  id:2,
+  type:"시설",
+  item : "미끄러짐",
+  risk :"하",
+  severity: 1,
+  frequency :1
+},
+{
+  id:3,
+  type:"안전",
+  item : "충돌",
+  risk :"하",
+  severity: 2,
+  frequency :1
+},
+{
+  id:4,
+  type:"안전",
+  item : "안전모",
+  risk :"중",
+  severity: 3,
+  frequency :1
+},
+
+{
+  id:5,
+  type:"시설",
+  item : "적재물",
+  risk :"하",
+  severity: 1,
+  frequency :5
+},
+
+{
+  id:6,
+  type:"시설",
+  item : "스프링쿨러",
+  risk :"중",
+  severity: 2,
+  frequency :5
+},
+
+{
+  id:7,
+  type:"시설",
+  item : "소화기",
+  risk :"중",
+  severity: 2,
+  frequency :1
+},
+
+{
+  id:8,
+  type:"시설",
+  item : "대피로",
+  risk :"상",
+  severity: 3,
+  frequency :2
+},
+]
