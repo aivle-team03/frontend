@@ -31,6 +31,24 @@
   box-sizing: border-box;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  padding-right: 0px !important;
+  margin-right: 0px !important;
+}
+
+body.MuiModal-open {
+  overflow: auto !important;
+  padding-right: 0px !important;
+}
+
+.MuiModal-root {
+  position: fixed !important;
+}
+
 body {
   margin: 0;
   min-width: 320px;

@@ -1,21 +1,18 @@
 .approval-history-page {
   display: grid;
   gap: 20px;
-  max-width: 1320px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
 .approval-summary-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+  width: 100%;
 }
 
 .approval-summary-grid {
   display: grid;
   flex: 1;
-  grid-template-columns: repeat(2, minmax(360px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 18px;
 }
 
@@ -23,17 +20,31 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  min-height: 112px;
-  padding: 18px 22px;
+  min-height: 68px;
+  padding: 12px 20px;
   border: 1px solid #e2eaf4;
   border-radius: 17px;
   background: #ffffff;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
 }
 
+.total-summary .approval-summary-icon {
+  color: #2f64b7;
+  background: #eaf2ff;
+}
+
+.rate-summary .approval-summary-icon {
+  color: #6366f1;
+  background: #eeefef;
+}
+
+.rate-summary .summary-count {
+  color: #4f46e5;
+}
+
 .approval-summary-icon {
   display: grid;
-  width: 58px;
+  width: 42px;
   height: 58px;
   flex: 0 0 auto;
   place-items: center;
@@ -55,7 +66,7 @@
   background: #eafaf0;
 }
 
-.approval-summary-card > div {
+.approval-summary-card>div {
   display: grid;
   gap: 1px;
 }
@@ -91,16 +102,13 @@
 .approval-history-card {
   padding: 24px;
   border: 1px solid #e2eaf4;
-  border-radius: 17px;
+  border-radius: 16px;
   background: #ffffff;
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
 }
 
 .approval-content-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 270px;
-  align-items: start;
-  gap: 20px;
+  display: block;
 }
 
 .approval-control-panel {
@@ -176,7 +184,7 @@
 .approval-history-tools .period-toggle .MuiToggleButton-root {
   min-width: 0;
   padding: 5px 9px;
-  font-size: 11px;
+  font-size: 12px;
   white-space: nowrap;
 }
 
@@ -240,14 +248,14 @@
 .approval-history-heading h2 {
   margin: 0;
   color: #172033;
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 900;
 }
 
 .approval-history-heading p {
   margin: 5px 0 0;
   color: #7b8799;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -291,14 +299,14 @@
   min-width: 880px;
   border-collapse: collapse;
   color: #526176;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .approval-history-table th {
   padding: 10px 6px;
   color: #63738a;
   background: #f5f8fc;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 900;
   text-align: left;
   white-space: nowrap;
@@ -323,13 +331,33 @@
   white-space: nowrap;
 }
 
-.approval-history-table th:nth-child(1) { width: 126px; }
-.approval-history-table th:nth-child(2) { width: 148px; }
-.approval-history-table th:nth-child(3) { width: 118px; }
-.approval-history-table th:nth-child(4) { width: 82px; }
-.approval-history-table th:nth-child(5) { width: 66px; }
-.approval-history-table th:nth-child(6) { width: 80px; }
-.approval-history-table th:nth-child(7) { width: 106px; }
+.approval-history-table th:nth-child(1) {
+  width: 126px;
+}
+
+.approval-history-table th:nth-child(2) {
+  width: 148px;
+}
+
+.approval-history-table th:nth-child(3) {
+  width: 118px;
+}
+
+.approval-history-table th:nth-child(4) {
+  width: 82px;
+}
+
+.approval-history-table th:nth-child(5) {
+  width: 66px;
+}
+
+.approval-history-table th:nth-child(6) {
+  width: 80px;
+}
+
+.approval-history-table th:nth-child(7) {
+  width: 106px;
+}
 
 .approval-history-table tbody tr:hover {
   background: #fbfdff;
@@ -396,7 +424,7 @@
   padding: 5px 8px;
   border: 1px solid;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 900;
   vertical-align: middle;
 }
@@ -439,7 +467,7 @@
   background: #ffffff;
   cursor: pointer;
   font: inherit;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 900;
   vertical-align: middle;
 }
@@ -487,7 +515,7 @@
   border-bottom: 1px solid #e9eef5;
 }
 
-.approval-modal-header > div {
+.approval-modal-header>div {
   display: grid;
   gap: 3px;
 }
@@ -548,7 +576,7 @@
   gap: 10px;
 }
 
-.approval-review-details > div {
+.approval-review-details>div {
   display: grid;
   gap: 4px;
   padding: 12px;
@@ -630,7 +658,7 @@
   color: #ffffff;
 }
 
-.photo-preview-header > div {
+.photo-preview-header>div {
   display: grid;
   gap: 2px;
 }
