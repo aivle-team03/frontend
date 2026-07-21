@@ -8,6 +8,15 @@ function LoginPage({ setIsLoggedIn }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [resetUserId, setResetUserId] = useState('');
+  const [resetName, setResetName] = useState('');
+  const [resetNewPw, setResetNewPw] = useState('');
+  const [resetConfirmPw, setResetConfirmPw] = useState('');
+  const [modalMessage, setModalMessage] = useState('');
+  const [isModalError, setIsModalError] = useState(false);
+  const [isResetLoading, setIsResetLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -16,7 +25,6 @@ function LoginPage({ setIsLoggedIn }) {
     setIsLoading(true);
 
     try {
-      // 1. FastAPI의 실제 로그인 엔드포인트 주소로 변경 (/api/auth/login)
       const response = await fetch('http://127.0.0.1:8000/api/auth/login', {
         method: 'POST',
         headers: {
@@ -31,17 +39,11 @@ function LoginPage({ setIsLoggedIn }) {
       const data = await response.json();
 
       if (response.ok) {
-        // 2. 로그인 성공 시 백엔드가 주는 'user_info' 구조에 맞춰 세션 저장
         localStorage.setItem('token', data.access_token);
         localStorage.setItem('isLoggedIn', 'true');
-        // localStorage.setItem('userName', data.user_info.name);
-        // localStorage.setItem('userRole', data.user_info.role);
-        // localStorage.setItem('userUid', data.user_info.uid); // DB 고유 PK 값
-        // localStorage.setItem('companyCode', data.user_info.company_code); // 회사 코드
 
         setIsLoggedIn(true);
       } else {
-        // 3. 백엔드에서 raise HTTPException 한 에러 메시지 처리 (예: "비밀번호가 틀렸습니다.")
         setErrorMessage(data.detail || 'ID 또는 비밀번호가 일치하지 않습니다.');
       }
     } catch (error) {
@@ -49,6 +51,68 @@ function LoginPage({ setIsLoggedIn }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setModalMessage('');
+    setIsModalError(false);
+
+    if (!resetUserId.trim() || !resetName.trim() || !resetNewPw.trim() || !resetConfirmPw.trim()) {
+      setIsModalError(true);
+      setModalMessage('모든 필드를 입력해주세요.');
+      return;
+    }
+
+    if (resetNewPw !== resetConfirmPw) {
+      setIsModalError(true);
+      setModalMessage('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.');
+      return;
+    }
+
+    setIsResetLoading(true);
+
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/auth/find/password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: resetUserId,
+          name: resetName,
+          new_password: resetNewPw
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsModalError(false);
+        setModalMessage('비밀번호가 성공적으로 변경되었습니다! 로그인 해주세요.');
+        setTimeout(() => {
+          closeModal();
+        }, 1500);
+      } else {
+        setIsModalError(true);
+        setModalMessage(data.detail || '일치하는 사용자 정보를 찾을 수 없습니다.');
+      }
+    } catch (error) {
+      setIsModalError(true);
+      setModalMessage('서버와 통신 중 에러가 발생했습니다.');
+    } finally {
+      setIsResetLoading(false);
+    }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setResetUserId('');
+    setResetName('');
+    setResetNewPw('');
+    setResetConfirmPw('');
+    setModalMessage('');
+    setIsModalError(false);
   };
 
   return (
@@ -87,9 +151,88 @@ function LoginPage({ setIsLoggedIn }) {
         </form>
 
         <div className="links">
-          <span onClick={() => navigate('/signup')}>회원가입</span> | <span>비밀번호 찾기</span>
+          <span onClick={() => navigate('/signup')}>회원가입</span> | <span onClick={() => setIsModalOpen(true)} style={{ cursor: 'pointer' }}>비밀번호 찾기</span>
         </div>
       </div>
+      {isModalOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white', padding: '24px', borderRadius: '8px',
+            width: '360px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          }}>
+            <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '18px', color: '#333' }}>비밀번호 재설정</h3>
+
+            <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <input
+                type="text"
+                placeholder="가입한 ID"
+                value={resetUserId}
+                onChange={(e) => setResetUserId(e.target.value)}
+                style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+                disabled={isResetLoading}
+              />
+              <input
+                type="text"
+                placeholder="가입자 이름"
+                value={resetName}
+                onChange={(e) => setResetName(e.target.value)}
+                style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+                disabled={isResetLoading}
+              />
+              <input
+                type="password"
+                placeholder="새로운 비밀번호"
+                value={resetNewPw}
+                onChange={(e) => setResetNewPw(e.target.value)}
+                style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+                disabled={isResetLoading}
+              />
+              <input
+                type="password"
+                placeholder="새로운 비밀번호 확인"
+                value={resetConfirmPw}
+                onChange={(e) => setResetConfirmPw(e.target.value)}
+                style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+                disabled={isResetLoading}
+              />
+
+              {modalMessage && (
+                <p style={{ fontSize: '12px', color: isModalError ? '#d32f2f' : '#2e7d32', margin: '4px 0 0 0' }}>
+                  {modalMessage}
+                </p>
+              )}
+
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                <button
+                  type="submit"
+                  disabled={isResetLoading}
+                  style={{
+                    flex: 1, padding: '10px', backgroundColor: '#1976d2', color: 'white',
+                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold'
+                  }}
+                >
+                  {isResetLoading ? '변경 중...' : '비밀번호 변경'}
+                </button>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  disabled={isResetLoading}
+                  style={{
+                    flex: 1, padding: '10px', backgroundColor: '#e0e0e0', color: '#333',
+                    border: 'none', borderRadius: '4px', cursor: 'pointer'
+                  }}
+                >
+                  취소
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

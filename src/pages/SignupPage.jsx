@@ -11,8 +11,40 @@ function SignupPage() {
     const [message, setMessage] = useState('');
     const [isError, setIsError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isIdChecked, setIsIdChecked] = useState(false);
+    const [idCheckMessage, setIdCheckMessage] = useState('');
 
     const navigate = useNavigate();
+
+    const handleUserIdChange = (e) => {
+        setUserId(e.target.value);
+        setIsIdChecked(false);
+        setIdCheckMessage('');
+    };
+
+    // 🚀 아이디 중복 확인 API 호출
+    const handleCheckId = async () => {
+        if (!userId.trim()) {
+            setIdCheckMessage('아이디를 입력해주세요.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/api/auth/checkid?user_id=${userId}`);
+            const data = await response.json();
+
+            if (data.message === 'duplicated') {
+                setIsIdChecked(false);
+                setIdCheckMessage('이미 존재하는 아이디입니다.');
+            } else {
+                setIsIdChecked(true);
+                setIdCheckMessage('사용 가능한 아이디입니다.');
+            }
+        } catch (error) {
+            console.error('중복확인 통신 에러:', error);
+            setIdCheckMessage('중복확인 중 오류가 발생했습니다.');
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -82,14 +114,36 @@ function SignupPage() {
                         className="input"
                         disabled={isLoading}
                     />
-                    <input
-                        type="text"
-                        placeholder="사용할 ID를 입력해주세요"
-                        value={userId}
-                        onChange={(e) => setUserId(e.target.value)}
-                        className="input"
-                        disabled={isLoading}
-                    />
+                    <div className="input-with-button" style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                        <input
+                            type="text"
+                            placeholder="사용할 ID를 입력해주세요"
+                            value={userId}
+                            onChange={handleUserIdChange}
+                            className="input"
+                            style={{ flex: 1 }}
+                            disabled={isLoading}
+                        />
+                        <button
+                            type="button"
+                            onClick={handleCheckId}
+                            className="button"
+                            style={{ width: '100px', margin: 0, padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                            disabled={isLoading}
+                        >
+                            중복확인
+                        </button>
+                    </div>
+                    {idCheckMessage && (
+                        <p style={{
+                            fontSize: '12px',
+                            marginTop: '-8px',
+                            marginBottom: '4px',
+                            color: isIdChecked ? '#2e7d32' : '#d32f2f'
+                        }}>
+                            {idCheckMessage}
+                        </p>
+                    )}
                     <input
                         type="password"
                         placeholder="비밀번호를 입력해주세요"
