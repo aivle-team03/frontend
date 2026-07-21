@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 
@@ -8,6 +9,7 @@ function LoginPage({ setIsLoggedIn }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // 비밀번호 재설정 모달 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resetUserId, setResetUserId] = useState('');
   const [resetName, setResetName] = useState('');
@@ -41,13 +43,12 @@ function LoginPage({ setIsLoggedIn }) {
       if (response.ok) {
         localStorage.setItem('token', data.access_token);
         localStorage.setItem('isLoggedIn', 'true');
-
         setIsLoggedIn(true);
       } else {
         setErrorMessage(data.detail || 'ID 또는 비밀번호가 일치하지 않습니다.');
       }
     } catch (error) {
-      setErrorMessage('서버와 통신할 수 없습니다. FastAPI 서버가 켜져 있는지 확인하세요.');
+      setErrorMessage('서버와 통신할 수 없습니다. FastAPI 서버 상태를 확인해주세요.');
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +89,6 @@ function LoginPage({ setIsLoggedIn }) {
       const data = await response.json();
 
       if (response.ok) {
-        setIsModalError(false);
         setModalMessage('비밀번호가 성공적으로 변경되었습니다! 로그인 해주세요.');
         setTimeout(() => {
           closeModal();
@@ -151,88 +151,106 @@ function LoginPage({ setIsLoggedIn }) {
         </form>
 
         <div className="links">
-          <span onClick={() => navigate('/signup')}>회원가입</span> | <span onClick={() => setIsModalOpen(true)} style={{ cursor: 'pointer' }}>비밀번호 찾기</span>
+          <span onClick={() => navigate('/signup')}>회원가입</span> |{' '}
+          <span onClick={() => setIsModalOpen(true)} className="find-pw-link">
+            비밀번호 찾기
+          </span>
         </div>
       </div>
-      {isModalOpen && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white', padding: '24px', borderRadius: '8px',
-            width: '360px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-          }}>
-            <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '18px', color: '#333' }}>비밀번호 재설정</h3>
 
-            <form onSubmit={handleResetPassword} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <input
-                type="text"
-                placeholder="가입한 ID"
-                value={resetUserId}
-                onChange={(e) => setResetUserId(e.target.value)}
-                style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                disabled={isResetLoading}
-              />
-              <input
-                type="text"
-                placeholder="가입자 이름"
-                value={resetName}
-                onChange={(e) => setResetName(e.target.value)}
-                style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                disabled={isResetLoading}
-              />
-              <input
-                type="password"
-                placeholder="새로운 비밀번호"
-                value={resetNewPw}
-                onChange={(e) => setResetNewPw(e.target.value)}
-                style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                disabled={isResetLoading}
-              />
-              <input
-                type="password"
-                placeholder="새로운 비밀번호 확인"
-                value={resetConfirmPw}
-                onChange={(e) => setResetConfirmPw(e.target.value)}
-                style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                disabled={isResetLoading}
-              />
-
-              {modalMessage && (
-                <p style={{ fontSize: '12px', color: isModalError ? '#d32f2f' : '#2e7d32', margin: '4px 0 0 0' }}>
-                  {modalMessage}
-                </p>
-              )}
-
-              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                <button
-                  type="submit"
-                  disabled={isResetLoading}
-                  style={{
-                    flex: 1, padding: '10px', backgroundColor: '#1976d2', color: 'white',
-                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold'
-                  }}
-                >
-                  {isResetLoading ? '변경 중...' : '비밀번호 변경'}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  disabled={isResetLoading}
-                  style={{
-                    flex: 1, padding: '10px', backgroundColor: '#e0e0e0', color: '#333',
-                    border: 'none', borderRadius: '4px', cursor: 'pointer'
-                  }}
-                >
-                  취소
+      {isModalOpen &&
+        ReactDOM.createPortal(
+          <div
+            className="approval-modal-backdrop"
+            role="presentation"
+            onMouseDown={closeModal}
+          >
+            <section
+              className="login-password-modal"
+              role="dialog"
+              aria-modal="true"
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <div className="modal-v2-header">
+                <h2>비밀번호 재설정</h2>
+                <button type="button" className="modal-v2-close" onClick={closeModal}>
+                  ✕
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+
+              <form onSubmit={handleResetPassword} className="login-modal-body">
+                <div className="input-group">
+                  <label>가입 ID</label>
+                  <input
+                    type="text"
+                    placeholder="가입한 ID"
+                    value={resetUserId}
+                    onChange={(e) => setResetUserId(e.target.value)}
+                    disabled={isResetLoading}
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>가입자 이름</label>
+                  <input
+                    type="text"
+                    placeholder="가입자 이름"
+                    value={resetName}
+                    onChange={(e) => setResetName(e.target.value)}
+                    disabled={isResetLoading}
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>새 비밀번호</label>
+                  <input
+                    type="password"
+                    placeholder="새로운 비밀번호"
+                    value={resetNewPw}
+                    onChange={(e) => setResetNewPw(e.target.value)}
+                    disabled={isResetLoading}
+                  />
+                </div>
+
+                <div className="input-group">
+                  <label>새 비밀번호 확인</label>
+                  <input
+                    type="password"
+                    placeholder="새로운 비밀번호 확인"
+                    value={resetConfirmPw}
+                    onChange={(e) => setResetConfirmPw(e.target.value)}
+                    disabled={isResetLoading}
+                  />
+                </div>
+
+                {modalMessage && (
+                  <p className={`modal-msg ${isModalError ? 'error' : 'success'}`}>
+                    {modalMessage}
+                  </p>
+                )}
+
+                <div className="modal-v2-footer">
+                  <button
+                    type="button"
+                    className="btn-v2-list"
+                    onClick={closeModal}
+                    disabled={isResetLoading}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-v2-approve"
+                    disabled={isResetLoading}
+                  >
+                    {isResetLoading ? '변경 중...' : '비밀번호 변경'}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

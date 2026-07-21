@@ -12,6 +12,7 @@ function MyPage() {
   });
   const [loading, setLoading] = useState(true);
 
+  // 모달 및 비밀번호 변경 관련 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -21,11 +22,9 @@ function MyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // 🚀 2. 백엔드 /api/auth/me로 내 정보 요청 함수
     const fetchMyInfo = async () => {
       try {
         const token = localStorage.getItem('token');
-
         if (!token) {
           setLoading(false);
           return;
@@ -45,7 +44,6 @@ function MyPage() {
 
         const data = await response.json();
 
-        // 🚀 3. 백엔드에서 받아온 데이터로 state 업데이트
         setUserInfo({
           user_id: data.user_id || '',
           name: data.name || '관리자',
@@ -53,7 +51,6 @@ function MyPage() {
           area: data.area || '지정 구역 없음',
           message: data.message || '설정된 알림이 없습니다.'
         });
-
       } catch (error) {
         console.error('마이페이지 연동 에러:', error);
       } finally {
@@ -69,7 +66,7 @@ function MyPage() {
     setModalMessage('');
     setIsError(false);
 
-    // 간단한 프론트엔드 유효성 검사
+    // 유효성 검사
     if (!currentPassword || !newPassword || !confirmPassword) {
       setIsError(true);
       setModalMessage('모든 비밀번호 항목을 입력해주세요.');
@@ -101,9 +98,7 @@ function MyPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setIsError(false);
         setModalMessage('비밀번호가 성공적으로 변경되었습니다!');
-        // 1.5초 후 모달 닫기 및 폼 초기화
         setTimeout(() => {
           closeModal();
         }, 1500);
@@ -184,74 +179,74 @@ function MyPage() {
         ))} */}
       </article>
       {isModalOpen && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white', padding: '24px', borderRadius: '8px',
-            width: '360px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-          }}>
-            <h3 style={{ marginTop: 0, marginBottom: '16px', fontSize: '18px' }}>비밀번호 변경</h3>
+        <div
+          className="approval-modal-backdrop"
+          role="presentation"
+          onMouseDown={closeModal}
+        >
+          <section
+            className="mypage-password-modal"
+            role="dialog"
+            aria-modal="true"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="modal-v2-header">
+              <h2>비밀번호 변경</h2>
+              <button type="button" className="modal-v2-close" onClick={closeModal}>
+                ✕
+              </button>
+            </div>
 
-            <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <input
-                type="password"
-                placeholder="현재 비밀번호"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                disabled={isSubmitting}
-              />
-              <input
-                type="password"
-                placeholder="새 비밀번호 (4자리 이상)"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                disabled={isSubmitting}
-              />
-              <input
-                type="password"
-                placeholder="새 비밀번호 확인"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
-                disabled={isSubmitting}
-              />
+            <form onSubmit={handleChangePassword} className="mypage-modal-body">
+              <div className="input-group">
+                <label>현재 비밀번호</label>
+                <input
+                  type="password"
+                  placeholder="현재 비밀번호를 입력하세요"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="input-group">
+                <label>새 비밀번호</label>
+                <input
+                  type="password"
+                  placeholder="새 비밀번호 (4자리 이상)"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={isSubmitting}
+                />
+              </div>
+
+              <div className="input-group">
+                <label>새 비밀번호 확인</label>
+                <input
+                  type="password"
+                  placeholder="새 비밀번호 다시 입력"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={isSubmitting}
+                />
+              </div>
 
               {modalMessage && (
-                <p style={{ fontSize: '12px', color: isError ? 'red' : 'green', margin: '4px 0 0 0' }}>
+                <p className={`modal-msg ${isError ? 'error' : 'success'}`}>
                   {modalMessage}
                 </p>
               )}
 
-              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  style={{
-                    flex: 1, padding: '10px', backgroundColor: '#1976d2', color: 'white',
-                    border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold'
-                  }}
-                >
-                  {isSubmitting ? '수정 중...' : '변경'}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  disabled={isSubmitting}
-                  style={{
-                    flex: 1, padding: '10px', backgroundColor: '#e0e0e0', color: '#333',
-                    border: 'none', borderRadius: '4px', cursor: 'pointer'
-                  }}
-                >
+              <div className="modal-v2-footer">
+                <button type="button" className="btn-v2-list" onClick={closeModal} disabled={isSubmitting}>
                   취소
+                </button>
+                <button type="submit" className="btn-v2-approve" disabled={isSubmitting}>
+                  {isSubmitting ? '수정 중...' : '변경'}
                 </button>
               </div>
             </form>
-          </div>
+          </section>
         </div>
       )}
     </section>
