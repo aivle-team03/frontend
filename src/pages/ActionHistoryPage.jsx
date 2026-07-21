@@ -126,53 +126,33 @@ function ActionHistoryPage() {
 
   return (
     <section className="approval-history-page" aria-label="조치 이력">
-      <div className="approval-summary-grid">
-        <article className="approval-summary-card pending-summary">
-          <span className="approval-summary-icon"><HourglassTopRoundedIcon /></span>
-          <div>
-            <span>승인 대기</span>
-            <strong>{pendingCount}건</strong>
-            <small>검토가 필요한 조치 완료 건</small>
-          </div>
-        </article>
-        <article className="approval-summary-card approved-summary">
-          <span className="approval-summary-icon"><CheckCircleOutlineRoundedIcon /></span>
-          <div>
-            <span>승인 완료</span>
-            <strong>{approvedCount}건</strong>
-            <small>승인 처리가 완료된 조치 건</small>
-          </div>
-        </article>
+      <div className="approval-summary-row">
+        <div className="approval-summary-grid">
+          <article className="approval-summary-card pending-summary">
+            <span className="approval-summary-icon"><HourglassTopRoundedIcon /></span>
+            <div>
+              <span>승인 대기</span>
+              <strong>{pendingCount}건</strong>
+              <small>검토가 필요한 조치 완료 건</small>
+            </div>
+          </article>
+          <article className="approval-summary-card approved-summary">
+            <span className="approval-summary-icon"><CheckCircleOutlineRoundedIcon /></span>
+            <div>
+              <span>승인 완료</span>
+              <strong>{approvedCount}건</strong>
+              <small>승인 처리가 완료된 조치 건</small>
+            </div>
+          </article>
+        </div>
       </div>
 
+      <div className="approval-content-layout">
       <article className="approval-history-card">
         <div className="approval-history-heading">
           <div>
             <h2>조치 완료 내역</h2>
             <p>현장 담당자가 조치 사진을 첨부해 완료한 건만 확인하고 승인합니다.</p>
-          </div>
-          <div className="approval-history-tools">
-            <PeriodSelector
-              selectedPeriod={selectedPeriod}
-              onSelectPeriod={setSelectedPeriod}
-              onApplyCustomPeriod={setCustomPeriod}
-              options={['전체', '이번 달', '지난달', '직접 설정']}
-            />
-            <span className="approval-history-count">{filteredRecords.length}건</span>
-            <div className="approval-report-actions">
-              <button className="approval-report-generate" type="button" onClick={createReport}>
-                <DescriptionOutlinedIcon /> 리포트 생성
-              </button>
-              <button
-                className="approval-report-download"
-                type="button"
-                onClick={downloadReport}
-                disabled={!reportSnapshot}
-                title={reportSnapshot ? '생성된 리포트 다운로드' : '먼저 리포트를 생성해 주세요'}
-              >
-                <DownloadRoundedIcon /> 다운로드
-              </button>
-            </div>
           </div>
         </div>
 
@@ -187,7 +167,6 @@ function ActionHistoryPage() {
                 <th>조치 사진</th>
                 <th>승인 상태</th>
                 <th>승인자 / 승인 일시</th>
-                <th aria-label="작업" />
               </tr>
             </thead>
             <tbody>
@@ -219,21 +198,52 @@ function ActionHistoryPage() {
                   <td>
                     {record.approvalStatus === 'approved'
                       ? <span className="approval-meta">{record.approver}<small>{record.approvedAt}</small></span>
-                      : <span className="approval-empty">-</span>}
-                  </td>
-                  <td>
-                    {record.approvalStatus === 'pending' ? (
-                      <button className="approval-review-button" type="button" onClick={() => setSelectedRecord(record)}>
+                      : (
+                        <button className="approval-review-button" type="button" onClick={() => setSelectedRecord(record)}>
                         승인 검토
-                      </button>
-                    ) : <span className="approval-empty">-</span>}
+                        </button>
+                      )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <div className="approval-history-footer">전체 {filteredRecords.length}건</div>
       </article>
+      <aside className="approval-control-panel">
+        <div>
+          <span className="approval-control-eyebrow">조회 기간</span>
+          <h2>기간 설정</h2>
+          <PeriodSelector
+            selectedPeriod={selectedPeriod}
+            onSelectPeriod={setSelectedPeriod}
+            onApplyCustomPeriod={setCustomPeriod}
+            options={['전체', '이번 달', '지난달', '직접 설정']}
+          />
+        </div>
+        <div className="approval-control-divider" />
+        <div>
+          <span className="approval-control-eyebrow">승인 리포트</span>
+          <h2>리포트 관리</h2>
+          <p>현재 조회 결과를 기준으로 리포트를 생성합니다.</p>
+          <div className="approval-report-actions">
+            <button className="approval-report-generate" type="button" onClick={createReport}>
+              <DescriptionOutlinedIcon /> 리포트 생성
+            </button>
+            <button
+              className="approval-report-download"
+              type="button"
+              onClick={downloadReport}
+              disabled={!reportSnapshot}
+              title={reportSnapshot ? '생성된 리포트 다운로드' : '먼저 리포트를 생성해 주세요'}
+            >
+              <DownloadRoundedIcon /> 다운로드
+            </button>
+          </div>
+        </div>
+      </aside>
+      </div>
 
       {selectedRecord && (
         <div className="approval-modal-backdrop" role="presentation" onMouseDown={() => setSelectedRecord(null)}>
