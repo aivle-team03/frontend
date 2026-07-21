@@ -30,9 +30,10 @@ function MonitoringPage() {
     fetchCctvData();
   }, []);
 
-  const handleMoveToMonitoringDetail = () => {
-    navigate('/monitoringdetail')
-  }
+  const handleMoveToMonitoringDetail = (camera) => {
+    navigate('/monitoringdetail', { state: { selectedCamera: camera } });
+  };
+
   return (
 
     <section className={styles.dashboardFrame} aria-label="BOSS CCTV monitoring workspace">
@@ -48,12 +49,13 @@ function MonitoringPage() {
                 return (
                   <button
                     className={styles.video}
-                    onClick={handleMoveToMonitoringDetail}
+                    onClick={() => handleMoveToMonitoringDetail(matchingCamera)}
                     key={slotNum}
                     type="button"
                   >
                     {videoSource ? (
                       <video
+                        key={videoSource}
                         src={videoSource}
                         autoPlay
                         muted

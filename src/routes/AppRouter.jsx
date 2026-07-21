@@ -10,6 +10,7 @@ import MyPage from '../pages/MyPage.jsx'
 import React, { useState, useEffect } from 'react';
 import LoginPage from '../pages/LoginPage.jsx'
 import SignupPage from '../pages/SignupPage.jsx'
+import MonitoringDetailPage from '../pages/MonitoringDetailPage.jsx'
 
 function AppRouter() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -30,6 +31,7 @@ function AppRouter() {
           <Route element={<MainLayout setIsLoggedIn={setIsLoggedIn} />}>
             <Route index element={<HomePage />} />
             <Route path="monitoring" element={<MonitoringPage />} />
+            <Route path="monitoringdetail" element={<MonitoringDetailPage />} />
             <Route path="checklists" element={<ChecklistPage />} />
             <Route path="actions" element={<ActionHistoryPage />} />
             <Route path="law-qa" element={<LawQaPage />} />
