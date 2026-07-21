@@ -1,154 +1,613 @@
-.card{
-    border: 1px solid #dfe7f2;
-    border-radius: 12px;
-    background: #ffffff;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
-}
 .dashboardFrame {
-    min-height: calc(100vh - 176px);
+  display: flex;
+  min-height: calc(100vh - 176px);
+  flex-direction: column;
+  gap: 16px;
 }
 
-.dashboardEmptyArea {
-    min-height: 320px;
-    margin: 16px;
+.monitoringOverview {
+  display: flex;
+  min-height: 76px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 18px;
+  border: 1px solid #dfe7f2;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
 }
 
-.blankAreaBlank {
-    min-height: 20px;
-    border: 10px solid #615d5d;
-    border-radius: 8px;
-    margin: 16px;
-    padding: 20px;
+.monitoringOverview > div,
+.overviewStats,
+.overviewStats span {
+  display: flex;
+  align-items: center;
+}
+
+.monitoringOverview > div:first-child {
+  gap: 12px;
+}
+
+.overviewIcon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 11px;
+  color: #0f62fe;
+  background: #edf5ff;
+}
+
+.overviewIcon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.monitoringOverview strong {
+  color: #172033;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.monitoringOverview p {
+  margin: 3px 0 0;
+  color: #7c899d;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.overviewStats {
+  gap: 18px;
+}
+
+.overviewStats span {
+  gap: 6px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.overviewStats span strong {
+  color: #172033;
+  font-size: 13px;
+}
+
+.overviewStats i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #198038;
+  box-shadow: 0 0 0 4px #defbe6;
+}
+
+.overviewStats small {
+  color: #9aa5b5;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .cctvemptyarea {
-    display: flex;
-    gap: 20px;
-    min-height: 420px;
-    margin: 0;
-    border: 1px dashed var(--color-main-muted);
-    border-radius: 8px;
-    background:
-        linear-gradient(180deg, rgba(245, 247, 250, 0.72), rgba(255, 255, 255, 0.9));
+  display: grid;
+  grid-template-columns: minmax(0, 1.62fr) minmax(360px, 0.82fr);
+  gap: 18px;
+  min-width: 0;
 }
 
-.cctvSection {
-    display: flex;
-    flex-direction: column;
-    width: 66.66%;
-    gap: 20px;
-}
-
-
+.cctvSection,
 .EventSection {
-    display: flex;
-    flex-direction: column;
-    width: 33.33%;
-    gap: 20px;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.cctvmonitoringSection {
-    display: flex;
-    flex-direction: column;
-    /* border: 3px solid black; */
-    align-items: center;
-    border: 1px solid #dfe7f2;
-    border-radius: 12px;
-    background: #ffffff;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+.cctvmonitoringSection,
+.videoChange,
+.liveEvent,
+.emptyBox {
+  overflow: hidden;
+  border: 1px solid #dfe7f2;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+}
+
+.cctvmonitoringSection,
+.videoChange,
+.liveEvent,
+.emptyBox {
+  padding: 18px;
+}
+
+.sectionHeader {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 15px;
+}
+
+.sectionTitleGroup {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.sectionIcon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 10px;
+  color: #0f62fe;
+  background: #edf5ff;
+}
+
+.sectionIcon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.alertIcon {
+  color: #b28600;
+  background: #fff8d6;
 }
 
 .title {
-    margin: 20px 20px;
-    align-self: flex-start;
+  margin: 0;
+  color: #172033;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.sectionTitleGroup p {
+  margin: 3px 0 0;
+  color: #8a96a8;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.panelAction {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 34px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 11px;
+  border: 1px solid #d8e2ef;
+  border-radius: 9px;
+  color: #334155;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 900;
+  transition:
+    background-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.panelAction:hover {
+  background: #f4f7fb;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+}
+
+.panelAction svg {
+  width: 16px;
+  height: 16px;
 }
 
 .videodashBoard {
-    width: 95%;
-    background-color: rgba(182, 182, 182, 0);
-    
-    height: 500px;
-    align-items: center;
-    margin: 20px 10px;
-
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-evenly;
-    align-content: space-evenly;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
-
-.videochangedashBoard {
-    display: flex;
-    width: 90%;
-    height: 50%;
-    justify-content: space-between;
-
-    
-}
-
 
 .video {
-    width: 46%;
-    height: 45%;
-    background-color: black;
-    color: #ffffff;
-    display: grid;
-    place-items: center;
-    border-radius: 15px;
+  position: relative;
+  display: block;
+  min-width: 0;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 12px;
+  color: #ffffff;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    radial-gradient(circle at 50% 42%, #263248 0%, #111827 62%, #0b1120 100%);
+  background-size: 26px 26px, 26px 26px, auto;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease;
+}
+
+.video:hover {
+  z-index: 1;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.2);
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+}
+
+.video:focus-visible,
+.videoChangeFrame:focus-visible,
+.panelAction:focus-visible,
+.eventDetail button:focus-visible {
+  outline: 3px solid rgba(15, 98, 254, 0.24);
+  outline-offset: 2px;
+}
+
+.videoActive {
+  background:
+    linear-gradient(rgba(15, 98, 254, 0.035), rgba(15, 98, 254, 0.035)),
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    radial-gradient(circle at 50% 42%, #2c3951 0%, #121b2d 62%, #0b1120 100%);
+  background-size: auto, 26px 26px, 26px 26px, auto;
+}
+
+.cameraTopbar,
+.cameraFooter {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cameraTopbar {
+  top: 0;
+  padding: 10px 11px;
+  background: linear-gradient(180deg, rgba(3, 7, 18, 0.7), transparent);
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.cameraLive {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px;
+  border-radius: 5px;
+  color: #ffffff;
+  background: rgba(218, 30, 40, 0.88);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+}
+
+.cameraLive i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.cameraPlaceholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 7px;
+  color: #64748b;
+}
+
+.cameraPlaceholder svg {
+  width: 34px;
+  height: 34px;
+}
+
+.cameraPlaceholder small {
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.cameraFooter {
+  bottom: 0;
+  padding: 22px 11px 10px;
+  background: linear-gradient(0deg, rgba(3, 7, 18, 0.86), transparent);
+}
+
+.cameraFooter > span {
+  display: grid;
+  gap: 2px;
+  color: #9aa8ba;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.cameraFooter strong {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.cameraFooter em {
+  padding: 3px 6px;
+  border-radius: 5px;
+  color: #d0e2ff;
+  background: rgba(15, 98, 254, 0.3);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 900;
 }
 
 .videoChange {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 370px;
-    border: 1px solid #dfe7f2;
-    border-radius: 12px;
-    background: #ffffff;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+  min-height: 150px;
+}
+
+.currentCamera,
+.alertCount {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: #0f62fe;
+  background: #edf5ff;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.alertCount {
+  color: #8a3800;
+  background: #fff2e8;
+}
+
+.videochangedashBoard {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .videoChangeFrame {
-    width: 22%;
-    height: 100%;
-    border: 0;
-    background-color: rgb(0, 0, 0);
-    color: #ffffff;
-    cursor: pointer;
-    margin-top: 30px;
-    border-radius: 12px;
-    
+  display: flex;
+  min-width: 0;
+  min-height: 70px;
+  align-items: center;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #94a3b8;
+  background: #111827;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.videoChangeFrame:hover {
+  background: #1e293b;
+  transform: translateY(-2px);
+}
+
+.videoChangeFrameActive {
+  background: #1e293b;
+}
+
+.videoChangeFrame > svg {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+}
+
+.videoChangeFrame span {
+  display: grid;
+  min-width: 0;
+}
+
+.videoChangeFrame strong {
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.videoChangeFrame small {
+  color: #8090a6;
+  font-size: 9px;
+  font-weight: 800;
 }
 
 .liveEvent {
-    display: flex;
-    flex-direction: column;
-    min-height: 600px;
-    align-items: center;
-    border: 1px solid #dfe7f2;
-    border-radius: 12px;
-    background: #ffffff;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+  min-height: 442px;
+}
+
+.liveEvent :global(.events-table-wrap) {
+  margin-top: 0;
+}
+
+.liveEvent :global(.events-table-wrap .MuiTableCell-root) {
+  padding-right: 8px;
+  padding-left: 8px;
+  white-space: nowrap;
+}
+
+.liveEvent :global(.monitoring-event-row) {
+  cursor: pointer;
+}
+
+.liveEvent :global(.monitoring-event-row.Mui-selected),
+.liveEvent :global(.monitoring-event-row.Mui-selected:hover) {
+  background: #edf5ff;
 }
 
 .emptyBox {
-    display: flex;
-    flex-direction: column;
-    min-height: 390px;
-    align-items: center;
-    border: 1px solid #dfe7f2;
-    border-radius: 12px;
-    background: #ffffff;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+  min-height: 270px;
 }
 
-@media (max-width: 1024px) {
-    .cctvemptyarea {
-        flex-direction: column;
-    }
+.eventDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
 
-    .cctvSection,
-    .EventSection {
-        width: 100%;
-    }
+.eventDetailHeadline {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #fff8d6;
+}
+
+.eventWarningIcon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 9px;
+  color: #8a3800;
+  background: #ffffff;
+}
+
+.eventWarningIcon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.eventDetailHeadline div {
+  display: grid;
+}
+
+.eventDetailHeadline span {
+  color: #8a3800;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.eventDetailHeadline strong {
+  margin-top: 1px;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.eventDetail dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.eventDetail dl > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.eventDetail dt {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #7c899d;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.eventDetail dt svg {
+  width: 14px;
+  height: 14px;
+}
+
+.eventDetail dd {
+  margin: 0;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: right;
+}
+
+.eventDetail > button {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: auto;
+  border: 0;
+  border-radius: 9px;
+  color: #ffffff;
+  background: #0f62fe;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 900;
+  transition: background-color 150ms ease;
+}
+
+.eventDetail > button:hover {
+  background: #0043ce;
+}
+
+.eventDetail > button svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 1280px) {
+  .cctvemptyarea {
+    grid-template-columns: 1fr;
+  }
+
+  .EventSection {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  }
+}
+
+@media (max-width: 820px) {
+  .monitoringOverview,
+  .overviewStats {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .overviewStats {
+    gap: 8px;
+  }
+
+  .EventSection {
+    display: flex;
+  }
+
+  .videodashBoard {
+    grid-template-columns: 1fr;
+  }
+
+  .videochangedashBoard {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sectionHeader {
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 520px) {
+  .cctvmonitoringSection,
+  .videoChange,
+  .liveEvent,
+  .emptyBox {
+    padding: 14px;
+  }
+
+  .panelAction {
+    width: 34px;
+    padding: 0;
+    justify-content: center;
+    overflow: hidden;
+    font-size: 0;
+  }
 }
