@@ -10,6 +10,8 @@
   gap: 16px;
 }
 
+.edu-card,
+.risk-card,
 .summary-card,
 .dashboard-card,
 .chart-card,
@@ -581,4 +583,43 @@
 .date-input:focus {
   border-color: #2f64b7;
   box-shadow: 0 0 0 1px #2f64b7;
+}
+
+.risk-main-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding:12px;
+}
+
+.risk-sub-grid {
+  display: flex;
+  gap: 18px;
+  padding:12px;
+}
+
+.risk-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.risk-chart-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 500px) minmax(0px, 1fr);
+  align-items: stretch;
+  gap: 18px;
+}
+
+.edu-card{
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  box-sizing: border-box;
+  min-height: 340px;
+}
+
+.history-card{
+  
 }

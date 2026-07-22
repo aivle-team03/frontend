@@ -225,6 +225,7 @@ export const EVENT_CATEGORY_MOCKUP_DATA=[
 
 {
   id:1,
+  location:'1구역',
   type:"소방",
   item : "화재",
   risk :"상",
@@ -233,6 +234,7 @@ export const EVENT_CATEGORY_MOCKUP_DATA=[
 },
 {
   id:2,
+  location:'2구역',
   type:"시설",
   item : "미끄러짐",
   risk :"하",
@@ -241,6 +243,7 @@ export const EVENT_CATEGORY_MOCKUP_DATA=[
 },
 {
   id:3,
+  location:'3구역',
   type:"안전",
   item : "충돌",
   risk :"하",
@@ -249,6 +252,7 @@ export const EVENT_CATEGORY_MOCKUP_DATA=[
 },
 {
   id:4,
+  location:'4구역',
   type:"안전",
   item : "안전모",
   risk :"중",
@@ -258,6 +262,7 @@ export const EVENT_CATEGORY_MOCKUP_DATA=[
 
 {
   id:5,
+  location:'1구역',
   type:"시설",
   item : "적재물",
   risk :"하",
@@ -267,6 +272,7 @@ export const EVENT_CATEGORY_MOCKUP_DATA=[
 
 {
   id:6,
+  location:'2구역',
   type:"시설",
   item : "스프링쿨러",
   risk :"중",
@@ -276,6 +282,7 @@ export const EVENT_CATEGORY_MOCKUP_DATA=[
 
 {
   id:7,
+  location:'3구역',
   type:"시설",
   item : "소화기",
   risk :"중",
@@ -285,10 +292,49 @@ export const EVENT_CATEGORY_MOCKUP_DATA=[
 
 {
   id:8,
+  location:'4구역',
   type:"시설",
   item : "대피로",
   risk :"상",
   severity: 3,
   frequency :2
+},
+
+{
+  id:9,
+  location:'1구역',
+  type:"시설",
+  item : "충돌",
+  risk :"상",
+  severity: 3,
+  frequency :2
+},
+
+{
+  id:10,
+  location:'4구역',
+  type:"안전",
+  item : "검사",
+  risk :"하",
+  severity: 3,
+  frequency :2
+},
+]
+
+export const EDUCATION_INFO_MOCKUP_DATA=[
+{
+  type : 'new',
+  total:120,
+  trained : 100,
+},
+{
+  type: 'regular',
+  total:200,
+  trained : 120,
+},
+{
+  type: 'specialized',
+  total:5,
+  trained : 5,
 },
 ]

@@ -8,6 +8,16 @@ import RiskTrendChart from '../components/dashboard/RiskTrendChart.jsx'
 import RiskTypeDonutChart from '../components/dashboard/RiskTypeDonutChart.jsx'
 import SafetyGradeCard from '../components/dashboard/SafetyGradeCard.jsx'
 import SummaryCard from '../components/dashboard/SummaryCard.jsx'
+import RiskTypePieChart from '../components/dashboard/RiskTypePieChart.jsx'
+import RiskSectionStackChart from '../components/dashboard/RiskSectionStackChart.jsx'
+import EducationTable from '../components/dashboard/EducationTable.jsx'
+import EducationPieChart from '../components/dashboard/EducationPieChart.jsx'
+import ActionHistoryTable from '../components/dashboard/ActionHistoryTable.jsx'
+import {
+  EVENT_CATEGORY_MOCKUP_DATA,
+  EDUCATION_INFO_MOCKUP_DATA,
+  ACTION_HISTORY_MOCK_DATA
+} from '../mocks/mockData.js'
 import {
   areaRisks,
   periodChartData,
@@ -52,6 +62,8 @@ function HomePage() {
           />
         ))}
       </section>
+      
+
 
       <section className="dashboard-main-grid">
         <RecentEventsTable
@@ -60,12 +72,35 @@ function HomePage() {
           onSelectEvent={setSelectedEvent}
           onClose={() => setSelectedEvent(null)}
         />
-        <AreaRiskChart
-          risks={areaRisks}
-          selectedArea={selectedArea}
-          onSelectArea={setSelectedArea}
-        />
+
+        <EducationPieChart data={EDUCATION_INFO_MOCKUP_DATA}></EducationPieChart>
       </section>
+      
+
+
+        <section className="risk-section">
+        <div className="section-heading">
+          <div>
+            <h2 className="section-title">위험도 관리</h2>
+            <p>전체 위험도 통계와 구간 별 위험도 분포를 확인합니다.</p>
+          </div>
+        </div>
+
+        <div className="risk-chart-grid">
+          <RiskTypePieChart data={EVENT_CATEGORY_MOCKUP_DATA} />
+          <RiskSectionStackChart  data={EVENT_CATEGORY_MOCKUP_DATA} />
+        </div>
+      </section>
+
+
+      <section>
+        <ActionHistoryTable
+          lists={ACTION_HISTORY_MOCK_DATA}
+        />
+
+      </section>
+
+
 
       <section className="statistics-section">
         <div className="section-heading">

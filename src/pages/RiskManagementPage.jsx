@@ -3,18 +3,7 @@ import { EVENT_CATEGORY_MOCKUP_DATA } from '../mocks/mockData.js'
 import RiskFactorTypeChart from '../components/riskmanagement/RiskFactorTypeChart.jsx'
 import EventCategotyTable from '../components/riskmanagement/EventCategotyTable.jsx'
 import {
-  Box,
-  Chip,
-  Drawer,
-  IconButton,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
+    Typography,
 } from '@mui/material'
 
 
@@ -58,7 +47,7 @@ function RiskManagementPage()
                             </div>
 
                             <div className='count-text-box'>
-                                <Typography variant="h6">전체 위험 요인 갯수</Typography>
+                                <Typography variant="h6">전체 위험<br /> 요인 갯수</Typography>
                                 <Typography variant="h6">32건</Typography>
                             </div>
                      </div>
@@ -68,7 +57,7 @@ function RiskManagementPage()
             </div>
 
             <div className='count-graph'>
-                <div className='risk-grpah-layout'>
+                <div className='risk-graph-layout'>
                     <Typography variant="h6">
                         위험 요인 유형 그래프
                     </Typography>
