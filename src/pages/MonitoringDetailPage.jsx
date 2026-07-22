@@ -52,7 +52,6 @@ function MonitoringDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [cameraList, setCameraList] = useState([]);
-  const [streams, setStreams] = useState({});
   const [loading, setLoading] = useState(true);
 
   const currentCameraIdFromUrl = searchParams.get('camera');
@@ -60,21 +59,6 @@ function MonitoringDetailPage() {
   useEffect(() => {
     fetchCameraList();
   }, []);
-
-  useEffect(() => {
-    if (cameraList.length > 0) {
-      const activeId = currentCameraIdFromUrl
-        ? Number(currentCameraIdFromUrl)
-        : cameraList[0].id;
-
-      // 해당 카메라 및 전체 썸네일 스트림 불러오기
-      cameraList.forEach((cam) => {
-        if (!streams[cam.id]) {
-          fetchCCTVStream(cam.id);
-        }
-      });
-    }
-  }, [cameraList, currentCameraIdFromUrl]);
 
   const fetchCameraList = async () => {
     try {
@@ -86,11 +70,12 @@ function MonitoringDetailPage() {
 
       if (response.data && response.data.length > 0) {
         const formattedList = response.data.map((item, index) => ({
-          id: item.camera_id || item.id,
-          camera_name: item.camera_name || `${index + 1}번 카메라`,
+          id: item.cctv_id ?? item.camera_id ?? item.id,
+          cctv_name: item.cctv_name || item.camera_name || `${index + 1}번 카메라`,
           area: item.area || `${index + 1}구역`,
-          location: item.location || `CCTV #${item.camera_id}`,
+          location: item.location || '위치 미지정',
           status: item.status || '정상',
+          streamUrl: item.stream_url || '',
         }));
         setCameraList(formattedList);
       }
@@ -101,29 +86,9 @@ function MonitoringDetailPage() {
     }
   };
 
-  const fetchCCTVStream = async (cctvId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`http://127.0.0.1:8000/api/cctvs/${cctvId}/stream`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const videoUrl = response.data.stream_url || response.data.video_url || response.data.url;
-
-      setStreams((prev) => ({
-        ...prev,
-        [cctvId]: videoUrl,
-      }));
-    } catch (error) {
-      console.error(`CCTV #${cctvId} 스트림 불러오기 실패:`, error);
-    }
-  };
-
   const activeCamera = cameraList.find(
     (cam) => String(cam.id) === String(currentCameraIdFromUrl)
-  ) || cameraList[0] || { id: 'CAM-01', area: '1구역', location: 'A동 1층 출입구', camera_name: '1번 카메라' };
-
-  const activeStreamUrl = streams[activeCamera.id];
+  ) || cameraList[0] || { id: 1, area: '1구역', location: '위치 미지정', cctv_name: '카메라', streamUrl: '' };
 
   if (loading) {
     return <div className="monitoring-detail-page" style={{ padding: '40px', textAlign: 'center' }}>상세 모니터링 정보를 불러오는 중...</div>;
@@ -136,7 +101,7 @@ function MonitoringDetailPage() {
           <ArrowBackRoundedIcon />
         </button>
         <div>
-          <span>{activeCamera.camera_name}</span>
+          <span>{activeCamera.cctv_name}</span>
           <strong>{activeCamera.area} · {activeCamera.location}</strong>
         </div>
         <span className="detail-live-status"><i />LIVE</span>
@@ -155,7 +120,7 @@ function MonitoringDetailPage() {
                 <i />CAM #{activeCamera.id}
               </span>
 
-              <StreamViewer streamUrl={activeStreamUrl} cameraId={activeCamera.id} />
+              <StreamViewer streamUrl={activeCamera.streamUrl} cameraId={activeCamera.id} />
 
               <span className="primary-video-time" style={{ zIndex: 2 }}>
                 <AccessTimeRoundedIcon />실시간 스트리밍 중
@@ -171,7 +136,6 @@ function MonitoringDetailPage() {
             <div className="detail-thumbnail-list">
               {cameraList.map((camera) => {
                 const isSelected = String(camera.id) === String(activeCamera.id);
-                const thumbStreamUrl = streams[camera.id];
 
                 return (
                   <button
@@ -181,7 +145,7 @@ function MonitoringDetailPage() {
                     onClick={() => setSearchParams({ camera: camera.id })}
                   >
                     <div className="detail-thumb-video-box">
-                      <StreamViewer streamUrl={thumbStreamUrl} cameraId={camera.id} />
+                      <StreamViewer streamUrl={camera.streamUrl} cameraId={camera.id} />
                     </div>
 
                     <div className="detail-thumb-info">

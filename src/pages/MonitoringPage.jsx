@@ -6,11 +6,10 @@ import OpenInFullRoundedIcon from '@mui/icons-material/OpenInFullRounded'
 import SensorsRoundedIcon from '@mui/icons-material/SensorsRounded'
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import RecentEventsTable from '../components/monitoring/RecentEventsTableMonitoring.jsx'
-import { recentEvents } from '../data/dashboardMock.js'
 import styles from '../styles/CCTVMonitoring.module.css'
 
 function StreamViewer({ streamUrl, cameraId }) {
@@ -55,7 +54,6 @@ function MonitoringPage() {
   const navigate = useNavigate()
 
   const [cameras, setCameras] = useState([])
-  const [streams, setStreams] = useState({})
   const [activeCameraId, setActiveCameraId] = useState(null)
   const [events, setEvents] = useState([])
   const [selectedEvent, setSelectedEvent] = useState(null)
@@ -64,12 +62,6 @@ function MonitoringPage() {
   useEffect(() => {
     fetchCCTVsAndEvents()
   }, [])
-
-  useEffect(() => {
-    if (activeCameraId && !streams[activeCameraId]) {
-      fetchCCTVStream(activeCameraId)
-    }
-  }, [activeCameraId])
 
   const fetchCCTVsAndEvents = async () => {
     try {
@@ -81,38 +73,40 @@ function MonitoringPage() {
       const dbCctvs = cctvResponse.data
 
       if (dbCctvs && dbCctvs.length > 0) {
-
         const formattedCameras = dbCctvs.map((item, index) => ({
-          id: item.camera_id || item.id,
-          name: item.camera_name,
+          id: item.cctv_id ?? item.camera_id ?? item.id,
+          name: item.cctv_name || item.camera_name || `CCTV #${index + 1}`,
           area: item.area || `${index + 1}구역`,
-          location: item.location || item.name || `CCTV #${item.camera_id}`,
+          location: item.location || '위치 미지정',
           status: item.status || '정상',
+          streamUrl: item.stream_url || '',
         }))
 
         setCameras(formattedCameras)
         setActiveCameraId(formattedCameras[0].id)
-
-        formattedCameras.forEach((cam) => fetchCCTVStream(cam.id))
       }
 
       try {
         const eventResponse = await axios.get('http://127.0.0.1:8000/api/checklists', { headers })
-        if (eventResponse.data && eventResponse.data.length > 0) {
-          const formattedEvents = eventResponse.data.map((evt) => ({
-            id: evt.checklist_id || evt.id,
-            time: evt.date ? evt.date.replace('T', ' ').substring(0, 16) : '-',
+        const checklists = eventResponse.data
+
+        if (checklists && checklists.length > 0) {
+          const formattedEvents = checklists.map((evt) => ({
+            id: evt.checklist_id ?? evt.id,
+            time: evt.date ? String(evt.date).replace('T', ' ').substring(0, 16) : '-',
             location: evt.camera_id ? `CCTV #${evt.camera_id}` : '지정 안 됨',
             type: evt.content || '위험 요인 감지',
-            status: evt.status === 'approved' ? '조치 완료' : '조치 필요',
-            manager: evt.uid || '미지정',
+            status: (evt.status === 'approved' || evt.status === '조치 완료') ? '조치 완료' : '조치 필요',
+            manager: evt.uid ? `담당자 ${evt.uid}` : '미지정',
           }))
+
           setEvents(formattedEvents)
           setSelectedEvent(formattedEvents[0])
         }
       } catch (evtErr) {
-        console.warn('알람 목록 조회 실패 (기본값 처리):', evtErr)
+        console.warn('알람/체크리스트 목록 조회 실패:', evtErr)
       }
+
     } catch (error) {
       console.error('CCTV 목록 로드 실패:', error)
       alert('CCTV 목록을 불러오지 못했습니다.')
@@ -121,29 +115,12 @@ function MonitoringPage() {
     }
   }
 
-  const fetchCCTVStream = async (cctvId) => {
-    try {
-      const token = localStorage.getItem('token')
-      const response = await axios.get(`http://127.0.0.1:8000/api/cctvs/${cctvId}/stream`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      // stream_url 또는 video_url 추출
-      const streamUrl = response.data.stream_url || response.data.video_url || response.data.url
-
-      setStreams((prev) => ({
-        ...prev,
-        [cctvId]: streamUrl,
-      }))
-    } catch (error) {
-      console.error(`CCTV #${cctvId} 스트림 로드 실패:`, error)
-    }
-  }
-
   const activeCamera = cameras.find((cam) => cam.id === activeCameraId)
 
   const handleMoveToMonitoringDetail = () => {
-    navigate(`/monitoringdetail?camera=${activeCameraId}`)
+    if (activeCameraId) {
+      navigate(`/monitoringdetail?camera=${activeCameraId}`)
+    }
   }
 
   if (loading) {
@@ -161,8 +138,8 @@ function MonitoringPage() {
           </div>
         </div>
         <div className={styles.overviewStats}>
-          <span><i />온라인 <strong>{cameras.filter((cam) => cam.status === 'running').length}</strong></span>
-          <span>점검 필요 <strong>{cameras.filter((cam) => cam.status !== 'running').length}</strong></span>
+          <span><i />온라인 <strong>{cameras.filter((cam) => cam.status === '정상' || cam.status === 'running').length}</strong></span>
+          <span>점검 필요 <strong>{cameras.filter((cam) => cam.status !== '정상' && cam.status !== 'running').length}</strong></span>
           <small>방금 전 업데이트</small>
         </div>
       </div>
@@ -186,7 +163,6 @@ function MonitoringPage() {
             <div className={styles.videodashBoard}>
               {cameras.map((camera) => {
                 const isActive = camera.id === activeCameraId
-                const streamUrl = streams[camera.id]
                 return (
                   <button
                     className={`${styles.video}${isActive ? ` ${styles.videoActive}` : ''}`}
@@ -199,7 +175,7 @@ function MonitoringPage() {
                       <span className={styles.cameraLive}><i />LIVE</span>
                       <span>{camera.id}</span>
                     </span>
-                    <StreamViewer streamUrl={streamUrl} cameraId={camera.id} />
+                    <StreamViewer streamUrl={camera.streamUrl} cameraId={camera.id} />
                     <span className={styles.cameraFooter}>
                       <span><strong>{camera.area}</strong>{camera.location}</span>
                       {isActive && <em>선택됨</em>}
@@ -218,12 +194,11 @@ function MonitoringPage() {
                   <p>썸네일을 눌러 활성 카메라를 변경합니다.</p>
                 </div>
               </div>
-              <span className={styles.currentCamera}>현재 {activeCamera?.id}</span>
+              <span className={styles.currentCamera}>현재 CAM #{activeCamera?.id}</span>
             </header>
             <div className={styles.videochangedashBoard}>
               {cameras.map((camera) => {
                 const isSelected = camera.id === activeCameraId;
-                const streamUrl = streams[camera.id];
 
                 return (
                   <button
@@ -234,7 +209,7 @@ function MonitoringPage() {
                     aria-pressed={isSelected}
                   >
                     <div className={styles.miniVideoWrapper}>
-                      <StreamViewer streamUrl={streamUrl} cameraId={camera.id} />
+                      <StreamViewer streamUrl={camera.streamUrl} cameraId={camera.id} />
                     </div>
 
                     <div className={styles.videoChangeInfo}>
@@ -258,10 +233,10 @@ function MonitoringPage() {
                   <p>최근 감지된 이상 이벤트입니다.</p>
                 </div>
               </div>
-              <span className={styles.alertCount}>{recentEvents.length}건</span>
+              <span className={styles.alertCount}>{events.length}건</span>
             </header>
             <RecentEventsTable
-              events={recentEvents}
+              events={events}
               selectedEvent={selectedEvent}
               onSelectEvent={setSelectedEvent}
             />
@@ -277,7 +252,7 @@ function MonitoringPage() {
               </div>
             </header>
 
-            {selectedEvent && (
+            {selectedEvent ? (
               <div className={styles.eventDetail}>
                 <div className={styles.eventDetailHeadline}>
                   <span className={styles.eventWarningIcon}><WarningAmberRoundedIcon /></span>
@@ -294,6 +269,10 @@ function MonitoringPage() {
                 <button type="button" onClick={() => navigate('/actions')}>
                   조치 이력에서 확인 <ArrowForwardRoundedIcon />
                 </button>
+              </div>
+            ) : (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+                선택된 이벤트가 없습니다.
               </div>
             )}
           </section>
