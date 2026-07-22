@@ -1,116 +1,172 @@
-import { useState, useEffect } from 'react'
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded'
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded'
+import GridViewRoundedIcon from '@mui/icons-material/GridViewRounded'
+import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
+import OpenInFullRoundedIcon from '@mui/icons-material/OpenInFullRounded'
+import SensorsRoundedIcon from '@mui/icons-material/SensorsRounded'
+import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import { recentEvents } from '../data/dashboardMock.js'
 import RecentEventsTable from '../components/monitoring/RecentEventsTableMonitoring.jsx'
+import { recentEvents } from '../data/dashboardMock.js'
 import styles from '../styles/CCTVMonitoring.module.css'
 
-const cameraSlots = ['1', '2', '3', '4']
+const cameraSlots = [
+  { id: 'CAM-01', area: '1구역', location: 'A동 1층 출입구', status: '정상' },
+  { id: 'CAM-02', area: '2구역', location: 'A동 2층 작업장', status: '정상' },
+  { id: 'CAM-03', area: '3구역', location: 'B동 자재 보관소', status: '정상' },
+  { id: 'CAM-04', area: '4구역', location: 'B동 지하 주차장', status: '정상' },
+]
 
 function MonitoringPage() {
   const navigate = useNavigate()
+  const [activeCameraId, setActiveCameraId] = useState(cameraSlots[0].id)
+  const [selectedEvent, setSelectedEvent] = useState(recentEvents[0])
+  const activeCamera = cameraSlots.find((camera) => camera.id === activeCameraId)
 
-  const [cctvList, setCctvList] = useState([])
-
-  useEffect(() => {
-    const fetchCctvData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-
-        const response = await axios.get("http://127.0.0.1:8000/api/cctvs", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-
-        setCctvList(response.data);
-      } catch (error) {
-        console.error("CCTV 데이터를 불러오지 못했습니다:", error);
-      }
-    };
-
-    fetchCctvData();
-  }, []);
-
-  const handleMoveToMonitoringDetail = (camera) => {
-    navigate('/monitoringdetail', { state: { selectedCamera: camera } });
-  };
+  const handleMoveToMonitoringDetail = () => {
+    navigate(`/monitoringdetail?camera=${activeCameraId}`)
+  }
 
   return (
+    <section className={styles.dashboardFrame} aria-label="BOSS CCTV 모니터링 작업 공간">
+      <div className={styles.monitoringOverview}>
+        <div>
+          <span className={styles.overviewIcon}><SensorsRoundedIcon /></span>
+          <div>
+            <strong>전체 카메라 정상 연결</strong>
+            <p>현장 카메라 4대가 실시간으로 연결되어 있습니다.</p>
+          </div>
+        </div>
+        <div className={styles.overviewStats}>
+          <span><i />온라인 <strong>4</strong></span>
+          <span>점검 필요 <strong>0</strong></span>
+          <small>방금 전 업데이트</small>
+        </div>
+      </div>
 
-    <section className={styles.dashboardFrame} aria-label="BOSS CCTV monitoring workspace">
       <div className={styles.cctvemptyarea}>
         <div className={styles.cctvSection}>
-          <div className={styles.cctvmonitoringSection}>
-            <h2 className={styles.title}>실시간 CCTV 모니터링</h2>
-            <div className={styles.videodashBoard}>
-              {cameraSlots.map((slotNum) => {
-                const matchingCamera = cctvList.find(cctv => Number(cctv.camera_id) === Number(slotNum));
-                const videoSource = (matchingCamera && matchingCamera.stream_url) ? matchingCamera.stream_url : null;
+          <section className={styles.cctvmonitoringSection}>
+            <header className={styles.sectionHeader}>
+              <div className={styles.sectionTitleGroup}>
+                <span className={styles.sectionIcon}><GridViewRoundedIcon /></span>
+                <div>
+                  <h2 className={styles.title}>실시간 CCTV</h2>
+                  <p>카메라를 선택해 현재 화면을 확인하세요.</p>
+                </div>
+              </div>
+              <button className={styles.panelAction} type="button" onClick={handleMoveToMonitoringDetail}>
+                <OpenInFullRoundedIcon />선택 화면 크게 보기
+              </button>
+            </header>
 
+            <div className={styles.videodashBoard}>
+              {cameraSlots.map((camera) => {
+                const isActive = camera.id === activeCameraId
                 return (
                   <button
-                    className={styles.video}
-                    onClick={() => handleMoveToMonitoringDetail(matchingCamera)}
-                    key={slotNum}
+                    className={`${styles.video}${isActive ? ` ${styles.videoActive}` : ''}`}
+                    onClick={() => navigate(`/monitoringdetail?camera=${camera.id}`)}
+                    key={camera.id}
                     type="button"
+                    aria-label={`${camera.area} ${camera.location} 실시간 영상 열기`}
                   >
-                    {videoSource ? (
-                      <video
-                        key={videoSource}
-                        src={videoSource}
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                      />
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#666', fontSize: '14px', width: '100%' }}>
-                        NO SIGNAL
-                      </div>
-                    )}
-
-                    <div style={{
-                      position: 'absolute',
-                      top: '10px',
-                      left: '10px',
-                      color: 'white',
-                      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      zIndex: 20,
-                      fontSize: '11px',
-                      fontWeight: 'bold',
-                      pointerEvents: 'none'
-                    }}>
-                      {matchingCamera ? `🔴 CAM - ${slotNum} (${matchingCamera.camera_name})` : `⚪ CAM - ${slotNum} (연결 끊김)`}
-                    </div>
+                    <span className={styles.cameraTopbar}>
+                      <span className={styles.cameraLive}><i />LIVE</span>
+                      <span>{camera.id}</span>
+                    </span>
+                    <span className={styles.cameraPlaceholder}>
+                      <VideocamOutlinedIcon />
+                      <small>실시간 영상 연결됨</small>
+                    </span>
+                    <span className={styles.cameraFooter}>
+                      <span><strong>{camera.area}</strong>{camera.location}</span>
+                      {isActive && <em>선택됨</em>}
+                    </span>
                   </button>
                 )
               })}
             </div>
-          </div>
+          </section>
 
-          <div className={styles.videoChange}>
-            <h2 className={styles.title}>빠른 전환</h2>
+          <section className={styles.videoChange}>
+            <header className={styles.sectionHeader}>
+              <div className={styles.sectionTitleGroup}>
+                <div>
+                  <h2 className={styles.title}>빠른 전환</h2>
+                  <p>썸네일을 눌러 활성 카메라를 변경합니다.</p>
+                </div>
+              </div>
+              <span className={styles.currentCamera}>현재 {activeCamera?.id}</span>
+            </header>
             <div className={styles.videochangedashBoard}>
-              {cameraSlots.map((slot) => (
-                <button className={styles.videoChangeFrame} key={slot} type="button">
-                  {slot}
+              {cameraSlots.map((camera) => (
+                <button
+                  className={`${styles.videoChangeFrame}${camera.id === activeCameraId ? ` ${styles.videoChangeFrameActive}` : ''}`}
+                  key={camera.id}
+                  type="button"
+                  onClick={() => setActiveCameraId(camera.id)}
+                  aria-pressed={camera.id === activeCameraId}
+                >
+                  <VideocamOutlinedIcon />
+                  <span><strong>{camera.area}</strong><small>{camera.id}</small></span>
                 </button>
               ))}
             </div>
-          </div>
+          </section>
         </div>
 
         <div className={styles.EventSection}>
-          <div className={styles.liveEvent}>
-            <h2 className={styles.title}>실시간 알람</h2>
-            <RecentEventsTable events={recentEvents} />
-          </div>
+          <section className={styles.liveEvent}>
+            <header className={styles.sectionHeader}>
+              <div className={styles.sectionTitleGroup}>
+                <span className={`${styles.sectionIcon} ${styles.alertIcon}`}><WarningAmberRoundedIcon /></span>
+                <div>
+                  <h2 className={styles.title}>실시간 알람</h2>
+                  <p>최근 감지된 이상 이벤트입니다.</p>
+                </div>
+              </div>
+              <span className={styles.alertCount}>{recentEvents.length}건</span>
+            </header>
+            <RecentEventsTable
+              events={recentEvents}
+              selectedEvent={selectedEvent}
+              onSelectEvent={setSelectedEvent}
+            />
+          </section>
 
-          <div className={styles.emptyBox}>
-            <h2 className={styles.title}>이벤트 상세</h2>
-          </div>
+          <section className={styles.emptyBox}>
+            <header className={styles.sectionHeader}>
+              <div className={styles.sectionTitleGroup}>
+                <div>
+                  <h2 className={styles.title}>이벤트 상세</h2>
+                  <p>선택한 알람의 세부 정보입니다.</p>
+                </div>
+              </div>
+            </header>
+
+            {selectedEvent && (
+              <div className={styles.eventDetail}>
+                <div className={styles.eventDetailHeadline}>
+                  <span className={styles.eventWarningIcon}><WarningAmberRoundedIcon /></span>
+                  <div>
+                    <span>{selectedEvent.status}</span>
+                    <strong>{selectedEvent.type}</strong>
+                  </div>
+                </div>
+                <dl>
+                  <div><dt><LocationOnOutlinedIcon />감지 위치</dt><dd>{selectedEvent.location}</dd></div>
+                  <div><dt><AccessTimeRoundedIcon />감지 시간</dt><dd>{selectedEvent.time}</dd></div>
+                  <div><dt>담당자</dt><dd>{selectedEvent.manager}</dd></div>
+                </dl>
+                <button type="button" onClick={() => navigate('/actions')}>
+                  조치 이력에서 확인 <ArrowForwardRoundedIcon />
+                </button>
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </section>
