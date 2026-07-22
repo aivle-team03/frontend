@@ -164,6 +164,27 @@
   font-weight: 900;
   line-height: 1.25;
 }
+.videodashBoardWrapper{
+
+    display: flex;
+    align-items: center;     
+    justify-content: space-between;
+    width: 100%;
+    gap: 16px;                 
+    margin-top: 20px;
+
+}
+
+.arrowButton {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  /* 보라색 포인트 컬러에 맞춘 예시 스타일 */
+  background-color: #2b2b2b; 
+  color: white;
+  border: none;
+  cursor: pointer;
+}
 
 .sectionTitleGroup p {
   margin: 3px 0 0;

@@ -11,6 +11,8 @@ import { useNavigate } from 'react-router-dom'
 import RecentEventsTable from '../components/monitoring/RecentEventsTableMonitoring.jsx'
 import { recentEvents } from '../data/dashboardMock.js'
 import styles from '../styles/CCTVMonitoring.module.css'
+import { CCTV_INFO_MOCKUP_DATA } from '../mocks/mockData.js'
+import { useState } from 'react';
 
 const cameraSlots = [
   { id: 'CAM-01', area: '1구역', location: 'A동 1층 출입구', status: '정상' },
@@ -18,6 +20,7 @@ const cameraSlots = [
   { id: 'CAM-03', area: '3구역', location: 'B동 자재 보관소', status: '정상' },
   { id: 'CAM-04', area: '4구역', location: 'B동 지하 주차장', status: '정상' },
 ]
+
 
 function MonitoringPage() {
   const navigate = useNavigate()
@@ -28,6 +31,13 @@ function MonitoringPage() {
   const handleMoveToMonitoringDetail = () => {
     navigate(`/monitoringdetail?camera=${activeCameraId}`)
   }
+
+  const DecreasePage = () => {
+  setPage(prev => (prev > 0 ? prev - 1 : prev));
+};
+
+  const cctvList = CCTV_INFO_MOCKUP_DATA ? CCTV_INFO_MOCKUP_DATA.slice(page*4, 4*page+4):[];
+
 
   return (
     <section className={styles.dashboardFrame} aria-label="BOSS CCTV 모니터링 작업 공간">
