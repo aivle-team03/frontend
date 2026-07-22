@@ -6,6 +6,7 @@ import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedI
 import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import PieChartRoundedIcon from '@mui/icons-material/PieChartRounded'
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { useMemo, useState } from 'react'
 import actionHistory1 from '../assets/actionhistory_1.jpg'
 import actionHistory2 from '../assets/actionhistory_2.jpg'
@@ -89,7 +90,6 @@ function ActionHistoryPage() {
   }
 
   const createReport = () => {
-    // TODO: 백엔드 연동 시 서버에서 생성한 리포트 파일 정보를 사용합니다.
     setReportSnapshot({
       records: filteredRecords,
       period: selectedPeriod === '직접 설정' && customPeriod
@@ -277,7 +277,7 @@ function ActionHistoryPage() {
             aria-labelledby="approval-review-title"
             onMouseDown={(e) => e.stopPropagation()}
           >
-            {/* 헤더 */}
+
             <div className="modal-v2-header">
               <h2 id="approval-review-title">조치 내역 관리자 승인</h2>
               <button type="button" className="modal-v2-close" onClick={() => setSelectedRecord(null)}>
@@ -286,7 +286,7 @@ function ActionHistoryPage() {
             </div>
 
             <div className="modal-v2-body">
-              {/* 상단 요약 정보 바 */}
+
               <div className="modal-v2-summary-bar">
                 <div className="summary-item">
                   <span>위험 유형</span>
@@ -318,10 +318,8 @@ function ActionHistoryPage() {
                 </div>
               </div>
 
-              {/* 메인 콘텐츠 그리드 (2행 구조) */}
               <div className="modal-v2-content-grid">
 
-                {/* 1행-1: 조치 전 (감지 사진) */}
                 <div className="modal-v2-card">
                   <h3>조치 전</h3>
                   <div className="img-box">
@@ -330,7 +328,6 @@ function ActionHistoryPage() {
                   <p className="card-desc">감지 내용: {selectedRecord.type} 발생 확인</p>
                 </div>
 
-                {/* 1행-2: 조치 후 (완료 사진) */}
                 <div className="modal-v2-card">
                   <h3>조치 후</h3>
                   <div className="img-box">
@@ -339,40 +336,46 @@ function ActionHistoryPage() {
                   <p className="card-desc">조치 내용: 현장 이물질/장애물 제거 완료</p>
                 </div>
 
-                {/* 1행-3: AI 재확인 결과 */}
                 <div className="modal-v2-card ai-result-card">
                   <h3>AI 재확인 결과</h3>
+
                   <div className="ai-success-box">
-                    <span className="ai-check-icon">✓</span>
-                    <div>
-                      <strong>결과</strong>
-                      <p>위험요소 해소</p>
+                    <CheckCircleRoundedIcon className="ai-check-icon-mui" />
+                    <div className="ai-result-text">
+                      <span className="ai-result-label">결과</span>
+                      <strong className="ai-result-value">위험요소 해소</strong>
                     </div>
                   </div>
+
                   <div className="ai-info-list">
                     <div><span>신뢰도</span><strong>98.4%</strong></div>
                     <div><span>분석 내용</span><strong>정상 상태 복구 감지됨</strong></div>
                   </div>
                 </div>
 
-                {/* 2행-1: 작업자 조치 내용 */}
                 <div className="modal-v2-card worker-detail-card">
                   <h3>작업자 조치 내용</h3>
-                  <div className="detail-row">
-                    <span>조치 담당자</span>
-                    <strong>{selectedRecord.assignee}</strong>
-                  </div>
-                  <div className="detail-row">
-                    <span>내용</span>
-                    <p>적치 박스를 제거하고 통행 및 피난동선을 안전하게 확보하였습니다.</p>
-                  </div>
-                  <div className="detail-row">
-                    <span>비고</span>
-                    <p>현장 사진 재촬영 후 등록 완료</p>
+
+                  <div className="worker-detail-group">
+                    <div className="detail-item">
+                      <span className="detail-label">조치 담당자</span>
+                      <strong className="detail-value">{selectedRecord.assignee}</strong>
+                    </div>
+
+                    <div className="detail-item">
+                      <span className="detail-label">내용</span>
+                      <p className="detail-value text-desc">
+                        적치 박스를 제거하고 통행 및 피난동선을 안전하게 확보하였습니다.
+                      </p>
+                    </div>
+
+                    <div className="detail-item">
+                      <span className="detail-label">비고</span>
+                      <p className="detail-value text-desc">현장 사진 재촬영 후 등록 완료</p>
+                    </div>
                   </div>
                 </div>
 
-                {/* 2행-2: 반려 사유 입력란 (처리 이력 자리를 대신하여 넓게 배치) */}
                 <div className="modal-v2-card reject-reason-card">
                   <h3>반려 사유</h3>
                   <textarea
@@ -384,7 +387,6 @@ function ActionHistoryPage() {
               </div>
             </div>
 
-            {/* 하단 푸터 버튼 (목록 / 반려 / 승인) */}
             <div className="modal-v2-footer">
               <button type="button" className="btn-v2-list" onClick={() => setSelectedRecord(null)}>
                 목록
