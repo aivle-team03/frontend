@@ -1,5 +1,5 @@
 import "../styles/ActionHistoryPage.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import RecentEventstable from "../components/dashboard/RecentEventsTable";
 import PeriodSelector from "../components/dashboard/PeriodSelector";
 import axios from "axios";
@@ -9,7 +9,6 @@ import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedI
 import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import PieChartRoundedIcon from '@mui/icons-material/PieChartRounded'
-import { useMemo, useState } from 'react'
 import actionHistory1 from '../assets/actionhistory_1.jpg'
 import actionHistory2 from '../assets/actionhistory_2.jpg'
 import actionHistory3 from '../assets/actionhistory_3.jpg'
@@ -18,7 +17,6 @@ import actionHistory5 from '../assets/actionhistory_5.jpg'
 import actionHistory6 from '../assets/actionhistory_6.jpg'
 import actionHistory7 from '../assets/actionhistory_7.jpg'
 import actionHistory8 from '../assets/actionhistory_8.jpg'
-import PeriodSelector from '../components/dashboard/PeriodSelector.jsx'
 import { APPROVAL_HISTORY_MOCK_DATA } from '../mocks/mockData.js'
 import '../styles/ActionHistoryPage.css'
 

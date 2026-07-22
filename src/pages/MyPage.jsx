@@ -10,7 +10,6 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import { useEffect, useState } from 'react'
 import { MY_PAGE_MOCK_DATA } from '../mocks/mockData.js'
 import '../styles/MyPage.css'
-import React, { useState, useEffect } from 'react';
 
 const NOTIFICATION_SETTINGS_STORAGE_KEY = 'boss-notification-settings'
 const defaultNotificationSettings = {
