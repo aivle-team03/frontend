@@ -55,6 +55,27 @@ function SidebarIcon({ name }) {
     )
   }
 
+  if (name === 'board') {
+    return (
+      <svg {...commonProps}>
+        <path d="M5 5h14v14H5V5Z" />
+        <path d="M8 9h8M8 13h5" />
+        <path d="M17 17h.01" />
+      </svg>
+    )
+  }
+
+  if (name === 'report') {
+    return (
+      <svg {...commonProps}>
+        <path d="M6 3h9l3 3v15H6V3Z" />
+        <path d="M14 3v4h4" />
+        <path d="M9 17v-4M12 17V9M15 17v-6" />
+      </svg>
+    )
+  }
+
+
   return (
     <svg {...commonProps}>
       <path d="M9.2 9a3 3 0 1 1 4.7 2.45c-.95.62-1.4 1.14-1.4 2.05" />

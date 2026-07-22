@@ -10,6 +10,8 @@ const navigationItems = [
   { path: '/actions', label: '조치 이력', icon: 'history' },
   { path: '/law-qa', label: '법규 Q&A', icon: 'help' },
   { path: '/education', label: '안전 교육', icon: 'education' },
+  { path: '/board', label: '위험 신고 게시판', icon: 'board' },
+  { path: '/report', label: '보고서', icon: 'report' },
 ]
 
 function MainLayout() {
