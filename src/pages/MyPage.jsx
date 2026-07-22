@@ -117,8 +117,8 @@ function MyPage() {
     const trimmedEmail = draftProfile.email.trim()
 
     if (!trimmedName) nextError.name = '이름을 입력해 주세요.'
-    if (!trimmedEmail) nextError.email = '이메일을 입력해 주세요.'
-    else if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) nextError.email = '이메일 형식을 확인해 주세요.'
+    // if (!trimmedEmail) nextError.email = '이메일을 입력해 주세요.'
+    // else if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) nextError.email = '이메일 형식을 확인해 주세요.'
 
     if (Object.keys(nextError).length) {
       setProfileError(nextError)

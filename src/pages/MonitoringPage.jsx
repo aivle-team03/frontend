@@ -84,6 +84,7 @@ function MonitoringPage() {
 
         const formattedCameras = dbCctvs.map((item, index) => ({
           id: item.camera_id || item.id,
+          name: item.camera_name,
           area: item.area || `${index + 1}구역`,
           location: item.location || item.name || `CCTV #${item.camera_id}`,
           status: item.status || '정상',

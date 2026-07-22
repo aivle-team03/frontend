@@ -17,6 +17,7 @@ import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { MY_PAGE_MOCK_DATA } from '../../mocks/mockData.js'
 import '../../styles/Header.css'
 
@@ -52,19 +53,61 @@ function getStoredReadIds() {
   }
 }
 
-function Header({ items, setIsLoggedIn }) {
+function Header({ items }) {
+  const [user, setUser] = useState({})
+
   const [activeMenu, setActiveMenu] = useState(null)
   const [readNotificationIds, setReadNotificationIds] = useState(getStoredReadIds)
   const menuRootRef = useRef(null)
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, notifications } = MY_PAGE_MOCK_DATA
+  const { notifications } = MY_PAGE_MOCK_DATA
   const headerPath = location.pathname === '/monitoringdetail' ? '/monitoring' : location.pathname
   const currentItem = items.find((item) => item.path === headerPath)
   const title = currentItem?.label ?? extraPageTitles[headerPath] ?? 'BOSS'
   const headerMeta = pageHeaderMeta[headerPath]
   const HeaderIcon = headerMeta?.icon
-  const [isProfileOpen, setIsProfileOpen] = useState(false)
+
+  useEffect(() => {
+    fetchUserProfile()
+  }, [])
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      const response = await axios.get('http://127.0.0.1:8000/api/users/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      const userData = response.data
+      if (userData) {
+        setUser({
+          name: userData.name || userData.user_id || '관리자',
+          role: userData.role || '소방안전 관리자',
+          department: userData.department || '시설관리팀',
+          email: userData.email || '',
+        })
+      }
+    } catch (error) {
+      console.error('헤더 사용자 프로필 로드 실패:', error)
+    }
+  }
+
+  const handleLogout = () => {
+    if (window.confirm('로그아웃 하시겠습니까?')) {
+
+      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('user');
+
+      setActiveMenu(null);
+
+      window.location.href = '/login';
+    }
+  }
 
   const notificationItems = useMemo(
     () => notifications.map((notification) => ({
@@ -121,33 +164,6 @@ function Header({ items, setIsLoggedIn }) {
     setActiveMenu(null)
     navigate('/mypage')
   }
-
-  const handleLogout = async () => {
-    try {
-      const token = localStorage.getItem('token');
-
-      await fetch('http://127.0.0.1:8000/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-    } catch (error) {
-      console.error('로그아웃 통신 중 에러 발생:', error);
-    } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userName');
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userUid');
-      localStorage.removeItem('companyCode');
-
-      setIsProfileOpen(false);
-      setIsLoggedIn(false);
-    }
-  };
 
   return (
     <header className="app-header">

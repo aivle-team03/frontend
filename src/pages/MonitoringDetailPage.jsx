@@ -87,8 +87,9 @@ function MonitoringDetailPage() {
       if (response.data && response.data.length > 0) {
         const formattedList = response.data.map((item, index) => ({
           id: item.camera_id || item.id,
+          camera_name: item.camera_name || `${index + 1}번 카메라`,
           area: item.area || `${index + 1}구역`,
-          location: item.location || item.name || `CCTV #${item.camera_id}`,
+          location: item.location || `CCTV #${item.camera_id}`,
           status: item.status || '정상',
         }));
         setCameraList(formattedList);
@@ -120,7 +121,7 @@ function MonitoringDetailPage() {
 
   const activeCamera = cameraList.find(
     (cam) => String(cam.id) === String(currentCameraIdFromUrl)
-  ) || cameraList[0] || { id: 'CAM-01', area: '1구역', location: 'A동 1층 출입구' };
+  ) || cameraList[0] || { id: 'CAM-01', area: '1구역', location: 'A동 1층 출입구', camera_name: '1번 카메라' };
 
   const activeStreamUrl = streams[activeCamera.id];
 
@@ -135,7 +136,7 @@ function MonitoringDetailPage() {
           <ArrowBackRoundedIcon />
         </button>
         <div>
-          <span>{activeCamera.id}</span>
+          <span>{activeCamera.camera_name}</span>
           <strong>{activeCamera.area} · {activeCamera.location}</strong>
         </div>
         <span className="detail-live-status"><i />LIVE</span>

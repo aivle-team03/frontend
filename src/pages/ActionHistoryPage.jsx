@@ -44,10 +44,10 @@ function ActionHistoryPage() {
           completedAt: item.date,
           location: item.camera_id ? `CCTV #${item.camera_id} 구역` : "지정 안 됨",
           type: item.content || "정기 조치 점검",
-          assignee: item.uid ? `${item.uid}` : "미지정",
+          assignee: item.name ? `${item.name}` : "임현수",
           imageUrl: item.image_url,
           approvalStatus: item.approval_status || "pending",
-          approver: item.approver ?? '미지정',
+          approver: item.approver ?? '임현수',
           approvedAt: item.approved_at ?? null,
         }));
         setRecords(fetchedRecords);
@@ -93,6 +93,27 @@ function ActionHistoryPage() {
     if (records.length === 0) return 0
     return Math.round((approvedCount / records.length) * 100)
   }, [approvedCount, records.length])
+
+  const handleApprove = () => {
+    const targetId = selectedRecord.id;
+    setRecords((prevRecords) =>
+      prevRecords.map((record) => {
+        const currentId = record.id || record.checklist_id || record.action_id;
+
+        if (currentId === targetId) {
+          return {
+            ...record,
+            approvalStatus: 'approved',
+            statusText: '승인 완료',
+          };
+        }
+        return record;
+      })
+    );
+    setSelectedRecord(null);
+
+    alert('승인 처리가 완료되었습니다.');
+  };
 
   const createReport = () => {
     setReportSnapshot({
@@ -338,7 +359,7 @@ function ActionHistoryPage() {
                 <div className="modal-v2-card">
                   <h3>조치 후</h3>
                   <div className="img-box">
-                    <img src={selectedRecord.actionImageUrl} alt="조치 후 사진" />
+                    <img src={selectedRecord.imageUrl} alt="조치 후 사진" />
                   </div>
                   <p className="card-desc">조치 내용: 현장 이물질/장애물 제거 완료</p>
                 </div>
@@ -402,7 +423,9 @@ function ActionHistoryPage() {
                 <button type="button" className="btn-v2-reject" onClick={() => setSelectedRecord(null)}>
                   반려
                 </button>
-                <button type="button" className="btn-v2-approve" onClick={() => setSelectedRecord(null)}>
+                <button type="button" className="btn-v2-approve" onClick={() => {
+                  handleApprove();
+                }}>
                   승인
                 </button>
               </div>

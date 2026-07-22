@@ -17,8 +17,14 @@ function AppRouter() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const status = localStorage.getItem('isLoggedIn') === 'true';
-    setIsLoggedIn(status);
+    const token = localStorage.getItem('token');
+    const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
+
+    if (token && loggedInStatus) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+    }
     setIsLoading(false);
   }, []);
 
