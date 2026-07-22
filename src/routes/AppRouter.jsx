@@ -9,6 +9,8 @@ import LawQaPage from '../pages/LawQaPage.jsx'
 import MonitoringPage from '../pages/MonitoringPage.jsx'
 import MyPage from '../pages/MyPage.jsx'
 import MonitoringDetailPage from '../pages/MonitoringDetailPage.jsx'
+import Board from '../pages/Board.jsx'
+import ReportPage from '../pages/ReportPage.jsx'
 import RiskManagementPage from '../pages/RiskManagementPage.jsx'
 
 function AppRouter() {
@@ -22,6 +24,8 @@ function AppRouter() {
           <Route path="actions" element={<ActionHistoryPage />} />
           <Route path="law-qa" element={<LawQaPage />} />
           <Route path="education" element={<EducationPage />} />
+          <Route path="board" element={<Board />} />
+          <Route path="report" element={<ReportPage />} />
           <Route path="education-management" element={<EducationManagementPage />} />
           <Route path="risk-management" element={<RiskManagementPage />} />
           <Route path="mypage" element={<MyPage />} />

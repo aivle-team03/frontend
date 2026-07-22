@@ -56,6 +56,27 @@ function SidebarIcon({ name }) {
     )
   }
 
+  if (name === 'board') {
+    return (
+      <svg {...commonProps}>
+        <path d="M5 5h14v14H5V5Z" />
+        <path d="M8 9h8M8 13h5" />
+        <path d="M17 17h.01" />
+      </svg>
+    )
+  }
+
+  if (name === 'report') {
+    return (
+      <svg {...commonProps}>
+        <path d="M6 3h9l3 3v15H6V3Z" />
+        <path d="M14 3v4h4" />
+        <path d="M9 17v-4M12 17V9M15 17v-6" />
+      </svg>
+    )
+  }
+
+
   if (name === 'manage') {
     return <svg {...commonProps}><path d="M8 5h8M9 3h6v4H9zM6 7h12v14H6z" /><path d="M9 12h6M9 16h4" /></svg>
   }
