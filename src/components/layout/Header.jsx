@@ -1,6 +1,9 @@
 import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined'
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded'
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined'
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded'
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined'
+import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined'
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined'
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded'
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded'
@@ -11,6 +14,7 @@ import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownR
 import ManageAccountsOutlinedIcon from '@mui/icons-material/ManageAccountsOutlined'
 import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined'
+import QueryStatsRoundedIcon from '@mui/icons-material/QueryStatsRounded'
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
@@ -24,6 +28,8 @@ import '../../styles/Header.css'
 const NOTIFICATION_STORAGE_KEY = 'boss-read-notification-ids'
 
 const extraPageTitles = {
+  '/education-management': '교육 관리',
+  '/risk-management': '위험도 관리',
   '/mypage': '마이페이지',
 }
 
@@ -34,6 +40,10 @@ const pageHeaderMeta = {
   '/actions': { icon: HistoryOutlinedIcon, description: '안전 조치 이력과 처리 상태를 확인하세요.' },
   '/law-qa': { icon: GavelOutlinedIcon, description: '산업안전 관련 법규와 관리 기준을 확인하세요.' },
   '/education': { icon: SchoolOutlinedIcon, description: '현장에 필요한 안전 교육 콘텐츠와 이수 현황을 확인하세요.' },
+  '/education-management': { icon: AdminPanelSettingsOutlinedIcon, description: '대상자별 교육 이수 현황을 관리하고 현장 교육 자료를 생성하세요.' },
+  '/risk-management': { icon: QueryStatsRoundedIcon, description: '조치 이력을 바탕으로 현장 위험도를 확인하고 관리하세요.' },
+  '/board': { icon: CampaignOutlinedIcon, description: '현장에서 접수된 위험 신고와 조치 진행 상태를 확인하세요.' },
+  '/report': { icon: ArticleOutlinedIcon, description: '현장 안전 현황과 조치 결과를 보고서로 확인하세요.' },
   '/mypage': { icon: AccountCircleOutlinedIcon, description: '관리자 정보와 계정 설정을 관리하세요.' },
 }
 
@@ -63,7 +73,7 @@ function Header({ items }) {
   const navigate = useNavigate()
   const { notifications } = MY_PAGE_MOCK_DATA
   const headerPath = location.pathname === '/monitoringdetail' ? '/monitoring' : location.pathname
-  const currentItem = items.find((item) => item.path === headerPath)
+  const currentItem = [...items, ...items.flatMap((item) => item.children ?? [])].find((item) => item.path === headerPath)
   const title = currentItem?.label ?? extraPageTitles[headerPath] ?? 'BOSS'
   const headerMeta = pageHeaderMeta[headerPath]
   const HeaderIcon = headerMeta?.icon
