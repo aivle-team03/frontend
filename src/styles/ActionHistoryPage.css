@@ -1,7 +1,10 @@
+/* ==========================================================================
+   1. 페이지 레이아웃 & 상단 서머리 카드
+   ========================================================================== */
 .approval-history-page {
   display: grid;
   gap: 20px;
-  max-width: 1400px;
+  max-width: 1320px;
   margin: 0 auto;
 }
 
@@ -28,44 +31,6 @@
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
 }
 
-.total-summary .approval-summary-icon {
-  color: #2f64b7;
-  background: #eaf2ff;
-}
-
-.rate-summary .approval-summary-icon {
-  color: #6366f1;
-  background: #eeefef;
-}
-
-.rate-summary .summary-count {
-  color: #4f46e5;
-}
-
-.approval-summary-icon {
-  display: grid;
-  width: 42px;
-  height: 58px;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 50%;
-}
-
-.approval-summary-icon svg {
-  width: 30px;
-  height: 30px;
-}
-
-.pending-summary .approval-summary-icon {
-  color: #d97706;
-  background: #fff6df;
-}
-
-.approved-summary .approval-summary-icon {
-  color: #169b58;
-  background: #eafaf0;
-}
-
 .approval-summary-card>div {
   display: grid;
   gap: 1px;
@@ -84,14 +49,6 @@
   line-height: 1.15;
 }
 
-.pending-summary strong {
-  color: #d97706;
-}
-
-.approved-summary strong {
-  color: #169b58;
-}
-
 .approval-summary-card small {
   margin-top: 3px;
   color: #94a3b8;
@@ -99,6 +56,56 @@
   font-weight: 700;
 }
 
+/* 서머리 아이콘 세부 스타일 */
+.approval-summary-icon {
+  display: grid;
+  width: 42px;
+  height: 58px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.approval-summary-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.total-summary .approval-summary-icon {
+  color: #2f64b7;
+  background: #eaf2ff;
+}
+
+.pending-summary .approval-summary-icon {
+  color: #d97706;
+  background: #fff6df;
+}
+
+.pending-summary strong {
+  color: #d97706;
+}
+
+.approved-summary .approval-summary-icon {
+  color: #169b58;
+  background: #eafaf0;
+}
+
+.approved-summary strong {
+  color: #169b58;
+}
+
+.rate-summary .approval-summary-icon {
+  color: #6366f1;
+  background: #eeefef;
+}
+
+.rate-summary .summary-count {
+  color: #4f46e5;
+}
+
+/* ==========================================================================
+   2. 메인 콘텐츠 영역 (테이블 & 우측 컨트롤 패널)
+   ========================================================================== */
 .approval-history-card {
   padding: 24px;
   border: 1px solid #e2eaf4;
@@ -108,56 +115,10 @@
 }
 
 .approval-content-layout {
-  display: block;
-}
-
-.approval-control-panel {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) 270px;
+  align-items: start;
   gap: 20px;
-  padding: 20px;
-  border: 1px solid #e2eaf4;
-  border-radius: 17px;
-  background: #ffffff;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
-}
-
-.approval-control-eyebrow {
-  display: block;
-  color: #2f64b7;
-  font-size: 10px;
-  font-weight: 900;
-}
-
-.approval-control-panel h2 {
-  margin: 4px 0 12px;
-  color: #243247;
-  font-size: 16px;
-  font-weight: 900;
-}
-
-.approval-control-panel p {
-  margin: -4px 0 14px;
-  color: #7b8799;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-
-.approval-control-panel .period-toggle {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: 100%;
-}
-
-.approval-control-panel .period-toggle .MuiToggleButton-root {
-  min-width: 0;
-  padding: 7px 4px;
-  font-size: 11px;
-}
-
-.approval-control-divider {
-  height: 1px;
-  background: #e9eef5;
 }
 
 .approval-history-heading {
@@ -167,82 +128,6 @@
   gap: 18px;
   padding: 0 2px 18px;
   border-bottom: 1px solid #eaf0f6;
-}
-
-.approval-history-tools {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.approval-history-tools .period-toggle {
-  flex-wrap: nowrap;
-}
-
-.approval-history-tools .period-toggle .MuiToggleButton-root {
-  min-width: 0;
-  padding: 5px 9px;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.approval-report-actions {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 6px;
-  margin-left: 2px;
-  padding-left: 10px;
-  border-left: 1px solid #dfe7f1;
-}
-
-.approval-report-actions button {
-  display: inline-flex;
-  min-height: 34px;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 0 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
-.approval-report-actions svg {
-  width: 15px;
-  height: 15px;
-}
-
-.approval-report-generate {
-  border: 1px solid #a9c7f4;
-  color: #2f64b7;
-  background: #f7faff;
-}
-
-.approval-report-generate:hover {
-  background: #eaf2ff;
-}
-
-.approval-report-download {
-  border: 1px solid #2f64b7;
-  color: #ffffff;
-  background: #2f64b7;
-}
-
-.approval-report-download:hover:not(:disabled) {
-  background: #24559e;
-}
-
-.approval-report-download:disabled {
-  border-color: #d7e0eb;
-  color: #a1adbb;
-  background: #eef2f6;
-  cursor: not-allowed;
 }
 
 .approval-history-heading h2 {
@@ -269,26 +154,117 @@
   font-weight: 800;
 }
 
+/* 우측 컨트롤 패널 */
+.approval-control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 22px;
+  border: 1px solid #e2eaf4;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+
+.approval-control-eyebrow {
+  display: block;
+  color: #2f64b7;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.approval-control-panel h2 {
+  margin: 3px 0 12px 0;
+  color: #172033;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.approval-control-panel p {
+  margin: -6px 0 14px 0;
+  color: #7b8799;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.approval-control-panel .period-toggle {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.approval-control-panel .period-toggle .MuiToggleButton-root {
+  min-width: 0 !important;
+  padding: 8px 0 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-color: #dbe4ef !important;
+}
+
+.approval-control-divider {
+  height: 1px;
+  background: #edf2f7;
+  margin: 2px 0;
+}
+
+/* 리포트 액션 버튼 */
 .approval-control-panel .approval-report-actions {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin: 0;
   padding: 0;
-  border: 0;
+  border: none;
 }
 
 .approval-control-panel .approval-report-actions button {
   width: 100%;
-}
-
-.approval-history-footer {
-  padding: 14px 2px 0;
-  color: #718198;
-  font-size: 12px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 800;
-  text-align: right;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
+.approval-report-generate {
+  border: 1px solid #2f64b7 !important;
+  color: #2f64b7 !important;
+  background: #ffffff !important;
+}
+
+.approval-report-generate:hover {
+  background: #f0f5ff !important;
+}
+
+.approval-report-download {
+  border: none !important;
+  color: #ffffff !important;
+  background: #2f64b7 !important;
+}
+
+.approval-report-download:hover:not(:disabled) {
+  background: #24559e !important;
+}
+
+.approval-report-download:disabled {
+  border: 1px solid #e2e8f0 !important;
+  color: #94a3b8 !important;
+  background: #f1f5f9 !important;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   3. 데이터 테이블
+   ========================================================================== */
 .approval-table-wrap {
   overflow-x: auto;
   padding-top: 16px;
@@ -296,10 +272,10 @@
 
 .approval-history-table {
   width: 100%;
-  min-width: 880px;
+  min-width: unset !important;
   border-collapse: collapse;
   color: #526176;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .approval-history-table th {
@@ -331,6 +307,7 @@
   white-space: nowrap;
 }
 
+/* 테이블 컬럼 너비 */
 .approval-history-table th:nth-child(1) {
   width: 126px;
 }
@@ -367,9 +344,6 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-}
-
-.approval-type {
   color: #42526a;
   min-height: 25px;
   vertical-align: middle;
@@ -384,16 +358,7 @@
   background: #edf5ff;
 }
 
-.approval-photo-thumbnail {
-  display: block;
-  width: 62px;
-  height: 42px;
-  border: 1px solid #dbe4ef;
-  border-radius: 7px;
-  object-fit: cover;
-  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.1);
-}
-
+/* 썸네일 사진 통합 */
 .approval-photo-button {
   display: block;
   padding: 0;
@@ -404,27 +369,30 @@
   vertical-align: middle;
 }
 
+.approval-photo-thumbnail {
+  display: block;
+  width: 62px;
+  height: 42px;
+  border: 1px solid #dbe4ef;
+  border-radius: 7px;
+  object-fit: cover;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.1);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
 .approval-photo-button:hover .approval-photo-thumbnail {
   border-color: #79a7e7;
   box-shadow: 0 4px 10px rgba(47, 100, 183, 0.2);
   transform: scale(1.04);
 }
 
-.approval-photo-button:focus-visible {
-  outline: 3px solid rgba(47, 100, 183, 0.25);
-  outline-offset: 3px;
-}
-
-.approval-photo-thumbnail {
-  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
-}
-
+/* 승인 상태 태그 */
 .approval-status {
   display: inline-flex;
   padding: 5px 8px;
   border: 1px solid;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   vertical-align: middle;
 }
@@ -455,10 +423,6 @@
   font-weight: 700;
 }
 
-.approval-empty {
-  color: #a4afbd;
-}
-
 .approval-review-button {
   padding: 7px 10px;
   border: 1px solid #a9c7f4;
@@ -477,228 +441,353 @@
   background: #2f64b7;
 }
 
-.approval-review-button:focus-visible {
-  outline: 3px solid rgba(47, 100, 183, 0.2);
-  outline-offset: 2px;
+.approval-history-footer {
+  padding: 14px 2px 0;
+  color: #718198;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
 }
 
+/* ==========================================================================
+   4. 승인 검토 모달 (V2 최신 버전)
+   ========================================================================== */
 .approval-modal-backdrop {
-  position: fixed;
-  z-index: 100;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  background: rgba(15, 23, 42, 0.48);
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(15, 23, 42, 0.5) !important;
   backdrop-filter: blur(3px);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 9999 !important;
 }
 
-.approval-review-modal {
-  width: min(720px, 100%);
+.approval-review-modal-v2 {
+  width: min(1080px, 92vw);
+  max-height: none;
+  border-radius: 16px;
   overflow: hidden;
-  border: 1px solid #dce6f2;
-  border-radius: 18px;
   background: #ffffff;
-  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28);
-}
-
-.approval-modal-header,
-.approval-modal-actions {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
   display: flex;
-  align-items: center;
+  flex-direction: column;
+}
+
+/* 모달 헤더 */
+.modal-v2-header {
+  display: flex;
   justify-content: space-between;
-  gap: 14px;
-  padding: 18px 22px;
+  align-items: center;
+  padding: 14px 24px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.approval-modal-header {
-  border-bottom: 1px solid #e9eef5;
-}
-
-.approval-modal-header>div {
-  display: grid;
-  gap: 3px;
-}
-
-.approval-modal-header span {
-  color: #2f64b7;
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.approval-modal-header h2 {
+.modal-v2-header h2 {
   margin: 0;
-  color: #172033;
-  font-size: 19px;
-  font-weight: 900;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1e293b;
 }
 
-.approval-modal-header button {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 0;
-  border-radius: 9px;
-  color: #64748b;
-  background: #f5f8fc;
+.modal-v2-close {
+  background: none;
+  border: none;
   cursor: pointer;
+  color: #64748b;
 }
 
-.approval-modal-header button:hover {
-  background: #eaf0f8;
+/* 모달 바디 */
+.modal-v2-body {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.approval-modal-header svg {
-  width: 20px;
-  height: 20px;
-}
-
-.approval-modal-body {
+/* 상단 요약 바 */
+.modal-v2-summary-bar {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(210px, 0.75fr);
-  gap: 20px;
-  padding: 22px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  text-align: center;
 }
 
-.approval-review-photo {
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.summary-item span {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.summary-item strong {
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.summary-item small {
+  font-size: 10px;
+  color: #475569;
+}
+
+.badge-danger {
+  background: #ef4444;
+  color: #fff !important;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px !important;
+}
+
+.badge-pending {
+  background: #3b82f6;
+  color: #fff !important;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px !important;
+}
+
+/* 모달 그리드 레이아웃 */
+.modal-v2-content-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.modal-v2-card {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+}
+
+.modal-v2-card h3 {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+/* 이미지 박스 */
+.img-box {
   width: 100%;
-  min-height: 290px;
-  max-height: 380px;
-  border-radius: 12px;
-  background: #e9eef4;
+  height: 125px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.img-box img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
-.approval-review-details {
-  display: grid;
-  align-content: start;
-  gap: 10px;
-}
-
-.approval-review-details>div {
-  display: grid;
-  gap: 4px;
-  padding: 12px;
-  border: 1px solid #e7edf5;
-  border-radius: 10px;
-  background: #f9fbfd;
-}
-
-.approval-review-details span {
-  color: #8090a5;
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.approval-review-details strong {
-  color: #243247;
-  font-size: 13px;
-  font-weight: 900;
-  line-height: 1.4;
-}
-
-.approval-modal-actions {
-  justify-content: flex-end;
-  border-top: 1px solid #e9eef5;
-}
-
-.approval-modal-actions button {
-  min-height: 38px;
-  padding: 0 14px;
-  border-radius: 9px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.approval-modal-cancel {
-  border: 1px solid #d7e0eb;
-  color: #526176;
-  background: #ffffff;
-}
-
-.approval-modal-confirm {
-  border: 1px solid #2f64b7;
-  color: #ffffff;
-  background: #2f64b7;
-}
-
-.approval-modal-confirm:hover {
-  background: #24559e;
-}
-
-.photo-preview-backdrop {
-  position: fixed;
-  z-index: 110;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgba(15, 23, 42, 0.72);
-  backdrop-filter: blur(4px);
-}
-
-.photo-preview-modal {
-  width: min(960px, 100%);
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  border-radius: 16px;
-  background: #172033;
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
-}
-
-.photo-preview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 15px 18px;
-  color: #ffffff;
-}
-
-.photo-preview-header>div {
-  display: grid;
-  gap: 2px;
-}
-
-.photo-preview-header span {
-  color: #a9c7f4;
-  font-size: 10px;
-  font-weight: 900;
-}
-
-.photo-preview-header h2 {
+.card-desc {
   margin: 0;
-  font-size: 15px;
-  font-weight: 900;
+  font-size: 11px;
+  color: #475569;
+  font-weight: 600;
 }
 
-.photo-preview-header button {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 9px;
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
+/* AI 재확인 결과 카드 */
+
+.ai-result-card {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.ai-success-box {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 14px !important;
+  border: 1px solid #bbf7d0 !important;
+  border-radius: 8px !important;
+  background: #f0fdf4 !important;
+  margin-bottom: 12px !important;
+}
+
+.ai-check-icon-mui {
+  color: #16a34a !important;
+  font-size: 26px !important;
+  flex-shrink: 0 !important;
+}
+
+.ai-result-text {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1px !important;
+  text-align: left !important;
+}
+
+.ai-result-label {
+  font-size: 11px !important;
+  color: #166534 !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+.ai-result-value {
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  color: #14532d !important;
+  line-height: 1.2 !important;
+}
+
+.ai-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.ai-info-list>div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ai-info-list span {
+  color: #64748b;
+}
+
+/* 작업자 조치 내용 카드 */
+.worker-detail-card {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.worker-detail-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  margin-top: 4px !important;
+}
+
+.detail-item {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 4px !important;
+  text-align: left !important;
+}
+
+.detail-label {
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #475569 !important;
+  background: #f1f5f9 !important;
+  padding: 3px 7px !important;
+  border-radius: 4px !important;
+  margin: 0 !important;
+}
+
+.detail-value {
+  font-size: 13px !important;
+  color: #0f172a !important;
+  font-weight: 800 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.detail-value.text-desc {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #334155 !important;
+  line-height: 1.45 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 반려 사유 카드를 넓게 (2컬럼) 차지 */
+.reject-reason-card {
+  grid-column: span 2 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+.reject-reason-card textarea {
+  width: 100% !important;
+  flex: 1 !important;
+  min-height: 110px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  padding: 12px !important;
+  font-size: 13px !important;
+  resize: none !important;
+  box-sizing: border-box !important;
+  margin-top: 4px !important;
+}
+
+/* 모달 푸터 버튼 */
+.modal-v2-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.footer-right-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.modal-v2-footer button {
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 800;
   cursor: pointer;
 }
 
-.photo-preview-header button:hover {
-  background: rgba(255, 255, 255, 0.18);
+.btn-v2-list {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
 }
 
-.photo-preview-image {
-  display: block;
-  width: 100%;
-  max-height: min(72vh, 700px);
-  background: #0f172a;
-  object-fit: contain;
+.btn-v2-reject {
+  border: none !important;
+  background: #ef4444 !important;
+  color: #ffffff !important;
 }
 
+.btn-v2-reject:hover {
+  background: #dc2626 !important;
+}
+
+.btn-v2-approve {
+  border: none;
+  background: #3b82f6;
+  color: #fff;
+}
+
+.btn-v2-approve:hover {
+  background: #2563eb;
+}
+
+/* ==========================================================================
+   5. 모바일 반응형 처리
+   ========================================================================== */
 @media (max-width: 680px) {
   .approval-summary-row {
     align-items: stretch;
@@ -707,13 +796,6 @@
 
   .approval-summary-grid {
     grid-template-columns: 1fr;
-  }
-
-  .approval-report-actions {
-    justify-content: flex-end;
-    margin-left: 0;
-    padding-left: 0;
-    border-left: 0;
   }
 
   .approval-history-card {
@@ -728,20 +810,102 @@
     display: grid;
   }
 
-  .approval-history-tools {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .approval-history-tools .period-toggle {
-    flex-wrap: wrap;
-  }
-
-  .approval-modal-body {
+  .modal-v2-content-grid {
     grid-template-columns: 1fr;
   }
 
-  .approval-review-photo {
-    min-height: 210px;
+  .reject-reason-card {
+    grid-column: span 1;
+  }
+}
+
+.photo-preview-backdrop {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(15, 23, 42, 0.75) !important;
+  backdrop-filter: blur(4px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 99999 !important;
+  /* 화면 최상단 강제 지정 */
+  padding: 20px !important;
+  box-sizing: border-box !important;
+}
+
+.photo-preview-modal {
+  background: #ffffff !important;
+  border-radius: 12px !important;
+  width: 100% !important;
+  max-width: 680px !important;
+  max-height: 85vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3) !important;
+  animation: photoModalPopIn 0.2s ease-out forwards;
+}
+
+.photo-preview-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 20px !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  background: #f8fafc !important;
+}
+
+.photo-preview-header span {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #3b82f6 !important;
+  display: block !important;
+}
+
+.photo-preview-header h2 {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  margin: 2px 0 0 0 !important;
+}
+
+.photo-preview-header button {
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  color: #64748b !important;
+  padding: 4px !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.photo-preview-header button:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.photo-preview-image {
+  width: 100% !important;
+  height: auto !important;
+  max-height: calc(85vh - 70px) !important;
+  object-fit: contain !important;
+  background: #0f172a !important;
+  display: block !important;
+}
+
+@keyframes photoModalPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }

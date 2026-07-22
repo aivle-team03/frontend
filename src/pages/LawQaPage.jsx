@@ -69,7 +69,6 @@ function LawQaPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 필요 시 토큰 추가: 'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           question_text: trimmedText,
@@ -80,7 +79,6 @@ function LawQaPage() {
       if (response.ok) {
         const data = await response.json();
 
-        // 🚀 백엔드에서 온 진짜(목업) 답변을 화면에 추가
         setMessages((currentMessages) => [
           ...currentMessages,
           { type: 'bot', text: data.answer, time: getCurrentTime() },
@@ -90,7 +88,7 @@ function LawQaPage() {
       }
     } catch (error) {
       console.error('챗봇 질의 실패:', error);
-      // 에러 발생 시 안내 메시지
+
       setMessages((currentMessages) => [
         ...currentMessages,
         { type: 'bot', text: '서버와 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.', time: getCurrentTime() },

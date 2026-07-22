@@ -52,7 +52,7 @@ function getStoredReadIds() {
   }
 }
 
-function Header({ items }) {
+function Header({ items, setIsLoggedIn }) {
   const [activeMenu, setActiveMenu] = useState(null)
   const [readNotificationIds, setReadNotificationIds] = useState(getStoredReadIds)
   const menuRootRef = useRef(null)
@@ -64,6 +64,7 @@ function Header({ items }) {
   const title = currentItem?.label ?? extraPageTitles[headerPath] ?? 'BOSS'
   const headerMeta = pageHeaderMeta[headerPath]
   const HeaderIcon = headerMeta?.icon
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
 
   const notificationItems = useMemo(
     () => notifications.map((notification) => ({
@@ -245,7 +246,7 @@ function Header({ items }) {
                   <small>{user.email}</small>
                 </div>
                 {/* TODO(auth): Connect this control to the logout endpoint/session cleanup flow. */}
-                <button className="profile-logout-button" type="button" role="menuitem" aria-label="로그아웃">
+                <button className="profile-logout-button" type="button" role="menuitem" aria-label="로그아웃" onClick={handleLogout}>
                   <LogoutOutlinedIcon />
                   <span>로그아웃</span>
                 </button>
