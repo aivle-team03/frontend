@@ -2,6 +2,8 @@ import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded'
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined'
 import ArrowForwardIosRoundedIcon from '@mui/icons-material/ArrowForwardIosRounded'
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined'
+import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined'
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined'
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded'
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded'
@@ -39,6 +41,8 @@ const pageHeaderMeta = {
   '/education': { icon: SchoolOutlinedIcon, description: '현장에 필요한 안전 교육 콘텐츠와 이수 현황을 확인하세요.' },
   '/education-management': { icon: AdminPanelSettingsOutlinedIcon, description: '대상자별 교육 이수 현황을 관리하고 현장 교육 자료를 생성하세요.' },
   '/risk-management': { icon: QueryStatsRoundedIcon, description: '조치 이력을 바탕으로 현장 위험도를 확인하고 관리하세요.' },
+  '/board': { icon: CampaignOutlinedIcon, description: '현장에서 접수된 위험 신고와 조치 진행 상태를 확인하세요.' },
+  '/report': { icon: ArticleOutlinedIcon, description: '현장 안전 현황과 조치 결과를 보고서로 확인하세요.' },
   '/mypage': { icon: AccountCircleOutlinedIcon, description: '관리자 정보와 계정 설정을 관리하세요.' },
 }
 

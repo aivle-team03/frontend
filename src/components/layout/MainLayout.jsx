@@ -23,6 +23,8 @@ const navigationItems = [
       { path: '/education-management', label: '교육 관리', icon: 'manage', requiresRole: 'safety-manager' },
     ],
   },
+  { path: '/board', label: '위험 신고 게시판', icon: 'board' },
+  { path: '/report', label: '보고서', icon: 'report' },
 ]
 
 function MainLayout() {

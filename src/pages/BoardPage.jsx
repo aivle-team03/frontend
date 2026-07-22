@@ -6,7 +6,7 @@ import ReportDetail from '../components/Board/ReportDetail.jsx'
 import { BOARD_MOCK_DATA } from '../mocks/mockData.js'
 import '../styles/board.css'
 
-function Board() {
+function BoardPage() {
   const [reports, setReports] = useState(BOARD_MOCK_DATA.reports)
   const [selectedCategory, setSelectedCategory] = useState('전체')
   const [selectedRiskLevel, setSelectedRiskLevel] = useState('전체')
@@ -167,4 +167,4 @@ function Board() {
   )
 }
 
-export default Board
+export default BoardPage
