@@ -1,5 +1,6 @@
 import bossLogo from '../../assets/boss-logo.png'
 import { Link, NavLink, useLocation } from 'react-router-dom'
+import { useState } from 'react'
 
 
 function SidebarIcon({ name }) {
@@ -55,6 +56,35 @@ function SidebarIcon({ name }) {
     )
   }
 
+  if (name === 'board') {
+    return (
+      <svg {...commonProps}>
+        <path d="M5 5h14v14H5V5Z" />
+        <path d="M8 9h8M8 13h5" />
+        <path d="M17 17h.01" />
+      </svg>
+    )
+  }
+
+  if (name === 'report') {
+    return (
+      <svg {...commonProps}>
+        <path d="M6 3h9l3 3v15H6V3Z" />
+        <path d="M14 3v4h4" />
+        <path d="M9 17v-4M12 17V9M15 17v-6" />
+      </svg>
+    )
+  }
+
+
+  if (name === 'manage') {
+    return <svg {...commonProps}><path d="M8 5h8M9 3h6v4H9zM6 7h12v14H6z" /><path d="M9 12h6M9 16h4" /></svg>
+  }
+
+  if (name === 'risk') {
+    return <svg {...commonProps}><path d="M12 4 21 20H3L12 4Z" /><path d="M12 9v5M12 17h.01" /></svg>
+  }
+
   return (
     <svg {...commonProps}>
       <path d="M9.2 9a3 3 0 1 1 4.7 2.45c-.95.62-1.4 1.14-1.4 2.05" />
@@ -64,8 +94,9 @@ function SidebarIcon({ name }) {
   )
 }
 
-function Sidebar({ isCollapsed, items, onToggle }) {
+function Sidebar({ isCollapsed, items, currentUserRole, onToggle }) {
   const location = useLocation()
+  const [openSubmenu, setOpenSubmenu] = useState(null)
 
   return (
     <aside className="app-sidebar" aria-label="Primary navigation">
@@ -75,23 +106,18 @@ function Sidebar({ isCollapsed, items, onToggle }) {
         </Link>
       </div>
       <nav className="sidebar-nav" aria-label="Main menu">
-        {items.map((item) => (
-          <NavLink
-            className={({ isActive }) => {
-              const isMonitoringDetail = item.path === '/monitoring' && location.pathname === '/monitoringdetail'
-              return isActive || isMonitoringDetail ? 'sidebar-tab is-active' : 'sidebar-tab'
-            }}
-            end={item.path === '/'}
-            key={item.path}
-            title={isCollapsed ? item.label : undefined}
-            to={item.path}
-          >
-            <span className="sidebar-icon-box">
-              <SidebarIcon name={item.icon} />
-            </span>
-            <span className="sidebar-label">{item.label}</span>
-          </NavLink>
-        ))}
+        {items.map((item) => {
+          const children = (item.children ?? []).filter((child) => !child.requiresRole || child.requiresRole === currentUserRole)
+          const isChildRouteActive = children.some((child) => location.pathname === child.path)
+          const isParentActive = location.pathname === item.path || (item.path === '/monitoring' && location.pathname === '/monitoringdetail') || isChildRouteActive
+          const parentKey = item.path ?? item.label
+          const hasManualStateForCurrentEntry = openSubmenu?.locationKey === location.key
+          const isSubmenuOpen = children.length > 0 && (isChildRouteActive || (hasManualStateForCurrentEntry && openSubmenu.key === parentKey))
+          return <div className={`sidebar-item${children.length ? ' has-children' : ''}${isParentActive ? ' is-active' : ''}${isChildRouteActive ? ' is-child-active' : ''}${isSubmenuOpen ? ' is-open' : ''}`} key={parentKey}>
+            {children.length > 0 ? <button className="sidebar-tab" type="button" title={isCollapsed ? item.label : undefined} aria-expanded={isSubmenuOpen} onClick={() => setOpenSubmenu((current) => current?.key === parentKey && current.locationKey === location.key ? null : { key: parentKey, locationKey: location.key })}><span className="sidebar-icon-box"><SidebarIcon name={item.icon} /></span><span className="sidebar-label">{item.label}</span><span className="sidebar-submenu-caret" aria-hidden="true">›</span></button> : <NavLink className="sidebar-tab" end={item.path === '/'} title={isCollapsed ? item.label : undefined} to={item.path} onClick={() => setOpenSubmenu(null)}><span className="sidebar-icon-box"><SidebarIcon name={item.icon} /></span><span className="sidebar-label">{item.label}</span></NavLink>}
+            {children.length > 0 && <div className="sidebar-submenu" aria-label={`${item.label} 하위 메뉴`}>{children.map((child) => <NavLink className={({ isActive }) => isActive ? 'sidebar-submenu-link is-active' : 'sidebar-submenu-link'} key={child.path} to={child.path}><span className="sidebar-submenu-icon"><SidebarIcon name={child.icon} /></span>{child.label}</NavLink>)}</div>}
+          </div>
+        })}
       </nav>
       <button
         className="sidebar-toggle"

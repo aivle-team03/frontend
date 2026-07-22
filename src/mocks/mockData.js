@@ -106,8 +106,30 @@ export const MY_PAGE_MOCK_DATA = {
   notifications: [
     {
       id: 1,
+      title: '점검 일정 등록',
       message: '담당 구역 점검 일정이 등록되었습니다.',
       time: '10분 전',
+      category: 'schedule',
+      path: '/checklists',
+      read: false,
+    },
+    {
+      id: 2,
+      title: '위험 요소 감지',
+      message: '2구역에서 적재물 과다 적재가 감지되었습니다.',
+      time: '24분 전',
+      category: 'danger',
+      path: '/monitoring',
+      read: false,
+    },
+    {
+      id: 3,
+      title: '조치 완료',
+      message: '1구역 방화문 개방 항목의 조치가 완료되었습니다.',
+      time: '1시간 전',
+      category: 'complete',
+      path: '/actions',
+      read: true,
     },
   ],
 }
@@ -153,72 +175,6 @@ export const ACTION_HISTORY_MOCK_DATA = [
     status: '미조치',
     manager: '-',
   },
-]
-
-export const CCTV_INFO_MOCKUP_DATA=[
-
-  {
-  id:1,
-  section:"A동",
-  floor:"1층",
-  location:'강당',
-  time: '01:00:00',
-  videoUrl:"/미정"
-  },
-  
-  {
-    id:2,
-    section:"A동",
-    floor:"2층",
-    location:'복도',
-    time: '03:00:00',
-    videoUrl:"/미정"
-  },
-
-  {
-    id:3,
-    section:"C동",
-    floor:"3층",
-    location:'복도',
-    time: '03:00:00',
-    videoUrl:"/미정"
-  },
-
-  {
-    id:4,
-    section:"B동",
-    floor:"4층",
-    location:'창고',
-    time: '04:00:00',
-    videoUrl:"/미정"
-  },
-
-  {
-    id:5,
-    section:"C동",
-    floor:"5층",
-    location:'상가',
-    time: '05:00:00',
-    videoUrl:"/미정"
-  },
-
-  {
-    id:6,
-    section:"E동",
-    floor:"6층",
-    location:'사무실',
-    time: '06:00:00',
-    videoUrl:"/미정"
-  },
-
-  {
-    id:7,
-    section:"F동",
-    floor:"6층",
-    location:'사무실',
-    time: '07:00:00',
-    videoUrl:"/미정"
-  }
 ]
 
 export const EVENT_CATEGORY_MOCKUP_DATA=[
@@ -338,3 +294,103 @@ export const EDUCATION_INFO_MOCKUP_DATA=[
   trained : 5,
 },
 ]
+export const APPROVAL_HISTORY_MOCK_DATA = [
+  { id: 1, completedAt: '2026-07-15 09:45', location: 'A동 2층 201-2121 복도', type: '적치물 감지', assignee: '박지훈', approvalStatus: 'pending' },
+  { id: 2, completedAt: '2026-07-15 09:18', location: 'B동 1층 출입구', type: '소화기 미탐지', assignee: '소현민', approvalStatus: 'pending' },
+  { id: 3, completedAt: '2026-07-14 16:32', location: 'C동 3층 창고', type: '방화문 개방', assignee: '이정훈', approvalStatus: 'pending' },
+  { id: 4, completedAt: '2026-07-14 13:05', location: 'A동 1층 하역장', type: '피난로 장애물', assignee: '장민석', approvalStatus: 'pending' },
+  { id: 5, completedAt: '2026-07-13 15:07', location: 'B동 4층 물류 창고', type: '적치물 감지', assignee: '김도현', approvalStatus: 'approved', approver: '김에이블러', approvedAt: '2026-07-13 15:21' },
+  { id: 6, completedAt: '2026-07-13 11:29', location: 'C동 1층 사무실 복도', type: '소화기 미탐지', assignee: '권혁준', approvalStatus: 'approved', approver: '김에이블러', approvedAt: '2026-07-13 11:35' },
+  { id: 7, completedAt: '2026-07-12 17:55', location: 'A동 3층 회의실 앞', type: '방화문 개방', assignee: '최서윤', approvalStatus: 'approved', approver: '김에이블러', approvedAt: '2026-07-12 18:02' },
+  { id: 8, completedAt: '2026-07-12 09:44', location: 'B동 지하 1층 주차장', type: '피난로 장애물', assignee: '윤태성', approvalStatus: 'approved', approver: '김에이블러', approvedAt: '2026-07-12 09:52' },
+]
+
+export const BOARD_MOCK_DATA = {
+  summary: [
+    { key: 'all', label: '전체신고', value: 24 },
+    { key: 'rejected', label: '반려', value: 7 },
+    { key: 'received', label: '접수', value: 7 },
+    { key: 'progress', label: '조치 중', value: 5 },
+    { key: 'done', label: '조치 완료', value: 10 },
+  ],
+  categories: ['전체', '소방시설', '피난동선', '전기설비', '위험물', '기타'],
+  riskOptions: [
+    { level: 'high', label: '높음' },
+    { level: 'medium', label: '보통' },
+    { level: 'low', label: '낮음' },
+  ],
+  statusOptions: [
+    { key: 'registered', label: '등록' },
+    { key: 'received', label: '접수' },
+    { key: 'progress', label: '조치 중' },
+    { key: 'done', label: '조치 완료' },
+    { key: 'rejected', label: '반려' },
+  ],
+  reports: [
+    {
+      id: 24,
+      category: '피난동선',
+      title: '비상구 앞 적치물 확인 요청',
+      description: '비상구 진입로에 박스가 쌓여 있어 대피 동선 확보가 필요합니다.',
+      riskLevel: 'high',
+      riskLabel: '높음',
+      location: 'A동 2층 복도',
+      reporter: '김민수',
+      reportedAt: '2026-07-20',
+      status: '접수',
+      statusKey: 'received',
+    },
+    {
+      id: 23,
+      category: '소방시설',
+      title: '소화기 위치 표시 훼손',
+      description: '소화기 표지판 일부가 떨어져 위치 확인이 어렵습니다.',
+      riskLevel: 'medium',
+      riskLabel: '보통',
+      location: 'B동 1층 출입구',
+      reporter: '이서연',
+      reportedAt: '2026-07-20',
+      status: '조치 중',
+      statusKey: 'progress',
+    },
+    {
+      id: 22,
+      category: '전기설비',
+      title: '분전반 주변 케이블 정리 필요',
+      description: '분전반 앞 케이블이 노출되어 있어 걸림 사고 위험이 있습니다.',
+      riskLevel: 'medium',
+      riskLabel: '보통',
+      location: 'C동 3층 전기실',
+      reporter: '박지훈',
+      reportedAt: '2026-07-20',
+      status: '등록',
+      statusKey: 'registered',
+    },
+    {
+      id: 21,
+      category: '위험물',
+      title: '인화성 물질 보관함 잠금 확인',
+      description: '보관함 잠금 장치가 느슨해져 점검이 필요합니다.',
+      riskLevel: 'high',
+      riskLabel: '높음',
+      location: 'A동 1층 창고',
+      reporter: '최유진',
+      reportedAt: '2026-07-20',
+      status: '조치 완료',
+      statusKey: 'done',
+    },
+    {
+      id: 20,
+      category: '기타',
+      title: '계단 난간 흔들림 신고',
+      description: '계단 난간 고정 상태가 불안정합니다.',
+      riskLevel: 'low',
+      riskLabel: '낮음',
+      location: 'B동 2층 계단',
+      reporter: '정하늘',
+      reportedAt: '2026-07-19',
+      status: '반려',
+      statusKey: 'rejected',
+    },
+  ],
+}
