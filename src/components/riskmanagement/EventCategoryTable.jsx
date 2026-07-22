@@ -1,14 +1,12 @@
 import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment'
-import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 import EngineeringIcon from '@mui/icons-material/Engineering'
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar'
 import { useState } from 'react'
 
 import {
   Box,
-  Chip,
   Stack,
   Table,
   TableBody,
@@ -28,7 +26,7 @@ function EventTypeIcon({ type }) {
   return <CloudOutlinedIcon fontSize="small" />
 }
 
-function EventCategotyTable({ events }) {
+function EventCategoryTable({ events }) {
 
   const [eventscategory, setEventsCategory] = useState(events)
   function handleSeverityChange(id, value) {
@@ -97,4 +95,4 @@ function EventCategotyTable({ events }) {
 }
 
 
-export default EventCategotyTable
+export default EventCategoryTable

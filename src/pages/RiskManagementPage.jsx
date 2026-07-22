@@ -1,7 +1,7 @@
 import '../styles/risk.css'
 import { EVENT_CATEGORY_MOCKUP_DATA } from '../mocks/mockData.js'
 import RiskFactorTypeChart from '../components/riskmanagement/RiskFactorTypeChart.jsx'
-import EventCategotyTable from '../components/riskmanagement/EventCategotyTable.jsx'
+import EventCategoryTable from '../components/riskmanagement/EventCategoryTable.jsx'
 import {
     Typography,
 } from '@mui/material'
@@ -34,7 +34,7 @@ function RiskManagementPage()
 
     return(
 
-      <section className='risk-page-layout'>
+      <section className='risk-page-layout' aria-label="위험도 관리">
 
         <div className='risk-top-layout'>
             <div className='count-card'>
@@ -75,7 +75,7 @@ function RiskManagementPage()
         <div className='risk-bottom-layout'>
             <div className='risk-list'>
                  <Typography variant="h6">위험 요인 리스트</Typography>
-                <EventCategotyTable events={EVENT_CATEGORY_MOCKUP_DATA}/>
+                <EventCategoryTable events={EVENT_CATEGORY_MOCKUP_DATA}/>
             </div>
 
             <div className='risk-list-button'>

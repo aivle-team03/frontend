@@ -94,8 +94,8 @@
 
 .summary-heading {
   display: grid;
-  grid-template-columns: 32px 1fr;
-  gap: 10px;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
   width: 100%;
   min-height: 28px;
   align-items: center;
@@ -147,17 +147,19 @@
   background: #eaf2ff;
 }
 
-.summary-icon {
-  width: 32px;
-  height: 32px;
+.summary-card .summary-heading .summary-icon {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  border-radius: 7px;
   color: #ffffff;
   background: var(--summary-accent);
   box-shadow: none;
 }
 
-.summary-icon svg {
-  width: 18px;
-  height: 18px;
+.summary-card .summary-heading .summary-icon svg {
+  width: 14px;
+  height: 14px;
 }
 
 .summary-footer {

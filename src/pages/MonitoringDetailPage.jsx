@@ -6,7 +6,6 @@ import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import '../styles/monitoringdetail.css'
-import { useLocation } from 'react-router-dom'
 
 const cameraList = [
   { id: 'CAM-01', area: '1구역', location: 'A동 1층 출입구' },

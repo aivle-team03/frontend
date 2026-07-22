@@ -30,7 +30,6 @@ function AppRouter() {
           <Route path="risk-management" element={<RiskManagementPage />} />
           <Route path="mypage" element={<MyPage />} />
           <Route path="monitoringdetail" element={<MonitoringDetailPage />} />
-          <Route path="riskmanagementpage" element={<RiskManagementPage />} />
           <Route path="*" element={<Navigate replace to="/" />} />
         </Route>
       </Routes>
