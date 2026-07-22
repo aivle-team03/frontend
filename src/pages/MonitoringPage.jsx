@@ -161,7 +161,7 @@ function MonitoringPage() {
         </div>
         <div className={styles.overviewStats}>
           <span><i />온라인 <strong>{cameras.filter((cam) => cam.status === 'running').length}</strong></span>
-          <span>점검 필요 <strong>0</strong></span>
+          <span>점검 필요 <strong>{cameras.filter((cam) => cam.status !== 'running').length}</strong></span>
           <small>방금 전 업데이트</small>
         </div>
       </div>

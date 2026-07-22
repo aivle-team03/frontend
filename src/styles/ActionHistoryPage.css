@@ -820,92 +820,71 @@
 }
 
 .photo-preview-backdrop {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  background-color: rgba(15, 23, 42, 0.75) !important;
-  backdrop-filter: blur(4px) !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  z-index: 99999 !important;
-  /* 화면 최상단 강제 지정 */
-  padding: 20px !important;
-  box-sizing: border-box !important;
+  position: fixed;
+  z-index: 110;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(4px);
 }
 
 .photo-preview-modal {
-  background: #ffffff !important;
-  border-radius: 12px !important;
-  width: 100% !important;
-  max-width: 680px !important;
-  max-height: 85vh !important;
-  display: flex !important;
-  flex-direction: column !important;
-  overflow: hidden !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3) !important;
-  animation: photoModalPopIn 0.2s ease-out forwards;
+  width: min(960px, 100%);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 16px;
+  background: #172033;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
 }
 
 .photo-preview-header {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  padding: 14px 20px !important;
-  border-bottom: 1px solid #e2e8f0 !important;
-  background: #f8fafc !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 18px;
+  color: #ffffff;
+}
+
+.photo-preview-header>div {
+  display: grid;
+  gap: 2px;
 }
 
 .photo-preview-header span {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  color: #3b82f6 !important;
-  display: block !important;
+  color: #a9c7f4;
+  font-size: 10px;
+  font-weight: 900;
 }
 
 .photo-preview-header h2 {
-  font-size: 16px !important;
-  font-weight: 800 !important;
-  color: #0f172a !important;
-  margin: 2px 0 0 0 !important;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 900;
 }
 
 .photo-preview-header button {
-  background: none !important;
-  border: none !important;
-  cursor: pointer !important;
-  color: #64748b !important;
-  padding: 4px !important;
-  border-radius: 6px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
 }
 
 .photo-preview-header button:hover {
-  background: #e2e8f0 !important;
-  color: #0f172a !important;
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .photo-preview-image {
-  width: 100% !important;
-  height: auto !important;
-  max-height: calc(85vh - 70px) !important;
-  object-fit: contain !important;
-  background: #0f172a !important;
-  display: block !important;
-}
-
-@keyframes photoModalPopIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  display: block;
+  width: 100%;
+  max-height: min(72vh, 700px);
+  background: #0f172a;
+  object-fit: contain;
 }
