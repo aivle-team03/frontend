@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import MainLayout from '../components/layout/MainLayout.jsx'
 import ActionHistoryPage from '../pages/ActionHistoryPage.jsx'
@@ -14,6 +15,8 @@ import ReportPage from '../pages/ReportPage.jsx'
 import RiskManagementPage from '../pages/RiskManagementPage.jsx'
 
 function AppRouter() {
+  const [addedCourses, setAddedCourses] = useState([])
+
   return (
     <BrowserRouter>
       <Routes>
@@ -23,10 +26,10 @@ function AppRouter() {
           <Route path="checklists" element={<ChecklistPage />} />
           <Route path="actions" element={<ActionHistoryPage />} />
           <Route path="law-qa" element={<LawQaPage />} />
-          <Route path="education" element={<EducationPage />} />
+          <Route path="education" element={<EducationPage addedCourses={addedCourses} />} />
           <Route path="board" element={<BoardPage />} />
           <Route path="report" element={<ReportPage />} />
-          <Route path="education-management" element={<EducationManagementPage />} />
+          <Route path="education-management" element={<EducationManagementPage addedCourses={addedCourses} onAddCourse={(course) => setAddedCourses((current) => [course, ...current])} />} />
           <Route path="risk-management" element={<RiskManagementPage />} />
           <Route path="mypage" element={<MyPage />} />
           <Route path="monitoringdetail" element={<MonitoringDetailPage />} />
