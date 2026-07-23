@@ -20,7 +20,7 @@ function RiskTypePieChart({ data }) {
 
 const countdata= makeTypeCountData(data);
   return (
-    <Box className="chart-card">
+    <Box className="risk-card">
       <Typography variant="h6">전체 위험도 통계</Typography>
       <Box className="chart-body donut-chart-body">
         <ResponsiveContainer width="100%" height={200}>
@@ -44,6 +44,15 @@ const countdata= makeTypeCountData(data);
             <strong>{item.percent}%</strong>
           </div>
         ))}
+
+
+        
+      </div>
+
+      <div className="Page-move-wrapper">
+            <button className="Page-move-button" type="button">
+              위험도 페이지로 이동
+            </button>
       </div>
     </Box>
   )

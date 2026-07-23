@@ -34,7 +34,7 @@ function RiskSectionStackChart({ data }) {
 
 const countdata= makeSectionCountData(data);
   return (
-   <Box className="chart-card">
+   <Box className="risk-card">
       <Typography variant="h6">구역별 위험도 통계 그래프</Typography>
       <Box className="chart-body trend-chart-body">
         <ResponsiveContainer width="100%" height="100%">

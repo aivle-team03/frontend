@@ -89,10 +89,16 @@ function HomePage() {
       </section>
 
 
-      <section>
+      <section className="risk-card compact-card">
         <ActionHistoryTable
           lists={ACTION_HISTORY_MOCK_DATA}
         />
+
+        <div className="Page-move-wrapper">
+            <button className="Page-move-button" type="button">
+              조치 이력 페이지로 이동
+            </button>
+        </div>
 
       </section>
 
