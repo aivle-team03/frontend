@@ -9,8 +9,7 @@ import '../styles/report.css'
 function ReportPage() {
   const [reports, setReports] = useState(REPORT_PAGE_MOCK_DATA.reports)
   const [reportForm, setReportForm] = useState({
-    title: '',
-    type: 'daily',
+    type: 'risk-assessment',
     startDate: '2026-07-21',
     endDate: '2026-07-21',
     site: '',
@@ -45,7 +44,7 @@ function ReportPage() {
     const nextId = Math.max(...reports.map((report) => report.id), 0) + 1
     const nextReport = {
       id: nextId,
-      title: reportForm.title.trim() || `${selectedPeriodLabel} ${typeOption?.label ?? '보고서'}`,
+      title: `${selectedPeriodLabel} ${typeOption?.label ?? '보고서'}`,
       type: typeOption?.label ?? '리포트',
       createdAt: '2026-07-21',
       owner: reportForm.author,
@@ -70,31 +69,14 @@ function ReportPage() {
         </div>
 
         <div className="report-basic-grid">
-          <label className="report-field wide">
-            <span>보고서 제목 <em>*</em></span>
-            <input
-              type="text"
-              value={reportForm.title}
-              onChange={(event) => updateReportForm('title', event.target.value)}
-              placeholder="보고서 제목을 입력하세요"
-            />
-          </label>
-
-          <div className="report-field">
+          <label className="report-field">
             <span>보고서 유형 <em>*</em></span>
-            <div className="report-type-toggle" role="group" aria-label="보고서 유형">
+            <select value={reportForm.type} onChange={(event) => updateReportForm('type', event.target.value)}>
               {REPORT_PAGE_MOCK_DATA.reportTypes.map((type) => (
-                <button
-                  className={reportForm.type === type.key ? 'is-active' : ''}
-                  type="button"
-                  key={type.key}
-                  onClick={() => updateReportForm('type', type.key)}
-                >
-                  {type.label}
-                </button>
+                <option key={type.key} value={type.key}>{type.label}</option>
               ))}
-            </div>
-          </div>
+            </select>
+          </label>
 
           <div className="report-field">
             <span>작성 기간 <em>*</em></span>
@@ -127,20 +109,22 @@ function ReportPage() {
 
           <label className="report-field">
             <span>작성자 <em>*</em></span>
-            <select value={reportForm.author} onChange={(event) => updateReportForm('author', event.target.value)}>
-              {REPORT_PAGE_MOCK_DATA.authorOptions.map((author) => (
-                <option key={author} value={author}>{author}</option>
-              ))}
-            </select>
+            <input
+              type="text"
+              value={reportForm.author}
+              placeholder="작성자를 입력하세요"
+              onChange={(event) => updateReportForm('author', event.target.value)}
+            />
           </label>
 
           <label className="report-field">
             <span>제출 대상 <em>*</em></span>
-            <select value={reportForm.submitTarget} onChange={(event) => updateReportForm('submitTarget', event.target.value)}>
-              {REPORT_PAGE_MOCK_DATA.submitTargets.map((target) => (
-                <option key={target} value={target}>{target}</option>
-              ))}
-            </select>
+            <input
+              type="text"
+              value={reportForm.submitTarget}
+              placeholder="제출 대상을 입력하세요"
+              onChange={(event) => updateReportForm('submitTarget', event.target.value)}
+            />
           </label>
         </div>
       </section>

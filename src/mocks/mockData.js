@@ -280,10 +280,11 @@ export const BOARD_MOCK_DATA = {
 
 export const REPORT_PAGE_MOCK_DATA = {
   reportTypes: [
-    { key: 'daily', label: '일일' },
-    { key: 'weekly', label: '주간' },
-    { key: 'monthly', label: '월간' },
-    { key: 'incident', label: '사고 보고' },
+    { key: 'risk-assessment', label: '위험성평가보고서' },
+    { key: 'safety-inspection', label: '안전점검 보고서' },
+    { key: 'incident-investigation', label: '산업재해조사보고서' },
+    { key: 'safety-education', label: '안전보건교육 기록' },
+    { key: 'etc', label: '기타' },
   ],
   siteOptions: ['A동 전체', 'A동 2층 복도', 'B동 1층 출입구', 'C동 3층 전기실', '지하 주차장'],
   authorOptions: ['김태니지 (안전책임자)', '김에이블러 (관리자)', '이안전 (점검담당자)'],
