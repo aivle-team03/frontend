@@ -22,6 +22,7 @@ function AppRouter() {
           <Route path="monitoring" element={<MonitoringPage />} />
           <Route path="checklists" element={<ChecklistPage />} />
           <Route path="actions" element={<ActionHistoryPage />} />
+          <Route path="actionHistoryPage" element={<ActionHistoryPage />} />
           <Route path="law-qa" element={<LawQaPage />} />
           <Route path="education" element={<EducationPage />} />
           <Route path="board" element={<BoardPage />} />

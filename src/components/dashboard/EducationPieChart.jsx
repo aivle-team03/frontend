@@ -1,4 +1,5 @@
 import { Box, Typography } from '@mui/material'
+import { useNavigate } from 'react-router-dom'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import EducationTable from './EducationTable.jsx'
 
@@ -25,6 +26,7 @@ function makeTypeCountData(data) {
 
 
 function EducationPieChart({ data }) {
+  const navigate = useNavigate()
 
   const countData = [
     ...data,
@@ -60,7 +62,7 @@ function EducationPieChart({ data }) {
       <EducationTable lists={countData}></EducationTable>
       
         <div className="Page-move-wrapper">
-          <button className="Page-move-button" type="button">
+          <button className="Page-move-button" type="button" onClick={() => navigate('/education')}>
             교육 이수 페이지로 이동
           </button>
         </div>

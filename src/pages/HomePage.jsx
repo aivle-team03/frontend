@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AiSummaryCard from '../components/dashboard/AiSummaryCard.jsx'
 import DailyReportCard from '../components/dashboard/DailyReportCard.jsx'
 import PeriodSelector from '../components/dashboard/PeriodSelector.jsx'
@@ -37,6 +38,7 @@ function filterEvents(events, selectedSummaryId) {
 }
 
 function HomePage() {
+  const navigate = useNavigate()
   const [selectedPeriod, setSelectedPeriod] = useState('오늘')
   const [selectedSummaryId, setSelectedSummaryId] = useState('realtime')
   const [selectedEvent, setSelectedEvent] = useState(null)
@@ -95,7 +97,7 @@ function HomePage() {
         />
 
         <div className="Page-move-wrapper">
-            <button className="Page-move-button" type="button">
+            <button className="Page-move-button" type="button" onClick={() => navigate('/actions')}>
               조치 이력 페이지로 이동
             </button>
         </div>

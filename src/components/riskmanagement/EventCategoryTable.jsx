@@ -14,8 +14,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Select,
-  MenuItem,
 } from '@mui/material'
 
 function EventTypeIcon({ type }) {
@@ -69,21 +67,23 @@ function EventCategoryTable({ events }) {
                                     </TableCell>
                   <TableCell> {event.risk}</TableCell>
                   <TableCell>
-                    <Select
-                      value={event.severity}
-                      size="small"
-                      onChange={(e)=>handleSeverityChange(event.id, e.target.value)}
-                    >
-                      <MenuItem value={1}>1</MenuItem>
-                      <MenuItem value={2}>2</MenuItem>
-                      <MenuItem value={3}>3</MenuItem>
-                      <MenuItem value={4}>4</MenuItem>
-                      <MenuItem value={5}>5</MenuItem>
-                      <MenuItem value={6}>6</MenuItem>
-                      <MenuItem value={7}>7</MenuItem>
-                      <MenuItem value={8}>8</MenuItem>
-                      <MenuItem value={9}>9</MenuItem>
-                    </Select>             
+                    <label className="risk-severity-select">
+                      <select
+                        aria-label={`${event.item} 강도 변경`}
+                        value={event.severity}
+                        onChange={(e)=>handleSeverityChange(event.id, e.target.value)}
+                      >
+                        <option value={1}>1</option>
+                        <option value={2}>2</option>
+                        <option value={3}>3</option>
+                        <option value={4}>4</option>
+                        <option value={5}>5</option>
+                        <option value={6}>6</option>
+                        <option value={7}>7</option>
+                        <option value={8}>8</option>
+                        <option value={9}>9</option>
+                      </select>
+                    </label>             
                   </TableCell>
                   <TableCell> {event.frequency}</TableCell>
             </TableRow>

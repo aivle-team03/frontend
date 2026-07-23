@@ -36,11 +36,7 @@ function RiskTypeDonutChart({ data }) {
           </div>
         ))}
       </div>
-      <div className="Page-move-wrapper">
-          <button className="Page-move-button" type="button">
-            교육 이수 페이지로 이동
-          </button>
-        </div>
+      
     </Box>
   )
 }
