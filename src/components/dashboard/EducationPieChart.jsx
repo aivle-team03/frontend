@@ -14,11 +14,11 @@ function makeTypeCountData(data) {
 
   return [
     {
-        type: '전체',
+        type: '전체 근로자',
         total: total,
         trained: trained,
         percent: Number(((trained / total) * 100).toFixed(1)),
-    },
+    }
   ]
 
 }
@@ -26,25 +26,25 @@ function makeTypeCountData(data) {
 
 function EducationPieChart({ data }) {
 
-data.push( makeTypeCountData(data));
-const countdata = [
-  ...data,
-  ...makeTypeCountData(data),
-];
+  const countData = [
+    ...data,
+    ...makeTypeCountData(data),
+  ];
   return (
     <Box className="edu-card">
       <Typography variant="h6">교육 이수 현황</Typography>
       <Box className="chart-body donut-chart-body">
         <ResponsiveContainer width="100%" height={300}>
            <BarChart
-      responsive
-      data={countdata}
-      margin={{
-        top: 5,
-        right: 0,
-        left: 0,
-        bottom: 5,
-      }}
+              responsive
+              data={countData}
+              margin=
+              {{
+                top: 5,
+                right: 0,
+                left: 0,
+                bottom: 5,
+              }}
     >
       <CartesianGrid vertical={false} strokeDasharray="3 3" />
       <XAxis dataKey="type" type="category" />
@@ -56,8 +56,8 @@ const countdata = [
     </BarChart>
         </ResponsiveContainer>
       </Box>
-      <div className="donut-legend">
-        {countdata.map((item, index) => (
+      {/* <div className="donut-legend">
+        {data.map((item, index) => (
           <div className="donut-legend-item" key={item.type}>
             <span>
               <i style={{ backgroundColor: colors[index % colors.length] }}></i>
@@ -66,9 +66,9 @@ const countdata = [
             <strong>{item.percent}%</strong>
           </div>
         ))}
-      </div>
+      </div> */}
 
-      <EducationTable lists={data}></EducationTable>
+      <EducationTable lists={countData}></EducationTable>
     </Box>
   )}
 
