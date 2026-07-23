@@ -17,7 +17,7 @@
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
 }
 
-.monitoring-detail-toolbar > button {
+.monitoring-detail-toolbar>button {
   display: grid;
   width: 38px;
   height: 38px;
@@ -29,21 +29,21 @@
   cursor: pointer;
 }
 
-.monitoring-detail-toolbar > button:hover {
+.monitoring-detail-toolbar>button:hover {
   background: #f4f7fb;
 }
 
-.monitoring-detail-toolbar > div {
+.monitoring-detail-toolbar>div {
   display: grid;
 }
 
-.monitoring-detail-toolbar > div span {
+.monitoring-detail-toolbar>div span {
   color: #0f62fe;
   font-size: 10px;
   font-weight: 900;
 }
 
-.monitoring-detail-toolbar > div strong {
+.monitoring-detail-toolbar>div strong {
   color: #172033;
   font-size: 14px;
   font-weight: 900;
@@ -109,7 +109,7 @@
   margin-bottom: 14px;
 }
 
-.primary-view-header > div {
+.primary-view-header>div {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -145,7 +145,7 @@
   background-size: 30px 30px, 30px 30px, auto;
 }
 
-.primary-video-placeholder > div {
+.primary-video-placeholder>div {
   display: grid;
   justify-items: center;
   gap: 8px;
@@ -153,7 +153,7 @@
   font-weight: 800;
 }
 
-.primary-video-placeholder > div svg {
+.primary-video-placeholder>div svg {
   width: 52px;
   height: 52px;
 }
@@ -246,7 +246,7 @@
   background: #1e293b;
 }
 
-.detail-thumbnail-list button > span {
+.detail-thumbnail-list button>span {
   display: grid;
   width: 30px;
   height: 30px;
@@ -260,7 +260,7 @@
   height: 17px;
 }
 
-.detail-thumbnail-list button > div {
+.detail-thumbnail-list button>div {
   display: grid;
 }
 
@@ -313,7 +313,7 @@
   height: 21px;
 }
 
-.detection-status-card > div {
+.detection-status-card>div {
   display: grid;
 }
 
@@ -352,12 +352,12 @@
   background: #fff8d6;
 }
 
-.detail-event-preview > svg {
+.detail-event-preview>svg {
   width: 22px;
   height: 22px;
 }
 
-.detail-event-preview > div {
+.detail-event-preview>div {
   display: grid;
 }
 
@@ -378,7 +378,7 @@
   margin: 16px 0;
 }
 
-.detail-event-card dl > div {
+.detail-event-card dl>div {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -416,7 +416,7 @@
   background: #fff2e8;
 }
 
-.detail-event-card > button {
+.detail-event-card>button {
   width: 100%;
   min-height: 38px;
   border: 0;
@@ -428,7 +428,7 @@
   font-weight: 900;
 }
 
-.detail-event-card > button:hover {
+.detail-event-card>button:hover {
   background: #0043ce;
 }
 
@@ -460,8 +460,75 @@
 }
 
 @media (max-width: 500px) {
+
   .detail-thumbnail-list,
   .detection-Section {
     grid-template-columns: 1fr;
   }
+}
+
+.detail-thumbnail-list {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+}
+
+.detail-thumbnail-list button {
+  position: relative !important;
+  flex: 0 0 180px !important;
+  height: 105px !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  border: 2px solid transparent !important;
+  background: #0f172a !important;
+  cursor: pointer;
+  padding: 0 !important;
+  transition: all 0.2s ease;
+}
+
+.detail-thumbnail-list button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+.detail-thumbnail-list button.is-active {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35) !important;
+}
+
+.detail-thumb-video-box {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1;
+}
+
+.detail-thumb-info {
+  position: absolute !important;
+  top: 8px !important;
+  left: 8px !important;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 4px 8px !important;
+  background: rgba(15, 23, 42, 0.75) !important;
+  border-radius: 6px !important;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+.detail-thumb-info strong {
+  color: #ffffff !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+}
+
+.detail-thumb-info small {
+  color: #cbd5e1 !important;
+  font-size: 10px !important;
+  line-height: 1.2 !important;
 }

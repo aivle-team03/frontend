@@ -23,9 +23,11 @@ const navigationItems = [
       { path: '/education-management', label: '교육 관리', icon: 'manage', requiresRole: 'safety-manager' },
     ],
   },
+  { path: '/board', label: '위험 신고 게시판', icon: 'board' },
+  { path: '/report', label: '보고서', icon: 'report' },
 ]
 
-function MainLayout() {
+function MainLayout({ setIsLoggedIn }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   // Temporary frontend role: safety manager. Backend authorization will own access control later.
   const currentUserRole = 'safety-manager'
@@ -39,7 +41,7 @@ function MainLayout() {
         onToggle={() => setIsSidebarCollapsed((currentValue) => !currentValue)}
       />
       <div className="app-content">
-        <Header items={navigationItems} />
+        <Header items={navigationItems} setIsLoggedIn={setIsLoggedIn} />
         <main className="app-main">
           <Outlet />
         </main>
