@@ -177,6 +177,123 @@ export const ACTION_HISTORY_MOCK_DATA = [
   },
 ]
 
+export const EVENT_CATEGORY_MOCKUP_DATA=[
+
+{
+  id:1,
+  location:'1구역',
+  type:"소방",
+  item : "화재",
+  risk :"상",
+  severity: 8,
+  frequency :1
+},
+{
+  id:2,
+  location:'2구역',
+  type:"시설",
+  item : "미끄러짐",
+  risk :"하",
+  severity: 1,
+  frequency :1
+},
+{
+  id:3,
+  location:'3구역',
+  type:"안전",
+  item : "충돌",
+  risk :"하",
+  severity: 2,
+  frequency :1
+},
+{
+  id:4,
+  location:'4구역',
+  type:"안전",
+  item : "안전모",
+  risk :"중",
+  severity: 3,
+  frequency :1
+},
+
+{
+  id:5,
+  location:'1구역',
+  type:"시설",
+  item : "적재물",
+  risk :"하",
+  severity: 1,
+  frequency :5
+},
+
+{
+  id:6,
+  location:'2구역',
+  type:"시설",
+  item : "스프링쿨러",
+  risk :"중",
+  severity: 2,
+  frequency :5
+},
+
+{
+  id:7,
+  location:'3구역',
+  type:"시설",
+  item : "소화기",
+  risk :"중",
+  severity: 2,
+  frequency :1
+},
+
+{
+  id:8,
+  location:'4구역',
+  type:"시설",
+  item : "대피로",
+  risk :"상",
+  severity: 3,
+  frequency :2
+},
+
+{
+  id:9,
+  location:'1구역',
+  type:"시설",
+  item : "충돌",
+  risk :"상",
+  severity: 3,
+  frequency :2
+},
+
+{
+  id:10,
+  location:'4구역',
+  type:"안전",
+  item : "검사",
+  risk :"하",
+  severity: 3,
+  frequency :2
+},
+]
+
+export const EDUCATION_INFO_MOCKUP_DATA=[
+{
+  type : 'new',
+  total:120,
+  trained : 100,
+},
+{
+  type: 'regular',
+  total:200,
+  trained : 120,
+},
+{
+  type: 'specialized',
+  total:5,
+  trained : 5,
+},
+]
 export const APPROVAL_HISTORY_MOCK_DATA = [
   { id: 1, completedAt: '2026-07-15 09:45', location: 'A동 2층 201-2121 복도', type: '적치물 감지', assignee: '박지훈', approvalStatus: 'pending' },
   { id: 2, completedAt: '2026-07-15 09:18', location: 'B동 1층 출입구', type: '소화기 미탐지', assignee: '소현민', approvalStatus: 'pending' },
