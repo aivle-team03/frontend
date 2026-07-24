@@ -8,7 +8,7 @@ import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import { useEffect, useState } from 'react'
-import { MY_PAGE_MOCK_DATA } from '../mocks/mockData.js'
+import axios from 'axios'
 import '../styles/MyPage.css'
 
 const NOTIFICATION_SETTINGS_STORAGE_KEY = 'boss-notification-settings'
@@ -29,15 +29,49 @@ function getStoredNotificationSettings() {
 }
 
 function MyPage() {
-  const { user: defaultUser, workLogs, notifications } = MY_PAGE_MOCK_DATA
-  const [user, setUser] = useState(defaultUser)
+  const [user, setUser] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [draftProfile, setDraftProfile] = useState(() => ({ name: user.name, email: user.email }))
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [profileError, setProfileError] = useState({})
   const [profileSaved, setProfileSaved] = useState(false)
   const [notificationSettings, setNotificationSettings] = useState(getStoredNotificationSettings)
-  const myLogs = workLogs.filter((log) => log.userId === user.userId)
-  const unreadNotificationCount = notifications.filter((notification) => !notification.read).length
+
+  useEffect(() => {
+    fetchMyProfile();
+  }, []);
+
+  const fetchMyProfile = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+
+      const response = await axios.get('http://127.0.0.1:8000/api/users/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const userData = response.data;
+
+      const formattedUser = {
+        name: userData.name || userData.user_id || '관리자',
+        email: userData.email || '이메일 미등록',
+        role: userData.role || '소방안전 관리자',
+        department: userData.department || '시설관리팀',
+        area: userData.area || 'A동 전체 구역',
+        unreadNotifications: userData.unread_notifications || 0
+      };
+
+      setUser(formattedUser);
+      setDraftProfile({ name: formattedUser.name, email: formattedUser.email });
+    } catch (error) {
+      console.error('내 정보 조회 실패:', error);
+      alert('사용자 정보를 불러오지 못했습니다. 로그인 상태를 확인해주세요.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -83,8 +117,8 @@ function MyPage() {
     const trimmedEmail = draftProfile.email.trim()
 
     if (!trimmedName) nextError.name = '이름을 입력해 주세요.'
-    if (!trimmedEmail) nextError.email = '이메일을 입력해 주세요.'
-    else if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) nextError.email = '이메일 형식을 확인해 주세요.'
+    // if (!trimmedEmail) nextError.email = '이메일을 입력해 주세요.'
+    // else if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) nextError.email = '이메일 형식을 확인해 주세요.'
 
     if (Object.keys(nextError).length) {
       setProfileError(nextError)
@@ -97,6 +131,14 @@ function MyPage() {
     setDraftProfile({ name: trimmedName, email: trimmedEmail })
     setIsEditingProfile(false)
     setProfileSaved(true)
+  }
+
+  if (loading) {
+    return <div className="loading-container" style={{ padding: '40px', textAlign: 'center' }}>내 정보를 불러오는 중...</div>;
+  }
+
+  if (!user) {
+    return <div className="loading-container" style={{ padding: '40px', textAlign: 'center' }}>사용자 정보를 찾을 수 없습니다.</div>;
   }
 
   return (
@@ -120,7 +162,7 @@ function MyPage() {
           <div>
             <NotificationsActiveOutlinedIcon />
             <span>새 알림</span>
-            <strong>{unreadNotificationCount}건</strong>
+            <strong>{user.unreadNotifications}건</strong>
           </div>
         </div>
       </article>
@@ -235,16 +277,14 @@ function MyPage() {
           </div>
 
           <div className="work-log-list">
-            {myLogs.map((log) => (
-              <div className="work-log-item" key={log.id}>
-                <span className="work-log-marker" />
-                <div>
-                  <strong>{log.action}</strong>
-                  <p>{log.detail}</p>
-                  <small>{log.time}</small>
-                </div>
+            <div className="work-log-item">
+              <span className="work-log-marker" />
+              <div>
+                <strong>로그인 성공</strong>
+                <p>마이페이지 접속 완료</p>
+                <small>방금 전</small>
               </div>
-            ))}
+            </div>
           </div>
         </article>
       </div>

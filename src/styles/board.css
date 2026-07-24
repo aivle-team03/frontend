@@ -707,9 +707,27 @@
 }
 
 .board-filter-row {
+  display: flex;
+  flex-wrap: wrap;
   grid-template-columns: 190px 160px 300px minmax(220px, 1fr) 108px;
   gap: 12px;
   padding: 14px;
+}
+
+.board-filter-row .board-select-filter {
+  flex: 1 1 160px;
+}
+
+.board-filter-row .board-date-filter {
+  flex: 1.4 1 300px;
+}
+
+.board-filter-row .board-search-filter {
+  flex: 1.6 1 260px;
+}
+
+.board-filter-row .board-reset-button {
+  flex: 0 0 108px;
 }
 
 .board-select-filter,
@@ -787,7 +805,8 @@
 
 .board-select-filter,
 .board-date-filter,
-.board-search-filter {
+.board-search-filter,
+.board-reset-button {
   min-width: 0;
 }
 
@@ -801,6 +820,12 @@
   }
 
   .board-search-filter {
+    grid-column: 1 / -1;
+  }
+
+  .board-reset-button {
+    width: 100%;
+    flex-basis: 100%;
     grid-column: 1 / -1;
   }
 }
@@ -824,7 +849,18 @@
     grid-template-columns: 1fr;
   }
 
+  .board-filter-row .board-select-filter,
+  .board-filter-row .board-date-filter,
+  .board-filter-row .board-search-filter,
+  .board-filter-row .board-reset-button {
+    flex-basis: 100%;
+  }
+
   .board-search-filter {
+    grid-column: auto;
+  }
+
+  .board-reset-button {
     grid-column: auto;
   }
 }
@@ -1124,6 +1160,78 @@
 
 .board-modal-submit:hover {
   background: #24559e;
+}
+
+.board-action-modal {
+  width: min(560px, 100%);
+}
+
+.board-action-form {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+}
+
+.board-action-target {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid #dce6f2;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.board-action-target span,
+.board-action-form label > span {
+  color: #42526a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.board-action-target strong {
+  overflow: hidden;
+  color: #172033;
+  font-size: 15px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.board-action-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.board-action-form em {
+  color: #dc2626;
+  font-style: normal;
+}
+
+.board-action-form textarea {
+  width: 100%;
+  min-height: 150px;
+  padding: 12px;
+  border: 1px solid #d7e0eb;
+  border-radius: 8px;
+  color: #243247;
+  background: #f9fbfd;
+  resize: vertical;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.5;
+  outline: 0;
+}
+
+.board-action-form textarea:focus {
+  border-color: #6f9cdb;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(47, 100, 183, 0.1);
+}
+
+.board-detail-action-content {
+  border-color: #bfd5f5;
+  background: #f5f9ff;
 }
 
 @media (max-width: 620px) {
