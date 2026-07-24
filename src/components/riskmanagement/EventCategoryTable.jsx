@@ -3,7 +3,6 @@ import DirectionsCarIcon from '@mui/icons-material/DirectionsCar'
 import EngineeringIcon from '@mui/icons-material/Engineering'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment'
-import { useEffect, useState } from 'react'
 
 import {
   Box,
@@ -16,6 +15,9 @@ import {
   TableRow,
 } from '@mui/material'
 
+const riskOptions = ['상', '중', '하']
+const numberOptions = Array.from({ length: 9 }, (_, index) => index + 1)
+
 function EventTypeIcon({ type }) {
   if (type === '화재') return <LocalFireDepartmentIcon fontSize="small" />
   if (type === '적재물') return <Inventory2OutlinedIcon fontSize="small" />
@@ -24,88 +26,88 @@ function EventTypeIcon({ type }) {
   return <CloudOutlinedIcon fontSize="small" />
 }
 
-function EventCategoryTable({ events, isDeleteMode = false, onDelete }) {
-  const [eventscategory, setEventsCategory] = useState(events)
-
-  useEffect(() => {
-    setEventsCategory(events)
-  }, [events])
-
-  function handleSeverityChange(id, value) {
-    setEventsCategory((prev) =>
-      prev.map((event) =>
-        event.id === id
-          ? {
-              ...event,
-              severity: Number(value),
-            }
-          : event,
-      ),
-    )
+function EventCategoryTable({ events, isEditMode = false, onUpdate }) {
+  const updateRiskValue = (riskId, field, value) => {
+    const nextValue = field === 'risk' ? value : Number(value)
+    onUpdate?.(riskId, field, nextValue)
   }
 
   return (
-    <TableContainer className="events-table-wrap">
-      <Table size="small" aria-label="위험 요인 리스트">
-        <TableHead>
-          <TableRow>
-            <TableCell>유형</TableCell>
-            <TableCell>항목</TableCell>
-            <TableCell>위험도</TableCell>
-            <TableCell>강도</TableCell>
-            <TableCell>빈도</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {eventscategory.map((event) => (
-            <TableRow hover key={event.id} className={`event-row${isDeleteMode ? ' is-delete-mode' : ''}`}>
-              <TableCell>{event.type}</TableCell>
-              <TableCell>
-                <Stack direction="row" spacing={0.8} alignItems="center">
-                  <Box className="event-type-icon">
-                    <EventTypeIcon type={event.item} />
-                  </Box>
-                  <span>{event.item}</span>
-                </Stack>
-              </TableCell>
-              <TableCell>{event.risk}</TableCell>
-              <TableCell>
-                <label className="risk-severity-select">
-                  <select
-                    aria-label={`${event.item} 강도 변경`}
-                    value={event.severity}
-                    onChange={(eventChange) => handleSeverityChange(event.id, eventChange.target.value)}
-                  >
-                    <option value={1}>1</option>
-                    <option value={2}>2</option>
-                    <option value={3}>3</option>
-                    <option value={4}>4</option>
-                    <option value={5}>5</option>
-                    <option value={6}>6</option>
-                    <option value={7}>7</option>
-                    <option value={8}>8</option>
-                    <option value={9}>9</option>
-                  </select>
-                </label>
-              </TableCell>
-              <TableCell>
-                {event.frequency}
-                {isDeleteMode && (
-                  <button
-                    className="risk-delete-row-button"
-                    type="button"
-                    aria-label={`${event.item} 삭제`}
-                    onClick={() => onDelete?.(event.id)}
-                  >
-                    ×
-                  </button>
-                )}
-              </TableCell>
+    <div className="risk-table-panel">
+      <TableContainer className="events-table-wrap">
+        <Table size="small" aria-label="위험 요인 리스트">
+          <TableHead>
+            <TableRow>
+              <TableCell>유형</TableCell>
+              <TableCell>항목</TableCell>
+              <TableCell>위험도</TableCell>
+              <TableCell>강도</TableCell>
+              <TableCell>빈도</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {events.map((event) => (
+              <TableRow hover key={event.id} className="event-row">
+                <TableCell>{event.type}</TableCell>
+                <TableCell>
+                  <Stack direction="row" spacing={0.8} alignItems="center">
+                    <Box className="event-type-icon">
+                      <EventTypeIcon type={event.item} />
+                    </Box>
+                    <span>{event.item}</span>
+                  </Stack>
+                </TableCell>
+                <TableCell>
+                  {isEditMode ? (
+                    <label className="risk-severity-select">
+                      <select
+                        aria-label={`${event.item} 위험도 변경`}
+                        value={event.risk}
+                        onChange={(eventChange) => updateRiskValue(event.id, 'risk', eventChange.target.value)}
+                      >
+                        {riskOptions.map((risk) => (
+                          <option key={risk} value={risk}>{risk}</option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : event.risk}
+                </TableCell>
+                <TableCell>
+                  {isEditMode ? (
+                    <label className="risk-severity-select">
+                      <select
+                        aria-label={`${event.item} 강도 변경`}
+                        value={event.severity}
+                        onChange={(eventChange) => updateRiskValue(event.id, 'severity', eventChange.target.value)}
+                      >
+                        {numberOptions.map((value) => (
+                          <option key={value} value={value}>{value}</option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : event.severity}
+                </TableCell>
+                <TableCell>
+                  {isEditMode ? (
+                    <label className="risk-severity-select">
+                      <select
+                        aria-label={`${event.item} 빈도 변경`}
+                        value={event.frequency}
+                        onChange={(eventChange) => updateRiskValue(event.id, 'frequency', eventChange.target.value)}
+                      >
+                        {numberOptions.map((value) => (
+                          <option key={value} value={value}>{value}</option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : event.frequency}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </div>
   )
 }
 

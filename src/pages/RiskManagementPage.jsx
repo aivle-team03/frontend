@@ -1,13 +1,13 @@
 import '../styles/risk.css'
-import { EVENT_CATEGORY_MOCKUP_DATA } from '../mocks/mockData.js'
-import RiskFactorTypeChart from '../components/riskmanagement/RiskFactorTypeChart.jsx'
-import EventCategoryTable from '../components/riskmanagement/EventCategoryTable.jsx'
-import RiskFormModal from '../components/riskmanagement/RiskFormModal.jsx'
+import { useState } from 'react'
 import { Typography } from '@mui/material'
 import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded'
-import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded'
 import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded'
-import { useState } from 'react'
+import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded'
+import EventCategoryTable from '../components/riskmanagement/EventCategoryTable.jsx'
+import RiskFactorTypeChart from '../components/riskmanagement/RiskFactorTypeChart.jsx'
+import RiskFormModal from '../components/riskmanagement/RiskFormModal.jsx'
+import { EVENT_CATEGORY_MOCKUP_DATA } from '../mocks/mockData.js'
 
 function Riskicon({ name }) {
   const commonProps = {
@@ -52,9 +52,7 @@ function getTopEntry(counts) {
 }
 
 function RiskManagementPage() {
-
-  const [isRiskModalOpen, setIsRiskModalOpen] = useState(false)
-  const [isDeleteMode, setIsDeleteMode] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
   const [risks, setRisks] = useState(EVENT_CATEGORY_MOCKUP_DATA)
 
   const createRisk = (riskForm) => {
@@ -72,11 +70,14 @@ function RiskManagementPage() {
       },
       ...currentRisks,
     ])
-    setIsRiskModalOpen(false)
   }
 
-  const deleteRisk = (riskId) => {
-    setRisks((currentRisks) => currentRisks.filter((risk) => risk.id !== riskId))
+  const updateRisk = (riskId, field, value) => {
+    setRisks((currentRisks) => currentRisks.map((risk) => (
+      risk.id === riskId
+        ? { ...risk, [field]: value }
+        : risk
+    )))
   }
 
   const totalRiskCount = risks.length
@@ -95,8 +96,6 @@ function RiskManagementPage() {
     { label: '총 빈도', value: totalFrequency, unit: '회', icon: RepeatRoundedIcon, tone: 'frequency' },
   ]
 
-
-
   return (
     <section className="risk-page-layout" aria-label="위험도 관리">
       <header className="risk-page-header">
@@ -106,10 +105,7 @@ function RiskManagementPage() {
               <span className="risk-kpi-icon"><card.icon /></span>
               <div>
                 <span>{card.label}</span>
-                <strong>
-                  {card.value}
-                  <small>{card.unit}</small>
-                </strong>
+                <strong>{card.value}<small>{card.unit}</small></strong>
               </div>
             </div>
           ))}
@@ -120,16 +116,11 @@ function RiskManagementPage() {
         <div className="count-card">
           <div className="risk-count-layout">
             <div className="risk-card-heading">
-              <div>
-                <Typography variant="h6">핵심 위험 요인</Typography>
-              </div>
+              <div><Typography variant="h6">핵심 위험 요인</Typography></div>
             </div>
 
             <div className="count-icon-text">
-              <div className="count-icon-box">
-                <Riskicon name="warning" />
-              </div>
-
+              <div className="count-icon-box"><Riskicon name="warning" /></div>
               <div className="count-text-box">
                 <span>상 위험 항목</span>
                 <strong>{highRiskCount}건</strong>
@@ -150,9 +141,7 @@ function RiskManagementPage() {
         <div className="count-graph">
           <div className="risk-graph-layout">
             <div className="risk-card-heading">
-              <div>
-                <Typography variant="h6">위험 요인 유형 그래프</Typography>
-              </div>
+              <div><Typography variant="h6">위험 요인 유형 그래프</Typography></div>
               <span className="risk-card-chip">전체 {totalRiskCount}건</span>
             </div>
 
@@ -166,42 +155,30 @@ function RiskManagementPage() {
       <div className="risk-bottom-layout">
         <div className="risk-list">
           <div className="risk-card-heading risk-list-heading">
-            <div>
-              <Typography variant="h6">위험 요인 리스트</Typography>
+            <div><Typography variant="h6">위험 요인 리스트</Typography></div>
+            <div className="risk-list-heading-actions">
+              <span className="risk-card-chip">{totalRiskCount}개 항목</span>
+              <button
+                className={`risk-edit-toggle${isEditMode ? ' is-active' : ''}`}
+                type="button"
+                onClick={() => setIsEditMode((currentMode) => !currentMode)}
+              >
+                {isEditMode ? '수정 완료' : '수정'}
+              </button>
             </div>
-            <span className="risk-card-chip">{totalRiskCount}개 항목</span>
           </div>
 
           <EventCategoryTable
             events={risks}
-            isDeleteMode={isDeleteMode}
-            onDelete={deleteRisk}
+            isEditMode={isEditMode}
+            onUpdate={updateRisk}
           />
         </div>
 
-        <aside className="risk-list-button" aria-label="위험 요인 관리 작업">
-          <div className="risk-action-copy">
-            <strong>위험 요인 편집</strong>
-          </div>
-
-          <div className="risk-button-layout">
-            <button className="risk-add-button" type="button"  onClick={() => setIsRiskModalOpen(true)}>
-              항목 추가
-            </button>
-
-            <button className="risk-add-button" type="button" onClick={() => setIsDeleteMode((currentMode) => !currentMode)}>
-              {isDeleteMode ? '취소하기' : '항목 제거'}
-            </button>
-          </div>
+        <aside className="risk-list-button" aria-label="위험 요인 추가">
+          <RiskFormModal onSubmit={createRisk} />
         </aside>
       </div>
-
-      {isRiskModalOpen && (
-        <RiskFormModal
-          onClose={() => setIsRiskModalOpen(false)}
-          onSubmit={createRisk}
-        />
-      )}
     </section>
   )
 }

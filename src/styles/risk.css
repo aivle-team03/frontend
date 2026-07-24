@@ -342,6 +342,12 @@
   margin-bottom: 15px;
 }
 
+.risk-list-heading-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .risk-page-layout .events-table-wrap {
   flex: 1;
   min-height: 0;
@@ -350,6 +356,50 @@
   border: 1px solid #e5edf6;
   border-radius: 14px;
   background: #ffffff;
+}
+
+.risk-table-panel {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.risk-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.risk-table-toolbar span {
+  color: #426389;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.risk-edit-toggle {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid #d8e1ec;
+  border-radius: 999px;
+  color: #596579;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.risk-edit-toggle:hover,
+.risk-edit-toggle.is-active {
+  border-color: #2f64b7;
+  color: #ffffff;
+  background: #2f64b7;
 }
 
 .risk-page-layout .events-table-wrap .MuiTableHead-root .MuiTableCell-root {
@@ -607,6 +657,24 @@
   display: grid;
   gap: 16px;
   padding: 22px;
+}
+
+.risk-inline-form {
+  gap: 14px;
+  padding: 0;
+}
+
+.risk-inline-form-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 4px;
+}
+
+.risk-inline-form-heading span {
+  color: #243247;
+  font-size: 16px;
+  font-weight: 950;
 }
 
 .risk-form-grid {
