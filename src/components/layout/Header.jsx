@@ -21,6 +21,7 @@ import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { MY_PAGE_MOCK_DATA } from '../../mocks/mockData.js'
 import '../../styles/Header.css'
 
@@ -45,6 +46,8 @@ const pageHeaderMeta = {
   '/risk-management': { icon: QueryStatsRoundedIcon, description: '조치 이력을 바탕으로 현장 위험도를 확인하고 관리하세요.' },
   '/board': { icon: CampaignOutlinedIcon, description: '현장에서 접수된 위험 신고와 조치 진행 상태를 확인하세요.' },
   '/report': { icon: ArticleOutlinedIcon, description: '현장 안전 현황과 조치 결과를 보고서로 확인하세요.' },
+  '/report/create': { icon: ArticleOutlinedIcon, description: '보고서 기본 정보를 입력하고 새 리포트를 생성하세요.' },
+  '/report/list': { icon: ArticleOutlinedIcon, description: '생성된 보고서와 자동 생성 보고서를 확인하세요.' },
   '/mypage': { icon: AccountCircleOutlinedIcon, description: '관리자 정보와 계정 설정을 관리하세요.' },
 }
 
@@ -65,17 +68,60 @@ function getStoredReadIds() {
 }
 
 function Header({ items }) {
+  const [user, setUser] = useState({})
+
   const [activeMenu, setActiveMenu] = useState(null)
   const [readNotificationIds, setReadNotificationIds] = useState(getStoredReadIds)
   const menuRootRef = useRef(null)
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, notifications } = MY_PAGE_MOCK_DATA
+  const { notifications } = MY_PAGE_MOCK_DATA
   const headerPath = location.pathname === '/monitoringdetail' ? '/monitoring' : location.pathname
   const currentItem = [...items, ...items.flatMap((item) => item.children ?? [])].find((item) => item.path === headerPath)
   const headerMeta = pageHeaderMeta[headerPath]
   const title = headerMeta?.title ?? currentItem?.label ?? extraPageTitles[headerPath] ?? 'BOSS'
   const HeaderIcon = headerMeta?.icon
+
+  useEffect(() => {
+    fetchUserProfile()
+  }, [])
+
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      const response = await axios.get('http://127.0.0.1:8000/api/users/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      const userData = response.data
+      if (userData) {
+        setUser({
+          name: userData.name || userData.user_id || '관리자',
+          role: userData.role || '소방안전 관리자',
+          department: userData.department || '시설관리팀',
+          email: userData.email || '',
+        })
+      }
+    } catch (error) {
+      console.error('헤더 사용자 프로필 로드 실패:', error)
+    }
+  }
+
+  const handleLogout = () => {
+    if (window.confirm('로그아웃 하시겠습니까?')) {
+
+      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('user');
+
+      setActiveMenu(null);
+
+      window.location.href = '/login';
+    }
+  }
 
   const notificationItems = useMemo(
     () => notifications.map((notification) => ({
@@ -230,7 +276,7 @@ function Header({ items }) {
                   <small>{user.email}</small>
                 </div>
                 {/* TODO(auth): Connect this control to the logout endpoint/session cleanup flow. */}
-                <button className="profile-logout-button" type="button" role="menuitem" aria-label="로그아웃">
+                <button className="profile-logout-button" type="button" role="menuitem" aria-label="로그아웃" onClick={handleLogout}>
                   <LogoutOutlinedIcon />
                   <span>로그아웃</span>
                 </button>

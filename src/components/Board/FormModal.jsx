@@ -35,13 +35,19 @@ function FormModal({ categories, riskOptions, onClose, onSubmit }) {
       }
 
       if (!file) {
-        return { ...currentForm, photoName: '', photoUrl: '' }
+        return {
+          ...currentForm,
+          photoName: '',
+          photoUrl: '',
+          photoFile: null
+        }
       }
 
       return {
         ...currentForm,
         photoName: file.name,
         photoUrl: URL.createObjectURL(file),
+        photoFile: file,
       }
     })
 
@@ -54,7 +60,12 @@ function FormModal({ categories, riskOptions, onClose, onSubmit }) {
         URL.revokeObjectURL(currentForm.photoUrl)
       }
 
-      return { ...currentForm, photoName: '', photoUrl: '' }
+      return {
+        ...currentForm,
+        photoName: '',
+        photoUrl: '',
+        photoFile: null
+      }
     })
   }
 

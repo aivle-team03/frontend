@@ -1,3 +1,5 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
@@ -7,18 +9,90 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import '../styles/monitoringdetail.css'
 
-const cameraList = [
-  { id: 'CAM-01', area: '1구역', location: 'A동 1층 출입구' },
-  { id: 'CAM-02', area: '2구역', location: 'A동 2층 작업장' },
-  { id: 'CAM-03', area: '3구역', location: 'B동 자재 보관소' },
-  { id: 'CAM-04', area: '4구역', location: 'B동 지하 주차장' },
-]
+function StreamViewer({ streamUrl, cameraId }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [streamUrl]);
+
+  if (!streamUrl || hasError) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8' }}>
+        <VideocamOutlinedIcon style={{ fontSize: '48px', marginBottom: '8px' }} />
+        <span>{hasError ? "비디오 로드 실패" : "실시간 스트림 연결 중..."}</span>
+      </div>
+    );
+  }
+
+  return (
+    <video
+      key={streamUrl}
+      src={streamUrl}
+      autoPlay
+      loop
+      muted
+      playsInline
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        display: 'block',
+      }}
+      onError={(e) => {
+        console.error(`CAM #${cameraId} 상세 영상 로드 에러:`, e);
+        setHasError(true);
+      }}
+    />
+  );
+}
 
 function MonitoringDetailPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const cameraId = searchParams.get('camera') ?? cameraList[0].id
-  const activeCamera = cameraList.find((camera) => camera.id === cameraId) ?? cameraList[0]
+
+  const [cameraList, setCameraList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const currentCameraIdFromUrl = searchParams.get('camera');
+
+  useEffect(() => {
+    fetchCameraList();
+  }, []);
+
+  const fetchCameraList = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://127.0.0.1:8000/api/cctvs', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.data && response.data.length > 0) {
+        const formattedList = response.data.map((item, index) => ({
+          id: item.cctv_id ?? item.camera_id ?? item.id,
+          cctv_name: item.cctv_name || item.camera_name || `${index + 1}번 카메라`,
+          area: item.area || `${index + 1}구역`,
+          location: item.location || '위치 미지정',
+          status: item.status || '정상',
+          streamUrl: item.stream_url || '',
+        }));
+        setCameraList(formattedList);
+      }
+    } catch (error) {
+      console.error('CCTV 상세 목록 조회 실패:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const activeCamera = cameraList.find(
+    (cam) => String(cam.id) === String(currentCameraIdFromUrl)
+  ) || cameraList[0] || { id: 1, area: '1구역', location: '위치 미지정', cctv_name: '카메라', streamUrl: '' };
+
+  if (loading) {
+    return <div className="monitoring-detail-page" style={{ padding: '40px', textAlign: 'center' }}>상세 모니터링 정보를 불러오는 중...</div>;
+  }
 
   return (
     <section className="monitoring-detail-page" aria-label={`${activeCamera.id} 상세 모니터링`}>
@@ -27,7 +101,7 @@ function MonitoringDetailPage() {
           <ArrowBackRoundedIcon />
         </button>
         <div>
-          <span>{activeCamera.id}</span>
+          <span>{activeCamera.cctv_name}</span>
           <strong>{activeCamera.area} · {activeCamera.location}</strong>
         </div>
         <span className="detail-live-status"><i />LIVE</span>
@@ -40,10 +114,17 @@ function MonitoringDetailPage() {
               <div><VideocamOutlinedIcon /><span>실시간 영상</span></div>
               <small>연결 상태 정상 · 1080p</small>
             </div>
-            <div className="primary-video-placeholder">
-              <span className="primary-camera-label"><i />{activeCamera.id}</span>
-              <div><VideocamOutlinedIcon /><span>실시간 영상 연결됨</span></div>
-              <span className="primary-video-time"><AccessTimeRoundedIcon />2026-07-18 14:32:08</span>
+
+            <div className="primary-video-placeholder" style={{ position: 'relative', overflow: 'hidden', height: '420px', background: '#0f172a' }}>
+              <span className="primary-camera-label" style={{ zIndex: 2 }}>
+                <i />CAM #{activeCamera.id}
+              </span>
+
+              <StreamViewer streamUrl={activeCamera.streamUrl} cameraId={activeCamera.id} />
+
+              <span className="primary-video-time" style={{ zIndex: 2 }}>
+                <AccessTimeRoundedIcon />실시간 스트리밍 중
+              </span>
             </div>
           </section>
 
@@ -53,17 +134,27 @@ function MonitoringDetailPage() {
               <span>전체 {cameraList.length}대</span>
             </div>
             <div className="detail-thumbnail-list">
-              {cameraList.map((camera) => (
-                <button
-                  className={camera.id === activeCamera.id ? 'is-active' : ''}
-                  type="button"
-                  key={camera.id}
-                  onClick={() => setSearchParams({ camera: camera.id })}
-                >
-                  <span><VideocamOutlinedIcon /></span>
-                  <div><strong>{camera.area}</strong><small>{camera.id}</small></div>
-                </button>
-              ))}
+              {cameraList.map((camera) => {
+                const isSelected = String(camera.id) === String(activeCamera.id);
+
+                return (
+                  <button
+                    className={isSelected ? 'is-active' : ''}
+                    type="button"
+                    key={camera.id}
+                    onClick={() => setSearchParams({ camera: camera.id })}
+                  >
+                    <div className="detail-thumb-video-box">
+                      <StreamViewer streamUrl={camera.streamUrl} cameraId={camera.id} />
+                    </div>
+
+                    <div className="detail-thumb-info">
+                      <strong>{camera.area}</strong>
+                      <small>CAM #{camera.id}</small>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </section>
         </div>

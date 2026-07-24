@@ -1,0 +1,224 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f5f5f5;
+    font-family: Arial, sans-serif;
+}
+
+.logo-area {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sub-title {
+    color: #003366;
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.desc {
+    color: #666;
+    margin: 5px 0 0 0;
+    font-size: 12px;
+}
+
+.login-box {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 360px;
+    text-align: center;
+}
+
+.main-title {
+    font-size: 18px;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.input {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.error {
+    color: red;
+    font-size: 12px;
+    margin: 0;
+    text-align: left;
+}
+
+.button {
+    padding: 12px;
+    background-color: #cbdffa;
+    border: none;
+    border-radius: 4px;
+    color: #333;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.links {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #666;
+}
+
+.find-pw-link {
+    cursor: pointer;
+}
+
+.approval-modal-backdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(15, 23, 42, 0.5) !important;
+    backdrop-filter: blur(3px);
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 9999 !important;
+}
+
+.login-password-modal {
+    position: relative !important;
+    width: min(400px, 90vw) !important;
+    background-color: #ffffff !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    z-index: 10000 !important;
+    box-sizing: border-box !important;
+}
+
+.login-password-modal .modal-v2-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 16px 20px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    background-color: #ffffff !important;
+}
+
+.login-password-modal .modal-v2-header h2 {
+    margin: 0 !important;
+    font-size: 17px !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+}
+
+.login-password-modal .modal-v2-close {
+    background: none !important;
+    border: none !important;
+    font-size: 18px !important;
+    cursor: pointer !important;
+    color: #64748b !important;
+    padding: 4px !important;
+}
+
+/* 모달 바디 */
+.login-modal-body {
+    padding: 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    background-color: #ffffff !important;
+}
+
+.input-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    text-align: left !important;
+}
+
+.input-group label {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    color: #475569 !important;
+}
+
+.input-group input {
+    padding: 10px 12px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+}
+
+.input-group input:focus {
+    border-color: #3b82f6 !important;
+}
+
+.modal-msg {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    text-align: left !important;
+}
+
+.modal-msg.error {
+    color: #ef4444 !important;
+}
+
+.modal-msg.success {
+    color: #16a34a !important;
+}
+
+/* 모달 푸터 */
+.login-password-modal .modal-v2-footer {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+    padding: 14px 20px !important;
+    border-top: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+}
+
+.login-password-modal .btn-v2-list {
+    padding: 8px 16px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    color: #475569 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+}
+
+.login-password-modal .btn-v2-approve {
+    padding: 8px 16px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    background: #2563eb !important;
+    color: #ffffff !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+}
+
+.login-password-modal .btn-v2-approve:hover {
+    background: #1d4ed8 !important;
+}
