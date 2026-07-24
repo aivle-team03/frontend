@@ -10,12 +10,27 @@ import {
   YAxis,
 } from 'recharts'
 
-function getRiskColor(value) {
-  if (value == "소방") return '#f76773'
-  if (value == "시설") return '#4ad661'
-  if (value == "안전") return '#4bc1df'
-  if (value == "전체") return '#ccf70e'
-  return '#000000'
+const riskTypeColors = [
+  '#f76773',
+  '#4bc1df',
+  '#4ad661',
+  '#f59e0b',
+  '#8b5cf6',
+  '#14b8a6',
+  '#ec4899',
+  '#64748b',
+  '#84cc16',
+  '#f97316',
+  '#06b6d4',
+  '#a855f7',
+  '#eab308',
+  '#10b981',
+  '#3b82f6',
+  '#ef4444',
+]
+
+function getRiskColor(index) {
+  return riskTypeColors[index % riskTypeColors.length]
 }
 
 function makeTypeCountData(risks) {
@@ -24,42 +39,45 @@ function makeTypeCountData(risks) {
     countMap[risk.type] = (countMap[risk.type] || 0) + 1
   })
 
-const typeData = Object.entries(countMap).map(([type, count]) => ({
+  const typeData = Object.entries(countMap).map(([type, count]) => ({
     type,
     count,
   }))
 
   typeData.push({
-    type: "전체",
+    type: '전체',
     count: risks.length,
   })
 
   return typeData
 }
 
-
 function RiskFactorTypeChart({ risks }) {
-
-const chartData = makeTypeCountData(risks);
-
+  const chartData = makeTypeCountData(risks)
 
   return (
-    
-    <Box >
+    <Box>
       <Box className="risk-chart">
         <ResponsiveContainer width="90%" height={200}>
-          <BarChart data={chartData}  margin={{ top: 6, right: 28, bottom: 0, left: 0 }}>
+          <BarChart data={chartData} margin={{ top: 6, right: 28, bottom: 0, left: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <YAxis dataKey="count" allowDecimals={false}/>
-            <XAxis dataKey="type"  width={20} />
+            <YAxis dataKey="count" allowDecimals={false} />
+            <XAxis dataKey="type" width={20} />
             <Tooltip formatter={(value) => [`${value}`, '개수']} />
-            <Bar dataKey="count" radius={[8, 8, 0, 0]} barSize={40} isAnimationActive animationBegin={120} animationDuration={1100} animationEasing="ease-out">
-              {chartData.map((data) => (
+            <Bar
+              dataKey="count"
+              radius={[8, 8, 0, 0]}
+              barSize={40}
+              isAnimationActive
+              animationBegin={120}
+              animationDuration={1100}
+              animationEasing="ease-out"
+            >
+              {chartData.map((data, index) => (
                 <Cell
                   cursor="pointer"
-                  fill={getRiskColor(data.type)}
+                  fill={getRiskColor(index)}
                   key={data.type}
-                
                 />
               ))}
             </Bar>

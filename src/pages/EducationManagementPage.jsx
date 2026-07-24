@@ -151,6 +151,14 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
     setAiStatus('queued')
   }
 
+  if (loading) {
+    return (
+      <div style={{ padding: '40px', textAlign: 'center' }}>
+        교육 관리 데이터 연결 중...
+      </div>
+    )
+  }
+
   return (
     <section className="education-page education-management-page">
       <div className="education-creation-grid">
@@ -235,6 +243,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
           )}
         </article>
 
+        {/* 하단 테이블: 대상자별 교육 리스트 */}
         <article className="education-panel management-course-table-card">
           <div className="management-card-heading table-card-heading"><PanelTitle icon={GroupsOutlinedIcon} kicker="교육 대상자" title="대상자별 교육 리스트" /><span className="course-count">총 {allCourses.length}개 과정</span></div>
           <div className="course-table-toolbar">
@@ -353,7 +362,51 @@ function VideoActionTabs({ value, onChange, dark = false }) {
 }
 
 function PanelTitle({ icon: Icon, kicker, title, dark = false }) {
-  return <div className={`panel-title-with-icon${dark ? ' is-dark' : ''}`}>{kicker && <span className="panel-kicker">{kicker}</span>}<div className="panel-title-main"><span className="panel-title-icon" aria-hidden="true"><Icon /></span><h3>{title}</h3></div></div>
+  return (
+    <div className={`panel-title-with-icon${dark ? ' is-dark' : ''}`}>
+      {kicker && <span className="panel-kicker">{kicker}</span>}
+      <div className="panel-title-main">
+        <span className="panel-title-icon" aria-hidden="true">
+          <Icon />
+        </span>
+        <h3>{title}</h3>
+      </div>
+    </div>
+  )
 }
+
+const statusStyles = (
+  <style>{`
+    .education-status {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    /* 미이수 : 빨간색 */
+    .education-status.status-red {
+      color: #ef4444;
+      background-color: #fef2f2;
+      border: 1px solid #fecaca;
+    }
+
+    /* 진행 중 : 파란색 */
+    .education-status.status-blue {
+      color: #3b82f6;
+      background-color: #eff6ff;
+      border: 1px solid #bfdbfe;
+    }
+
+    /* 이수 완료 : 노란색 */
+    .education-status.status-yellow {
+      color: #ca8a04;
+      background-color: #fefce8;
+      border: 1px solid #fef08a;
+    }
+  `}`</style>
+)
 
 export default EducationManagementPage

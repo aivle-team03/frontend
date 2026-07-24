@@ -87,24 +87,40 @@ function MonitoringPage() {
       }
 
       try {
-        const eventResponse = await axios.get('http://127.0.0.1:8000/api/checklists', { headers })
-        const checklists = eventResponse.data
+        const eventResponse = await axios.get('http://127.0.0.1:8000/api/monitoring/events', { headers })
+        const monitoringEvents = eventResponse.data
 
-        if (checklists && checklists.length > 0) {
-          const formattedEvents = checklists.map((evt) => ({
-            id: evt.checklist_id ?? evt.id,
-            time: evt.date ? String(evt.date).replace('T', ' ').substring(0, 16) : '-',
-            location: evt.camera_id ? `CCTV #${evt.camera_id}` : '지정 안 됨',
-            type: evt.content || '위험 요인 감지',
-            status: (evt.status === 'approved' || evt.status === '조치 완료') ? '조치 완료' : '조치 필요',
-            manager: evt.uid ? `담당자 ${evt.uid}` : '미지정',
-          }))
+        if (monitoringEvents && monitoringEvents.length > 0) {
+          const formattedEvents = monitoringEvents.map((evt) => {
+
+            const rawTime = evt.detected_at || evt.created_at || evt.time || evt.date
+            const formattedTime = rawTime
+              ? String(rawTime).replace('T', ' ').substring(0, 16)
+              : '-'
+
+            const isCompleted = ['completed', 'resolved', 'approved', '조치 완료'].includes(
+              String(evt.status).toLowerCase()
+            )
+
+            return {
+              id: evt.event_id ?? evt.id,
+              eventId: evt.event_id ?? evt.id,
+              cctvId: evt.cctv_id,
+              time: formattedTime,
+              location: evt.cctv?.location || evt.location || (evt.cctv_id ? `CCTV #${evt.cctv_id}` : '위치 미지정'),
+              type: evt.event_type || evt.hazard_type || evt.content || '위험 요인 감지',
+              status: isCompleted ? '조치 완료' : '조치 필요',
+              rawStatus: evt.status,
+              manager: evt.manager_name || (evt.manager_id ? `담당자 ${evt.manager_id}` : '미지정'),
+              imageUrl: evt.image_url || evt.snapshot_url || '',
+            }
+          })
 
           setEvents(formattedEvents)
           setSelectedEvent(formattedEvents[0])
         }
       } catch (evtErr) {
-        console.warn('알람/체크리스트 목록 조회 실패:', evtErr)
+        console.warn('모니터링 이벤트 목록 조회 실패:', evtErr)
       }
 
     } catch (error) {
