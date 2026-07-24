@@ -2,7 +2,12 @@ import '../styles/risk.css'
 import { EVENT_CATEGORY_MOCKUP_DATA } from '../mocks/mockData.js'
 import RiskFactorTypeChart from '../components/riskmanagement/RiskFactorTypeChart.jsx'
 import EventCategoryTable from '../components/riskmanagement/EventCategoryTable.jsx'
+import RiskFormModal from '../components/riskmanagement/RiskFormModal.jsx'
 import { Typography } from '@mui/material'
+import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded'
+import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded'
+import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded'
+import { useState } from 'react'
 
 function Riskicon({ name }) {
   const commonProps = {
@@ -47,7 +52,33 @@ function getTopEntry(counts) {
 }
 
 function RiskManagementPage() {
-  const risks = EVENT_CATEGORY_MOCKUP_DATA
+
+  const [isRiskModalOpen, setIsRiskModalOpen] = useState(false)
+  const [isDeleteMode, setIsDeleteMode] = useState(false)
+  const [risks, setRisks] = useState(EVENT_CATEGORY_MOCKUP_DATA)
+
+  const createRisk = (riskForm) => {
+    const nextId = Math.max(...risks.map((risk) => risk.id), 0) + 1
+
+    setRisks((currentRisks) => [
+      {
+        id: nextId,
+        location: '-',
+        type: riskForm.type.trim(),
+        item: riskForm.item.trim(),
+        risk: riskForm.risk,
+        severity: riskForm.severity,
+        frequency: riskForm.frequency,
+      },
+      ...currentRisks,
+    ])
+    setIsRiskModalOpen(false)
+  }
+
+  const deleteRisk = (riskId) => {
+    setRisks((currentRisks) => currentRisks.filter((risk) => risk.id !== riskId))
+  }
+
   const totalRiskCount = risks.length
   const totalFrequency = risks.reduce((sum, risk) => sum + risk.frequency, 0)
   const averageSeverity = totalRiskCount
@@ -55,28 +86,31 @@ function RiskManagementPage() {
     : '0.0'
   const riskLevelCounts = countBy(risks, 'risk')
   const typeCounts = countBy(risks, 'type')
-  const locationCounts = countBy(risks, 'location')
   const topType = getTopEntry(typeCounts)
-  const topLocation = getTopEntry(locationCounts)
   const highRiskCount = riskLevelCounts['상'] ?? 0
 
   const summaryCards = [
-    { label: '전체 항목', value: totalRiskCount, unit: '건' },
-    { label: '평균 강도', value: averageSeverity, unit: '점' },
-    { label: '총 빈도', value: totalFrequency, unit: '회' },
+    { label: '전체 항목', value: totalRiskCount, unit: '건', icon: FormatListBulletedRoundedIcon, tone: 'total' },
+    { label: '평균 강도', value: averageSeverity, unit: '점', icon: SpeedRoundedIcon, tone: 'severity' },
+    { label: '총 빈도', value: totalFrequency, unit: '회', icon: RepeatRoundedIcon, tone: 'frequency' },
   ]
+
+
 
   return (
     <section className="risk-page-layout" aria-label="위험도 관리">
       <header className="risk-page-header">
         <div className="risk-kpi-grid" aria-label="위험도 요약">
           {summaryCards.map((card) => (
-            <div className="risk-kpi-card" key={card.label}>
-              <span>{card.label}</span>
-              <strong>
-                {card.value}
-                <small>{card.unit}</small>
-              </strong>
+            <div className={`risk-kpi-card risk-kpi-${card.tone}`} key={card.label}>
+              <span className="risk-kpi-icon"><card.icon /></span>
+              <div>
+                <span>{card.label}</span>
+                <strong>
+                  {card.value}
+                  <small>{card.unit}</small>
+                </strong>
+              </div>
             </div>
           ))}
         </div>
@@ -109,11 +143,6 @@ function RiskManagementPage() {
                 <strong>{topType.label}</strong>
                 <em>{topType.value}건</em>
               </div>
-              <div>
-                <span>최다 구역</span>
-                <strong>{topLocation.label}</strong>
-                <em>{topLocation.value}건</em>
-              </div>
             </div>
           </div>
         </div>
@@ -143,7 +172,11 @@ function RiskManagementPage() {
             <span className="risk-card-chip">{totalRiskCount}개 항목</span>
           </div>
 
-          <EventCategoryTable events={risks} />
+          <EventCategoryTable
+            events={risks}
+            isDeleteMode={isDeleteMode}
+            onDelete={deleteRisk}
+          />
         </div>
 
         <aside className="risk-list-button" aria-label="위험 요인 관리 작업">
@@ -152,16 +185,23 @@ function RiskManagementPage() {
           </div>
 
           <div className="risk-button-layout">
-            <button className="risk-add-button" type="button">
+            <button className="risk-add-button" type="button"  onClick={() => setIsRiskModalOpen(true)}>
               항목 추가
             </button>
 
-            <button className="risk-add-button" type="button">
-              항목 제거
+            <button className="risk-add-button" type="button" onClick={() => setIsDeleteMode((currentMode) => !currentMode)}>
+              {isDeleteMode ? '취소하기' : '항목 제거'}
             </button>
           </div>
         </aside>
       </div>
+
+      {isRiskModalOpen && (
+        <RiskFormModal
+          onClose={() => setIsRiskModalOpen(false)}
+          onSubmit={createRisk}
+        />
+      )}
     </section>
   )
 }

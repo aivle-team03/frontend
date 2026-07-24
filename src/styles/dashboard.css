@@ -581,13 +581,21 @@
 .risk-section-stack-card {
   position: relative;
   overflow: hidden;
-  gap: 10px;
+  gap: 12px;
   background: linear-gradient(145deg, #ffffff 0%, #f8fbff 100%);
 }
 
 .risk-section-stack-heading {
   min-height: 0;
-  align-items: center;
+  align-items: flex-start;
+}
+
+.risk-section-stack-heading p {
+  margin: 5px 0 0;
+  color: #7c899d;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
 }
 
 .risk-section-total-pill {
@@ -672,9 +680,12 @@
 
 .risk-section-stack-body {
   flex: 1;
-  min-height: 168px;
+  min-height: 220px;
   margin-top: 0;
-  padding: 2px 0;
+  padding: 8px 4px 2px;
+  border: 1px solid #e5edf7;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .risk-section-stack-card .recharts-bar-rectangle {
@@ -736,15 +747,29 @@
   display: flex;
   min-height: 32px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 10px;
-  padding-top: 4px;
-  border-top: 1px solid #edf2f7;
+  padding-top: 0;
+  border-top: 0;
 }
 
 .risk-section-stack-footer .risk-level-legend {
   justify-content: flex-start;
-  gap: 8px;
+  gap: 11px;
+}
+
+.risk-section-stack-footer .risk-level-legend span {
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid #e5edf7;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.risk-section-stack-footer .risk-level-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
 }
 
 .risk-section-stack-footer p {
@@ -916,6 +941,75 @@
 .donut-chart-body {
   margin-top: 0;
   margin-bottom: 4px;
+}
+
+.education-chart-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.education-chart-heading h6 {
+  color: #172033;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.education-chart-heading p {
+  margin: 5px 0 0;
+  color: #7c899d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.education-chart-heading > span {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  padding: 0 11px;
+  border: 1px solid #d8e7f8;
+  border-radius: 999px;
+  color: #285f9e;
+  background: #f4f9ff;
+  font-size: 13px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.education-completion-chart {
+  flex: 0 0 270px;
+  margin-top: 4px;
+}
+
+.education-completion-chart .recharts-legend-wrapper {
+  color: #526176 !important;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.education-chart-tooltip {
+  display: grid;
+  gap: 5px;
+  min-width: 132px;
+  padding: 10px 12px;
+  border: 1px solid #dbe7f5;
+  border-radius: 10px;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.education-chart-tooltip strong {
+  color: #172033;
+  font-size: 13px;
+}
+
+.education-chart-tooltip b {
+  color: #d97706;
+  font-size: 13px;
 }
 
 .donut-center-label {

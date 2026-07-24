@@ -80,7 +80,7 @@ function HomePage() {
         <div className="section-heading">
           <div>
             <h2 className="section-title">위험도 관리</h2>
-            <p>전체 위험도 통계와 구간 별 위험도 분포를 확인합니다.</p>
+            <p>전체 위험도 통계와 유형별 위험도 분포를 확인합니다.</p>
           </div>
         </div>
 

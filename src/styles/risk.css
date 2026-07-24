@@ -59,6 +59,9 @@
 }
 
 .risk-kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   min-width: 0;
   padding: 14px 15px;
   border: 1px solid #e4ecf5;
@@ -66,11 +69,54 @@
   background: #ffffff;
 }
 
+.risk-kpi-card > div {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
 .risk-kpi-card span {
   display: block;
   color: #708097;
   font-size: 11px;
   font-weight: 900;
+}
+
+.risk-kpi-icon {
+  display: grid !important;
+  width: 48px;
+  height: 58px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+}
+
+.risk-kpi-icon svg {
+  width: 29px;
+  height: 29px;
+}
+
+.risk-kpi-total .risk-kpi-icon {
+  color: #2f64b7;
+  background: #eaf2ff;
+}
+
+.risk-kpi-severity .risk-kpi-icon {
+  color: #d97706;
+  background: #fff6df;
+}
+
+.risk-kpi-severity strong {
+  color: #d97706;
+}
+
+.risk-kpi-frequency .risk-kpi-icon {
+  color: #169b58;
+  background: #eafaf0;
+}
+
+.risk-kpi-frequency strong {
+  color: #169b58;
 }
 
 .risk-kpi-card strong {
@@ -331,6 +377,14 @@
   background: #f8fbff;
 }
 
+.risk-page-layout .event-row.is-delete-mode {
+  position: relative;
+}
+
+.risk-page-layout .event-row.is-delete-mode .MuiTableCell-root:last-child {
+  padding-right: 52px;
+}
+
 .risk-page-layout .event-type-icon {
   width: 28px;
   height: 28px;
@@ -455,6 +509,170 @@
   box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.14);
 }
 
+.risk-frequency-cell {
+  display: inline-flex;
+  min-width: 48px;
+  align-items: center;
+  gap: 10px;
+}
+
+.risk-delete-row-button {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid #f0c8ce;
+  border-radius: 999px;
+  color: #b4232f;
+  background: #fff7f8;
+  cursor: pointer;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 950;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+.risk-delete-row-button:hover {
+  border-color: #e79aa4;
+  color: #8f1d27;
+  background: #ffecef;
+}
+
+.risk-modal-backdrop {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.risk-form-modal {
+  width: min(520px, 100%);
+  overflow: hidden;
+  border: 1px solid #dfe7f2;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 22px 54px rgba(15, 23, 42, 0.24);
+}
+
+.risk-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.risk-modal-header span {
+  color: #2f64b7;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.risk-modal-header h2 {
+  margin: 4px 0 0;
+  color: #172033;
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.risk-modal-header button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 1px solid #d8e1ec;
+  border-radius: 10px;
+  color: #596579;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.risk-modal-header button:hover {
+  color: #172033;
+  background: #f8fafc;
+}
+
+.risk-form {
+  display: grid;
+  gap: 16px;
+  padding: 22px;
+}
+
+.risk-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.risk-form label {
+  display: grid;
+  gap: 7px;
+  color: #526176;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.risk-form input,
+.risk-form select {
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d8e1ec;
+  border-radius: 10px;
+  color: #243247;
+  background: #ffffff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  outline: 0;
+}
+
+.risk-form input:focus,
+.risk-form select:focus {
+  border-color: #9bb6d8;
+  box-shadow: 0 0 0 3px rgba(47, 100, 183, 0.12);
+}
+
+.risk-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  padding-top: 4px;
+}
+
+.risk-modal-actions button {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.risk-modal-cancel {
+  border: 1px solid #d8e1ec;
+  color: #596579;
+  background: #ffffff;
+}
+
+.risk-modal-submit {
+  border: 1px solid #2f64b7;
+  color: #ffffff;
+  background: #2f64b7;
+}
+
 @media (max-width: 1180px) {
   .risk-page-header,
   .risk-top-layout,
@@ -501,5 +719,9 @@
 
   .risk-button-layout {
     min-width: 0;
+  }
+
+  .risk-form-grid {
+    grid-template-columns: 1fr;
   }
 }
