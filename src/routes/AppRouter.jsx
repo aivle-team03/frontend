@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import MainLayout from '../components/layout/MainLayout.jsx'
 import ActionHistoryPage from '../pages/ActionHistoryPage.jsx'
@@ -10,7 +10,6 @@ import HomePage from '../pages/HomePage.jsx'
 import LawQaPage from '../pages/LawQaPage.jsx'
 import MonitoringPage from '../pages/MonitoringPage.jsx'
 import MyPage from '../pages/MyPage.jsx'
-import React, { useState, useEffect } from 'react';
 import LoginPage from '../pages/LoginPage.jsx'
 import SignupPage from '../pages/SignupPage.jsx'
 import MonitoringDetailPage from '../pages/MonitoringDetailPage.jsx'
@@ -23,6 +22,7 @@ import RiskManagementPage from '../pages/RiskManagementPage.jsx'
 function AppRouter() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [addedCourses, setAddedCourses] = useState([])
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -37,8 +37,6 @@ function AppRouter() {
   }, []);
 
   if (isLoading) return <div>로딩 중...</div>;
-  const [addedCourses, setAddedCourses] = useState([])
-
   return (
     <BrowserRouter>
       <Routes>
@@ -47,14 +45,23 @@ function AppRouter() {
             <Route index element={<HomePage />} />
             <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="checklists" element={<ChecklistPage />} />
+            <Route path="checklists/management" element={<ChecklistManagementPage />} />
             <Route path="actions" element={<ActionHistoryPage />} />
             <Route path="law-qa" element={<LawQaPage />} />
-            <Route path="education" element={<EducationPage />} />
+            <Route path="education" element={<EducationPage addedCourses={addedCourses} />} />
             <Route path="board" element={<BoardPage />} />
             <Route path="report" element={<ReportPage />} />
             <Route path="report/create" element={<ReportCreatePage />} />
             <Route path="report/list" element={<ReportListPage />} />
-            <Route path="education-management" element={<EducationManagementPage />} />
+            <Route
+              path="education-management"
+              element={
+                <EducationManagementPage
+                  addedCourses={addedCourses}
+                  onAddCourse={(course) => setAddedCourses((current) => [course, ...current])}
+                />
+              }
+            />
             <Route path="risk-management" element={<RiskManagementPage />} />
             <Route path="mypage" element={<MyPage />} />
             <Route path="monitoringdetail" element={<MonitoringDetailPage />} />
@@ -62,7 +69,7 @@ function AppRouter() {
           </Route>
         ) : (
           <>
-            <Route path="*" element={<LoginPage setIsLoggedIn={setIsLoggedIn} />} />
+            <Route path="login" element={<LoginPage setIsLoggedIn={setIsLoggedIn} />} />
             <Route path="signup" element={<SignupPage />} />
             <Route path="*" element={<Navigate replace to="/login" />} />
           </>
