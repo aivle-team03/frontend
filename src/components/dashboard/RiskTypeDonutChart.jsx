@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material'
 import { Cell, Label, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
-const riskTypeColors = ['#6929c4', '#1192e8', '#005d5d', '#9f1853']
+const riskTypeColors = ['#FBB4AE', '#B3CDE3', '#CCEBC5', '#DECBE4']
 
 function RiskTypeDonutChart({ data }) {
   return (
