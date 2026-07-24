@@ -10,6 +10,36 @@ import { useEffect, useState } from 'react'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
+/**
+ * 유튜브 URL을 embed용 URL로 변환
+ * 지원 형식: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/...
+ * 유튜브 URL이 아니면 null 반환
+ */
+function getYouTubeEmbedUrl(url) {
+  if (!url) return null
+  try {
+    const urlObj = new URL(url)
+    let videoId = null
+
+    if (urlObj.hostname.includes('youtube.com')) {
+      if (urlObj.pathname === '/watch') {
+        videoId = urlObj.searchParams.get('v')
+      } else if (urlObj.pathname.startsWith('/embed/')) {
+        videoId = urlObj.pathname.split('/embed/')[1]
+      }
+    } else if (urlObj.hostname === 'youtu.be') {
+      videoId = urlObj.pathname.slice(1)
+    }
+
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}`
+    }
+  } catch {
+    // URL 파싱 실패 시 null
+  }
+  return null
+}
+
 function EducationPage() {
   const [loading, setLoading] = useState(true)
 
@@ -201,21 +231,38 @@ function EducationPage() {
             </div>
             <div className="preview-center">
               {currentCourse?.videoUrl ? (
-                <video
-                  src={currentCourse.videoUrl}
-                  controls
-                  style={{ width: '100%', height: '100%', borderRadius: '8px' }}
-                  onTimeUpdate={(e) => {
-                    // 비디오 재생 시 진도율 자동 계산 예시
-                    const duration = e.target.duration
-                    if (duration > 0) {
-                      const p = Math.floor((e.target.currentTime / duration) * 100)
-                      if (p > videoProgress && currentCourse.status !== '이수') {
-                        setVideoProgress(p)
-                      }
-                    }
-                  }}
-                />
+                (() => {
+                  const embedUrl = getYouTubeEmbedUrl(currentCourse.videoUrl)
+                  if (embedUrl) {
+                    // 유튜브 링크 → iframe 임베드
+                    return (
+                      <iframe
+                        src={embedUrl}
+                        title={currentCourse.title}
+                        style={{ width: '100%', height: '100%', borderRadius: '8px', border: 'none' }}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    )
+                  }
+                  // 일반 동영상 파일 URL → <video> 태그
+                  return (
+                    <video
+                      src={currentCourse.videoUrl}
+                      controls
+                      style={{ width: '100%', height: '100%', borderRadius: '8px' }}
+                      onTimeUpdate={(e) => {
+                        const duration = e.target.duration
+                        if (duration > 0) {
+                          const p = Math.floor((e.target.currentTime / duration) * 100)
+                          if (p > videoProgress && currentCourse.status !== '이수') {
+                            setVideoProgress(p)
+                          }
+                        }
+                      }}
+                    />
+                  )
+                })()
               ) : (
                 <>
                   <VideocamOutlinedIcon fontSize="large" />
