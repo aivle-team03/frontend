@@ -79,6 +79,12 @@ function RiskManagementPage() {
     setRisks((currentRisks) => currentRisks.filter((risk) => risk.id !== riskId))
   }
 
+  const updateRiskSeverity = (riskId, severity) => {
+    setRisks((currentRisks) => currentRisks.map((risk) => (
+      risk.id === riskId ? { ...risk, severity } : risk
+    )))
+  }
+
   const totalRiskCount = risks.length
   const totalFrequency = risks.reduce((sum, risk) => sum + risk.frequency, 0)
   const averageSeverity = totalRiskCount
@@ -176,6 +182,7 @@ function RiskManagementPage() {
             events={risks}
             isDeleteMode={isDeleteMode}
             onDelete={deleteRisk}
+            onSeverityChange={updateRiskSeverity}
           />
         </div>
 

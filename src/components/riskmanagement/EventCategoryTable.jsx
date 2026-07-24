@@ -3,7 +3,6 @@ import DirectionsCarIcon from '@mui/icons-material/DirectionsCar'
 import EngineeringIcon from '@mui/icons-material/Engineering'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment'
-import { useEffect, useState } from 'react'
 
 import {
   Box,
@@ -24,25 +23,7 @@ function EventTypeIcon({ type }) {
   return <CloudOutlinedIcon fontSize="small" />
 }
 
-function EventCategoryTable({ events, isDeleteMode = false, onDelete }) {
-  const [eventscategory, setEventsCategory] = useState(events)
-
-  useEffect(() => {
-    setEventsCategory(events)
-  }, [events])
-
-  function handleSeverityChange(id, value) {
-    setEventsCategory((prev) =>
-      prev.map((event) =>
-        event.id === id
-          ? {
-              ...event,
-              severity: Number(value),
-            }
-          : event,
-      ),
-    )
-  }
+function EventCategoryTable({ events, isDeleteMode = false, onDelete, onSeverityChange }) {
 
   return (
     <TableContainer className="events-table-wrap">
@@ -57,7 +38,7 @@ function EventCategoryTable({ events, isDeleteMode = false, onDelete }) {
           </TableRow>
         </TableHead>
         <TableBody>
-          {eventscategory.map((event) => (
+          {events.map((event) => (
             <TableRow hover key={event.id} className={`event-row${isDeleteMode ? ' is-delete-mode' : ''}`}>
               <TableCell>{event.type}</TableCell>
               <TableCell>
@@ -74,7 +55,7 @@ function EventCategoryTable({ events, isDeleteMode = false, onDelete }) {
                   <select
                     aria-label={`${event.item} 강도 변경`}
                     value={event.severity}
-                    onChange={(eventChange) => handleSeverityChange(event.id, eventChange.target.value)}
+                    onChange={(eventChange) => onSeverityChange?.(event.id, Number(eventChange.target.value))}
                   >
                     <option value={1}>1</option>
                     <option value={2}>2</option>
