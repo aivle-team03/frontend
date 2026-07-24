@@ -11,9 +11,11 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import RecentEventsTable from '../components/monitoring/RecentEventsTableMonitoring.jsx'
 import styles from '../styles/CCTVMonitoring.module.css'
+import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
 
 function StreamViewer({ streamUrl, cameraId }) {
   const [hasError, setHasError] = useState(false);
+  const youTubeEmbedUrl = getYouTubeEmbedUrl(streamUrl, { autoplay: true })
 
   useEffect(() => {
     setHasError(false);
@@ -28,10 +30,14 @@ function StreamViewer({ streamUrl, cameraId }) {
     );
   }
 
+  if (youTubeEmbedUrl) {
+    return <iframe key={youTubeEmbedUrl} src={youTubeEmbedUrl} title={`CAM #${cameraId} YouTube 영상`} allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ width: '100%', height: '100%', border: 0, display: 'block' }} />
+  }
+
   return (
     <video
       key={streamUrl}
-      src={streamUrl}
+      src={resolveMediaUrl(streamUrl)}
       autoPlay
       loop
       muted
@@ -93,13 +99,13 @@ function MonitoringPage() {
         if (monitoringEvents && monitoringEvents.length > 0) {
           const formattedEvents = monitoringEvents.map((evt) => {
 
-            const rawTime = evt.detected_at || evt.created_at || evt.time || evt.date
+            const rawTime = evt.date || evt.detected_at || evt.created_at || evt.time
             const formattedTime = rawTime
               ? String(rawTime).replace('T', ' ').substring(0, 16)
               : '-'
 
             const isCompleted = ['completed', 'resolved', 'approved', '조치 완료'].includes(
-              String(evt.status).toLowerCase()
+              String(evt.current_status ?? evt.status).toLowerCase()
             )
 
             return {
@@ -108,9 +114,9 @@ function MonitoringPage() {
               cctvId: evt.cctv_id,
               time: formattedTime,
               location: evt.cctv?.location || evt.location || (evt.cctv_id ? `CCTV #${evt.cctv_id}` : '위치 미지정'),
-              type: evt.event_type || evt.hazard_type || evt.content || '위험 요인 감지',
+              type: evt.category?.category_name || evt.event_type || evt.hazard_type || evt.content || '위험 요인 감지',
               status: isCompleted ? '조치 완료' : '조치 필요',
-              rawStatus: evt.status,
+              rawStatus: evt.current_status ?? evt.status,
               manager: evt.manager_name || (evt.manager_id ? `담당자 ${evt.manager_id}` : '미지정'),
               imageUrl: evt.image_url || evt.snapshot_url || '',
             }

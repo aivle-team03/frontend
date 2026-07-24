@@ -8,9 +8,11 @@ import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import '../styles/monitoringdetail.css'
+import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
 
 function StreamViewer({ streamUrl, cameraId }) {
   const [hasError, setHasError] = useState(false);
+  const youTubeEmbedUrl = getYouTubeEmbedUrl(streamUrl, { autoplay: true })
 
   useEffect(() => {
     setHasError(false);
@@ -25,10 +27,14 @@ function StreamViewer({ streamUrl, cameraId }) {
     );
   }
 
+  if (youTubeEmbedUrl) {
+    return <iframe key={youTubeEmbedUrl} src={youTubeEmbedUrl} title={`CAM #${cameraId} YouTube 영상`} allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ width: '100%', height: '100%', border: 0, display: 'block' }} />
+  }
+
   return (
     <video
       key={streamUrl}
-      src={streamUrl}
+      src={resolveMediaUrl(streamUrl)}
       autoPlay
       loop
       muted

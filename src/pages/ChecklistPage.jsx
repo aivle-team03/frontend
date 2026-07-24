@@ -71,18 +71,15 @@ function ChecklistPage() {
 
   // 이미지 파일 선택 처리
   const handleFileChange = (event) => {
-    const files = Array.from(event.target.files ?? [])
-    if (files.length === 0) return
+    const [file] = Array.from(event.target.files ?? [])
+    if (!file) return
 
-    setImageFiles((prev) => [...prev, ...files])
-
-    files.forEach((file) => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setAfterImages((currentImages) => [...currentImages, reader.result])
-      }
-      reader.readAsDataURL(file)
-    })
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setImageFiles([file])
+      setAfterImages([reader.result])
+    }
+    reader.readAsDataURL(file)
 
     event.target.value = ''
   }
@@ -108,7 +105,7 @@ function ChecklistPage() {
     }
 
     if (imageFiles.length === 0) {
-      alert('조치 완료 사진을 최소 1장 첨부해 주세요.')
+      alert('조치 완료 사진을 1장 첨부해 주세요.')
       return
     }
 
@@ -118,7 +115,7 @@ function ChecklistPage() {
 
       const formData = new FormData()
       formData.append('content', actionContent.trim())
-      formData.append('image', imageFiles[0]) // 첫 번째 사진 파일 전송
+      formData.append('image', imageFiles[0])
 
       await axios.patch(`${API_BASE_URL}/api/checklists/${currentTask.id}/complete`, formData, {
         headers: {
