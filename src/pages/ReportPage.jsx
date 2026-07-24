@@ -1,10 +1,7 @@
+import { Navigate } from 'react-router-dom'
+
 function ReportPage() {
-    return (
-    <section className="placeholder-page">
-      <h2>보고서</h2>
-      <p>보고서 페이지입니다.</p>
-    </section>
-    );
+  return <Navigate replace to="/report/list" />
 }
 
 export default ReportPage

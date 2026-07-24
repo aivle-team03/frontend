@@ -25,7 +25,7 @@ const ActionHistorydata= filterEvents(lists)
 
   return (
 
-      <Box className="dashboard-card compact-card">
+      <Box>
         <Typography variant="h6">조치 승인 요청</Typography>
     <TableContainer className="events-table-wrap">
       <Table size="small" aria-label="조치 승인 요청">

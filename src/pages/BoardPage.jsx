@@ -4,6 +4,7 @@ import Filtering from '../components/Board/Filtering.jsx'
 import FormModal from '../components/Board/FormModal.jsx'
 import ReportList from '../components/Board/ReportList.jsx'
 import ReportDetail from '../components/Board/ReportDetail.jsx'
+import ActionContentModal from '../components/Board/ActionContentModal.jsx'
 import { BOARD_MOCK_DATA } from '../mocks/mockData.js'
 import '../styles/board.css'
 
@@ -21,6 +22,7 @@ function BoardPage() {
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
   const [selectedReportId, setSelectedReportId] = useState(null)
+  const [pendingActionStatus, setPendingActionStatus] = useState(null)
   const canEditStatus = true
 
   const API_BASE_URL = 'http://127.0.0.1:8000'
@@ -46,9 +48,11 @@ function BoardPage() {
 
         let statusKey = 'registered'
 
+        if (item.status === '등록' || item.status === 'registered') statusKey = 'registered'
         if (item.status === '접수' || item.status === 'received') statusKey = 'received'
-        if (item.status === '조치중' || item.status === 'in_progress') statusKey = 'in_progress'
-        if (item.status === '완료' || item.status === 'completed') statusKey = 'completed'
+        if (item.status === '조치 중' || item.status === '조치중' || item.status === 'in_progress') statusKey = 'progress'
+        if (item.status === '조치 완료' || item.status === '완료' || item.status === 'completed') statusKey = 'done'
+        if (item.status === '반려' || item.status === 'rejected') statusKey = 'rejected'
 
         return {
           id: item.board_id || item.id,
@@ -64,6 +68,7 @@ function BoardPage() {
           reportedAt: item.created_at ? item.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
           status: item.status || '접수',
           statusKey: statusKey,
+          actionContent: item.action_content || item.actionContent || '',
         }
       })
 
@@ -113,16 +118,20 @@ function BoardPage() {
     [reports, selectedReportId],
   )
 
-  const updateReportStatus = async (reportId, statusKey) => {
+  const updateReportStatus = async (reportId, statusKey, actionContent = '') => {
     const nextStatus = BOARD_MOCK_DATA.statusOptions.find((status) => status.key === statusKey)
-    if (!nextStatus) return
+    if (!nextStatus) return false
 
     try {
       const token = localStorage.getItem('token')
 
+      const requestBody = actionContent
+        ? { status: nextStatus.label, action_content: actionContent }
+        : { status: nextStatus.label }
+
       const response = await axios.patch(
         `http://127.0.0.1:8000/api/boards/${reportId}/status`,
-        { status: nextStatus.label },
+        requestBody,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -139,20 +148,24 @@ function BoardPage() {
             const newStatus = updatedBoard.status || nextStatus.label
 
             let newStatusKey = statusKey
-            if (newStatus === '접수') newStatusKey = 'registered'
-            if (newStatus === '조치중') newStatusKey = 'in_progress'
-            if (newStatus === '완료') newStatusKey = 'completed'
+            if (newStatus === '등록') newStatusKey = 'registered'
+            if (newStatus === '접수') newStatusKey = 'received'
+            if (newStatus === '조치 중' || newStatus === '조치중') newStatusKey = 'progress'
+            if (newStatus === '조치 완료' || newStatus === '완료') newStatusKey = 'done'
+            if (newStatus === '반려') newStatusKey = 'rejected'
 
             return {
               ...report,
               status: newStatus,
               statusKey: newStatusKey,
+              actionContent: actionContent || report.actionContent,
             }
           }
           return report
         })
       )
 
+      return true
     } catch (error) {
       console.error(`게시글 #${reportId} 상태 변경 실패:`, error)
 
@@ -163,7 +176,17 @@ function BoardPage() {
       } else {
         alert('게시글 상태 변경 중 오류가 발생했습니다.')
       }
+      return false
     }
+  }
+
+  const requestReportStatusUpdate = (reportId, statusKey) => {
+    if (statusKey === 'done') {
+      setPendingActionStatus({ reportId, statusKey })
+      return
+    }
+
+    updateReportStatus(reportId, statusKey)
   }
 
   const createReport = async (reportForm) => {
@@ -213,6 +236,24 @@ function BoardPage() {
 
   const openReportDetail = (reportId) => setSelectedReportId(reportId)
   const closeReportDetail = () => setSelectedReportId(null)
+  const closeActionContentModal = () => setPendingActionStatus(null)
+  const pendingActionReport = pendingActionStatus
+    ? reports.find((report) => report.id === pendingActionStatus.reportId)
+    : null
+
+  const submitActionContent = async (actionContent) => {
+    if (!pendingActionStatus) return
+
+    const isUpdated = await updateReportStatus(
+      pendingActionStatus.reportId,
+      pendingActionStatus.statusKey,
+      actionContent,
+    )
+
+    if (isUpdated) {
+      setPendingActionStatus(null)
+    }
+  }
 
   if (loading) {
     return <div className="board-page" style={{ padding: '40px', textAlign: 'center' }}>게시판 데이터를 불러오는 중...</div>
@@ -262,7 +303,7 @@ function BoardPage() {
         statusOptions={BOARD_MOCK_DATA.statusOptions}
         canEditStatus={canEditStatus}
         onOpenReport={openReportDetail}
-        onUpdateStatus={updateReportStatus}
+        onUpdateStatus={requestReportStatusUpdate}
       />
 
       {isReportModalOpen && (
@@ -276,6 +317,14 @@ function BoardPage() {
 
       {selectedReport && (
         <ReportDetail report={selectedReport} onClose={closeReportDetail} />
+      )}
+
+      {pendingActionReport && (
+        <ActionContentModal
+          report={pendingActionReport}
+          onClose={closeActionContentModal}
+          onSubmit={submitActionContent}
+        />
       )}
     </section>
   )

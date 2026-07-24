@@ -1,487 +1,111 @@
 import ArrowBackIosNewOutlinedIcon from '@mui/icons-material/ArrowBackIosNewOutlined'
 import ArrowForwardIosOutlinedIcon from '@mui/icons-material/ArrowForwardIosOutlined'
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined'
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded'
 import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineRounded'
-import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
-import CircularProgress from '@mui/material/CircularProgress'
-import axios from 'axios'
-import { useEffect, useState } from 'react'
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
+import { useMemo, useState } from 'react'
+import { EDUCATION_MOCK_DATA } from '../mocks/mockData.js'
 
-const API_BASE_URL = 'http://127.0.0.1:8000'
+const completionSummary = [
+  { label: '필수 교육', value: 76, detail: '19 / 25' },
+  { label: '정기 교육', value: 58, detail: '7 / 12' },
+  { label: '특별 교육', value: 100, detail: '3 / 3' },
+  { label: '전체', value: 72, detail: '29 / 40' },
+]
+const completionRingColors = ['#4f78d1', '#2f9d75', '#8b63d6', '#e18a3f']
+const progressByContent = { 'forklift-basics': 86, 'fire-response': 35, 'conveyor-safety': 0, 'ppe-basics': 100, 'chemical-safety': 62, 'work-at-height': 72, 'electrical-safety': 48 }
 
-/**
- * 유튜브 URL을 embed용 URL로 변환
- * 지원 형식: youtube.com/watch?v=..., youtu.be/..., youtube.com/embed/...
- * 유튜브 URL이 아니면 null 반환
- */
-function getYouTubeEmbedUrl(url) {
-  if (!url) return null
-  try {
-    const urlObj = new URL(url)
-    let videoId = null
-
-    if (urlObj.hostname.includes('youtube.com')) {
-      if (urlObj.pathname === '/watch') {
-        videoId = urlObj.searchParams.get('v')
-      } else if (urlObj.pathname.startsWith('/embed/')) {
-        videoId = urlObj.pathname.split('/embed/')[1]
-      }
-    } else if (urlObj.hostname === 'youtu.be') {
-      videoId = urlObj.pathname.slice(1)
-    }
-
-    if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}`
-    }
-  } catch {
-    // URL 파싱 실패 시 null
-  }
-  return null
-}
-
-function EducationPage() {
-  const [loading, setLoading] = useState(true)
-
-  // 1. 상단 요약 건수
-  const [summaryCounts, setSummaryCounts] = useState({
-    dueThisWeek: 0,
-    inProgress: 0,
-    completed: 0,
-  })
-
-  // 2. 내 교육 목록
-  const [courseList, setCourseList] = useState([])
-  const [selectedCourseIndex, setSelectedCourseIndex] = useState(0)
+function EducationPage({ addedCourses = [] }) {
+  const { content, requiredCourses } = EDUCATION_MOCK_DATA
+  const customContent = useMemo(() => addedCourses.map((course) => ({
+    id: course.contentId,
+    title: course.title,
+    category: course.category,
+    duration: course.duration,
+    videoUrl: course.videoUrl,
+  })), [addedCourses])
+  const allContent = [...customContent, ...content]
+  const allCourses = [...addedCourses, ...requiredCourses]
+  const [contentId, setContentId] = useState(allContent[0]?.id)
   const [requiredPage, setRequiredPage] = useState(0)
-
-  // 3. 하단 이수 현황 (백분율)
-  const [completionRates, setCompletionRates] = useState({
-    essential: 0,
-    regular: 0,
-    total: 0,
+  const [summaryModal, setSummaryModal] = useState(null)
+  const currentContent = allContent.find((item) => item.id === contentId) ?? allContent[0]
+  const currentProgress = progressByContent[currentContent.id] ?? 0
+  const currentCourseIndex = allCourses.findIndex((course) => course.contentId === currentContent.id)
+  const visibleCourses = allCourses.slice(requiredPage * 5, (requiredPage + 1) * 5)
+  const pageCount = Math.max(1, Math.ceil(allCourses.length / 5))
+  const getCourseProgress = (course) => progressByContent[course.contentId] ?? 0
+  const dueCourses = allCourses.filter((course) => ['오늘', '내일', '이번 주'].includes(course.deadline) && course.status !== '완료')
+  const inProgressCourses = allCourses.filter((course) => {
+    const progress = getCourseProgress(course)
+    return progress > 0 && progress < 100 && course.status !== '완료'
   })
-
-  // 4. 동영상 플레이어 가상 진도율 관리 (0 ~ 100)
-  const [videoProgress, setVideoProgress] = useState(0)
-  const [completing, setCompleting] = useState(false)
-
-  // ==========================================
-  // API 로딩
-  // ==========================================
-  useEffect(() => {
-    fetchAllEducationData()
-  }, [])
-
-  const fetchAllEducationData = async () => {
-    try {
-      setLoading(true)
-      const token = localStorage.getItem('token')
-      const headers = { Authorization: `Bearer ${token}` }
-
-      // (1) 상단 요약 건수 조회
-      const summaryRes = await axios.get(`${API_BASE_URL}/api/education/summary`, { headers })
-      if (summaryRes.data) {
-        setSummaryCounts({
-          dueThisWeek: summaryRes.data.due_this_week_count ?? 0,
-          inProgress: summaryRes.data.in_progress_count ?? 0,
-          completed: summaryRes.data.completed_count ?? 0,
-        })
-      }
-
-      // (2) 내 교육 리스트 조회
-      const statusRes = await axios.get(`${API_BASE_URL}/api/education/status`, { headers })
-      if (statusRes.data && Array.isArray(statusRes.data)) {
-        const formatted = statusRes.data.map((item) => {
-          const rawDue = item.due_date ? String(item.due_date).slice(0, 10) : '-'
-          const isCompleted = item.status === '이수'
-
-          return {
-            id: item.education_id,
-            title: item.title,
-            type: item.type || '필수',
-            category: item.category || '산업안전',
-            deadline: rawDue,
-            status: item.status || '미이수',
-            videoUrl: item.video_url || '',
-            // 기존 상태가 이수완료면 100%, 아니면 기본 0%
-            progress: isCompleted ? 100 : item.status === '진행중' ? 40 : 0,
-          }
-        })
-        setCourseList(formatted)
-      }
-
-      // (3) 하단 이수율 조회
-      const ratesRes = await axios.get(`${API_BASE_URL}/api/education/completion-rates`, { headers })
-      if (ratesRes.data) {
-        setCompletionRates({
-          essential: ratesRes.data.essential_rate ?? 0,
-          regular: ratesRes.data.regular_rate ?? 0,
-          total: ratesRes.data.total_rate ?? 0,
-        })
-      }
-    } catch (error) {
-      console.error('유저 교육 데이터 로드 실패:', error)
-    } finally {
-      setLoading(false)
-    }
+  const completedCourses = allCourses.filter((course) => getCourseProgress(course) >= 100 || course.status === '완료')
+  const summaryCards = [
+    { key: 'due', icon: <MenuBookOutlinedIcon />, tone: 'blue', label: '이번 주 마감', value: `${dueCourses.length}건`, description: '마감 전 교육을 확인하세요', courses: dueCourses },
+    { key: 'progress', icon: <PlayCircleOutlineRoundedIcon />, tone: 'green', label: '진행 중', value: `${inProgressCourses.length}건`, description: '수강 중인 교육이 있습니다', courses: inProgressCourses },
+    { key: 'complete', icon: <CheckCircleOutlineRoundedIcon />, tone: 'purple', label: '이수 완료', value: `${completedCourses.length}건`, description: '완료한 교육을 확인하세요', courses: completedCourses },
+  ]
+  const showPreviousCourse = () => {
+    if (currentCourseIndex <= 0) return
+    const previousIndex = currentCourseIndex - 1
+    setContentId(allCourses[previousIndex].contentId)
+    setRequiredPage(Math.floor(previousIndex / 5))
   }
 
-  // 현재 선택된 강의 객체
-  const currentCourse = courseList[selectedCourseIndex] || null
+  return <section className="education-page learner-education-page">
+    {addedCourses.length > 0 && <div className="learner-new-course-banner"><span><PlayCircleOutlineRoundedIcon /><strong>새 교육이 배정되었습니다.</strong> 교육 관리에서 등록한 {addedCourses[0].title}을 확인해 보세요.</span><button type="button" onClick={() => setContentId(addedCourses[0].contentId)}>지금 보기</button></div>}
 
-  // 선택된 강의가 변경되면 플레이어 진도율 세팅
-  useEffect(() => {
-    if (currentCourse) {
-      setVideoProgress(currentCourse.progress)
-    }
-  }, [selectedCourseIndex, courseList])
-
-  // 수강 완료 처리 (POST /api/education/{id}/complete)
-  const handleCompleteEducation = async () => {
-    if (!currentCourse) return
-
-    try {
-      setCompleting(true)
-      const token = localStorage.getItem('token')
-      const headers = { Authorization: `Bearer ${token}` }
-
-      await axios.post(
-        `${API_BASE_URL}/api/education/${currentCourse.id}/complete`,
-        {},
-        { headers }
-      )
-
-      alert(`'${currentCourse.title}' 교육 수강이 완료되었습니다!`)
-      // 데이터 최신화
-      fetchAllEducationData()
-    } catch (error) {
-      console.error('이수 완료 처리 실패:', error)
-      alert('이수 처리 중 오류가 발생했습니다: ' + (error.response?.data?.detail || error.message))
-    } finally {
-      setCompleting(false)
-    }
-  }
-
-  // 테이블 페이징 관련
-  const pageSize = 5
-  const visibleCourses = courseList.slice(requiredPage * pageSize, (requiredPage + 1) * pageSize)
-  const pageCount = Math.max(1, Math.ceil(courseList.length / pageSize))
-
-  const selectCourse = (course) => {
-    const idx = courseList.findIndex((item) => item.id === course.id)
-    if (idx !== -1) setSelectedCourseIndex(idx)
-  }
-
-  if (loading) {
-    return (
-      <div className="education-page learner-education-page" style={{ padding: '40px', textAlign: 'center' }}>
-        학습 데이터 연결 중...
-      </div>
-    )
-  }
-
-  return (
-    <section className="education-page learner-education-page">
-      {/* 1. 상단 요약 카드 (API 동적 데이터) */}
-      <div className="education-summary rich-summary">
-        <SummaryCard
-          icon={<MenuBookOutlinedIcon />}
-          tone="blue"
-          label="이번 주 마감"
-          value={`${summaryCounts.dueThisWeek}건`}
-          description="마감 전 교육을 확인하세요"
-        />
-        <SummaryCard
-          icon={<PlayCircleOutlineRoundedIcon />}
-          tone="green"
-          label="진행 중"
-          value={`${summaryCounts.inProgress}건`}
-          description="수강 중인 교육이 있습니다"
-        />
-        <SummaryCard
-          icon={<CheckCircleOutlineRoundedIcon />}
-          tone="purple"
-          label="이수 완료"
-          value={`${summaryCounts.completed}건`}
-          description="완료한 교육을 확인하세요"
-        />
-      </div>
-
-      <div className="education-top-grid learner-grid">
-        {/* 2. 동영상 플레이어 및 이수 완료 영역 */}
-        <article className="education-panel content-panel course-player-panel">
-          <div className="panel-heading panel-heading-row">
-            <div>
-              <span className="panel-kicker">교육 동영상</span>
-              <h3>{currentCourse ? currentCourse.title : '등록된 교육이 없습니다'}</h3>
-            </div>
-            <span className="content-category">
-              {currentCourse?.status === '이수'
-                ? '이수 완료'
-                : videoProgress >= 80
-                  ? '이수 가능'
-                  : '수강 중'}
-            </span>
-          </div>
-
-          <div className="content-preview" aria-label="교육 콘텐츠 미리보기">
-            <div className="preview-badge">
-              <MenuBookOutlinedIcon /> 교육 자료
-            </div>
-            <div className="preview-center">
-              {currentCourse?.videoUrl ? (
-                (() => {
-                  const embedUrl = getYouTubeEmbedUrl(currentCourse.videoUrl)
-                  if (embedUrl) {
-                    // 유튜브 링크 → iframe 임베드
-                    return (
-                      <iframe
-                        src={embedUrl}
-                        title={currentCourse.title}
-                        style={{ width: '100%', height: '100%', borderRadius: '8px', border: 'none' }}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    )
-                  }
-                  // 일반 동영상 파일 URL → <video> 태그
-                  return (
-                    <video
-                      src={currentCourse.videoUrl}
-                      controls
-                      style={{ width: '100%', height: '100%', borderRadius: '8px' }}
-                      onTimeUpdate={(e) => {
-                        const duration = e.target.duration
-                        if (duration > 0) {
-                          const p = Math.floor((e.target.currentTime / duration) * 100)
-                          if (p > videoProgress && currentCourse.status !== '이수') {
-                            setVideoProgress(p)
-                          }
-                        }
-                      }}
-                    />
-                  )
-                })()
-              ) : (
-                <>
-                  <VideocamOutlinedIcon fontSize="large" />
-                  <strong>{currentCourse ? currentCourse.title : '선택된 강의 없음'}</strong>
-                  <span>영상 미리보기 준비 중</span>
-                </>
-              )}
-            </div>
-            <div className="preview-time">구분: {currentCourse?.type || '-'}</div>
-          </div>
-
-          <div className="course-progress">
-            <span>진도율 {videoProgress}%</span>
-            <div>
-              <i style={{ width: `${videoProgress}%` }} />
-            </div>
-            <strong>{videoProgress}%</strong>
-          </div>
-          <p className="course-progress-caption">
-            80% 이상 시청 시 이수 완료 처리가 가능합니다.
-          </p>
-
-          <div className="content-navigation">
-            <button
-              type="button"
-              disabled={selectedCourseIndex === 0}
-              onClick={() => setSelectedCourseIndex((prev) => prev - 1)}
-            >
-              <ArrowBackIosNewOutlinedIcon fontSize="inherit" /> 이전 강의
-            </button>
-
-            {/* 시청 시뮬레이션용 임시 버튼 (필요시 삭제 가능) */}
-            {currentCourse?.status !== '이수' && videoProgress < 80 && (
-              <button
-                type="button"
-                onClick={() => setVideoProgress(85)}
-                style={{ backgroundColor: '#f3f4f6', color: '#374151' }}
-              >
-                ▶ 80% 시청 시뮬레이션
-              </button>
-            )}
-
-            <button
-              type="button"
-              disabled={videoProgress < 80 || currentCourse?.status === '이수' || completing}
-              onClick={handleCompleteEducation}
-              style={{
-                backgroundColor: currentCourse?.status === '이수' ? '#10b981' : undefined,
-                color: currentCourse?.status === '이수' ? '#fff' : undefined,
-              }}
-            >
-              {completing ? (
-                <CircularProgress size={16} color="inherit" />
-              ) : currentCourse?.status === '이수' ? (
-                '이수 완료됨'
-              ) : (
-                <>
-                  <CheckCircleOutlineRoundedIcon fontSize="inherit" /> 이수 완료
-                </>
-              )}
-            </button>
-          </div>
-        </article>
-
-        {/* 3. 내 교육 리스트 테이블 */}
-        <article className="education-panel required-panel learner-list-panel">
-          <div className="panel-heading">
-            <span className="panel-kicker">나의 수강 현황</span>
-            <h3>내 교육 리스트</h3>
-          </div>
-          <div className="required-table-wrap">
-            <table className="required-table learner-table">
-              <thead>
-                <tr>
-                  <th>교육명</th>
-                  <th>구분</th>
-                  <th>마감일</th>
-                  <th>진도율</th>
-                  <th>상태</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleCourses.length > 0 ? (
-                  visibleCourses.map((course) => {
-                    const isSelected = currentCourse?.id === course.id
-                    return (
-                      <tr
-                        className={isSelected ? 'is-selected' : ''}
-                        key={course.id}
-                        onClick={() => selectCourse(course)}
-                        onKeyDown={(e) => e.key === 'Enter' && selectCourse(course)}
-                        role="button"
-                        tabIndex="0"
-                      >
-                        <td>{course.title}</td>
-                        <td>
-                          <span className="course-type">{course.type}</span>
-                        </td>
-                        <td>{course.deadline}</td>
-                        <td>
-                          <span className="table-progress">
-                            <b>{course.progress}%</b>
-                            <i>
-                              <em style={{ width: `${course.progress}%` }} />
-                            </i>
-                          </span>
-                        </td>
-                        <td>
-                          <span
-                            className={`education-status ${course.status === '이수'
-                              ? 'status-yellow'
-                              : course.status === '미이수'
-                                ? 'status-red'
-                                : 'status-blue'
-                              }`}
-                          >
-                            {course.status}
-                          </span>
-                        </td>
-                      </tr>
-                    )
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
-                      수강할 교육 항목이 없습니다.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="required-footer">
-            <span>총 {courseList.length}개 과정</span>
-            <div className="required-pagination">
-              <button
-                type="button"
-                aria-label="이전 교육 목록"
-                disabled={requiredPage === 0}
-                onClick={() => setRequiredPage((value) => value - 1)}
-              >
-                <ArrowBackIosNewOutlinedIcon fontSize="inherit" />
-              </button>
-              <span>
-                {requiredPage + 1} / {pageCount}
-              </span>
-              <button
-                type="button"
-                aria-label="다음 교육 목록"
-                disabled={requiredPage === pageCount - 1}
-                onClick={() => setRequiredPage((value) => value + 1)}
-              >
-                <ArrowForwardIosOutlinedIcon fontSize="inherit" />
-              </button>
-            </div>
-          </div>
-        </article>
-      </div>
-
-      {/* 4. 하단 이수 현황 (API 백분율 데이터 바인딩) */}
-      <div className="learner-bottom-grid">
-        <article className="education-panel learner-completion-panel">
-          <div className="panel-heading">
-            <span className="panel-kicker">나의 학습 현황</span>
-            <h3>교육 이수 현황</h3>
-          </div>
-          <div className="learner-rings">
-            <CompletionRing label="필수 교육" value={completionRates.essential} />
-            <CompletionRing label="정기 교육" value={completionRates.regular} />
-            <CompletionRing label="전체" value={completionRates.total} />
-          </div>
-        </article>
-
-        <article className="education-panel learning-guide-card">
-          <div className="guide-copy">
-            <span className="panel-kicker">학습 안내</span>
-            <h3>
-              <MenuBookOutlinedIcon /> 수강 전 확인하세요
-            </h3>
-            <ul>
-              <li>영상 80% 이상 시 이수 완료 버튼이 활성화됩니다.</li>
-              <li>필수 교육은 마감일 전까지 반드시 수강해야 합니다.</li>
-              <li>재생 중 브라우저를 종료해도 진도율이 저장됩니다.</li>
-            </ul>
-          </div>
-          <div className="guide-illustration">
-            <MenuBookOutlinedIcon />
-            <CheckCircleOutlineRoundedIcon />
-          </div>
-        </article>
-      </div>
-    </section>
-  )
-}
-
-function SummaryCard({ icon, tone, label, value, description }) {
-  return (
-    <article className="summary-card">
-      <span className={`summary-icon summary-icon-${tone}`}>{icon}</span>
-      <div>
-        <small>{label}</small>
-        <strong>{value}</strong>
-        <p>{description}</p>
-      </div>
-      <ArrowForwardIosOutlinedIcon />
-    </article>
-  )
-}
-
-function CompletionRing({ label, value }) {
-  return (
-    <div className="completion-ring-item">
-      <div className="completion-ring" style={{ '--completion-rate': `${value}%` }}>
-        <strong>{value}%</strong>
-      </div>
-      <strong>{label}</strong>
+    <div className="education-summary rich-summary">
+      {summaryCards.map((card) => <SummaryCard key={card.key} {...card} onClick={() => setSummaryModal(card)} />)}
     </div>
-  )
+
+    <div className="education-top-grid learner-grid">
+      <article className="education-panel content-panel course-player-panel">
+        <div className="panel-heading panel-heading-row"><div><span className="panel-kicker">교육 영상</span><h3>{currentContent.title}</h3></div><span className="content-category">{currentContent.category ?? '안전 교육'}</span></div>
+        {currentContent.videoUrl ? (
+          <div className="uploaded-video-player">
+            <video src={currentContent.videoUrl} controls preload="metadata" aria-label={`${currentContent.title} 교육 영상`} />
+          </div>
+        ) : (
+          <div className="course-video" aria-label="교육 영상 미리보기">
+            <div className="course-video-glow" />
+            <div className="video-topline"><span><PlayCircleOutlineRoundedIcon /> 교육 영상</span></div>
+            <div className="video-preview-center">
+              <span className="video-play"><PlayArrowRoundedIcon /></span>
+              <strong>{currentContent.title}</strong>
+              <small>재생 버튼을 눌러 교육을 시작하세요</small>
+            </div>
+            <div className="video-bottom"><span>재생 시간 {currentContent.duration}</span></div>
+          </div>
+        )}
+        <div className="course-progress"><span>진행률</span><div><i style={{ width: `${currentProgress}%` }} /></div><strong>{currentProgress}%</strong></div>
+        <p className="course-progress-caption">영상의 80% 이상을 수강하면 이수 완료할 수 있습니다.</p>
+        <div className="content-navigation"><button type="button" disabled={currentCourseIndex <= 0} onClick={showPreviousCourse}><ArrowBackIosNewOutlinedIcon fontSize="inherit" /> 이전 강의</button><button type="button" disabled={currentProgress < 80}><CheckCircleOutlineRoundedIcon fontSize="inherit" /> 이수 완료</button></div>
+      </article>
+
+      <article className="education-panel required-panel learner-list-panel">
+        <div className="panel-heading"><span className="panel-kicker">나의 수강 현황</span><h3>내 교육 리스트</h3></div>
+        <div className="required-table-wrap"><table className="required-table learner-table"><thead><tr><th>교육명</th><th>구분</th><th>마감일</th><th>진도율</th><th>상태</th></tr></thead><tbody>{visibleCourses.map((course, index) => {
+          const progress = progressByContent[course.contentId] ?? 0
+          return <tr className={currentContent.id === course.contentId ? 'is-selected' : ''} key={course.id} onClick={() => setContentId(course.contentId)} onKeyDown={(event) => event.key === 'Enter' && setContentId(course.contentId)} role="button" tabIndex="0"><td>{course.title}{course.isCustom && <span className="new-course-dot">NEW</span>}</td><td><span className="course-type">{course.isCustom ? '신규' : index < 3 ? '필수' : '정기'}</span></td><td>{course.deadline}</td><td><span className="table-progress"><b>{progress}%</b><i><em style={{ width: `${progress}%` }} /></i></span></td><td><span className={`education-status${course.isCustom ? ' status-waiting' : ` status-${course.id}`}`}>{course.status}</span></td></tr>
+        })}</tbody></table></div>
+        <div className="required-footer"><span>총 {allCourses.length}개 과정</span><div className="required-pagination"><button type="button" aria-label="이전 교육 목록" disabled={requiredPage === 0} onClick={() => setRequiredPage((value) => value - 1)}><ArrowBackIosNewOutlinedIcon fontSize="inherit" /></button><span>{requiredPage + 1} / {pageCount}</span><button type="button" aria-label="다음 교육 목록" disabled={requiredPage === pageCount - 1} onClick={() => setRequiredPage((value) => value + 1)}><ArrowForwardIosOutlinedIcon fontSize="inherit" /></button></div></div>
+      </article>
+    </div>
+
+    <div className="learner-bottom-grid">
+      <article className="education-panel learner-completion-panel"><div className="panel-heading"><span className="panel-kicker">나의 학습 현황</span><h3>교육 이수 현황</h3></div><div className="learner-rings">{completionSummary.map((item, index) => <CompletionRing key={item.label} {...item} toneIndex={index} />)}</div></article>
+      <article className="education-panel learning-guide-card"><div className="guide-copy"><span className="panel-kicker">학습 안내</span><h3><SchoolOutlinedIcon /> 수강 전 확인하세요</h3><ul><li>영상의 80% 이상을 시청하면 이수 완료 버튼이 활성화됩니다.</li><li>필수 교육은 마감일까지 반드시 수강해야 합니다.</li><li>재생 중 페이지를 벗어나도 진도율이 저장됩니다.</li></ul></div><div className="guide-illustration"><MenuBookOutlinedIcon /><CheckCircleOutlineRoundedIcon /></div></article>
+    </div>
+    {summaryModal && <LearningSummaryModal summary={summaryModal} getProgress={getCourseProgress} onClose={() => setSummaryModal(null)} />}
+  </section>
 }
 
+function SummaryCard({ icon, tone, label, value, description, onClick }) { return <article className="summary-card" role="button" tabIndex="0" onClick={onClick} onKeyDown={(event) => event.key === 'Enter' && onClick()}><span className={`summary-icon summary-icon-${tone}`}>{icon}</span><div><small>{label}</small><strong>{value}</strong><p>{description}</p></div><ArrowForwardIosOutlinedIcon /></article> }
+function LearningSummaryModal({ summary, getProgress, onClose }) { return <div className="learning-summary-modal-backdrop" role="presentation" onMouseDown={onClose}><section className="learning-summary-modal" role="dialog" aria-modal="true" aria-label={`${summary.label} 교육 목록`} onMouseDown={(event) => event.stopPropagation()}><header><div><span>내 교육 현황</span><h3>{summary.label}</h3><p>{summary.description}</p></div><button type="button" aria-label="교육 목록 창 닫기" onClick={onClose}><CloseRoundedIcon /></button></header><div className="learning-summary-modal-count"><strong>{summary.value}</strong><span>현재 내 교육 리스트 기준</span></div><div className="learning-summary-course-list">{summary.courses.length ? summary.courses.map((course) => { const progress = getProgress(course); return <div key={course.id} className="learning-summary-course-row"><div><strong>{course.title}</strong><span>{course.target} · 마감 {course.deadline}</span></div><div><b>{progress}%</b><i><em style={{ width: `${progress}%` }} /></i></div><span className={`education-status${course.isCustom ? ' status-waiting' : ` status-${course.id}`}`}>{course.status}</span></div> }) : <p className="learning-summary-empty">해당하는 교육이 없습니다.</p>}</div></section></div> }
+function CompletionRing({ label, value, detail, toneIndex }) { return <div className="completion-ring-item" style={{ '--ring-color': completionRingColors[toneIndex], '--ring-delay': `${toneIndex * 110}ms` }}><div className="completion-ring" style={{ '--completion-rate': `${value}%` }}><strong>{value}%</strong></div><strong>{label}</strong><span>{detail}</span></div> }
 export default EducationPage
