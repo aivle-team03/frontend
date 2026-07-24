@@ -456,9 +456,33 @@
   background: #f8fbff;
 }
 
-.report-table th:nth-child(1) { width: 48%; }
-.report-table th:nth-child(2) { width: 30%; }
-.report-table th:nth-child(3) { width: 22%; }
+.report-table th:nth-child(1) { width: 44%; }
+.report-table th:nth-child(2) { width: 28%; }
+.report-table th:nth-child(3) { width: 18%; }
+.report-table th:nth-child(4) { width: 10%; }
+
+.report-download-button {
+  display: inline-flex;
+  width: 38px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d7e0eb;
+  border-radius: 8px;
+  color: #2f64b7;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.report-download-button:hover {
+  border-color: #9bbcea;
+  background: #f5f9ff;
+}
+
+.report-download-button svg {
+  width: 18px;
+  height: 18px;
+}
 
 .report-empty-cell {
   height: 160px;

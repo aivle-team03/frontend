@@ -1,3 +1,4 @@
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
 import { useMemo, useState } from 'react'
 import Filtering from '../components/Report/Filtering.jsx'
 import { REPORT_PAGE_MOCK_DATA } from '../mocks/mockData.js'
@@ -54,6 +55,11 @@ function ReportListPage() {
     setFilters(getInitialFilters())
   }
 
+  const downloadReport = (event, report) => {
+    event.stopPropagation()
+    console.log(`${report.title} 다운로드`)
+  }
+
   return (
     <section className="report-page" aria-label="보고서 목록">
       <section className="report-archive-card">
@@ -77,6 +83,7 @@ function ReportListPage() {
                 <th>제목</th>
                 <th>기간</th>
                 <th>작성자</th>
+                <th>다운로드</th>
               </tr>
             </thead>
             <tbody>
@@ -94,11 +101,21 @@ function ReportListPage() {
                   </td>
                   <td>{report.period ?? report.createdAt}</td>
                   <td>{report.owner}</td>
+                  <td>
+                    <button
+                      className="report-download-button"
+                      type="button"
+                      aria-label={`${report.title} 다운로드`}
+                      onClick={(event) => downloadReport(event, report)}
+                    >
+                      <DownloadRoundedIcon />
+                    </button>
+                  </td>
                 </tr>
               ))}
               {!filteredReports.length && (
                 <tr>
-                  <td className="report-empty-cell" colSpan={3}>조건에 맞는 보고서가 없습니다.</td>
+                  <td className="report-empty-cell" colSpan={4}>조건에 맞는 보고서가 없습니다.</td>
                 </tr>
               )}
             </tbody>

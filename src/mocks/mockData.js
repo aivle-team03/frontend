@@ -400,7 +400,7 @@ export const REPORT_PAGE_MOCK_DATA = {
     { key: 'risk-assessment', label: '위험성평가보고서' },
     { key: 'safety-inspection', label: '안전점검 보고서' },
     { key: 'incident-investigation', label: '산업재해조사보고서' },
-    { key: 'safety-education', label: '안전보건교육 기록' },
+    { key: 'safety-education', label: '안전보건교육보고서' },
     { key: 'etc', label: '기타' },
   ],
   siteOptions: ['A동 전체', 'A동 2층 복도', 'B동 1층 출입구', 'C동 3층 전기실', '지하 주차장'],
