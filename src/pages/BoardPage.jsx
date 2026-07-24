@@ -125,9 +125,13 @@ function BoardPage() {
     try {
       const token = localStorage.getItem('token')
 
+      const requestBody = actionContent
+        ? { status: nextStatus.label, action_content: actionContent }
+        : { status: nextStatus.label }
+
       const response = await axios.patch(
         `http://127.0.0.1:8000/api/boards/${reportId}/status`,
-        { status: nextStatus.label },
+        requestBody,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

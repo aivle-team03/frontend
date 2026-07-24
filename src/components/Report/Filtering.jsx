@@ -1,16 +1,6 @@
 function Filtering({ filters, onChange, onReset }) {
   return (
     <section className="report-filter-panel" aria-label="보고서 필터">
-      <label className="report-filter-field report-filter-search">
-        <span>제목 검색</span>
-        <input
-          type="search"
-          value={filters.keyword}
-          placeholder="보고서 제목 검색"
-          onChange={(event) => onChange('keyword', event.target.value)}
-        />
-      </label>
-
       <div className="report-filter-field">
         <span>기간</span>
         <div className="report-filter-range">
@@ -40,13 +30,13 @@ function Filtering({ filters, onChange, onReset }) {
         />
       </label>
 
-      <label className="report-filter-field">
-        <span>제출 대상</span>
+      <label className="report-filter-field report-filter-search">
+        <span>제목 검색</span>
         <input
-          type="text"
-          value={filters.submitTarget}
-          placeholder="제출 대상 검색"
-          onChange={(event) => onChange('submitTarget', event.target.value)}
+          type="search"
+          value={filters.keyword}
+          placeholder="보고서 제목 검색"
+          onChange={(event) => onChange('keyword', event.target.value)}
         />
       </label>
 

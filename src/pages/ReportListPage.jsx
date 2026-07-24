@@ -16,7 +16,6 @@ const getInitialFilters = () => {
     startDate: formatDate(startDate),
     endDate: formatDate(endDate),
     author: '',
-    submitTarget: '',
   }
 }
 
@@ -28,22 +27,18 @@ function ReportListPage() {
   const filteredReports = useMemo(() => reports.filter((report) => {
     const keyword = filters.keyword.trim().toLowerCase()
     const author = filters.author.trim().toLowerCase()
-    const submitTarget = filters.submitTarget.trim().toLowerCase()
     const reportDate = report.createdAt ?? ''
     const reportAuthor = report.owner ?? ''
-    const reportSubmitTarget = report.submitTarget ?? ''
 
     const matchesKeyword = !keyword || report.title.toLowerCase().includes(keyword)
     const matchesStartDate = !filters.startDate || reportDate >= filters.startDate
     const matchesEndDate = !filters.endDate || reportDate <= filters.endDate
     const matchesAuthor = !author || reportAuthor.toLowerCase().includes(author)
-    const matchesSubmitTarget = !submitTarget || reportSubmitTarget.toLowerCase().includes(submitTarget)
 
     return matchesKeyword
       && matchesStartDate
       && matchesEndDate
       && matchesAuthor
-      && matchesSubmitTarget
   }), [filters, reports])
 
   const selectedReport = useMemo(
@@ -82,7 +77,6 @@ function ReportListPage() {
                 <th>제목</th>
                 <th>기간</th>
                 <th>작성자</th>
-                <th>제출 대상</th>
               </tr>
             </thead>
             <tbody>
@@ -100,12 +94,11 @@ function ReportListPage() {
                   </td>
                   <td>{report.period ?? report.createdAt}</td>
                   <td>{report.owner}</td>
-                  <td>{report.submitTarget ?? '안전보건관리팀장'}</td>
                 </tr>
               ))}
               {!filteredReports.length && (
                 <tr>
-                  <td className="report-empty-cell" colSpan={4}>조건에 맞는 보고서가 없습니다.</td>
+                  <td className="report-empty-cell" colSpan={3}>조건에 맞는 보고서가 없습니다.</td>
                 </tr>
               )}
             </tbody>

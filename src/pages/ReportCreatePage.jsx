@@ -14,7 +14,6 @@ function ReportCreatePage() {
     customTitle: '',
     incidentOverview: '',
     author: '김태니지 (안전책임자)',
-    submitTarget: '안전보건관리팀장',
   })
 
   const selectedPeriodLabel = useMemo(() => {
@@ -47,7 +46,6 @@ function ReportCreatePage() {
       attachments: 1,
       retentionUntil: '2026-10-21',
       retentionStatus: 'normal',
-      submitTarget: reportForm.submitTarget,
       overview: isIncidentReport ? reportForm.incidentOverview.trim() : '',
     })
     navigate('/report/list')
@@ -85,17 +83,6 @@ function ReportCreatePage() {
             </label>
           )}
 
-          {reportForm.type === 'incident-investigation' && (
-            <label className="report-field report-overview-field">
-              <span>사고 개요 <em>*</em></span>
-              <textarea
-                value={reportForm.incidentOverview}
-                placeholder="사고 발생 경위, 피해 현황, 초기 조치 내용을 입력하세요"
-                onChange={(event) => updateReportForm('incidentOverview', event.target.value)}
-              />
-            </label>
-          )}
-
           <div className="report-field">
             <span>작성 기간 <em>*</em></span>
             <div className="report-range-field">
@@ -125,21 +112,23 @@ function ReportCreatePage() {
             />
           </label>
 
-          <label className="report-field">
-            <span>제출 대상 <em>*</em></span>
-            <input
-              type="text"
-              value={reportForm.submitTarget}
-              placeholder="제출 대상을 입력하세요"
-              onChange={(event) => updateReportForm('submitTarget', event.target.value)}
-            />
-          </label>
+          {reportForm.type === 'incident-investigation' && (
+            <label className="report-field report-overview-field">
+              <span>사고 개요 <em>*</em></span>
+              <textarea
+                value={reportForm.incidentOverview}
+                placeholder="사고 발생 경위, 피해 현황, 초기 조치 내용을 입력하세요"
+                onChange={(event) => updateReportForm('incidentOverview', event.target.value)}
+              />
+            </label>
+          )}
 
-          <div className="report-form-action">
-            <button className="report-create-button" type="button" onClick={createReport}>
-              <DescriptionOutlinedIcon /> 리포트 생성
-            </button>
-          </div>
+        </div>
+
+        <div className="report-form-action">
+          <button className="report-create-button" type="button" onClick={createReport}>
+            <DescriptionOutlinedIcon /> 리포트 생성
+          </button>
         </div>
       </section>
     </section>
