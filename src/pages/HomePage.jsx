@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import axios from 'axios'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AiSummaryCard from '../components/dashboard/AiSummaryCard.jsx'
 import DailyReportCard from '../components/dashboard/DailyReportCard.jsx'
@@ -24,6 +25,8 @@ import {
   summaryCards,
 } from '../data/dashboardMock.js'
 
+const API_BASE_URL = 'http://127.0.0.1:8000'
+
 function filterEvents(events, selectedSummaryId) {
   if (selectedSummaryId === 'pending') {
     return events.filter((event) => event.status === '조치 대기')
@@ -42,6 +45,24 @@ function HomePage() {
   const [selectedPeriod, setSelectedPeriod] = useState('오늘')
   const [selectedSummaryId, setSelectedSummaryId] = useState('realtime')
   const [selectedEvent, setSelectedEvent] = useState(null)
+  const [riskFactors, setRiskFactors] = useState(EVENT_CATEGORY_MOCKUP_DATA)
+
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/api/risk/list`)
+      .then((response) => {
+        if (!Array.isArray(response.data)) return
+        setRiskFactors(response.data.map((riskFactor) => ({
+          type: riskFactor.category,
+          item: riskFactor.category_name,
+          risk: riskFactor.risk_level,
+          severity: riskFactor.level,
+          frequency: riskFactor.frequency,
+        })))
+      })
+      .catch((error) => {
+        console.error('홈 위험도 데이터 조회 실패:', error)
+      })
+  }, [])
 
   const filteredEvents = useMemo(
     () => filterEvents(recentEvents, selectedSummaryId),
@@ -85,8 +106,8 @@ function HomePage() {
         </div>
 
         <div className="risk-chart-grid">
-          <RiskTypePieChart data={EVENT_CATEGORY_MOCKUP_DATA} />
-          <RiskSectionStackChart  data={EVENT_CATEGORY_MOCKUP_DATA} />
+          <RiskTypePieChart data={riskFactors} />
+          <RiskSectionStackChart data={riskFactors} />
         </div>
       </section>
 

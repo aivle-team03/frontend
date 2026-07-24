@@ -7,7 +7,21 @@ import { Typography } from '@mui/material'
 import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded'
 import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded'
 import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded'
-import { useState } from 'react'
+import axios from 'axios'
+import { useEffect, useState } from 'react'
+
+const API_BASE_URL = 'http://127.0.0.1:8000'
+
+function mapRiskFactor(riskFactor) {
+  return {
+    id: riskFactor.category_id,
+    type: riskFactor.category,
+    item: riskFactor.category_name,
+    risk: riskFactor.risk_level,
+    severity: riskFactor.level,
+    frequency: riskFactor.frequency,
+  }
+}
 
 function Riskicon({ name }) {
   const commonProps = {
@@ -57,32 +71,56 @@ function RiskManagementPage() {
   const [isDeleteMode, setIsDeleteMode] = useState(false)
   const [risks, setRisks] = useState(EVENT_CATEGORY_MOCKUP_DATA)
 
-  const createRisk = (riskForm) => {
-    const nextId = Math.max(...risks.map((risk) => risk.id), 0) + 1
-
-    setRisks((currentRisks) => [
-      {
-        id: nextId,
-        location: '-',
-        type: riskForm.type.trim(),
-        item: riskForm.item.trim(),
-        risk: riskForm.risk,
-        severity: riskForm.severity,
-        frequency: riskForm.frequency,
-      },
-      ...currentRisks,
-    ])
-    setIsRiskModalOpen(false)
+  const fetchRisks = async () => {
+    const response = await axios.get(`${API_BASE_URL}/api/risk/list`)
+    setRisks(Array.isArray(response.data) ? response.data.map(mapRiskFactor) : [])
   }
 
-  const deleteRisk = (riskId) => {
-    setRisks((currentRisks) => currentRisks.filter((risk) => risk.id !== riskId))
+  useEffect(() => {
+    fetchRisks().catch((error) => {
+      console.error('위험 요인 목록 조회 실패:', error)
+    })
+  }, [])
+
+  const createRisk = async (riskForm) => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/risk/category`, {
+        category: riskForm.type.trim(),
+        category_name: riskForm.item.trim(),
+        level: riskForm.severity,
+      })
+      await fetchRisks()
+      setIsRiskModalOpen(false)
+    } catch (error) {
+      console.error('위험 요인 등록 실패:', error)
+      alert(`항목 등록에 실패했습니다. ${error.response?.data?.detail ?? ''}`)
+    }
   }
 
-  const updateRiskSeverity = (riskId, severity) => {
+  const deleteRisk = async (riskId) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/api/risk/category/${riskId}`)
+      await fetchRisks()
+    } catch (error) {
+      console.error('위험 요인 삭제 실패:', error)
+      alert(`항목 삭제에 실패했습니다. ${error.response?.data?.detail ?? ''}`)
+    }
+  }
+
+  const updateRiskSeverity = async (riskId, severity) => {
+    const previousRisks = risks
     setRisks((currentRisks) => currentRisks.map((risk) => (
       risk.id === riskId ? { ...risk, severity } : risk
     )))
+
+    try {
+      await axios.patch(`${API_BASE_URL}/api/risk/category/${riskId}/level`, { level: severity })
+      await fetchRisks()
+    } catch (error) {
+      setRisks(previousRisks)
+      console.error('위험 요인 강도 변경 실패:', error)
+      alert(`강도 변경에 실패했습니다. ${error.response?.data?.detail ?? ''}`)
+    }
   }
 
   const totalRiskCount = risks.length

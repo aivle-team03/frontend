@@ -17,8 +17,11 @@ import PersonAddAltRoundedIcon from '@mui/icons-material/PersonAddAltRounded'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
 import VideoLibraryOutlinedIcon from '@mui/icons-material/VideoLibraryOutlined'
 import VideoFileOutlinedIcon from '@mui/icons-material/VideoFileOutlined'
+import axios from 'axios'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { EDUCATION_MOCK_DATA } from '../mocks/mockData.js'
+
+const API_BASE_URL = 'http://127.0.0.1:8000'
 
 const completionMetricIcons = [
   GroupsOutlinedIcon,
@@ -53,7 +56,70 @@ const attendeeTeams = ['물류운영팀', '생산1팀', '생산2팀', '설비관
 
 function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) {
   const { completion, requiredCourses } = EDUCATION_MOCK_DATA
-  const allCourses = useMemo(() => [...addedCourses, ...requiredCourses], [addedCourses, requiredCourses])
+  const [apiCourses, setApiCourses] = useState(null)
+  const [apiCompletion, setApiCompletion] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [apiError, setApiError] = useState('')
+
+  const fetchAdminEducationData = async () => {
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+    const [statusResult, roleStatsResult] = await Promise.allSettled([
+      axios.get(`${API_BASE_URL}/api/admin/education/status`, { headers }),
+      axios.get(`${API_BASE_URL}/api/admin/education/role-stats`, { headers }),
+    ])
+
+    if (statusResult.status === 'fulfilled') {
+      setApiCourses(statusResult.value.data.map((course) => {
+        const completed = course.status_counts?.find((item) => item.status === '이수')?.count ?? 0
+        return {
+          id: `api-${course.education_id}`,
+          title: course.title,
+          target: course.role,
+          deadline: course.due_date ?? '-',
+          status: completed === course.target_count ? '이수 완료' : '진행 중',
+          apiMetric: {
+            progress: course.completion_rate ?? 0,
+            assigned: course.target_count ?? 0,
+            completed,
+          },
+        }
+      }))
+    } else {
+      setApiError('교육 관리 데이터를 불러오지 못해 기존 화면 데이터를 표시합니다.')
+    }
+
+    if (roleStatsResult.status === 'fulfilled') {
+      const roleItems = roleStatsResult.value.data.roles ?? []
+      setApiCompletion([
+        {
+          label: '전체',
+          value: roleStatsResult.value.data.total_completion_rate ?? 0,
+          total: roleItems.reduce((sum, item) => sum + (item.target_count ?? 0), 0),
+          completed: roleItems.reduce((sum, item) => sum + (item.completed_count ?? 0), 0),
+        },
+        ...roleItems.map((item) => ({
+          label: item.role,
+          value: item.completion_rate ?? 0,
+          total: item.target_count ?? 0,
+          completed: item.completed_count ?? 0,
+        })),
+      ])
+    }
+  }
+
+  useEffect(() => {
+    fetchAdminEducationData()
+      .catch((error) => {
+        console.error('교육 관리 API 조회 실패:', error)
+        setApiError('교육 관리 데이터를 불러오지 못해 기존 화면 데이터를 표시합니다.')
+      })
+      .finally(() => setLoading(false))
+  }, [])
+
+  const baseCourses = apiCourses?.length ? apiCourses : requiredCourses
+  const displayedCompletion = apiCompletion?.length ? apiCompletion : completion
+  const allCourses = useMemo(() => [...addedCourses, ...baseCourses], [addedCourses, baseCourses])
   const [selectedTarget, setSelectedTarget] = useState('전체')
   const [courseSearch, setCourseSearch] = useState('')
   const [tableTarget, setTableTarget] = useState('전체')
@@ -70,8 +136,8 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   })
   const [aiForm, setAiForm] = useState({
     workType: workTypes[0],
-    title: '',
-    requirement: '필수 교육',
+    equipment: '',
+    riskFactor: '',
   })
   const [materialFile, setMaterialFile] = useState(null)
   const [aiStatus, setAiStatus] = useState('idle')
@@ -82,10 +148,10 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   const materialInputRef = useRef(null)
 
   const orderedCompletion = [
-    ...completion.filter((item) => item.label === '전체'),
-    ...completion.filter((item) => item.label !== '전체'),
+    ...displayedCompletion.filter((item) => item.label === '전체'),
+    ...displayedCompletion.filter((item) => item.label !== '전체'),
   ]
-  const selectedCompletion = completion.find((item) => item.label === selectedTarget) ?? orderedCompletion[0]
+  const selectedCompletion = displayedCompletion.find((item) => item.label === selectedTarget) ?? orderedCompletion[0]
   const selectedTargetCourses = allCourses.filter(
     (course) => selectedTarget === '전체' || course.target === selectedTarget || course.target === '전체',
   )
@@ -142,13 +208,45 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
     setNotice('교육 영상이 대상자 교육 리스트와 내 교육 리스트에 추가되었습니다.')
   }
 
-  const requestAiVideo = (event) => {
+  const requestAiVideo = async (event) => {
     event.preventDefault()
-    if (!aiForm.title.trim() || !materialFile) {
+    if (!aiForm.equipment.trim() || !aiForm.riskFactor.trim()) {
       setAiStatus('error')
       return
     }
-    setAiStatus('queued')
+
+    try {
+      setAiStatus('queued')
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const response = await axios.post(`${API_BASE_URL}/api/admin/education/ai-generate`, {
+        work_type: aiForm.workType,
+        equipment: aiForm.equipment.trim(),
+        risk_factor: aiForm.riskFactor.trim(),
+      }, { headers })
+
+      const generatedCourse = response.data
+      onAddCourse({
+        id: `ai-${generatedCourse.education_id ?? Date.now()}`,
+        contentId: `ai-content-${generatedCourse.education_id ?? Date.now()}`,
+        title: generatedCourse.title,
+        target: '전체 임직원',
+        deadline: '-',
+        status: '대기',
+        progress: 0,
+        duration: 'AI 생성 영상',
+        category: 'AI 생성 교육',
+        videoUrl: generatedCourse.generated_video_url ?? '',
+        isCustom: true,
+      })
+      await fetchAdminEducationData()
+      setNotice(`AI 교육 자료가 생성되었습니다. ${generatedCourse.summary ?? ''}`)
+      setAiStatus('complete')
+    } catch (error) {
+      console.error('AI 교육 자료 생성 실패:', error)
+      setAiStatus('error')
+      setNotice(`AI 교육 자료 생성에 실패했습니다. ${error.response?.data?.detail ?? ''}`)
+    }
   }
 
   if (loading) {
@@ -197,7 +295,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
               </FormField>
             )}
             <button className="primary-course-button" type="submit"><AddCircleOutlineRoundedIcon /> 교육 리스트에 추가</button>
-            {notice && <p className={`form-notice${notice.includes('추가되었습니다') ? ' is-success' : ''}`} role="status">{notice}</p>}
+            {(notice || apiError) && <p className={`form-notice${notice.includes('추가되었습니다') ? ' is-success' : ''}`} role="status">{notice || apiError}</p>}
           </form>
         </article>
 
@@ -210,16 +308,17 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
           <p className="card-intro">교육 자료를 업로드하면 핵심 내용을 분석해 교육용 영상 초안을 만듭니다.</p>
           <form className="ai-video-form" onSubmit={requestAiVideo}>
             <EducationSelect label="작업 유형" value={aiForm.workType} options={workTypes} onChange={(value) => updateAiForm('workType', value)} />
-            <label className="education-select"><span>영상 제목</span><input value={aiForm.title} onChange={(event) => updateAiForm('title', event.target.value)} placeholder="생성할 교육 영상 제목" /></label>
-            <EducationSelect label="교육 구분" value={aiForm.requirement} options={['필수 교육', '정기 교육', '특별 교육']} onChange={(value) => updateAiForm('requirement', value)} />
+            <label className="education-select"><span>사용 장비</span><input value={aiForm.equipment} onChange={(event) => updateAiForm('equipment', event.target.value)} placeholder="예: 지게차, 안전모, 절단기" /></label>
+            <label className="education-select"><span>위험 요인</span><input value={aiForm.riskFactor} onChange={(event) => updateAiForm('riskFactor', event.target.value)} placeholder="예: 충돌, 낙하, 끼임" /></label>
             <button className={`upload-dropzone ai-upload${materialFile ? ' has-file' : ''}`} type="button" onClick={() => materialInputRef.current?.click()}>
               <input ref={materialInputRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.hwp,.txt" onChange={(event) => setMaterialFile(event.target.files?.[0] ?? null)} />
               <CloudUploadOutlinedIcon />
               <span><strong>{materialFile?.name ?? '교육 자료 업로드'}</strong><small>PDF, Word, PPT, HWP · 원본은 서버에 저장하지 않습니다</small></span>
             </button>
             <button className="ai-generate-button" type="submit"><VideoLibraryOutlinedIcon /> AI 교육 영상 생성</button>
-            {aiStatus === 'error' && <p className="ai-form-status is-error">영상 제목과 교육 자료를 입력해 주세요.</p>}
-            {aiStatus === 'queued' && <p className="ai-form-status"><CheckCircleOutlineRoundedIcon /> 백엔드 연결 전 미리보기입니다. 생성 요청 UI가 준비되었습니다.</p>}
+            {aiStatus === 'error' && <p className="ai-form-status is-error">사용 장비와 위험 요인을 입력해 주세요.</p>}
+            {aiStatus === 'queued' && <p className="ai-form-status"><CheckCircleOutlineRoundedIcon /> AI 교육 자료를 생성하고 있습니다.</p>}
+            {aiStatus === 'complete' && <p className="ai-form-status"><CheckCircleOutlineRoundedIcon /> AI 교육 자료가 교육 목록에 추가되었습니다.</p>}
           </form>
         </article>
       </div>
@@ -254,7 +353,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
             <table className="management-course-table">
               <thead><tr><th>교육명</th><th>대상</th><th>마감일</th><th>이수 대상</th><th>이수 완료</th><th>이수율</th><th>상태</th></tr></thead>
               <tbody>{visibleCourses.map((course, index) => {
-                const metric = course.isCustom ? { progress: 0, assigned: course.target === '전체 임직원' ? 152 : 24, completed: 0 } : (courseMetrics[course.id - 1] ?? courseMetrics[index])
+                const metric = course.isCustom ? { progress: 0, assigned: course.target === '전체 임직원' ? 152 : 24, completed: 0 } : (course.apiMetric ?? courseMetrics[course.id - 1] ?? courseMetrics[index])
                 return <tr className={`${course.isCustom ? 'is-new-course ' : ''}is-course-row`} key={course.id} role="button" tabIndex="0" onClick={() => openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed })} onKeyDown={(event) => event.key === 'Enter' && openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed })}><td>{course.title}{course.isCustom && <span className="new-course-dot">NEW</span>}</td><td>{course.target}</td><td>{course.deadline}</td><td>{metric.assigned}명</td><td>{metric.completed}명</td><td><span className="course-rate"><b>{metric.progress}%</b><i><em style={{ width: `${metric.progress}%` }} /></i></span></td><td><span className={`education-status${course.isCustom ? ' status-waiting' : ` status-${course.id}`}`}>{course.status}</span></td></tr>
               })}</tbody>
             </table>
