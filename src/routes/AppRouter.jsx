@@ -13,6 +13,8 @@ import LoginPage from '../pages/LoginPage.jsx'
 import SignupPage from '../pages/SignupPage.jsx'
 import MonitoringDetailPage from '../pages/MonitoringDetailPage.jsx'
 import BoardPage from '../pages/BoardPage.jsx'
+import ReportCreatePage from '../pages/ReportCreatePage.jsx'
+import ReportListPage from '../pages/ReportListPage.jsx'
 import ReportPage from '../pages/ReportPage.jsx'
 import RiskManagementPage from '../pages/RiskManagementPage.jsx'
 
@@ -47,6 +49,8 @@ function AppRouter() {
             <Route path="education" element={<EducationPage />} />
             <Route path="board" element={<BoardPage />} />
             <Route path="report" element={<ReportPage />} />
+            <Route path="report/create" element={<ReportCreatePage />} />
+            <Route path="report/list" element={<ReportListPage />} />
             <Route path="education-management" element={<EducationManagementPage />} />
             <Route path="risk-management" element={<RiskManagementPage />} />
             <Route path="mypage" element={<MyPage />} />

@@ -44,6 +44,8 @@ const pageHeaderMeta = {
   '/risk-management': { icon: QueryStatsRoundedIcon, description: '조치 이력을 바탕으로 현장 위험도를 확인하고 관리하세요.' },
   '/board': { icon: CampaignOutlinedIcon, description: '현장에서 접수된 위험 신고와 조치 진행 상태를 확인하세요.' },
   '/report': { icon: ArticleOutlinedIcon, description: '현장 안전 현황과 조치 결과를 보고서로 확인하세요.' },
+  '/report/create': { icon: ArticleOutlinedIcon, description: '보고서 기본 정보를 입력하고 새 리포트를 생성하세요.' },
+  '/report/list': { icon: ArticleOutlinedIcon, description: '생성된 보고서와 자동 생성 보고서를 확인하세요.' },
   '/mypage': { icon: AccountCircleOutlinedIcon, description: '관리자 정보와 계정 설정을 관리하세요.' },
 }
 

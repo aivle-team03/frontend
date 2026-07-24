@@ -24,7 +24,15 @@ const navigationItems = [
     ],
   },
   { path: '/board', label: '위험 신고 게시판', icon: 'board' },
-  { path: '/report', label: '보고서', icon: 'report' },
+  {
+    path: '/report',
+    label: '보고서',
+    icon: 'report',
+    children: [
+      { path: '/report/create', label: '보고서 생성', icon: 'manage' },
+      { path: '/report/list', label: '보고서 목록', icon: 'report' },
+    ],
+  },
 ]
 
 function MainLayout({ setIsLoggedIn }) {
