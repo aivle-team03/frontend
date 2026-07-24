@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import MainLayout from '../components/layout/MainLayout.jsx'
 import ActionHistoryPage from '../pages/ActionHistoryPage.jsx'
 import ChecklistPage from '../pages/ChecklistPage.jsx'
+import ChecklistManagementPage from '../pages/ChecklistManagementPage.jsx'
 import EducationPage from '../pages/EducationPage.jsx'
 import EducationManagementPage from '../pages/EducationManagementPage.jsx'
 import HomePage from '../pages/HomePage.jsx'
@@ -35,6 +37,7 @@ function AppRouter() {
   }, []);
 
   if (isLoading) return <div>로딩 중...</div>;
+  const [addedCourses, setAddedCourses] = useState([])
 
   return (
     <BrowserRouter>

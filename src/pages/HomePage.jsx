@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import AiSummaryCard from '../components/dashboard/AiSummaryCard.jsx'
-import AreaRiskChart from '../components/dashboard/AreaRiskChart.jsx'
 import DailyReportCard from '../components/dashboard/DailyReportCard.jsx'
 import PeriodSelector from '../components/dashboard/PeriodSelector.jsx'
 import RecentEventsTable from '../components/dashboard/RecentEventsTable.jsx'
@@ -8,8 +7,16 @@ import RiskTrendChart from '../components/dashboard/RiskTrendChart.jsx'
 import RiskTypeDonutChart from '../components/dashboard/RiskTypeDonutChart.jsx'
 import SafetyGradeCard from '../components/dashboard/SafetyGradeCard.jsx'
 import SummaryCard from '../components/dashboard/SummaryCard.jsx'
+import RiskTypePieChart from '../components/dashboard/RiskTypePieChart.jsx'
+import RiskSectionStackChart from '../components/dashboard/RiskSectionStackChart.jsx'
+import EducationPieChart from '../components/dashboard/EducationPieChart.jsx'
+import ActionHistoryTable from '../components/dashboard/ActionHistoryTable.jsx'
 import {
-  areaRisks,
+  EVENT_CATEGORY_MOCKUP_DATA,
+  EDUCATION_INFO_MOCKUP_DATA,
+  ACTION_HISTORY_MOCK_DATA
+} from '../mocks/mockData.js'
+import {
   periodChartData,
   recentEvents,
   riskTypeData,
@@ -33,7 +40,6 @@ function HomePage() {
   const [selectedPeriod, setSelectedPeriod] = useState('오늘')
   const [selectedSummaryId, setSelectedSummaryId] = useState('realtime')
   const [selectedEvent, setSelectedEvent] = useState(null)
-  const [selectedArea, setSelectedArea] = useState(null)
 
   const filteredEvents = useMemo(
     () => filterEvents(recentEvents, selectedSummaryId),
@@ -52,6 +58,8 @@ function HomePage() {
           />
         ))}
       </section>
+      
+
 
       <section className="dashboard-main-grid">
         <RecentEventsTable
@@ -60,12 +68,35 @@ function HomePage() {
           onSelectEvent={setSelectedEvent}
           onClose={() => setSelectedEvent(null)}
         />
-        <AreaRiskChart
-          risks={areaRisks}
-          selectedArea={selectedArea}
-          onSelectArea={setSelectedArea}
-        />
+
+        <EducationPieChart data={EDUCATION_INFO_MOCKUP_DATA}></EducationPieChart>
       </section>
+      
+
+
+        <section className="risk-section">
+        <div className="section-heading">
+          <div>
+            <h2 className="section-title">위험도 관리</h2>
+            <p>전체 위험도 통계와 구간 별 위험도 분포를 확인합니다.</p>
+          </div>
+        </div>
+
+        <div className="risk-chart-grid">
+          <RiskTypePieChart data={EVENT_CATEGORY_MOCKUP_DATA} />
+          <RiskSectionStackChart  data={EVENT_CATEGORY_MOCKUP_DATA} />
+        </div>
+      </section>
+
+
+      <section>
+        <ActionHistoryTable
+          lists={ACTION_HISTORY_MOCK_DATA}
+        />
+
+      </section>
+
+
 
       <section className="statistics-section">
         <div className="section-heading">

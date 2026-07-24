@@ -6,7 +6,13 @@ import Sidebar from './Sidebar.jsx'
 const navigationItems = [
   { path: '/', label: '홈', icon: 'home' },
   { path: '/monitoring', label: 'CCTV 모니터링', icon: 'camera' },
-  { path: '/checklists', label: '체크리스트', icon: 'checklist' },
+  {
+    label: '체크리스트', icon: 'checklist',
+    children: [
+      { path: '/checklists', label: '점검 목록', icon: 'checklist' },
+      { path: '/checklists/management', label: '점검 관리', icon: 'manage', requiresRole: 'safety-manager' },
+    ],
+  },
   {
     label: '조치 이력', icon: 'history',
     children: [
