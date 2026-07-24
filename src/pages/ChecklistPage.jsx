@@ -49,7 +49,7 @@ function ChecklistPage() {
       <div className="checklist-grid">
         <article className="checklist-card">
           <div className="checklist-card-header">
-            <h2>오늘의 업무</h2>
+            <h2>오늘의 점검 목록</h2>
             <select
               value={selectedLocation}
               onChange={(event) => setSelectedLocation(event.target.value)}
@@ -90,7 +90,7 @@ function ChecklistPage() {
         </article>
 
         <article className="checklist-card action-card">
-          <h2>조치 진행</h2>
+          <h2>조치 사진 등록</h2>
           <ImageUploadSection
             count={beforeImages.length}
             inputRef={beforeInputRef}
