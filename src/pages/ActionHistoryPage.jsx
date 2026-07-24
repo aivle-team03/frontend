@@ -113,7 +113,7 @@ function ActionHistoryPage() {
       await axios.patch(
         `http://127.0.0.1:8000/api/checklists/${selectedRecord.id}/status`,
         {
-          status: "반려",
+          status: "조치 필요",
           reason: rejectReason.trim(),
         },
         { headers }
