@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AiSummaryCard from '../components/dashboard/AiSummaryCard.jsx'
 import DailyReportCard from '../components/dashboard/DailyReportCard.jsx'
 import PeriodSelector from '../components/dashboard/PeriodSelector.jsx'
@@ -37,6 +38,7 @@ function filterEvents(events, selectedSummaryId) {
 }
 
 function HomePage() {
+  const navigate = useNavigate()
   const [selectedPeriod, setSelectedPeriod] = useState('오늘')
   const [selectedSummaryId, setSelectedSummaryId] = useState('realtime')
   const [selectedEvent, setSelectedEvent] = useState(null)
@@ -78,7 +80,7 @@ function HomePage() {
         <div className="section-heading">
           <div>
             <h2 className="section-title">위험도 관리</h2>
-            <p>전체 위험도 통계와 구간 별 위험도 분포를 확인합니다.</p>
+            <p>전체 위험도 통계와 유형별 위험도 분포를 확인합니다.</p>
           </div>
         </div>
 
@@ -89,10 +91,16 @@ function HomePage() {
       </section>
 
 
-      <section>
+      <section className="risk-card compact-card">
         <ActionHistoryTable
           lists={ACTION_HISTORY_MOCK_DATA}
         />
+
+        <div className="Page-move-wrapper">
+            <button className="Page-move-button" type="button" onClick={() => navigate('/actions')}>
+              조치 이력 페이지로 이동
+            </button>
+        </div>
 
       </section>
 

@@ -1,9 +1,9 @@
 import CloudOutlinedIcon from '@mui/icons-material/CloudOutlined'
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar'
+import EngineeringIcon from '@mui/icons-material/Engineering'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment'
-import EngineeringIcon from '@mui/icons-material/Engineering'
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   Box,
@@ -14,8 +14,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Select,
-  MenuItem,
 } from '@mui/material'
 
 function EventTypeIcon({ type }) {
@@ -26,26 +24,29 @@ function EventTypeIcon({ type }) {
   return <CloudOutlinedIcon fontSize="small" />
 }
 
-function EventCategoryTable({ events }) {
-
+function EventCategoryTable({ events, isDeleteMode = false, onDelete }) {
   const [eventscategory, setEventsCategory] = useState(events)
-  function handleSeverityChange(id, value) {
 
+  useEffect(() => {
+    setEventsCategory(events)
+  }, [events])
+
+  function handleSeverityChange(id, value) {
     setEventsCategory((prev) =>
       prev.map((event) =>
         event.id === id
           ? {
               ...event,
-              severity: Number(value)
+              severity: Number(value),
             }
-          : event
-      )
+          : event,
+      ),
     )
-
   }
+
   return (
     <TableContainer className="events-table-wrap">
-      <Table size="small" aria-label="최근 이상 발생 리스트">
+      <Table size="small" aria-label="위험 요인 리스트">
         <TableHead>
           <TableRow>
             <TableCell>유형</TableCell>
@@ -57,35 +58,49 @@ function EventCategoryTable({ events }) {
         </TableHead>
         <TableBody>
           {eventscategory.map((event) => (
-            <TableRow hover key={event.id} className="event-row">
-                  <TableCell>{event.type}</TableCell>
-                    <TableCell>
-                                      <Stack direction="row" spacing={0.8} alignItems="center">
-                                        <Box className="event-type-icon">
-                                          <EventTypeIcon type={event.item} />
-                                        </Box>
-                                        <span>{event.item}</span>
-                                      </Stack>
-                                    </TableCell>
-                  <TableCell> {event.risk}</TableCell>
-                  <TableCell>
-                    <Select
-                      value={event.severity}
-                      size="small"
-                      onChange={(e)=>handleSeverityChange(event.id, e.target.value)}
-                    >
-                      <MenuItem value={1}>1</MenuItem>
-                      <MenuItem value={2}>2</MenuItem>
-                      <MenuItem value={3}>3</MenuItem>
-                      <MenuItem value={4}>4</MenuItem>
-                      <MenuItem value={5}>5</MenuItem>
-                      <MenuItem value={6}>6</MenuItem>
-                      <MenuItem value={7}>7</MenuItem>
-                      <MenuItem value={8}>8</MenuItem>
-                      <MenuItem value={9}>9</MenuItem>
-                    </Select>             
-                  </TableCell>
-                  <TableCell> {event.frequency}</TableCell>
+            <TableRow hover key={event.id} className={`event-row${isDeleteMode ? ' is-delete-mode' : ''}`}>
+              <TableCell>{event.type}</TableCell>
+              <TableCell>
+                <Stack direction="row" spacing={0.8} alignItems="center">
+                  <Box className="event-type-icon">
+                    <EventTypeIcon type={event.item} />
+                  </Box>
+                  <span>{event.item}</span>
+                </Stack>
+              </TableCell>
+              <TableCell>{event.risk}</TableCell>
+              <TableCell>
+                <label className="risk-severity-select">
+                  <select
+                    aria-label={`${event.item} 강도 변경`}
+                    value={event.severity}
+                    onChange={(eventChange) => handleSeverityChange(event.id, eventChange.target.value)}
+                  >
+                    <option value={1}>1</option>
+                    <option value={2}>2</option>
+                    <option value={3}>3</option>
+                    <option value={4}>4</option>
+                    <option value={5}>5</option>
+                    <option value={6}>6</option>
+                    <option value={7}>7</option>
+                    <option value={8}>8</option>
+                    <option value={9}>9</option>
+                  </select>
+                </label>
+              </TableCell>
+              <TableCell>
+                {event.frequency}
+                {isDeleteMode && (
+                  <button
+                    className="risk-delete-row-button"
+                    type="button"
+                    aria-label={`${event.item} 삭제`}
+                    onClick={() => onDelete?.(event.id)}
+                  >
+                    ×
+                  </button>
+                )}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -93,6 +108,5 @@ function EventCategoryTable({ events }) {
     </TableContainer>
   )
 }
-
 
 export default EventCategoryTable

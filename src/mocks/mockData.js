@@ -279,19 +279,19 @@ export const EVENT_CATEGORY_MOCKUP_DATA=[
 
 export const EDUCATION_INFO_MOCKUP_DATA=[
 {
-  type : 'new',
+  type : '신규 근로자',
   total:120,
   trained : 100,
 },
 {
-  type: 'regular',
+  type: '기존 근로자',
   total:200,
   trained : 120,
 },
 {
-  type: 'specialized',
-  total:5,
-  trained : 5,
+  type: '특수 근로자',
+  total:90,
+  trained : 90,
 },
 ]
 export const APPROVAL_HISTORY_MOCK_DATA = [

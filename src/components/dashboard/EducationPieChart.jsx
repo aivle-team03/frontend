@@ -1,61 +1,105 @@
 import { Box, Typography } from '@mui/material'
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import { useNavigate } from 'react-router-dom'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import EducationTable from './EducationTable.jsx'
 
-const colors = ['#e7b0b5', '#f1d19b', '#b8cbe0', '#8eb6df']
-
 function makeTypeCountData(data) {
-  
   const total = data.reduce((sum, item) => sum + item.total, 0)
   const trained = data.reduce((sum, item) => sum + item.trained, 0)
 
   return [
     {
-        type: '이수',
-        value: trained,
-        percent: Number(((trained / total) * 100).toFixed(1)),
-    },
-    {
-        type: '미이수',
-        value: total - trained,
-        percent: Number((((total - trained) / total) * 100).toFixed(1)),
+      type: '전체 근로자',
+      total,
+      trained,
+      percent: Number(((trained / total) * 100).toFixed(1)),
     },
   ]
-
 }
 
-  
-function EducationPieChart({ data }) {
+function EducationTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
 
-const countdata= makeTypeCountData(data);
+  const total = payload.find((item) => item.dataKey === 'total')?.value ?? 0
+  const trained = payload.find((item) => item.dataKey === 'trained')?.value ?? 0
+
   return (
-    <Box className="edu-card">
-      <Typography variant="h6">교육 이수 현황</Typography>
-      <Box className="chart-body donut-chart-body">
-        <ResponsiveContainer width="100%" height={200}>
-          <PieChart>
-            <Pie data={countdata} dataKey="percent" nameKey="type" innerRadius={0} outerRadius={88} paddingAngle={3} isAnimationActive animationBegin={180} animationDuration={1100} animationEasing="ease-out">
-              {countdata.map((entry, index) => (
-                <Cell key={entry.type} fill={colors[index % colors.length]} />
-              ))}
-            </Pie>
-            <Tooltip formatter={(value,name) => [`${value}%`, name]} />
-          </PieChart>
-        </ResponsiveContainer>
-      </Box>
-      <div className="donut-legend">
-        {countdata.map((item, index) => (
-          <div className="donut-legend-item" key={item.type}>
-            <span>
-              <i style={{ backgroundColor: colors[index % colors.length] }}></i>
-              {item.type}
-            </span>
-            <strong>{item.percent}%</strong>
-          </div>
-        ))}
+    <div className="education-chart-tooltip">
+      <strong>{label}</strong>
+      <span>대상 {total}명</span>
+      <span>이수 {trained}명</span>
+    </div>
+  )
+}
+
+function EducationPieChart({ data }) {
+  const navigate = useNavigate()
+
+  const countData = [
+    ...data,
+    ...makeTypeCountData(data),
+  ]
+
+  return (
+    <Box className="edu-card compact-card">
+      <div className="education-chart-heading">
+        <div>
+          <Typography variant="h6">교육 이수 현황</Typography>
+          <p>대상자별 이수 인원을 확인합니다.</p>
+        </div>
       </div>
 
-      <EducationTable lists={data}></EducationTable>
+      <Box className="chart-body donut-chart-body education-completion-chart">
+        <ResponsiveContainer width="100%" height={270}>
+          <BarChart
+            data={countData}
+            margin={{
+              top: 16,
+              right: 8,
+              left: 0,
+              bottom: 0,
+            }}
+          >
+            <CartesianGrid vertical={false} stroke="#e7edf5" strokeDasharray="4 4" />
+            <XAxis dataKey="type" tick={{ fill: '#64748b', fontSize: 13, fontWeight: 700 }} tickLine={false} />
+            <YAxis
+              yAxisId="count"
+              width={42}
+              allowDecimals={false}
+              axisLine={false}
+              tick={{ fill: '#7c899d', fontSize: 12 }}
+              tickLine={false}
+            />
+            <Tooltip content={<EducationTooltip />} cursor={{ fill: 'rgba(47, 100, 183, 0.04)' }} />
+            <Legend
+              iconType="circle"
+              formatter={(value) => ({
+                total: '대상',
+                trained: '이수',
+              }[value])}
+            />
+            <Bar yAxisId="count" dataKey="total" fill="#dbe7f6" radius={[9, 9, 0, 0]} barSize={28} />
+            <Bar yAxisId="count" dataKey="trained" fill="#3974c6" radius={[9, 9, 0, 0]} barSize={28} />
+          </BarChart>
+        </ResponsiveContainer>
+      </Box>
+
+      <EducationTable lists={countData} />
+
+      <div className="Page-move-wrapper">
+        <button className="Page-move-button" type="button" onClick={() => navigate('/education')}>
+          교육 이수 페이지로 이동
+        </button>
+      </div>
     </Box>
   )
 }
