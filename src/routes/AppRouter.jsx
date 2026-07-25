@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import MainLayout from '../components/layout/MainLayout.jsx'
 import ActionHistoryPage from '../pages/ActionHistoryPage.jsx'
@@ -18,25 +18,15 @@ import ReportCreatePage from '../pages/ReportCreatePage.jsx'
 import ReportListPage from '../pages/ReportListPage.jsx'
 import ReportPage from '../pages/ReportPage.jsx'
 import RiskManagementPage from '../pages/RiskManagementPage.jsx'
+import SafetyManagementPage from '../pages/SafetyManagementPage.jsx'
 
 function AppRouter() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [addedCourses, setAddedCourses] = useState([])
-
-  useEffect(() => {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const token = localStorage.getItem('token');
     const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
-
-    if (token && loggedInStatus) {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-    }
-    setIsLoading(false);
-  }, []);
-
-  if (isLoading) return <div>로딩 중...</div>;
+    return Boolean(token && loggedInStatus)
+  });
+  const [addedCourses, setAddedCourses] = useState([])
   return (
     <BrowserRouter>
       <Routes>
@@ -63,6 +53,7 @@ function AppRouter() {
               }
             />
             <Route path="risk-management" element={<RiskManagementPage />} />
+            <Route path="safety-management" element={<SafetyManagementPage />} />
             <Route path="mypage" element={<MyPage />} />
             <Route path="monitoringdetail" element={<MonitoringDetailPage />} />
             <Route path="*" element={<Navigate replace to="/" />} />

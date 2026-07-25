@@ -44,6 +44,7 @@ const pageHeaderMeta = {
   '/education': { icon: SchoolOutlinedIcon, description: '현장에 필요한 안전 교육 콘텐츠와 이수 현황을 확인하세요.' },
   '/education-management': { icon: AdminPanelSettingsOutlinedIcon, description: '대상자별 교육 이수 현황을 관리하고 현장 교육 자료를 생성하세요.' },
   '/risk-management': { icon: QueryStatsRoundedIcon, description: '조치 이력을 바탕으로 현장 위험도를 확인하고 관리하세요.' },
+  '/safety-management': { icon: AdminPanelSettingsOutlinedIcon, title: '안전 관리 설정', description: '회사의 안전보건 방침, 위험성 평가 조직, 허용가능 위험도를 관리하세요.' },
   '/board': { icon: CampaignOutlinedIcon, description: '현장에서 접수된 위험 신고와 조치 진행 상태를 확인하세요.' },
   '/report': { icon: ArticleOutlinedIcon, description: '현장 안전 현황과 조치 결과를 보고서로 확인하세요.' },
   '/report/create': { icon: ArticleOutlinedIcon, description: '보고서 기본 정보를 입력하고 새 리포트를 생성하세요.' },
@@ -83,10 +84,7 @@ function Header({ items }) {
   const HeaderIcon = headerMeta?.icon
 
   useEffect(() => {
-    fetchUserProfile()
-  }, [])
-
-  const fetchUserProfile = async () => {
+    const fetchUserProfile = async () => {
     try {
       const token = localStorage.getItem('token')
       if (!token) return
@@ -107,7 +105,10 @@ function Header({ items }) {
     } catch (error) {
       console.error('헤더 사용자 프로필 로드 실패:', error)
     }
-  }
+    }
+
+    fetchUserProfile()
+  }, [])
 
   const handleLogout = () => {
     if (window.confirm('로그아웃 하시겠습니까?')) {
@@ -177,6 +178,11 @@ function Header({ items }) {
   const handleMoveToMyPage = () => {
     setActiveMenu(null)
     navigate('/mypage')
+  }
+
+  const handleMoveToSafetyManagement = () => {
+    setActiveMenu(null)
+    navigate('/safety-management')
   }
 
   return (
@@ -270,11 +276,11 @@ function Header({ items }) {
             <div className="profile-dropdown" role="menu">
               <div className="profile-dropdown-overview">
                 <span className="profile-avatar profile-avatar-large" aria-hidden="true"><AccountCircleRoundedIcon /></span>
-                <div>
+                <button className="profile-account-summary" type="button" role="menuitem" onClick={handleMoveToSafetyManagement}>
                   <strong>{user.name}</strong>
                   <span>{user.department} · {user.role}</span>
                   <small>{user.email}</small>
-                </div>
+                </button>
                 {/* TODO(auth): Connect this control to the logout endpoint/session cleanup flow. */}
                 <button className="profile-logout-button" type="button" role="menuitem" aria-label="로그아웃" onClick={handleLogout}>
                   <LogoutOutlinedIcon />

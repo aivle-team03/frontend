@@ -1,0 +1,304 @@
+.safety-management-page {
+  display: grid;
+  max-width: 1480px;
+  margin: 0 auto;
+  gap: 18px;
+  color: #172033;
+}
+
+.safety-policy-card {
+  overflow: hidden;
+  border: 1px solid #dce6f2;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.safety-card-heading {
+  display: grid;
+  gap: 5px;
+  padding: 20px 22px;
+  border-bottom: 1px solid #e7edf5;
+  background: #fbfdff;
+}
+
+.safety-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.safety-card-heading span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #2f64b7;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.safety-card-heading svg {
+  width: 17px;
+  height: 17px;
+}
+
+.safety-card-heading h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.safety-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding: 22px;
+}
+
+.safety-form-grid label {
+  display: grid;
+  gap: 8px;
+}
+
+.safety-form-grid label > span {
+  color: #53647b;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.safety-form-grid textarea,
+.safety-role-row input {
+  width: 100%;
+  border: 1px solid #d7e0eb;
+  border-radius: 8px;
+  color: #243247;
+  background: #ffffff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  outline: 0;
+}
+
+.safety-form-grid textarea {
+  min-height: 120px;
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.safety-role-row input {
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.safety-form-grid textarea:focus,
+.safety-role-row input:focus {
+  border-color: #6f9cdb;
+  box-shadow: 0 0 0 4px rgba(47, 100, 183, 0.1);
+}
+
+.safety-add-button,
+.safety-page-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.safety-add-button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #d7e0eb;
+  color: #2f64b7;
+  background: #ffffff;
+}
+
+.safety-add-button:hover {
+  background: #f5f9ff;
+}
+
+.safety-add-button svg,
+.safety-page-actions svg {
+  width: 18px;
+  height: 18px;
+}
+
+.safety-role-table {
+  display: grid;
+  padding: 22px;
+}
+
+.safety-role-head,
+.safety-role-row {
+  display: grid;
+  grid-template-columns: 220px 180px minmax(0, 1fr);
+}
+
+.safety-role-head {
+  min-height: 44px;
+  align-items: center;
+  border: 1px solid #dce6f2;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  color: #53647b;
+  background: #f5f8fc;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.safety-role-head span,
+.safety-role-row input {
+  border-right: 1px solid #e7edf5;
+}
+
+.safety-role-head span {
+  padding: 0 14px;
+}
+
+.safety-role-head span:last-child,
+.safety-role-row input:last-child {
+  border-right: 0;
+}
+
+.safety-role-row {
+  border: 1px solid #e7edf5;
+  border-top: 0;
+}
+
+.safety-role-row:last-child {
+  border-radius: 0 0 8px 8px;
+}
+
+.safety-role-row input {
+  border-width: 0;
+  border-radius: 0;
+}
+
+.safety-standard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 22px 22px 12px;
+}
+
+.safety-risk-option {
+  display: grid;
+  width: 100%;
+  gap: 6px;
+  min-height: 86px;
+  align-content: center;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid;
+  cursor: pointer;
+  text-align: left;
+}
+
+.safety-standard-grid strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.safety-standard-grid span {
+  color: #53647b;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.standard-high {
+  border-color: #fecaca;
+  background: #fff1f2;
+}
+
+.standard-high strong {
+  color: #dc2626;
+}
+
+.standard-medium {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.standard-medium strong {
+  color: #d97706;
+}
+
+.standard-low {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.standard-low strong {
+  color: #16a34a;
+}
+
+.safety-risk-option.is-selected {
+  box-shadow: 0 0 0 3px rgba(47, 100, 183, 0.14);
+}
+
+.safety-risk-note {
+  margin: 0;
+  padding: 0 22px 22px;
+  color: #53647b;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.safety-risk-note strong {
+  color: #2f64b7;
+  font-weight: 900;
+}
+
+.safety-page-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.safety-page-actions button {
+  min-width: 112px;
+  min-height: 44px;
+  border: 0;
+  color: #ffffff;
+  background: #2f64b7;
+  box-shadow: 0 10px 22px rgba(47, 100, 183, 0.22);
+}
+
+.safety-page-actions button:hover {
+  background: #24559e;
+}
+
+@media (max-width: 900px) {
+  .safety-form-grid,
+  .safety-standard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .safety-role-head {
+    display: none;
+  }
+
+  .safety-role-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px;
+    border-top: 1px solid #e7edf5;
+    border-radius: 8px;
+  }
+
+  .safety-role-row + .safety-role-row {
+    margin-top: 10px;
+  }
+
+  .safety-role-row input {
+    border: 1px solid #d7e0eb;
+    border-radius: 8px;
+  }
+}
