@@ -1,6 +1,6 @@
 import CloseIcon from '@mui/icons-material/Close'
 import axios from 'axios'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import '../styles/checklist.css'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
@@ -8,6 +8,7 @@ const API_BASE_URL = 'http://127.0.0.1:8000'
 function ChecklistPage() {
   const [loading, setLoading] = useState(true)
   const [tasks, setTasks] = useState([])
+  const [activeTaskView, setActiveTaskView] = useState('inspection')
   const [selectedTaskId, setSelectedTaskId] = useState(null)
 
   // 조치 보고용 입력 상태
@@ -19,14 +20,7 @@ function ChecklistPage() {
 
   const afterInputRef = useRef(null)
 
-  // ==========================================
-  // 1. 백엔드에서 체크리스트 목록 조회 (GET /api/checklists)
-  // ==========================================
-  useEffect(() => {
-    fetchChecklists()
-  }, [])
-
-  const fetchChecklists = async () => {
+  const fetchChecklists = useCallback(async () => {
     try {
       setLoading(true)
       const token = localStorage.getItem('token')
@@ -59,15 +53,39 @@ function ChecklistPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  // 현재 선택된 체크리스트 항목
-  const currentTask = tasks.find((t) => t.id === selectedTaskId)
+  // ==========================================
+  // 1. 백엔드에서 체크리스트 목록 조회 (GET /api/checklists)
+  // ==========================================
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchChecklists()
+  }, [fetchChecklists])
+
+  const { inspectionTasks, actionTasks, visibleTasks } = useMemo(() => {
+    const isActionTask = (task) => task.type === '조치' || task.status === '조치 필요' || task.status === '반려'
+    const nextInspectionTasks = tasks.filter((task) => !isActionTask(task))
+    const nextActionTasks = tasks.filter((task) => isActionTask(task))
+
+    return {
+      inspectionTasks: nextInspectionTasks,
+      actionTasks: nextActionTasks,
+      visibleTasks: activeTaskView === 'inspection' ? nextInspectionTasks : nextActionTasks,
+    }
+  }, [activeTaskView, tasks])
 
   // 진행률 계산
-  const completedCount = tasks.filter((task) => task.completed).length
-  const totalCount = tasks.length
+  const completedCount = visibleTasks.filter((task) => task.completed).length
+  const totalCount = visibleTasks.length
   const progressPercent = totalCount ? Math.round((completedCount / totalCount) * 100) : 0
+
+  const effectiveSelectedTaskId = visibleTasks.some((task) => task.id === selectedTaskId)
+    ? selectedTaskId
+    : visibleTasks[0]?.id
+
+  // 현재 선택된 체크리스트 항목
+  const currentTask = tasks.find((t) => t.id === effectiveSelectedTaskId)
 
   // 이미지 파일 선택 처리
   const handleFileChange = (event) => {
@@ -149,8 +167,34 @@ function ChecklistPage() {
         {/* 1. 오늘의 업무 (체크리스트 & 조치 필요 목록) */}
         <article className="checklist-card">
           <div className="checklist-card-header">
-            <h2>오늘의 점검 및 조치 업무</h2>
+            <div>
+              <h2>점검 목록</h2>
+              <p>오늘 필요한 점검과 조치 업무를 구분해 확인하세요.</p>
+            </div>
             <span className="task-badge-count">총 {totalCount}건</span>
+          </div>
+
+          <div className="daily-task-tabs" role="tablist" aria-label="점검 목록 보기 전환">
+            <button
+              className={activeTaskView === 'inspection' ? 'is-active' : ''}
+              type="button"
+              role="tab"
+              aria-selected={activeTaskView === 'inspection'}
+              onClick={() => setActiveTaskView('inspection')}
+            >
+              오늘의 점검
+              <span>{inspectionTasks.length}</span>
+            </button>
+            <button
+              className={activeTaskView === 'action' ? 'is-active' : ''}
+              type="button"
+              role="tab"
+              aria-selected={activeTaskView === 'action'}
+              onClick={() => setActiveTaskView('action')}
+            >
+              조치 업무
+              <span>{actionTasks.length}</span>
+            </button>
           </div>
 
           <div className="checklist-progress">
@@ -166,9 +210,9 @@ function ChecklistPage() {
           </div>
 
           <div className="task-list">
-            {tasks.length > 0 ? (
-              tasks.map((task) => {
-                const isSelected = task.id === selectedTaskId
+            {visibleTasks.length > 0 ? (
+              visibleTasks.map((task) => {
+                const isSelected = task.id === effectiveSelectedTaskId
                 const isRejected = task.status === '조치 필요' || task.status === '반려'
 
                 return (
@@ -218,7 +262,9 @@ function ChecklistPage() {
               })
             ) : (
               <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
-                현재 할당된 점검 및 조치 항목이 없습니다.
+                {activeTaskView === 'inspection'
+                  ? '오늘 할당된 점검 항목이 없습니다.'
+                  : '현재 필요한 조치 업무가 없습니다.'}
               </div>
             )}
           </div>

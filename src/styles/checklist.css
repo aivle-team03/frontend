@@ -37,6 +37,13 @@
   gap: 14px;
 }
 
+.checklist-card-header p {
+  margin: 6px 0 0;
+  color: #71839a;
+  font-size: 13px;
+  font-weight: 650;
+}
+
 .checklist-card-header select {
   min-width: 150px;
   padding: 9px 12px;
@@ -47,6 +54,62 @@
   font: inherit;
   font-size: 14px;
   font-weight: 800;
+}
+
+.daily-task-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 18px;
+  padding: 5px;
+  border: 1px solid #dbe6f2;
+  border-radius: 12px;
+  background: #f5f8fc;
+}
+
+.daily-task-tabs button {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 9px;
+  color: #6c7f95;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 900;
+  transition: 0.18s ease;
+}
+
+.daily-task-tabs button:hover {
+  color: #2f64b7;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.daily-task-tabs button.is-active {
+  color: #1f5fae;
+  background: #ffffff;
+  box-shadow: 0 3px 10px rgba(47, 100, 183, 0.14);
+}
+
+.daily-task-tabs span {
+  display: grid;
+  min-width: 24px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  color: #2f64b7;
+  background: #e8f1ff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.daily-task-tabs button.is-active span {
+  color: #ffffff;
+  background: #2f64b7;
 }
 
 .checklist-progress {
