@@ -5,6 +5,10 @@ import SaveRoundedIcon from '@mui/icons-material/SaveRounded'
 import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined'
 import { useState } from 'react'
 import '../styles/SafetyManagementPage.css'
+import {
+  getStoredSafetyRiskThreshold,
+  saveSafetyRiskThreshold,
+} from '../utils/checklistStatusStorage'
 
 const initialPolicy = {
   policy: '근로자의 생명과 건강을 최우선 가치로 두고, 모든 작업에서 위험요인을 사전에 확인하고 개선한다.',
@@ -19,7 +23,10 @@ const initialRoles = [
 ]
 
 function SafetyManagementPage() {
-  const [policyForm, setPolicyForm] = useState(initialPolicy)
+  const [policyForm, setPolicyForm] = useState(() => ({
+    ...initialPolicy,
+    acceptableRisk: getStoredSafetyRiskThreshold(),
+  }))
   const [roles, setRoles] = useState(initialRoles)
 
   const updatePolicy = (field, value) => {
@@ -40,6 +47,7 @@ function SafetyManagementPage() {
   }
 
   const saveSettings = () => {
+    saveSafetyRiskThreshold(policyForm.acceptableRisk)
     alert('안전보건 관리 설정이 저장되었습니다.')
   }
 

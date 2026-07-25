@@ -3,6 +3,12 @@ import axios from 'axios'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TODAY_INSPECTION_MOCK_DATA } from '../mocks/mockData'
 import '../styles/checklist.css'
+import {
+  applyChecklistInspectionResults,
+  getStoredSafetyRiskThreshold,
+  saveChecklistActionRiskResult,
+  saveChecklistInspectionResult,
+} from '../utils/checklistStatusStorage'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 const STRENGTH_OPTIONS = Array.from({ length: 9 }, (_, index) => String(index + 1))
@@ -11,6 +17,26 @@ const FREQUENCY_OPTIONS = [
   { key: 'sometimes', label: '가끔', score: 2 },
   { key: 'rare', label: '드묾', score: 1 },
 ]
+
+function getRiskSelectionFromTask(task) {
+  const strength = Number(task?.strength)
+  const frequency = FREQUENCY_OPTIONS.find((option) => option.score === Number(task?.frequency))
+
+  if (Number.isFinite(strength) && strength >= 1 && strength <= 9 && frequency) {
+    return { strength: String(strength), frequency }
+  }
+
+  return { strength: '5', frequency: FREQUENCY_OPTIONS[1] }
+}
+
+function applyStoredResultsToTasks(tasks) {
+  return applyChecklistInspectionResults(tasks.map((task) => ({ ...task, progress: task.status })))
+    .map((task) => ({
+      ...task,
+      status: task.progress,
+      completed: task.progress === '점검 완료' || task.completed,
+    }))
+}
 
 function ChecklistPage() {
   const [loading, setLoading] = useState(true)
@@ -26,6 +52,8 @@ function ChecklistPage() {
   const [submitting, setSubmitting] = useState(false)
   const [selectedStrength, setSelectedStrength] = useState('5')
   const [selectedFrequency, setSelectedFrequency] = useState(FREQUENCY_OPTIONS[1])
+  const [actionBeforeStrength, setActionBeforeStrength] = useState('5')
+  const [actionBeforeFrequency, setActionBeforeFrequency] = useState(FREQUENCY_OPTIONS[1])
 
   const afterInputRef = useRef(null)
 
@@ -47,8 +75,16 @@ function ChecklistPage() {
           date: item.date ? String(item.date).slice(0, 10) : '-',
           imageUrl: item.image_url || '',
           completed: item.status === '승인 대기' || item.status === '승인 완료' || item.status === '조치 완료',
+          riskScore: item.risk_score ?? item.riskScore ?? item.before_risk_score,
+          inspectionRiskScore: item.inspection_risk_score ?? item.before_risk_score,
+          actionRiskScore: item.action_risk_score ?? item.after_risk_score,
+          beforeRiskScore: item.before_risk_score,
+          strength: item.strength ?? item.severity ?? item.before_risk_strength,
+          frequency: item.frequency ?? item.before_risk_frequency,
+          actionStrength: item.action_strength ?? item.after_risk_strength,
+          actionFrequency: item.action_frequency ?? item.after_risk_frequency,
         }))
-        const mergedTasks = [...TODAY_INSPECTION_MOCK_DATA, ...formattedTasks]
+        const mergedTasks = applyStoredResultsToTasks([...TODAY_INSPECTION_MOCK_DATA, ...formattedTasks])
 
         setTasks(mergedTasks)
 
@@ -59,7 +95,7 @@ function ChecklistPage() {
       }
     } catch (error) {
       console.error('체크리스트 로드 실패:', error)
-      setTasks(TODAY_INSPECTION_MOCK_DATA)
+      setTasks(applyStoredResultsToTasks(TODAY_INSPECTION_MOCK_DATA))
       setSelectedTaskId(TODAY_INSPECTION_MOCK_DATA[0]?.id ?? null)
     } finally {
       setLoading(false)
@@ -75,7 +111,7 @@ function ChecklistPage() {
   }, [fetchChecklists])
 
   const { inspectionTasks, actionTasks, visibleTasks } = useMemo(() => {
-    const isActionTask = (task) => task.type === '조치' || task.status === '조치 필요' || task.status === '반려'
+    const isActionTask = (task) => task.type === '조치' || task.status === '조치 대기' || task.status === '조치 필요' || task.status === '반려'
     const nextInspectionTasks = tasks.filter((task) => !isActionTask(task))
     const nextActionTasks = tasks.filter((task) => isActionTask(task))
 
@@ -97,6 +133,14 @@ function ChecklistPage() {
 
   // 현재 선택된 체크리스트 항목
   const currentTask = tasks.find((t) => t.id === effectiveSelectedTaskId)
+
+  useEffect(() => {
+    if (activeTaskView !== 'action' || !currentTask) return
+
+    const { strength, frequency } = getRiskSelectionFromTask(currentTask)
+    setActionBeforeStrength(strength)
+    setActionBeforeFrequency(frequency)
+  }, [activeTaskView, currentTask])
 
   // 이미지 파일 선택 처리
   const handleFileChange = (event) => {
@@ -145,12 +189,25 @@ function ChecklistPage() {
       const formData = new FormData()
       formData.append('content', actionContent.trim())
       formData.append('image', imageFiles[0])
+      formData.append('risk_score', String(Number(actionBeforeStrength) * actionBeforeFrequency.score))
+      formData.append('risk_strength', actionBeforeStrength)
+      formData.append('risk_frequency', String(actionBeforeFrequency.score))
+      formData.append('before_risk_score', String(Number(actionBeforeStrength) * actionBeforeFrequency.score))
+      formData.append('before_risk_strength', actionBeforeStrength)
+      formData.append('before_risk_frequency', String(actionBeforeFrequency.score))
 
       await axios.patch(`${API_BASE_URL}/api/checklists/${currentTask.id}/complete`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
+      })
+
+      saveChecklistActionRiskResult({
+        id: currentTask.id,
+        riskScore: Number(actionBeforeStrength) * actionBeforeFrequency.score,
+        strength: Number(actionBeforeStrength),
+        frequency: actionBeforeFrequency.score,
       })
 
       alert('조치 완료 보고가 성공적으로 등록되었습니다. (승인 대기 상태로 전환)')
@@ -175,7 +232,61 @@ function ChecklistPage() {
     }
 
     const riskScore = Number(selectedStrength) * selectedFrequency.score
-    alert(`${currentTask.text} 항목의 강도 ${selectedStrength}, 빈도 ${selectedFrequency.label}(${selectedFrequency.score}점), 위험도 ${riskScore}점 제출이 완료되었습니다.`)
+    const riskThreshold = getStoredSafetyRiskThreshold()
+    const result = saveChecklistInspectionResult({
+      id: currentTask.id,
+      riskScore,
+      riskThreshold,
+      strength: Number(selectedStrength),
+      frequency: selectedFrequency.score,
+    })
+    const nextStatus = result?.progress ?? '점검 완료'
+
+    setTasks((currentTasks) => currentTasks.map((task) => (
+      task.id === currentTask.id
+        ? {
+          ...task,
+          status: nextStatus,
+          completed: nextStatus === '점검 완료',
+          riskScore,
+          inspectionRiskScore: riskScore,
+          strength: Number(selectedStrength),
+          frequency: selectedFrequency.score,
+          inspectionStrength: Number(selectedStrength),
+          inspectionFrequency: selectedFrequency.score,
+        }
+        : task
+    )))
+
+    alert(`${currentTask.text} 항목의 강도 ${selectedStrength}, 빈도 ${selectedFrequency.label}(${selectedFrequency.score}점), 위험도 ${riskScore}점 제출이 완료되었습니다. 진행 상태: ${nextStatus}`)
+  }
+
+  const handleUpdateActionBeforeRisk = () => {
+    if (!currentTask) {
+      alert('선택된 조치 항목이 없습니다.')
+      return
+    }
+
+    const riskScore = Number(actionBeforeStrength) * actionBeforeFrequency.score
+    saveChecklistActionRiskResult({
+      id: currentTask.id,
+      riskScore,
+      strength: Number(actionBeforeStrength),
+      frequency: actionBeforeFrequency.score,
+    })
+
+    setTasks((currentTasks) => currentTasks.map((task) => (
+      task.id === currentTask.id
+        ? {
+          ...task,
+          actionRiskScore: riskScore,
+          actionStrength: Number(actionBeforeStrength),
+          actionFrequency: actionBeforeFrequency.score,
+        }
+        : task
+    )))
+
+    alert(`위험도가 ${riskScore}점으로 재설정되었습니다.`)
   }
 
   if (loading) {
@@ -259,25 +370,6 @@ function ChecklistPage() {
                         </small>
                       </div>
                     </div>
-
-                    <span
-                      className={`task-status-tag ${isRejected
-                        ? 'tag-red'
-                        : task.type === '조치'
-                          ? 'tag-orange'
-                          : 'tag-blue'
-                        }`}
-                      style={{
-                        fontSize: '11px',
-                        padding: '2px 8px',
-                        borderRadius: '4px',
-                        fontWeight: 'bold',
-                        color: isRejected ? '#ef4444' : task.type === '조치' ? '#f59e0b' : '#3b82f6',
-                        backgroundColor: isRejected ? '#fef2f2' : '#fef3c7',
-                      }}
-                    >
-                      {isRejected ? '조치 필요 (반려)' : task.status}
-                    </span>
                   </button>
                 )
               })
@@ -413,6 +505,50 @@ function ChecklistPage() {
                 onDelete={deleteImage}
                 onPreview={setSelectedImage}
               />
+
+              <div className="action-risk-editor">
+                <div className="frequency-heading">
+                  <strong>위험도 재설정</strong>
+                  <span>위험도 = 강도 x 빈도</span>
+                </div>
+                <div className="action-risk-current">
+                  <span>기본값</span>
+                  <strong>{Number(actionBeforeStrength) * actionBeforeFrequency.score}점</strong>
+                  <small>조치 전 위험도를 기준으로 표시됩니다.</small>
+                </div>
+                <div className="strength-options is-compact" role="radiogroup" aria-label="조치 전 강도 선택">
+                  {STRENGTH_OPTIONS.map((strength) => (
+                    <button
+                      className={actionBeforeStrength === strength ? 'is-active' : ''}
+                      type="button"
+                      role="radio"
+                      aria-checked={actionBeforeStrength === strength}
+                      key={`action-strength-${strength}`}
+                      onClick={() => setActionBeforeStrength(strength)}
+                    >
+                      {strength}
+                    </button>
+                  ))}
+                </div>
+                <div className="frequency-options" role="radiogroup" aria-label="조치 전 빈도 선택">
+                  {FREQUENCY_OPTIONS.map((frequency) => (
+                    <button
+                      className={actionBeforeFrequency.key === frequency.key ? 'is-active' : ''}
+                      type="button"
+                      role="radio"
+                      aria-checked={actionBeforeFrequency.key === frequency.key}
+                      key={`action-frequency-${frequency.key}`}
+                      onClick={() => setActionBeforeFrequency(frequency)}
+                    >
+                      <strong>{frequency.label}</strong>
+                      <span>{frequency.score}점</span>
+                    </button>
+                  ))}
+                </div>
+                <button className="action-risk-save-button" type="button" onClick={handleUpdateActionBeforeRisk}>
+                  위험도 {Number(actionBeforeStrength) * actionBeforeFrequency.score}점 저장
+                </button>
+              </div>
 
               <button
                 className="submit-action-button"

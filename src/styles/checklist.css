@@ -254,6 +254,11 @@
   gap: 8px;
 }
 
+.strength-options.is-compact {
+  grid-template-columns: repeat(9, minmax(34px, 1fr));
+  gap: 6px;
+}
+
 .strength-options button {
   min-height: 52px;
   border: 1px solid #d8e4ef;
@@ -278,6 +283,12 @@
   color: #ffffff;
   background: #2f64b7;
   box-shadow: 0 10px 22px rgba(47, 100, 183, 0.22);
+}
+
+.strength-options.is-compact button {
+  min-height: 40px;
+  border-radius: 8px;
+  font-size: 15px;
 }
 
 .frequency-section {
@@ -362,6 +373,60 @@
 
 .strength-submit-button:hover {
   background: #174f9d;
+}
+
+.action-risk-editor {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #dbe7f2;
+  border-radius: 12px;
+  background: #fbfdff;
+}
+
+.action-risk-current {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #e5edf5;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.action-risk-current span,
+.action-risk-current small {
+  color: #76889d;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.action-risk-current strong {
+  color: #1f5fb8;
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.action-risk-current small {
+  justify-self: end;
+}
+
+.action-risk-save-button {
+  min-height: 42px;
+  border: 1px solid #2f64b7;
+  border-radius: 9px;
+  color: #1f5fb8;
+  background: #edf5ff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.action-risk-save-button:hover {
+  color: #ffffff;
+  background: #1f5fb8;
 }
 
 .upload-section {
@@ -506,13 +571,26 @@
 /* Keep photo placeholders and manager rows fully legible. */
 .detail-photo-card > div:first-child { display: flex; width: 100%; align-items: center; justify-content: space-between; }.detail-photo-card > .detail-no-photo { display: grid !important; width: min(100%,620px); min-height: 265px; align-content: center; justify-content: center; justify-items: center; gap: 10px; margin: 0 auto; text-align: center; }.detail-photo-card > .detail-no-photo svg,.detail-photo-card > .detail-no-photo strong,.detail-photo-card > .detail-no-photo span { grid-column: 1; justify-self: center; text-align: center; }.detail-photo-card > .detail-no-photo span { max-width: 100%; }.assignment-member-list { max-height: none; overflow: visible; }.assignment-member.is-unavailable { opacity: 1; color: #708398; background: #fbfcfe; }
 
+.risk-score-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: #1f5fb8;
+  background: #edf5ff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
 .checklist-management-page .management-search { flex: 0 1 355px; }.checklist-management-page .filter-reset { display: inline-flex; align-items: center; gap: 4px; }.checklist-management-page .filter-reset svg { font-size: 16px; }.checklist-pagination { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-top: 1px solid #e8eef4; color: #8091a4; background: #fff; font-size: 12px; font-weight: 750; }.checklist-pagination > span strong { color: #3974c6; font-size: 14px; }.checklist-pagination > div { display: flex; align-items: center; gap: 10px; }.checklist-pagination button { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid #d8e4ef; border-radius: 10px; color: #4d759f; background: #fff; cursor: pointer; }.checklist-pagination button:hover:not(:disabled) { color: #fff; border-color: #3974c6; background: #3974c6; }.checklist-pagination button:disabled { color: #bdc9d6; background: #f7f9fb; cursor: not-allowed; }.checklist-pagination button svg { font-size: 22px; }.checklist-pagination b { min-width: 34px; color: #607995; font-size: 12px; text-align: center; }
 
 /* Compact title-to-filter spacing and a conventional select affordance. */
 .checklist-management-page .management-table-header { padding-top: 18px; padding-bottom: 8px; }.checklist-management-page .management-table-header h3 { margin-bottom: 0; }.checklist-management-page .management-filters { padding-top: 10px; padding-bottom: 10px; }.checklist-management-page .management-filter-select > button { justify-content: flex-start; gap: 9px; padding-right: 12px; }.checklist-management-page .management-filter-select > button svg { width: 19px; height: 19px; margin-left: 30px; color: #6f88a3; transition: transform .16s ease; }.checklist-management-page .management-filter-select.is-open > button svg { transform: rotate(180deg); }.checklist-management-page .management-filter-select > button b { display: none; }
 
 /* Management controls and detail content refinements */
-.checklist-management-page .metric-heading { display: flex; align-items: center; gap: 8px; }.checklist-management-page .metric-heading i { display: grid; width: 27px; height: 27px; place-items: center; border-radius: 8px; color: #3974c6; background: #eaf3ff; }.checklist-management-page .metric-heading i svg { font-size: 16px; }.checklist-management-page .metric-2 .metric-heading i { color: #27855f; background: #e8f7ef; }.checklist-management-page .metric-3 .metric-heading i { color: #c8656a; background: #fff0f1; }.management-date { position: relative; cursor: pointer; }.management-date input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }.management-date span { pointer-events: none; }.checklist-management-page .management-filter-select { position: relative; min-width: 126px; height: 38px; padding: 0; border: 0; background: transparent; }.management-filter-select > button { display: flex; width: 100%; height: 100%; align-items: center; justify-content: space-between; gap: 9px; padding: 0 10px 0 12px; border: 1px solid #d7e2ed; border-radius: 9px; color: #536b86; background: #fff; cursor: pointer; font: inherit; font-size: 12px; font-weight: 750; }.management-filter-select > button:hover,.management-filter-select.is-open > button { border-color: #9bbce2; color: #316eae; box-shadow: 0 3px 10px rgba(57,116,198,.1); }.management-filter-select > button b { width: 17px; color: #6f88a3; font-size: 18px; font-weight: 500; line-height: 1; transform: translateY(-2px); }.management-filter-select.is-open > button b { transform: translateY(1px) rotate(180deg); }.management-select-menu { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; width: 100%; overflow: hidden; padding: 5px; border: 1px solid #d5e1ed; border-radius: 10px; background: #fff; box-shadow: 0 12px 25px rgba(37,66,97,.16); animation: checklist-dialog-in .14s ease-out both; }.management-select-menu button { display: flex; width: 100%; align-items: center; justify-content: space-between; padding: 8px 8px; border: 0; border-radius: 6px; color: #58708a; background: transparent; cursor: pointer; font: inherit; font-size: 11px; font-weight: 750; text-align: left; }.management-select-menu button:hover,.management-select-menu button.is-selected { color: #2f70b2; background: #edf5ff; }.management-select-menu button span { font-size: 12px; font-weight: 900; }.checklist-management-table { min-width: 1120px; }.checklist-management-table th { font-size: 12px; }.checklist-management-table td { font-size: 13px; }.checklist-management-table td > strong { font-size: 14px; }.table-category { font-size: 11px; }.assignment-done { display: inline-flex; align-items: center; gap: 4px; min-height: 31px; padding: 0 10px; border-radius: 7px; color: #26805c; background: #e8f7ef; font-size: 11px; font-weight: 850; }.assignment-done svg { font-size: 15px; }.performer-cell i { color: #8a6bb5; background: #f1ebff; }
+.checklist-management-page .metric-heading { display: flex; align-items: center; gap: 8px; }.checklist-management-page .metric-heading i { display: grid; width: 27px; height: 27px; place-items: center; border-radius: 8px; color: #3974c6; background: #eaf3ff; }.checklist-management-page .metric-heading i svg { font-size: 16px; }.checklist-management-page .metric-2 .metric-heading i { color: #27855f; background: #e8f7ef; }.checklist-management-page .metric-3 .metric-heading i { color: #c8656a; background: #fff0f1; }.management-date { position: relative; cursor: pointer; }.management-date input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }.management-date span { pointer-events: none; }.checklist-management-page .management-filter-select { position: relative; min-width: 126px; height: 38px; padding: 0; border: 0; background: transparent; }.management-filter-select > button { display: flex; width: 100%; height: 100%; align-items: center; justify-content: space-between; gap: 9px; padding: 0 10px 0 12px; border: 1px solid #d7e2ed; border-radius: 9px; color: #536b86; background: #fff; cursor: pointer; font: inherit; font-size: 12px; font-weight: 750; }.management-filter-select > button:hover,.management-filter-select.is-open > button { border-color: #9bbce2; color: #316eae; box-shadow: 0 3px 10px rgba(57,116,198,.1); }.management-filter-select > button b { width: 17px; color: #6f88a3; font-size: 18px; font-weight: 500; line-height: 1; transform: translateY(-2px); }.management-filter-select.is-open > button b { transform: translateY(1px) rotate(180deg); }.management-select-menu { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; width: 100%; overflow: hidden; padding: 5px; border: 1px solid #d5e1ed; border-radius: 10px; background: #fff; box-shadow: 0 12px 25px rgba(37,66,97,.16); animation: checklist-dialog-in .14s ease-out both; }.management-select-menu button { display: flex; width: 100%; align-items: center; justify-content: space-between; padding: 8px 8px; border: 0; border-radius: 6px; color: #58708a; background: transparent; cursor: pointer; font: inherit; font-size: 11px; font-weight: 750; text-align: left; }.management-select-menu button:hover,.management-select-menu button.is-selected { color: #2f70b2; background: #edf5ff; }.management-select-menu button span { font-size: 12px; font-weight: 900; }.checklist-management-table { min-width: 1180px; }.checklist-management-table th { font-size: 12px; }.checklist-management-table td { font-size: 13px; }.checklist-management-table td > strong { font-size: 14px; }.table-category { font-size: 11px; }.assignment-done { display: inline-flex; align-items: center; gap: 4px; min-height: 31px; padding: 0 10px; border-radius: 7px; color: #26805c; background: #e8f7ef; font-size: 11px; font-weight: 850; }.assignment-done svg { font-size: 15px; }.performer-cell i { color: #8a6bb5; background: #f1ebff; }
 .detail-content-grid { grid-template-columns: 1fr; }.detail-photo-card { display: grid; justify-items: center; }.detail-photo-card > div { width: 100%; }.detail-main-photo,.detail-no-photo { width: min(100%,620px); }.detail-main-photo { height: 265px; }.detail-thumbnails { justify-content: center; width: 100%; }.detail-thumbnails button { width: 62px; height: 48px; }.detail-no-photo { min-height: 265px; align-content: center; justify-content: center; }.detail-no-photo svg { margin-bottom: 2px; }.detail-no-photo strong,.detail-no-photo span { display: block; text-align: center; }
 
 /* Larger detail readability and photo-strip alignment */

@@ -15,19 +15,20 @@ import PersonOffOutlinedIcon from '@mui/icons-material/PersonOffOutlined'
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import actionPhoto1 from '../assets/actionhistory_1.jpg'
 import actionPhoto3 from '../assets/actionhistory_3.jpg'
 import actionPhoto5 from '../assets/actionhistory_5.jpg'
 import actionPhoto7 from '../assets/actionhistory_7.jpg'
 import '../styles/checklist.css'
+import { applyChecklistInspectionResults } from '../utils/checklistStatusStorage'
 
 const CHECKLISTS = [
-  { id: 1, name: '비상구·피난 통로 점검', location: 'B동 1층 현관', category: '시설 안전', assignee: '신지윤', completedBy: '이도현', date: '2026-07-09', progress: '조치 대기', assignment: '배정 완료', level: '높음', photo: true, images: [actionPhoto1, actionPhoto3], note: '현관 비상구 주변 적치물은 없으며, 유도등 작동 상태를 확인 중입니다.' },
+  { id: 1, name: '비상구·피난 통로 점검', location: 'B동 1층 현관', category: '시설 안전', assignee: '신지윤', completedBy: '이도현', date: '2026-07-09', progress: '점검 대기', assignment: '배정 완료', level: '높음', photo: true, images: [actionPhoto1, actionPhoto3], note: '현관 비상구 주변 적치물은 없으며, 유도등 작동 상태를 확인 중입니다.' },
   { id: 2, name: '소화기 및 소방설비 점검', location: 'A동 2층 복도', category: '소방 안전', assignee: '', completedBy: '김하린', date: '2026-07-11', progress: '점검 대기', assignment: '미배정', level: '보통', photo: false, images: [], note: '정기 점검 일정에 따라 소화기 위치와 압력 게이지를 확인할 예정입니다.' },
   { id: 3, name: '낙하물 방지 설비 점검', location: 'A동 5층 외벽', category: '작업 안전', assignee: '', completedBy: '정서윤', date: '2026-07-20', progress: '점검 대기', assignment: '미배정', level: '높음', photo: true, images: [actionPhoto5], note: '외벽 작업 전 난간 및 낙하물 방지망 상태를 우선 확인해야 합니다.' },
-  { id: 4, name: '전기 패널 및 누전 차단기 점검', location: 'C동 지하 1층', category: '전기 안전', assignee: '임현수', completedBy: '최민석', date: '2026-07-14', progress: '점검 완료', assignment: '배정 완료', level: '낮음', photo: true, images: [actionPhoto7, actionPhoto3], note: '패널 외관, 누전 차단기 시험 버튼 및 주변 정리 상태를 모두 확인했습니다.' },
-  { id: 5, name: '보호구 착용 상태 점검', location: 'B동 3층 작업장', category: '작업 안전', assignee: '김다온', completedBy: '한유진', date: '2026-07-18', progress: '조치 완료', assignment: '배정 완료', level: '보통', photo: false, images: [], note: '작업자 보호구 착용 여부를 순차적으로 점검하고 있습니다.' },
+  { id: 4, name: '전기 패널 및 누전 차단기 점검', location: 'C동 지하 1층', category: '전기 안전', assignee: '임현수', completedBy: '최민석', date: '2026-07-14', progress: '점검 대기', assignment: '배정 완료', level: '낮음', photo: true, images: [actionPhoto7, actionPhoto3], note: '패널 외관, 누전 차단기 시험 버튼 및 주변 정리 상태를 모두 확인했습니다.' },
+  { id: 5, name: '보호구 착용 상태 점검', location: 'B동 3층 작업장', category: '작업 안전', assignee: '김다온', completedBy: '한유진', date: '2026-07-18', progress: '점검 대기', assignment: '배정 완료', level: '보통', photo: false, images: [], note: '작업자 보호구 착용 여부를 순차적으로 점검하고 있습니다.' },
 ]
 
 const MEMBERS = [
@@ -70,14 +71,38 @@ function getMonthRange(month) {
   return `${year}. ${String(monthNumber).padStart(2, '0')}. 01 - ${year}. ${String(monthNumber).padStart(2, '0')}. ${lastDay}`
 }
 
+function getChecklistRiskScore(item) {
+  const progress = normalizeProgress(item.progress)
+
+  if (progress === '조치 완료') {
+    return item.actionRiskScore ?? item.riskScore ?? item.inspectionRiskScore
+  }
+
+  return item.inspectionRiskScore ?? item.riskScore
+}
+
 function ChecklistManagementPage() {
-  const [records, setRecords] = useState(CHECKLISTS)
+  const [records, setRecords] = useState(() => applyChecklistInspectionResults(CHECKLISTS))
   const [filters, setFilters] = useState({ location: '전체 구역', progress: '전체 상태', targetAssignment: '대상자 필터링', assignment: '담당자 필터링', query: '' })
   const [selected, setSelected] = useState(null)
   const [selectedIds, setSelectedIds] = useState([])
   const [memberQuery, setMemberQuery] = useState('')
   const [selectedMonth, setSelectedMonth] = useState('2026-07')
   const [page, setPage] = useState(0)
+
+  useEffect(() => {
+    const syncInspectionResults = () => {
+      setRecords((current) => applyChecklistInspectionResults(current))
+    }
+
+    window.addEventListener('focus', syncInspectionResults)
+    window.addEventListener('storage', syncInspectionResults)
+
+    return () => {
+      window.removeEventListener('focus', syncInspectionResults)
+      window.removeEventListener('storage', syncInspectionResults)
+    }
+  }, [])
 
   const filtered = useMemo(() => records.filter((item) => {
     const query = filters.query.trim()
@@ -217,6 +242,7 @@ function ChecklistManagementPage() {
                 <th>구역/위치</th>
                 <th>대상자</th>
                 <th>일시</th>
+                <th>위험도</th>
                 <th>진행 상태</th>
                 <th>담당자</th>
                 <th>증빙</th>
@@ -232,6 +258,7 @@ function ChecklistManagementPage() {
                   <td><span className="location-cell"><LocationOnOutlinedIcon />{item.location}</span></td>
                   <td><span className="assignee-cell performer-cell"><i>{item.completedBy.slice(0, 1)}</i>{item.completedBy}</span></td>
                   <td>{item.date}</td>
+                  <td><RiskScoreCell value={getChecklistRiskScore(item)} /></td>
                   <td><StatusBadge value={normalizeProgress(item.progress)} /></td>
                   <td>{item.assignee ? <span className="assignee-cell"><i>{item.assignee.slice(0, 1)}</i>{item.assignee}</span> : <span className="no-photo">미배정</span>}</td>
                   <td>{item.photo ? <span className="photo-chip"><ImageOutlinedIcon />첨부</span> : <span className="no-photo">-</span>}</td>
@@ -294,6 +321,12 @@ function FilterSelect({ value, options, onChange }) {
 function StatusBadge({ value }) {
   const state = value === '점검 완료' || value === '조치 완료' || value === '배정 완료' ? 'is-complete' : value === '미배정' ? 'is-unassigned' : value === '조치 대기' ? 'is-progress' : 'is-pending'
   return <span className={`checklist-status ${state}`}>{value}</span>
+}
+
+function RiskScoreCell({ value }) {
+  return Number.isFinite(Number(value))
+    ? <span className="risk-score-cell">{value}점</span>
+    : <span className="no-photo">-</span>
 }
 
 function AssignmentModal({ checklistCount, members, mode, query, onQueryChange, onClose, onAssign }) {
