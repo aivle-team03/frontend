@@ -1,5 +1,4 @@
 import '../styles/risk.css'
-import { useState } from 'react'
 import { Typography } from '@mui/material'
 import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded'
 import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded'
