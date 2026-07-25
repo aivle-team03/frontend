@@ -191,67 +191,82 @@
   border-radius: 0;
 }
 
-.safety-standard-grid {
+.safety-risk-slider-panel {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 18px;
   padding: 22px 22px 12px;
 }
 
-.safety-risk-option {
-  display: grid;
-  width: 100%;
-  gap: 6px;
-  min-height: 86px;
-  align-content: center;
-  padding: 14px;
-  border-radius: 8px;
-  border: 1px solid;
-  cursor: pointer;
-  text-align: left;
+.risk-threshold-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #dce6f2;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f8fbff, #eef5ff);
 }
 
-.safety-standard-grid strong {
-  font-size: 15px;
-  font-weight: 900;
-}
-
-.safety-standard-grid span {
+.risk-threshold-summary span {
   color: #53647b;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.risk-threshold-summary strong {
+  color: #1f5fb8;
+  font-size: 28px;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.risk-threshold-control {
+  display: grid;
+  gap: 10px;
+}
+
+.risk-threshold-control input[type='range'] {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  outline: 0;
+  background: linear-gradient(
+    90deg,
+    #2f64b7 0%,
+    #2f64b7 var(--risk-progress),
+    #e3ebf5 var(--risk-progress),
+    #e3ebf5 100%
+  );
+  cursor: pointer;
+  appearance: none;
+}
+
+.risk-threshold-control input[type='range']::-webkit-slider-thumb {
+  width: 24px;
+  height: 24px;
+  border: 4px solid #ffffff;
+  border-radius: 50%;
+  background: #2f64b7;
+  box-shadow: 0 4px 12px rgba(47, 100, 183, 0.3);
+  appearance: none;
+}
+
+.risk-threshold-control input[type='range']::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 4px solid #ffffff;
+  border-radius: 50%;
+  background: #2f64b7;
+  box-shadow: 0 4px 12px rgba(47, 100, 183, 0.3);
+}
+
+.risk-threshold-scale {
+  display: flex;
+  justify-content: space-between;
+  color: #738399;
   font-size: 12px;
-  font-weight: 800;
-  line-height: 1.45;
-}
-
-.standard-high {
-  border-color: #fecaca;
-  background: #fff1f2;
-}
-
-.standard-high strong {
-  color: #dc2626;
-}
-
-.standard-medium {
-  border-color: #fde68a;
-  background: #fffbeb;
-}
-
-.standard-medium strong {
-  color: #d97706;
-}
-
-.standard-low {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
-}
-
-.standard-low strong {
-  color: #16a34a;
-}
-
-.safety-risk-option.is-selected {
-  box-shadow: 0 0 0 3px rgba(47, 100, 183, 0.14);
+  font-weight: 850;
 }
 
 .safety-risk-note {
@@ -286,9 +301,13 @@
 }
 
 @media (max-width: 900px) {
-  .safety-form-grid,
-  .safety-standard-grid {
+  .safety-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .risk-threshold-summary {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .safety-role-head {

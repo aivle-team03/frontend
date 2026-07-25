@@ -9,14 +9,8 @@ import '../styles/SafetyManagementPage.css'
 const initialPolicy = {
   policy: '근로자의 생명과 건강을 최우선 가치로 두고, 모든 작업에서 위험요인을 사전에 확인하고 개선한다.',
   goal: '중대재해 0건, 위험성 평가 이행률 100%, 개선조치 기한 준수율 95% 이상',
-  acceptableRisk: 'low',
+  acceptableRisk: 12,
 }
-
-const riskLevels = [
-  { key: 'high', label: '높음', description: '높음까지 허용하며 주요 위험은 책임자 승인 후 관리합니다.' },
-  { key: 'medium', label: '보통', description: '보통 이하만 허용하며 높은 위험은 개선 전 작업을 제한합니다.' },
-  { key: 'low', label: '낮음', description: '낮음만 허용하며 보통 이상 위험은 개선 후 진행합니다.' },
-]
 
 const initialRoles = [
   { id: 1, team: '안전보건관리책임자', owner: '유진', responsibility: '안전보건 방침 승인 및 주요 위험 개선 의사결정' },
@@ -48,6 +42,8 @@ function SafetyManagementPage() {
   const saveSettings = () => {
     alert('안전보건 관리 설정이 저장되었습니다.')
   }
+
+  const riskPercent = Math.round(((policyForm.acceptableRisk - 1) / 26) * 100)
 
   return (
     <section className="safety-management-page" aria-label="안전보건 관리 설정">
@@ -101,27 +97,38 @@ function SafetyManagementPage() {
           <span><SecurityOutlinedIcon /> 위험성 기준</span>
           <h2>
             허용가능한 위험도 설정
-            <small className="safety-risk-formula">위험도 = 점검시 선택한 강도 x 빈도</small>
+            <small className="safety-risk-formula">위험도 = 강도 x 빈도</small>
           </h2>
         </div>
 
-        <div className="safety-standard-grid">
-          {riskLevels.map((risk) => (
-            <button
-              className={`safety-risk-option standard-${risk.key}${policyForm.acceptableRisk === risk.key ? ' is-selected' : ''}`}
-              type="button"
-              key={risk.key}
-              onClick={() => updatePolicy('acceptableRisk', risk.key)}
-              aria-pressed={policyForm.acceptableRisk === risk.key}
-            >
-              <strong>{risk.label}</strong>
-              <span>{risk.description}</span>
-            </button>
-          ))}
+        <div className="safety-risk-slider-panel">
+          <div className="risk-threshold-summary">
+            <span>조치필요항목 설정 기준</span>
+            <strong>{policyForm.acceptableRisk}점 이상</strong>
+          </div>
+
+          <label className="risk-threshold-control">
+            <input
+              type="range"
+              min="1"
+              max="27"
+              step="1"
+              value={policyForm.acceptableRisk}
+              onChange={(event) => updatePolicy('acceptableRisk', Number(event.target.value))}
+              style={{ '--risk-progress': `${riskPercent}%` }}
+              aria-label="허용가능한 위험도 기준"
+            />
+            <div className="risk-threshold-scale">
+              <span>1</span>
+              <span>9</span>
+              <span>18</span>
+              <span>27</span>
+            </div>
+          </label>
         </div>
 
         <p className="safety-risk-note">
-          현재 허용가능한 최대 위험도는 <strong>{riskLevels.find((risk) => risk.key === policyForm.acceptableRisk)?.label}</strong>입니다.
+          체크리스트에서 계산된 위험도가 <strong>{policyForm.acceptableRisk}점 이상</strong>이면 조치필요항목으로 설정됩니다.
         </p>
       </section>
 
