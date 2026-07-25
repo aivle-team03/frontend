@@ -99,7 +99,10 @@ function SafetyManagementPage() {
       <section className="safety-policy-card">
         <div className="safety-card-heading">
           <span><SecurityOutlinedIcon /> 위험성 기준</span>
-          <h2>허용가능한 위험도 설정</h2>
+          <h2>
+            허용가능한 위험도 설정
+            <small className="safety-risk-formula">위험도 = 점검시 선택한 강도 x 빈도</small>
+          </h2>
         </div>
 
         <div className="safety-standard-grid">

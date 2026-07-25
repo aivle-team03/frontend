@@ -15,6 +15,19 @@ export const CHECKLIST_MOCK_DATA = {
   ],
 }
 
+export const TODAY_INSPECTION_MOCK_DATA = [
+  {
+    id: 'today-inspection-1',
+    text: 'A동 1층 소화기 압력 게이지 점검',
+    type: '점검',
+    status: '점검 대기',
+    location: 'A동 1층 복도',
+    date: '2026-07-25',
+    imageUrl: '',
+    completed: false,
+  },
+]
+
 export const CHATBOT_MOCK_DATA = {
   recommendedQuestions: [
     '소방시설 설치 및 관리에 관한 법률 제12조',

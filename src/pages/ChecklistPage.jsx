@@ -1,9 +1,16 @@
 import CloseIcon from '@mui/icons-material/Close'
 import axios from 'axios'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { TODAY_INSPECTION_MOCK_DATA } from '../mocks/mockData'
 import '../styles/checklist.css'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
+const STRENGTH_OPTIONS = Array.from({ length: 9 }, (_, index) => String(index + 1))
+const FREQUENCY_OPTIONS = [
+  { key: 'frequent', label: '빈번', score: 3 },
+  { key: 'sometimes', label: '가끔', score: 2 },
+  { key: 'rare', label: '드묾', score: 1 },
+]
 
 function ChecklistPage() {
   const [loading, setLoading] = useState(true)
@@ -17,6 +24,8 @@ function ChecklistPage() {
   const [imageFiles, setImageFiles] = useState([]) // 실제 업로드할 File 객체
   const [selectedImage, setSelectedImage] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [selectedStrength, setSelectedStrength] = useState('5')
+  const [selectedFrequency, setSelectedFrequency] = useState(FREQUENCY_OPTIONS[1])
 
   const afterInputRef = useRef(null)
 
@@ -39,17 +48,19 @@ function ChecklistPage() {
           imageUrl: item.image_url || '',
           completed: item.status === '승인 대기' || item.status === '승인 완료' || item.status === '조치 완료',
         }))
+        const mergedTasks = [...TODAY_INSPECTION_MOCK_DATA, ...formattedTasks]
 
-        setTasks(formattedTasks)
+        setTasks(mergedTasks)
 
         // 첫 번째 조치/점검 항목 기본 선택
-        if (formattedTasks.length > 0) {
-          setSelectedTaskId(formattedTasks[0].id)
+        if (mergedTasks.length > 0) {
+          setSelectedTaskId(mergedTasks[0].id)
         }
       }
     } catch (error) {
       console.error('체크리스트 로드 실패:', error)
-      alert('체크리스트 목록을 불러오지 못했습니다.')
+      setTasks(TODAY_INSPECTION_MOCK_DATA)
+      setSelectedTaskId(TODAY_INSPECTION_MOCK_DATA[0]?.id ?? null)
     } finally {
       setLoading(false)
     }
@@ -155,6 +166,16 @@ function ChecklistPage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleSubmitStrength = () => {
+    if (!currentTask) {
+      alert('선택된 점검 항목이 없습니다.')
+      return
+    }
+
+    const riskScore = Number(selectedStrength) * selectedFrequency.score
+    alert(`${currentTask.text} 항목의 강도 ${selectedStrength}, 빈도 ${selectedFrequency.label}(${selectedFrequency.score}점), 위험도 ${riskScore}점 제출이 완료되었습니다.`)
   }
 
   if (loading) {
@@ -270,12 +291,73 @@ function ChecklistPage() {
           </div>
         </article>
 
-        {/* 2. 조치 진행 및 보고 작성 카드 */}
         <article className="checklist-card action-card">
-          <h2>조치 진행 보고</h2>
+          {activeTaskView === 'inspection' ? (
+            currentTask ? (
+              <div className="strength-request-panel">
+                <div className="strength-request-header">
+                  <span>INSPECTION REVIEW</span>
+                  <h2>위험도 제출</h2>
+                  <p>오늘의 점검 항목 확인 후 강도와 빈도를 선택해 위험도를 제출하세요.</p>
+                </div>
 
-          {currentTask ? (
+                <div className="selected-task-info">
+                  <span>선택 점검 항목 (#{currentTask.id})</span>
+                  <h4>{currentTask.text}</h4>
+                  <p>
+                    위치: {currentTask.location} | 현재 상태: <strong>{currentTask.status}</strong>
+                  </p>
+                </div>
+
+                <div className="strength-options" role="radiogroup" aria-label="강도 선택">
+                  {STRENGTH_OPTIONS.map((strength) => (
+                    <button
+                      className={selectedStrength === strength ? 'is-active' : ''}
+                      type="button"
+                      role="radio"
+                      aria-checked={selectedStrength === strength}
+                      key={strength}
+                      onClick={() => setSelectedStrength(strength)}
+                    >
+                      {strength}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="frequency-section">
+                  <div className="frequency-heading">
+                    <strong>빈도 선택</strong>
+                    <span>위험도 = 강도 x 빈도</span>
+                  </div>
+                  <div className="frequency-options" role="radiogroup" aria-label="빈도 선택">
+                    {FREQUENCY_OPTIONS.map((frequency) => (
+                      <button
+                        className={selectedFrequency.key === frequency.key ? 'is-active' : ''}
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedFrequency.key === frequency.key}
+                        key={frequency.key}
+                        onClick={() => setSelectedFrequency(frequency)}
+                      >
+                        <strong>{frequency.label}</strong>
+                        <span>{frequency.score}점</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button className="strength-submit-button" type="button" onClick={handleSubmitStrength}>
+                  위험도 {Number(selectedStrength) * selectedFrequency.score}점 제출
+                </button>
+              </div>
+            ) : (
+              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
+                목록에서 점검 항목을 선택해주세요.
+              </div>
+            )
+          ) : currentTask ? (
             <>
+              <h2>조치 진행 보고</h2>
               <div className="selected-task-info" style={{ marginBottom: '16px', padding: '12px', background: '#f9fafb', borderRadius: '8px' }}>
                 <span style={{ fontSize: '12px', color: '#6b7280' }}>선택 항목 (#{currentTask.id})</span>
                 <h4 style={{ margin: '4px 0', fontSize: '15px' }}>{currentTask.text}</h4>

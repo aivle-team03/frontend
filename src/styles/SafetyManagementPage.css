@@ -44,10 +44,20 @@
 }
 
 .safety-card-heading h2 {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 0;
   color: #172033;
   font-size: 18px;
   font-weight: 900;
+}
+
+.safety-risk-formula {
+  color: #7a8ba1;
+  font-size: 12px;
+  font-weight: 750;
 }
 
 .safety-form-grid {
