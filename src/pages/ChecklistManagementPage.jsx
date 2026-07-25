@@ -1,3 +1,4 @@
+import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined'
 import AssignmentTurnedInOutlinedIcon from '@mui/icons-material/AssignmentTurnedInOutlined'
 import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined'
@@ -46,6 +47,14 @@ const TARGETS = [
   { name: '한유진', zone: 'B동 3층', workload: 2, available: true },
 ]
 
+const INITIAL_NEW_CHECKLIST = {
+  name: '',
+  location: '',
+  category: '',
+  completedBy: '',
+  date: '2026-07-25',
+}
+
 function normalizeProgress(progress) {
   if (progress === '점검 중' || progress === '점검중') return '점검 대기'
   return progress
@@ -88,6 +97,7 @@ function ChecklistManagementPage() {
   const [selectedIds, setSelectedIds] = useState([])
   const [memberQuery, setMemberQuery] = useState('')
   const [selectedMonth, setSelectedMonth] = useState('2026-07')
+  const [newChecklist, setNewChecklist] = useState(INITIAL_NEW_CHECKLIST)
   const [page, setPage] = useState(0)
 
   useEffect(() => {
@@ -182,6 +192,49 @@ function ChecklistManagementPage() {
     setSelected(null)
   }
 
+  const openCreateChecklist = () => {
+    setNewChecklist((current) => ({
+      ...INITIAL_NEW_CHECKLIST,
+      date: selectedMonth ? `${selectedMonth}-25` : current.date,
+    }))
+    setSelected({ mode: 'create' })
+  }
+
+  const updateNewChecklist = (field, value) => {
+    setNewChecklist((current) => ({ ...current, [field]: value }))
+  }
+
+  const createChecklist = (event) => {
+    event.preventDefault()
+
+    if (!newChecklist.name.trim() || !newChecklist.location.trim() || !newChecklist.category.trim() || !newChecklist.completedBy.trim()) {
+      alert('체크리스트명, 구역/위치, 분류, 대상자를 입력해 주세요.')
+      return
+    }
+
+    const created = {
+      id: Date.now(),
+      name: newChecklist.name.trim(),
+      location: newChecklist.location.trim(),
+      category: newChecklist.category.trim(),
+      assignee: '',
+      completedBy: newChecklist.completedBy.trim(),
+      date: newChecklist.date,
+      progress: '점검 대기',
+      assignment: '미배정',
+      level: '보통',
+      photo: false,
+      images: [],
+      note: '등록된 점검 항목입니다.',
+    }
+
+    setRecords((current) => applyChecklistInspectionResults([created, ...current]))
+    setSelectedMonth(created.date.slice(0, 7))
+    setSelectedIds([])
+    setPage(0)
+    setSelected(null)
+  }
+
   return (
     <section className="checklist-management-page">
       <div className="checklist-metrics">
@@ -200,11 +253,16 @@ function ChecklistManagementPage() {
             <span className="section-kicker"><FilterAltOutlinedIcon /> CHECKLIST OVERVIEW</span>
             <h3>전체 체크리스트</h3>
           </div>
-          <label className="management-date">
-            <CalendarTodayOutlinedIcon />
-            <input type="month" value={selectedMonth} onChange={(event) => { setSelectedMonth(event.target.value); setPage(0); setSelectedIds([]) }} />
-            <span>{monthRange}</span>
-          </label>
+          <div className="management-header-actions">
+            <button className="checklist-create-button" type="button" onClick={openCreateChecklist}>
+              <AddRoundedIcon /> 항목 추가
+            </button>
+            <label className="management-date">
+              <CalendarTodayOutlinedIcon />
+              <input type="month" value={selectedMonth} onChange={(event) => { setSelectedMonth(event.target.value); setPage(0); setSelectedIds([]) }} />
+              <span>{monthRange}</span>
+            </label>
+          </div>
         </div>
 
         <div className="management-filters">
@@ -290,6 +348,14 @@ function ChecklistManagementPage() {
           onAssign={assign}
         />
       )}
+      {selected?.mode === 'create' && (
+        <ChecklistCreateModal
+          form={newChecklist}
+          onChange={updateNewChecklist}
+          onClose={() => setSelected(null)}
+          onSubmit={createChecklist}
+        />
+      )}
       {selected?.mode === 'detail' && <ChecklistDetailModal checklist={selected} onClose={() => setSelected(null)} />}
     </section>
   )
@@ -327,6 +393,53 @@ function RiskScoreCell({ value }) {
   return Number.isFinite(Number(value))
     ? <span className="risk-score-cell">{value}점</span>
     : <span className="no-photo">-</span>
+}
+
+function ChecklistCreateModal({ form, onChange, onClose, onSubmit }) {
+  return (
+    <div className="assignment-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="assignment-modal checklist-create-modal" role="dialog" aria-modal="true" aria-labelledby="checklist-create-title" onMouseDown={(event) => event.stopPropagation()}>
+        <header>
+          <div>
+            <span>CHECKLIST CREATE</span>
+            <h3 id="checklist-create-title">체크리스트 항목 추가</h3>
+            <p>전체 체크리스트에 새 점검 항목을 등록합니다.</p>
+          </div>
+          <button type="button" aria-label="체크리스트 항목 추가 창 닫기" onClick={onClose}><CloseRoundedIcon /></button>
+        </header>
+
+        <form className="checklist-create-form" onSubmit={onSubmit}>
+          <label>
+            <span>체크리스트명</span>
+            <input value={form.name} onChange={(event) => onChange('name', event.target.value)} placeholder="예: 비상구 피난 통로 점검" />
+          </label>
+          <label>
+            <span>구역/위치</span>
+            <input value={form.location} onChange={(event) => onChange('location', event.target.value)} placeholder="예: A동 2층 복도" />
+          </label>
+          <label>
+            <span>분류</span>
+            <input value={form.category} onChange={(event) => onChange('category', event.target.value)} placeholder="예: 소방 안전" />
+          </label>
+          <label>
+            <span>대상자</span>
+            <input value={form.completedBy} onChange={(event) => onChange('completedBy', event.target.value)} placeholder="예: 김하린" />
+          </label>
+          <label>
+            <span>점검일</span>
+            <input type="date" value={form.date} onChange={(event) => onChange('date', event.target.value)} />
+          </label>
+          <footer>
+            <span>새 항목은 진행 상태가 점검 대기로 등록됩니다.</span>
+            <div>
+              <button type="button" onClick={onClose}>취소</button>
+              <button type="submit">추가</button>
+            </div>
+          </footer>
+        </form>
+      </section>
+    </div>
+  )
 }
 
 function AssignmentModal({ checklistCount, members, mode, query, onQueryChange, onClose, onAssign }) {

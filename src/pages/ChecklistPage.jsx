@@ -1,3 +1,4 @@
+import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import CloseIcon from '@mui/icons-material/Close'
 import axios from 'axios'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -17,6 +18,12 @@ const FREQUENCY_OPTIONS = [
   { key: 'sometimes', label: '가끔', score: 2 },
   { key: 'rare', label: '드묾', score: 1 },
 ]
+
+const INITIAL_NEW_INSPECTION = {
+  text: '',
+  location: '',
+  date: '2026-07-25',
+}
 
 function getRiskSelectionFromTask(task) {
   const strength = Number(task?.strength)
@@ -38,11 +45,21 @@ function applyStoredResultsToTasks(tasks) {
     }))
 }
 
+function createTaskKey(source, id, index) {
+  return `${source}-${id ?? index}`
+}
+
+function getTaskRiskScore(task) {
+  return Number(task.inspectionRiskScore ?? task.riskScore ?? task.beforeRiskScore ?? 0)
+}
+
 function ChecklistPage() {
   const [loading, setLoading] = useState(true)
   const [tasks, setTasks] = useState([])
   const [activeTaskView, setActiveTaskView] = useState('inspection')
   const [selectedTaskId, setSelectedTaskId] = useState(null)
+  const [isCreateInspectionOpen, setIsCreateInspectionOpen] = useState(false)
+  const [newInspection, setNewInspection] = useState(INITIAL_NEW_INSPECTION)
 
   // 조치 보고용 입력 상태
   const [actionContent, setActionContent] = useState('')
@@ -66,8 +83,9 @@ function ChecklistPage() {
       const response = await axios.get(`${API_BASE_URL}/api/checklists`, { headers })
 
       if (response.data && Array.isArray(response.data)) {
-        const formattedTasks = response.data.map((item) => ({
+        const formattedTasks = response.data.map((item, index) => ({
           id: item.checklist_id,
+          taskKey: createTaskKey('api', item.checklist_id, index),
           text: item.content || '지정된 점검/조치 항목',
           type: item.type || (item.event_id ? '조치' : '점검'),
           status: item.status || '미조치',
@@ -84,19 +102,27 @@ function ChecklistPage() {
           actionStrength: item.action_strength ?? item.after_risk_strength,
           actionFrequency: item.action_frequency ?? item.after_risk_frequency,
         }))
-        const mergedTasks = applyStoredResultsToTasks([...TODAY_INSPECTION_MOCK_DATA, ...formattedTasks])
+        const mockTasks = TODAY_INSPECTION_MOCK_DATA.map((task, index) => ({
+          ...task,
+          taskKey: createTaskKey('mock', task.id, index),
+        }))
+        const mergedTasks = applyStoredResultsToTasks([...mockTasks, ...formattedTasks])
 
         setTasks(mergedTasks)
 
         // 첫 번째 조치/점검 항목 기본 선택
         if (mergedTasks.length > 0) {
-          setSelectedTaskId(mergedTasks[0].id)
+          setSelectedTaskId(mergedTasks[0].taskKey)
         }
       }
     } catch (error) {
       console.error('체크리스트 로드 실패:', error)
-      setTasks(applyStoredResultsToTasks(TODAY_INSPECTION_MOCK_DATA))
-      setSelectedTaskId(TODAY_INSPECTION_MOCK_DATA[0]?.id ?? null)
+      const mockTasks = TODAY_INSPECTION_MOCK_DATA.map((task, index) => ({
+        ...task,
+        taskKey: createTaskKey('mock', task.id, index),
+      }))
+      setTasks(applyStoredResultsToTasks(mockTasks))
+      setSelectedTaskId(mockTasks[0]?.taskKey ?? null)
     } finally {
       setLoading(false)
     }
@@ -113,7 +139,9 @@ function ChecklistPage() {
   const { inspectionTasks, actionTasks, visibleTasks } = useMemo(() => {
     const isActionTask = (task) => task.type === '조치' || task.status === '조치 대기' || task.status === '조치 필요' || task.status === '반려'
     const nextInspectionTasks = tasks.filter((task) => !isActionTask(task))
-    const nextActionTasks = tasks.filter((task) => isActionTask(task))
+    const nextActionTasks = tasks
+      .filter((task) => isActionTask(task))
+      .sort((a, b) => getTaskRiskScore(b) - getTaskRiskScore(a))
 
     return {
       inspectionTasks: nextInspectionTasks,
@@ -127,12 +155,12 @@ function ChecklistPage() {
   const totalCount = visibleTasks.length
   const progressPercent = totalCount ? Math.round((completedCount / totalCount) * 100) : 0
 
-  const effectiveSelectedTaskId = visibleTasks.some((task) => task.id === selectedTaskId)
+  const effectiveSelectedTaskId = visibleTasks.some((task) => task.taskKey === selectedTaskId)
     ? selectedTaskId
-    : visibleTasks[0]?.id
+    : visibleTasks[0]?.taskKey
 
   // 현재 선택된 체크리스트 항목
-  const currentTask = tasks.find((t) => t.id === effectiveSelectedTaskId)
+  const currentTask = tasks.find((t) => t.taskKey === effectiveSelectedTaskId)
 
   useEffect(() => {
     if (activeTaskView !== 'action' || !currentTask) return
@@ -289,6 +317,42 @@ function ChecklistPage() {
     alert(`위험도가 ${riskScore}점으로 재설정되었습니다.`)
   }
 
+  const openCreateInspection = () => {
+    setNewInspection(INITIAL_NEW_INSPECTION)
+    setIsCreateInspectionOpen(true)
+  }
+
+  const updateNewInspection = (field, value) => {
+    setNewInspection((current) => ({ ...current, [field]: value }))
+  }
+
+  const createInspectionTask = (event) => {
+    event.preventDefault()
+
+    if (!newInspection.text.trim() || !newInspection.location.trim() || !newInspection.date) {
+      alert('점검 항목명, 위치, 점검일을 입력해 주세요.')
+      return
+    }
+
+    const id = Date.now()
+    const createdTask = {
+      id,
+      taskKey: createTaskKey('created', id),
+      text: newInspection.text.trim(),
+      type: '점검',
+      status: '점검 대기',
+      location: newInspection.location.trim(),
+      date: newInspection.date,
+      imageUrl: '',
+      completed: false,
+    }
+
+    setTasks((currentTasks) => [createdTask, ...currentTasks])
+    setActiveTaskView('inspection')
+    setSelectedTaskId(createdTask.taskKey)
+    setIsCreateInspectionOpen(false)
+  }
+
   if (loading) {
     return <div style={{ padding: '40px', textAlign: 'center' }}>체크리스트 데이터 연결 중...</div>
   }
@@ -344,16 +408,16 @@ function ChecklistPage() {
           <div className="task-list">
             {visibleTasks.length > 0 ? (
               visibleTasks.map((task) => {
-                const isSelected = task.id === effectiveSelectedTaskId
+                const isSelected = task.taskKey === effectiveSelectedTaskId
                 const isRejected = task.status === '조치 필요' || task.status === '반려'
 
                 return (
                   <button
                     className={`task-item ${task.completed ? 'is-completed' : ''} ${isSelected ? 'is-selected' : ''
                       } ${isRejected ? 'is-rejected' : ''}`}
-                    key={task.id}
+                    key={task.taskKey}
                     type="button"
-                    onClick={() => setSelectedTaskId(task.id)}
+                    onClick={() => setSelectedTaskId(task.taskKey)}
                     style={{
                       borderLeft: isRejected ? '4px solid #ef4444' : undefined,
                       backgroundColor: isSelected ? '#f3f4f6' : undefined,
@@ -370,6 +434,11 @@ function ChecklistPage() {
                         </small>
                       </div>
                     </div>
+                    {activeTaskView === 'action' && (
+                      <span className="task-risk-score">
+                        위험도 {getTaskRiskScore(task)}점
+                      </span>
+                    )}
                   </button>
                 )
               })
@@ -379,6 +448,11 @@ function ChecklistPage() {
                   ? '오늘 할당된 점검 항목이 없습니다.'
                   : '현재 필요한 조치 업무가 없습니다.'}
               </div>
+            )}
+            {activeTaskView === 'inspection' && (
+              <button className="task-create-plus-button" type="button" aria-label="오늘의 점검 항목 추가" onClick={openCreateInspection}>
+                <AddRoundedIcon />
+              </button>
             )}
           </div>
         </article>
@@ -577,7 +651,55 @@ function ChecklistPage() {
           <img src={selectedImage} alt="업로드 이미지 확대 보기" />
         </div>
       )}
+      {isCreateInspectionOpen && (
+        <InspectionCreateModal
+          form={newInspection}
+          onChange={updateNewInspection}
+          onClose={() => setIsCreateInspectionOpen(false)}
+          onSubmit={createInspectionTask}
+        />
+      )}
     </section>
+  )
+}
+
+function InspectionCreateModal({ form, onChange, onClose, onSubmit }) {
+  return (
+    <div className="assignment-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="assignment-modal checklist-create-modal" role="dialog" aria-modal="true" aria-labelledby="inspection-create-title" onMouseDown={(event) => event.stopPropagation()}>
+        <header>
+          <div>
+            <span>INSPECTION CREATE</span>
+            <h3 id="inspection-create-title">오늘의 점검 항목 추가</h3>
+            <p>점검 목록에 새 점검 항목을 등록합니다.</p>
+          </div>
+          <button type="button" aria-label="오늘의 점검 항목 추가 창 닫기" onClick={onClose}><CloseIcon /></button>
+        </header>
+
+        <form className="checklist-create-form" onSubmit={onSubmit}>
+          <label className="is-wide">
+            <span>점검 항목명</span>
+            <input value={form.text} onChange={(event) => onChange('text', event.target.value)} placeholder="예: 소화기 압력 게이지 점검" />
+          </label>
+          <label>
+            <span>위치</span>
+            <input value={form.location} onChange={(event) => onChange('location', event.target.value)} placeholder="예: A동 1층 복도" />
+          </label>
+          <label>
+            <span>점검일</span>
+            <input type="date" value={form.date} onChange={(event) => onChange('date', event.target.value)} />
+          </label>
+
+          <footer>
+            <span>새 항목은 점검 대기 상태로 추가됩니다.</span>
+            <div>
+              <button type="button" onClick={onClose}>취소</button>
+              <button type="submit">추가</button>
+            </div>
+          </footer>
+        </form>
+      </section>
+    </div>
   )
 }
 
