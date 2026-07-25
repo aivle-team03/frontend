@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import axios from 'axios'
 import Filtering from '../components/Report/Filtering.jsx'
-import { REPORT_PAGE_MOCK_DATA } from '../mocks/mockData.js'
 import { loadGeneratedReports } from '../utils/reportArchiveStorage.js'
 import '../styles/report.css'
+
+const API_BASE_URL = 'http://127.0.0.1:8000'
 
 const formatDate = (date) => date.toISOString().slice(0, 10)
 
@@ -20,31 +22,66 @@ const getInitialFilters = () => {
 }
 
 function ReportListPage() {
-  const [reports] = useState(() => [...loadGeneratedReports(), ...REPORT_PAGE_MOCK_DATA.reports])
+  const [reports, setReports] = useState([])
+  const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState(getInitialFilters)
-  const [selectedReportId, setSelectedReportId] = useState(reports[0]?.id ?? null)
+  const [selectedReportId, setSelectedReportId] = useState(null)
 
-  const filteredReports = useMemo(() => reports.filter((report) => {
-    const keyword = filters.keyword.trim().toLowerCase()
-    const author = filters.author.trim().toLowerCase()
-    const reportDate = report.createdAt ?? ''
-    const reportAuthor = report.owner ?? ''
+  const fetchReports = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
-    const matchesKeyword = !keyword || report.title.toLowerCase().includes(keyword)
-    const matchesStartDate = !filters.startDate || reportDate >= filters.startDate
-    const matchesEndDate = !filters.endDate || reportDate <= filters.endDate
-    const matchesAuthor = !author || reportAuthor.toLowerCase().includes(author)
+      const params = {
+        page: 1,
+        size: 50,
+        start_date: filters.startDate || undefined,
+        end_date: filters.endDate || undefined,
+        writer: filters.author.trim() || undefined,
+        keyword: filters.keyword.trim() || undefined,
+      }
 
-    return matchesKeyword
-      && matchesStartDate
-      && matchesEndDate
-      && matchesAuthor
-  }), [filters, reports])
+      const response = await axios.get(`${API_BASE_URL}/api/report`, { headers, params })
 
-  const selectedReport = useMemo(
-    () => reports.find((report) => report.id === selectedReportId) ?? reports[0],
-    [reports, selectedReportId],
-  )
+      if (response.data && response.data.items) {
+        const formattedReports = response.data.items.map((item) => {
+          const createdAtStr = item.created_at ? String(item.created_at).slice(0, 10) : '-'
+          return {
+            id: item.report_id,
+            title: item.title || `안전 보고서 #${item.report_id}`,
+            createdAt: createdAtStr,
+            retentionUntil: item.retention_until || '-',
+            period: item.period || createdAtStr,
+
+            // 백엔드 get_reports에서 넘겨준 작성자 이름(writer)을 바인딩!
+            owner: item.writer || item.user?.name || '작성자 미상',
+
+            content: item.content || '',
+            summary: item.summary || '',
+          }
+        })
+
+        setReports(formattedReports)
+
+        if (formattedReports.length > 0) {
+          setSelectedReportId((prev) => (formattedReports.some((r) => r.id === prev) ? prev : formattedReports[0].id))
+        } else {
+          setSelectedReportId(null)
+        }
+      }
+    } catch (error) {
+      console.error('보고서 목록 로드 실패:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchReports()
+  }, [filters])
+
+  const selectedReport = reports.find((report) => report.id === selectedReportId) ?? reports[0]
 
   const updateFilter = (field, value) => {
     setFilters((currentFilters) => ({ ...currentFilters, [field]: value }))
@@ -61,7 +98,7 @@ function ReportListPage() {
           <div>
             <span>Archive</span>
           </div>
-          <strong>{filteredReports.length}건</strong>
+          <strong>{reports.length}건</strong>
         </div>
 
         <div className="report-table-wrap">
@@ -80,23 +117,28 @@ function ReportListPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredReports.map((report) => (
-                <tr
-                  className={selectedReport?.id === report.id ? 'is-selected' : ''}
-                  key={report.id}
-                  onClick={() => setSelectedReportId(report.id)}
-                >
-                  <td>
-                    <div className="report-title-cell">
-                      <strong>{report.title}</strong>
-                      <span>생성 {report.createdAt} · 보관 {report.retentionUntil}</span>
-                    </div>
-                  </td>
-                  <td>{report.period ?? report.createdAt}</td>
-                  <td>{report.owner}</td>
+              {loading ? (
+                <tr>
+                  <td className="report-empty-cell" colSpan={3}>데이터를 불러오는 중입니다...</td>
                 </tr>
-              ))}
-              {!filteredReports.length && (
+              ) : reports.length > 0 ? (
+                reports.map((report) => (
+                  <tr
+                    className={selectedReport?.id === report.id ? 'is-selected' : ''}
+                    key={report.id}
+                    onClick={() => setSelectedReportId(report.id)}
+                  >
+                    <td>
+                      <div className="report-title-cell">
+                        <strong>{report.title}</strong>
+                        <span>생성 {report.createdAt} · 보관 {report.retentionUntil}</span>
+                      </div>
+                    </td>
+                    <td>{report.period ?? report.createdAt}</td>
+                    <td>{report.owner}</td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
                   <td className="report-empty-cell" colSpan={3}>조건에 맞는 보고서가 없습니다.</td>
                 </tr>

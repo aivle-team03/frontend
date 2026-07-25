@@ -62,7 +62,7 @@ function BoardPage() {
           riskLevel: item.risk_level || 'M',
           riskLabel: item.risk_label || '보통',
           location: item.location || '위치 미지정',
-          reporter: item.user?.name || item.author || '익명',
+          reporter: item.writer || item.user?.name || item.author || '익명',
           photoName: item.image_url ? '첨부이미지.jpg' : '',
           photoUrl: photoUrl,
           reportedAt: item.created_at ? item.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10),

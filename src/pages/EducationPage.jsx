@@ -32,14 +32,35 @@ function EducationPage({ addedCourses = [] }) {
   const fetchEducationData = async () => {
     const token = localStorage.getItem('token')
     const headers = token ? { Authorization: `Bearer ${token}` } : {}
-    const [summaryResponse, statusResponse, ratesResponse] = await Promise.all([
+
+    const results = await Promise.allSettled([
       axios.get(`${API_BASE_URL}/api/education/summary`, { headers }),
       axios.get(`${API_BASE_URL}/api/education/status`, { headers }),
       axios.get(`${API_BASE_URL}/api/education/completion-rates`, { headers }),
     ])
-    setApiSummary(summaryResponse.data)
-    setApiCourses(Array.isArray(statusResponse.data) ? statusResponse.data : [])
-    setApiRates(ratesResponse.data)
+
+    const [summaryRes, statusRes, ratesRes] = results
+
+    // 1. Summary API
+    if (summaryRes.status === 'fulfilled') {
+      setApiSummary(summaryRes.value.data)
+    } else {
+      console.error('Summary API 실패:', summaryRes.reason)
+    }
+
+    // 2. Status API
+    if (statusRes.status === 'fulfilled') {
+      setApiCourses(Array.isArray(statusRes.value.data) ? statusRes.value.data : [])
+    } else {
+      console.error('Status API 실패:', statusRes.reason)
+    }
+
+    // 3. Completion Rates API
+    if (ratesRes.status === 'fulfilled') {
+      setApiRates(ratesRes.value.data)
+    } else {
+      console.error('Rates API 실패:', ratesRes.reason)
+    }
   }
 
   useEffect(() => {
@@ -147,8 +168,9 @@ function EducationPage({ addedCourses = [] }) {
     {addedCourses.length > 0 && <div className="learner-new-course-banner"><span><PlayCircleOutlineRoundedIcon /><strong>새 교육이 배정되었습니다.</strong> 교육 관리에서 등록한 {addedCourses[0].title}을 확인해 보세요.</span><button type="button" onClick={() => setContentId(addedCourses[0].contentId)}>지금 보기</button></div>}
 
     <div className="education-summary rich-summary">
-      {summaryCards.map((card) => <SummaryCard key={card.key} {...card} onClick={() => setSummaryModal(card)} />)}
-    </div>
+      {summaryCards.map(({ key, ...cardProps }) => (
+        <SummaryCard key={key} {...cardProps} onClick={() => setSummaryModal(cardProps)} />
+      ))}    </div>
 
     <div className="education-top-grid learner-grid">
       <article className="education-panel content-panel course-player-panel">

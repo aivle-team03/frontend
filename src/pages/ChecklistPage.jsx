@@ -69,6 +69,8 @@ function ChecklistPage() {
   const totalCount = tasks.length
   const progressPercent = totalCount ? Math.round((completedCount / totalCount) * 100) : 0
 
+  const sortedTasks = [...tasks].sort((a, b) => Number(a.completed) - Number(b.completed))
+
   // 이미지 파일 선택 처리
   const handleFileChange = (event) => {
     const [file] = Array.from(event.target.files ?? [])
@@ -166,10 +168,20 @@ function ChecklistPage() {
           </div>
 
           <div className="task-list">
-            {tasks.length > 0 ? (
-              tasks.map((task) => {
+            {sortedTasks.length > 0 ? (
+              sortedTasks.map((task) => {
                 const isSelected = task.id === selectedTaskId
                 const isRejected = task.status === '조치 필요' || task.status === '반려'
+
+                // 상태 텍스트 분기 처리 (점검 vs 조치)
+                let statusText = ''
+                if (isRejected) {
+                  statusText = '조치 필요 (반려)'
+                } else if (task.completed) {
+                  statusText = task.type === '점검' ? '점검 완료' : '조치 완료'
+                } else {
+                  statusText = task.type === '점검' ? '점검 대기' : '조치 대기'
+                }
 
                 return (
                   <button
@@ -181,6 +193,7 @@ function ChecklistPage() {
                     style={{
                       borderLeft: isRejected ? '4px solid #ef4444' : undefined,
                       backgroundColor: isSelected ? '#f3f4f6' : undefined,
+                      opacity: task.completed ? 0.75 : 1, // 완료된 항목은 살짝 연하게 처리
                     }}
                   >
                     <div className="task-item-content">
@@ -197,21 +210,35 @@ function ChecklistPage() {
 
                     <span
                       className={`task-status-tag ${isRejected
-                        ? 'tag-red'
-                        : task.type === '조치'
-                          ? 'tag-orange'
-                          : 'tag-blue'
+                          ? 'tag-red'
+                          : task.completed
+                            ? 'tag-green'
+                            : task.type === '조치'
+                              ? 'tag-orange'
+                              : 'tag-blue'
                         }`}
                       style={{
                         fontSize: '11px',
                         padding: '2px 8px',
                         borderRadius: '4px',
                         fontWeight: 'bold',
-                        color: isRejected ? '#ef4444' : task.type === '조치' ? '#f59e0b' : '#3b82f6',
-                        backgroundColor: isRejected ? '#fef2f2' : '#fef3c7',
+                        color: isRejected
+                          ? '#ef4444'
+                          : task.completed
+                            ? '#10b981'
+                            : task.type === '조치'
+                              ? '#f59e0b'
+                              : '#3b82f6',
+                        backgroundColor: isRejected
+                          ? '#fef2f2'
+                          : task.completed
+                            ? '#ecfdf5'
+                            : task.type === '조치'
+                              ? '#fef3c7'
+                              : '#eff6ff',
                       }}
                     >
-                      {isRejected ? '조치 필요 (반려)' : task.status}
+                      {statusText}
                     </span>
                   </button>
                 )
@@ -226,19 +253,33 @@ function ChecklistPage() {
 
         {/* 2. 조치 진행 및 보고 작성 카드 */}
         <article className="checklist-card action-card">
-          <h2>조치 진행 보고</h2>
+          <h2>{currentTask?.type === '점검' ? '점검 진행 보고' : '조치 진행 보고'}</h2>
 
           {currentTask ? (
             <>
-              <div className="selected-task-info" style={{ marginBottom: '16px', padding: '12px', background: '#f9fafb', borderRadius: '8px' }}>
-                <span style={{ fontSize: '12px', color: '#6b7280' }}>선택 항목 (#{currentTask.id})</span>
+              <div
+                className="selected-task-info"
+                style={{
+                  marginBottom: '16px',
+                  padding: '12px',
+                  background: '#f9fafb',
+                  borderRadius: '8px',
+                }}
+              >
+                <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                  선택 항목 (#{currentTask.id}) · {currentTask.type}
+                </span>
                 <h4 style={{ margin: '4px 0', fontSize: '15px' }}>{currentTask.text}</h4>
                 <p style={{ fontSize: '13px', color: '#4b5563', margin: 0 }}>
-                  위치: {currentTask.location} | 현재 상태: <strong style={{ color: currentTask.status === '조치 필요' ? '#ef4444' : '#10b981' }}>{currentTask.status}</strong>
+                  위치: {currentTask.location} | 현재 상태:{' '}
+                  <strong style={{ color: currentTask.status === '조치 필요' ? '#ef4444' : '#10b981' }}>
+                    {currentTask.completed
+                      ? currentTask.type === '점검' ? '점검 완료' : '조치 완료'
+                      : currentTask.type === '점검' ? '점검 대기' : '조치 대기'}
+                  </strong>
                 </p>
               </div>
 
-              {/* 현장 원본 사진 미리보기 (있을 경우) */}
               {currentTask.imageUrl && (
                 <div className="upload-section">
                   <div className="upload-label">
@@ -249,19 +290,28 @@ function ChecklistPage() {
                       src={currentTask.imageUrl}
                       alt="현장 사진"
                       onClick={() => setSelectedImage(currentTask.imageUrl)}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer' }}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                      }}
                     />
                   </div>
                 </div>
               )}
 
-              {/* 조치 내용 작성 입력란 */}
               <div className="upload-section" style={{ marginTop: '12px' }}>
                 <div className="upload-label">
-                  <strong>조치 내용 입력</strong>
+                  <strong>{currentTask.type === '점검' ? '점검 내용 입력' : '조치 내용 입력'}</strong>
                 </div>
                 <textarea
-                  placeholder="현장에서 수행한 조치 작업 내용을 상세히 입력하세요."
+                  placeholder={
+                    currentTask.type === '점검'
+                      ? '현장에서 점검한 내용을 상세히 입력하세요.'
+                      : '현장에서 수행한 조치 작업 내용을 상세히 입력하세요.'
+                  }
                   value={actionContent}
                   onChange={(e) => setActionContent(e.target.value)}
                   rows={3}
@@ -275,11 +325,10 @@ function ChecklistPage() {
                 />
               </div>
 
-              {/* 조치 완료 사진 업로드 */}
               <ImageUploadSection
                 count={afterImages.length}
                 inputRef={afterInputRef}
-                label="조치 완료 사진 첨부"
+                label={currentTask.type === '점검' ? '점검 완료 사진 첨부' : '조치 완료 사진 첨부'}
                 images={afterImages}
                 onAdd={handleFileChange}
                 onDelete={deleteImage}
@@ -296,12 +345,18 @@ function ChecklistPage() {
                   cursor: currentTask.completed ? 'not-allowed' : 'pointer',
                 }}
               >
-                {submitting ? '제출 중...' : currentTask.completed ? '보고 완료됨' : '완료 보고'}
+                {submitting
+                  ? '제출 중...'
+                  : currentTask.completed
+                    ? '보고 완료됨'
+                    : currentTask.type === '점검'
+                      ? '점검 완료 보고'
+                      : '조치 완료 보고'}
               </button>
             </>
           ) : (
             <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
-              목록에서 조치할 항목을 선택해주세요.
+              목록에서 진행할 항목을 선택해주세요.
             </div>
           )}
         </article>
