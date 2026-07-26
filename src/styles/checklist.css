@@ -126,8 +126,79 @@
   background: #2f64b7;
 }
 
+.task-item.is-selected {
+  margin: 0 -10px;
+  padding: 14px 10px;
+  border-bottom-color: transparent;
+  border-radius: 9px;
+  color: #1d4f91;
+  background: #edf5ff;
+}
+
+.task-item.is-selected.is-completed { color: #5e7da6; }
+
+.task-check {
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
 .action-card {
   gap: 22px;
+}
+
+.selected-task-summary {
+  display: grid;
+  gap: 6px;
+  padding: 20px;
+  border-radius: 12px;
+  background: #f7f9fc;
+}
+
+.selected-task-summary span {
+  color: #59738f;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.selected-task-summary strong {
+  color: #173a67;
+  font-size: 20px;
+}
+
+.selected-task-summary p {
+  margin: 0;
+  color: #58718d;
+  font-size: 15px;
+}
+
+.action-content-field {
+  display: grid;
+  gap: 12px;
+  color: #263f5d;
+  font-size: 16px;
+}
+
+.action-content-field textarea {
+  min-height: 126px;
+  resize: vertical;
+  padding: 14px;
+  border: 1px solid #cbd8e7;
+  border-radius: 9px;
+  outline: 0;
+  color: #334d6a;
+  font: inherit;
+  line-height: 1.5;
+}
+
+.action-content-field textarea:focus {
+  border-color: #78a8e6;
+  box-shadow: 0 0 0 3px rgba(75, 133, 207, .12);
+}
+
+.no-selected-task {
+  color: #71839a;
+  text-align: center;
 }
 
 .upload-section {
