@@ -4,9 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { TODAY_INSPECTION_MOCK_DATA } from '../mocks/mockData'
 import '../styles/checklist.css'
 import {
-  getChecklistManagementActionQueue,
   getStoredChecklistManagementRecords,
-  saveChecklistManagementActionQueue,
   saveChecklistManagementRecords,
 } from '../utils/checklistStatusStorage'
 import { resolveMediaUrl } from '../utils/mediaUrl'
@@ -21,11 +19,6 @@ function createKey(prefix, id) {
 function normalizeActionStatus(status) {
   if (status === '조치 완료') return '조치 완료'
   return '조치 대기'
-}
-
-function getManagementRecordId(task, type) {
-  const id = String(task.id)
-  return id.startsWith(`${type}-`) || id.startsWith('management-') ? id : `${type}-${id}`
 }
 
 function isAssignedAction(task) {
@@ -70,29 +63,6 @@ const ACTION_MOCK_DATA = [
   },
 ]
 
-function toManagementRecord(task, type) {
-  const isAction = type === 'action'
-  const progress = isAction
-    ? normalizeActionStatus(task.status)
-    : task.inspectionStatus || '점검 대기'
-
-  return {
-    id: getManagementRecordId(task, type),
-    name: isAction ? (task.inspectionRef || task.text) : task.text,
-    location: isAction ? (task.inspectionLocation || task.location) : task.location,
-    category: task.category || '점검 항목',
-    assignee: isAction ? task.assignee || '' : '',
-    completedBy: task.inspector || '이안전',
-    date: isAction ? task.inspectionDate || task.date : task.inspectedAt || task.date,
-    progress,
-    assignment: task.assignee && task.assignee !== '미배정' ? '배정 완료' : '미배정',
-    level: task.risk || '보통',
-    photo: Boolean(task.photoNames?.length),
-    images: [],
-    note: task.content || '등록된 점검 항목입니다.',
-  }
-}
-
 function toActionTask(record) {
   return {
     id: record.id,
@@ -125,6 +95,7 @@ function toManagementActionQueueRecord(action) {
     actionAssignee: '',
     dateTime: `${action.date || today} 09:00`,
     progress: '조치 대기',
+    source: 'checklist-action',
     note: action.content || '점검 결과에 따라 조치가 필요한 항목입니다.',
   }
 }
@@ -192,20 +163,6 @@ function ChecklistPage() {
     }
     fetchChecklists()
   }, [])
-
-  useEffect(() => {
-    const managementCreatedRecords = getStoredChecklistManagementRecords()
-      .filter((record) => String(record.id).startsWith('management-'))
-    const records = [
-      ...managementCreatedRecords,
-      ...inspectionTasks
-        .filter((task) => !task.movedToAction)
-        .map((task) => toManagementRecord(task, 'inspection')),
-      ...actionTasks.map((task) => toManagementRecord(task, 'action')),
-    ]
-
-    saveChecklistManagementRecords(records)
-  }, [actionTasks, inspectionTasks])
 
   useEffect(() => {
     const syncAssignedActions = () => {
@@ -287,8 +244,9 @@ function ChecklistPage() {
     setActionContent('')
     setSelectedTaskId(nextSelectedTask?.taskKey ?? null)
     const managementAction = toManagementActionQueueRecord(action)
-    const queuedActions = getChecklistManagementActionQueue().filter((item) => item.id !== managementAction.id)
-    saveChecklistManagementActionQueue([managementAction, ...queuedActions])
+    const managementRecords = getStoredChecklistManagementRecords()
+    const remainingRecords = managementRecords.filter((item) => item.id !== managementAction.id)
+    saveChecklistManagementRecords([managementAction, ...remainingRecords])
     navigate('/checklists/management')
     alert('체크리스트 관리에 조치 대기 항목으로 등록되었습니다. 담당자 배정 후 조치 목록에 표시됩니다.')
   }

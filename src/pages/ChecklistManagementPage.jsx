@@ -22,7 +22,13 @@ const rows = [
 ]
 export const CHECKLIST_MANAGEMENT_MOCK_RECORDS = rows.map(([name,category,location,cycle,inspectionAssignee,actionAssignee,dateTime,progress], index) => ({ id:index+1,name,category,location,cycle,inspectionAssignee,actionAssignee,dateTime,progress }))
 const rangeText = (monthValue) => { const [year, month] = monthValue.split('-').map(Number); return `${year}. ${String(month).padStart(2,'0')}. 01 - ${year}. ${String(month).padStart(2,'0')}. ${new Date(year, month, 0).getDate()}` }
-const getInitialRecords = () => { const stored = getStoredChecklistManagementRecords(); const storedIds = new Set(stored.map((item) => String(item.id))); return [...stored, ...INITIAL.filter((item) => !storedIds.has(String(item.id)))] }
+const getInitialRecords = () => {
+  const stored = getStoredChecklistManagementRecords().filter((item) => (
+    item.source === 'board' || item.source === 'checklist-action'
+  ))
+  const storedIds = new Set(stored.map((item) => String(item.id)))
+  return [...stored, ...CHECKLIST_MANAGEMENT_MOCK_RECORDS.filter((item) => !storedIds.has(String(item.id)))]
+}
 
 function ChecklistManagementPage() {
   const [records, setRecords] = useState(() => getInitialRecords())
