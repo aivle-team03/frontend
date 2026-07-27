@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { TODAY_INSPECTION_MOCK_DATA } from '../mocks/mockData'
 import '../styles/checklist.css'
 import {
   getStoredChecklistManagementRecords,
   saveChecklistManagementRecords,
 } from '../utils/checklistStatusStorage'
+import { resolveMediaUrl } from '../utils/mediaUrl'
 
 const today = '2026-07-25'
+const API_BASE_URL = 'http://127.0.0.1:8000'
 
 function createKey(prefix, id) {
   return `${prefix}-${id}`
@@ -131,6 +134,45 @@ function ChecklistPage() {
   const [actionContent, setActionContent] = useState('')
   const [actionDetailContent, setActionDetailContent] = useState('')
   const [actionPhotoFiles, setActionPhotoFiles] = useState([])
+  const actionPhotoInputRef = useRef(null)
+
+  useEffect(() => {
+    const fetchChecklists = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const response = await axios.get(`${API_BASE_URL}/api/checklists`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        if (!Array.isArray(response.data) || !response.data.length) return
+
+        const inspections = []
+        const actions = []
+        response.data.forEach((item, index) => {
+          const id = item.checklist_id ?? item.id ?? index
+          const isAction = item.type === '조치' || ['조치 대기', '조치 완료', '승인 대기', '승인 완료'].includes(item.status)
+          const task = {
+            id,
+            taskKey: createKey(isAction ? 'action' : 'inspection', id),
+            text: item.content || item.name || '점검 항목',
+            location: item.location || (item.camera_id ? `CCTV #${item.camera_id} 구역` : '현장 구역'),
+            date: item.date ? String(item.date).slice(0, 10) : today,
+            inspectedAt: item.inspected_at ? String(item.inspected_at).slice(0, 10) : (item.date ? String(item.date).slice(0, 10) : today),
+            inspector: item.inspector || item.manager || '미지정',
+          }
+          if (isAction) {
+            actions.push({ ...task, inspectionRef: item.inspection_name || item.content || '점검 항목', inspectionLocation: item.location || '현장 구역', category: item.risk_category || '시설 안전', risk: item.risk_level || '-', status: item.status || '조치 대기', assignee: item.assignee || item.manager || '미지정', content: item.action_content || item.content || '', photos: item.image_url ? [{ name: '첨부 사진', url: resolveMediaUrl(item.image_url) }] : [], completed: ['조치 완료', '승인 대기', '승인 완료'].includes(item.status) })
+          } else {
+            inspections.push({ ...task, inspectionStatus: item.status || '점검 대기', movedToAction: Boolean(item.moved_to_action) })
+          }
+        })
+        if (inspections.length) setInspectionTasks(inspections)
+        if (actions.length) setActionTasks(actions)
+      } catch (error) {
+        console.warn('체크리스트 API 조회에 실패해 기존 데이터를 표시합니다.', error)
+      }
+    }
+    fetchChecklists()
+  }, [])
 
   useEffect(() => {
     const managementCreatedRecords = getStoredChecklistManagementRecords()
@@ -166,9 +208,7 @@ function ChecklistPage() {
 
   const visibleTasks = activeTaskView === 'inspection' ? inspectionTasks : actionTasks.filter(isAssignedAction)
   const visibleActionCount = actionTasks.filter(isAssignedAction).length
-  const selectableTasks = activeTaskView === 'inspection'
-    ? visibleTasks.filter((task) => task.inspectionStatus !== '점검 완료' && !task.movedToAction)
-    : visibleTasks.filter((task) => task.status !== '조치 완료')
+  const selectableTasks = visibleTasks
   const effectiveSelectedTaskId = selectableTasks.some((task) => task.taskKey === selectedTaskId)
     ? selectedTaskId
     : selectableTasks[0]?.taskKey
@@ -186,7 +226,7 @@ function ChecklistPage() {
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setActionDetailContent(currentTask.content || '')
-    setActionPhotoFiles([])
+    setActionPhotoFiles(currentTask.completed ? (currentTask.photos || []) : [])
   }, [activeTaskView, currentTask])
 
   const completeInspection = () => {
@@ -232,8 +272,15 @@ function ChecklistPage() {
 
   const handleActionPhotoChange = (event) => {
     const files = Array.from(event.target.files ?? [])
-    setActionPhotoFiles(files)
+    setActionPhotoFiles((current) => [...current, ...files.map((file) => ({ file, name:file.name, url:URL.createObjectURL(file) }))])
+    event.target.value = ''
   }
+
+  const removeActionPhoto = (target) => setActionPhotoFiles((current) => current.filter((photo) => {
+    const shouldRemove = photo.url === target.url
+    if (shouldRemove && photo.file) URL.revokeObjectURL(photo.url)
+    return !shouldRemove
+  }))
 
   const completeAction = () => {
     if (!currentTask) return
@@ -254,7 +301,8 @@ function ChecklistPage() {
       ? {
         ...task,
         content: actionDetailContent.trim(),
-        photoNames: actionPhotoFiles.map((file) => file.name),
+        photoNames: actionPhotoFiles.map((photo) => photo.name),
+        photos: actionPhotoFiles.map(({ name, url }) => ({ name, url })),
         status: '조치 완료',
         completed: true,
       }
@@ -309,10 +357,7 @@ function ChecklistPage() {
                   className={`task-item ${selected ? 'is-selected' : ''} ${isDisabled ? 'is-completed' : ''}`}
                   key={task.taskKey}
                   type="button"
-                  disabled={isDisabled}
-                  onClick={() => {
-                    if (!isDisabled) setSelectedTaskId(task.taskKey)
-                  }}
+                  onClick={() => setSelectedTaskId(task.taskKey)}
                 >
                   <div className="task-item-content">
                     <span className="task-check">{task.movedToAction || task.completed ? '✓' : '·'}</span>
@@ -357,21 +402,16 @@ function ChecklistPage() {
               <div className="action-registration-form">
                 <label className="is-wide">
                   <span>조치내용</span>
-                  <textarea value={actionDetailContent} onChange={(event) => setActionDetailContent(event.target.value)} placeholder="수행한 조치 내용을 입력하세요." rows="5" />
+                  <textarea value={actionDetailContent} readOnly={currentTask.completed} onChange={(event) => setActionDetailContent(event.target.value)} placeholder="수행한 조치 내용을 입력하세요." rows="5" />
                 </label>
                 <div className="upload-section">
                   <div className="upload-label">
                     <strong>사진 첨부</strong>
                     <span>{actionPhotoFiles.length}장</span>
                   </div>
-                  <input type="file" accept="image/*" multiple onChange={handleActionPhotoChange} />
-                  {actionPhotoFiles.length > 0 && (
-                    <div className="action-photo-file-list">
-                      {actionPhotoFiles.map((file) => <span key={`${file.name}-${file.lastModified}`}>{file.name}</span>)}
-                    </div>
-                  )}
+                  <div className="photo-grid">{actionPhotoFiles.map((photo) => <div className="photo-preview" key={photo.url}><button type="button" aria-label={`${photo.name} 미리보기`}><img src={photo.url} alt={photo.name} /></button>{!currentTask.completed && <button className="delete-photo-button" type="button" aria-label={`${photo.name} 삭제`} onClick={() => removeActionPhoto(photo)}>×</button>}</div>)}{!currentTask.completed && <><input ref={actionPhotoInputRef} type="file" accept="image/*" multiple hidden onChange={handleActionPhotoChange} /><button className="add-photo-button" type="button" aria-label="사진 추가" onClick={() => actionPhotoInputRef.current?.click()}>+</button></>}</div>
                 </div>
-                <button className="submit-action-button" type="button" onClick={completeAction}>조치완료</button>
+                {!currentTask.completed && <button className="submit-action-button" type="button" onClick={completeAction}>조치완료</button>}
               </div>
             </div>
           ) : <div className="checklist-empty">목록에서 항목을 선택해 주세요.</div>}
