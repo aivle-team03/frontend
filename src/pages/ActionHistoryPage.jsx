@@ -11,6 +11,7 @@ import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import PieChartRoundedIcon from '@mui/icons-material/PieChartRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import { CHECKLIST_MANAGEMENT_MOCK_RECORDS } from './ChecklistManagementPage'
 
 function ActionHistoryPage() {
   const [loading, setLoading] = useState(false);
@@ -26,8 +27,28 @@ function ActionHistoryPage() {
   const [rejectReason, setRejectReason] = useState('')
 
   useEffect(() => {
-    fetchActionHistory();
+    loadManagementHistory()
   }, []);
+
+  const loadManagementHistory = () => {
+    setLoading(true)
+    const completedRecords = CHECKLIST_MANAGEMENT_MOCK_RECORDS
+      .filter((item) => item.progress === '조치 완료')
+      .map((item, index) => ({
+        id: `management-${item.id}`,
+        completedAt: item.dateTime,
+        location: item.location,
+        type: item.name,
+        assignee: item.actionAssignee || '담당자 미지정',
+        imageUrl: '',
+        statusRaw: item.progress,
+        approvalStatus: index < 2 ? 'approved' : 'pending',
+        approver: index < 2 ? '안전 관리자' : '-',
+        approvedAt: index < 2 ? '2026-07-25 16:00' : '-',
+      }))
+    setRecords(completedRecords)
+    setLoading(false)
+  }
 
   // 1. 조치 이력 전용 API 호출 (/api/checklists/history)
   const fetchActionHistory = async () => {
@@ -78,6 +99,13 @@ function ActionHistoryPage() {
   const handleApprove = async () => {
     if (!selectedRecord) return;
 
+    if (String(selectedRecord.id).startsWith('management-')) {
+      const approvedAt = new Date().toLocaleString('ko-KR')
+      setRecords((current) => current.map((record) => record.id === selectedRecord.id ? { ...record, approvalStatus: 'approved', approver: '안전 관리자', approvedAt } : record))
+      setSelectedRecord(null)
+      return
+    }
+
     try {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
@@ -104,6 +132,13 @@ function ActionHistoryPage() {
     if (!rejectReason.trim()) {
       alert('반려 사유를 입력해주세요.');
       return;
+    }
+
+    if (String(selectedRecord.id).startsWith('management-')) {
+      setRecords((current) => current.map((record) => record.id === selectedRecord.id ? { ...record, approvalStatus: 'rejected' } : record))
+      setSelectedRecord(null)
+      setRejectReason('')
+      return
     }
 
     try {
@@ -279,14 +314,11 @@ function ActionHistoryPage() {
                       <button
                         className="approval-photo-button"
                         type="button"
+                        disabled={!record.imageUrl}
                         onClick={() => setPhotoPreviewRecord(record)}
                         aria-label={`${record.location} 조치 사진 크게 보기`}
                       >
-                        <img
-                          className="approval-photo-thumbnail"
-                          src={record.imageUrl}
-                          alt=""
-                        />
+                        {record.imageUrl ? <img className="approval-photo-thumbnail" src={record.imageUrl} alt="" /> : <span className="no-photo">사진 없음</span>}
                       </button>
                     </td>
                     <td>

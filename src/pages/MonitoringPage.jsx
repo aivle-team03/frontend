@@ -288,8 +288,8 @@ function MonitoringPage() {
                   <div><dt><AccessTimeRoundedIcon />감지 시간</dt><dd>{selectedEvent.time}</dd></div>
                   <div><dt>담당자</dt><dd>{selectedEvent.manager}</dd></div>
                 </dl>
-                <button type="button" onClick={() => navigate('/actions')}>
-                  조치 이력에서 확인 <ArrowForwardRoundedIcon />
+                <button type="button" onClick={() => navigate('/checklists/management')}>
+                  체크리스트 확인 <ArrowForwardRoundedIcon />
                 </button>
               </div>
             ) : (

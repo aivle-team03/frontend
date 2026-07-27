@@ -72,14 +72,17 @@
   gap: 8px;
 }
 
-.safety-form-grid label > span {
+.safety-form-grid label > span,
+.company-code-grid label > span {
   color: #53647b;
   font-size: 12px;
   font-weight: 900;
 }
 
 .safety-form-grid textarea,
-.safety-role-row input {
+.safety-role-row input,
+.company-code-grid input,
+.company-code-grid select {
   width: 100%;
   border: 1px solid #d7e0eb;
   border-radius: 8px;
@@ -89,6 +92,35 @@
   font-size: 13px;
   font-weight: 800;
   outline: 0;
+}
+
+.company-code-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+  padding: 22px;
+}
+
+.company-code-grid label {
+  display: grid;
+  gap: 8px;
+}
+
+.company-code-grid input,
+.company-code-grid select {
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.company-code-output {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+.company-code-create-button {
+  min-width: 86px;
+  min-height: 42px;
 }
 
 .safety-form-grid textarea {
@@ -193,7 +225,7 @@
 
 .safety-worker-role-table .safety-role-head,
 .safety-worker-role-table .safety-role-row {
-  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr);
+  grid-template-columns: minmax(130px, .9fr) minmax(160px, 1fr) minmax(180px, 1.1fr) minmax(180px, 1.1fr);
 }
 
 .safety-role-row select {

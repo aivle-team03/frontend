@@ -1,9 +1,12 @@
 import axios from 'axios'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { TODAY_INSPECTION_MOCK_DATA } from '../mocks/mockData'
 import '../styles/checklist.css'
 import {
+  getChecklistManagementActionQueue,
   getStoredChecklistManagementRecords,
+  saveChecklistManagementActionQueue,
   saveChecklistManagementRecords,
 } from '../utils/checklistStatusStorage'
 import { resolveMediaUrl } from '../utils/mediaUrl'
@@ -111,6 +114,21 @@ function toActionTask(record) {
   }
 }
 
+function toManagementActionQueueRecord(action) {
+  return {
+    id: `action-queue-${action.id}`,
+    name: action.inspectionRef || action.text,
+    category: action.category || '시설 안전',
+    location: action.inspectionLocation || action.location || '현장 구역',
+    cycle: '매주',
+    inspectionAssignee: action.inspector || '미배정',
+    actionAssignee: '',
+    dateTime: `${action.date || today} 09:00`,
+    progress: '조치 대기',
+    note: action.content || '점검 결과에 따라 조치가 필요한 항목입니다.',
+  }
+}
+
 function getInitialActionTasks() {
   const managementActions = getStoredChecklistManagementRecords()
     .filter((record) => ['조치 대기', '조치 완료'].includes(record.progress))
@@ -120,6 +138,7 @@ function getInitialActionTasks() {
 }
 
 function ChecklistPage() {
+  const navigate = useNavigate()
   const [inspectionTasks, setInspectionTasks] = useState(() => TODAY_INSPECTION_MOCK_DATA.map((task) => ({
     ...task,
     taskKey: createKey('inspection', task.id),
@@ -267,6 +286,10 @@ function ChecklistPage() {
       : task))
     setActionContent('')
     setSelectedTaskId(nextSelectedTask?.taskKey ?? null)
+    const managementAction = toManagementActionQueueRecord(action)
+    const queuedActions = getChecklistManagementActionQueue().filter((item) => item.id !== managementAction.id)
+    saveChecklistManagementActionQueue([managementAction, ...queuedActions])
+    navigate('/checklists/management')
     alert('체크리스트 관리에 조치 대기 항목으로 등록되었습니다. 담당자 배정 후 조치 목록에 표시됩니다.')
   }
 
