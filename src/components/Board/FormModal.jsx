@@ -9,6 +9,7 @@ const initialReportForm = {
   reporter: '',
   photoName: '',
   photoUrl: '',
+  photoFile: null,
 }
 
 function FormModal({ categories, riskOptions, onClose, onSubmit }) {
@@ -39,7 +40,7 @@ function FormModal({ categories, riskOptions, onClose, onSubmit }) {
           ...currentForm,
           photoName: '',
           photoUrl: '',
-          photoFile: null
+          photoFile: null,
         }
       }
 
@@ -64,7 +65,7 @@ function FormModal({ categories, riskOptions, onClose, onSubmit }) {
         ...currentForm,
         photoName: '',
         photoUrl: '',
-        photoFile: null
+        photoFile: null,
       }
     })
   }
