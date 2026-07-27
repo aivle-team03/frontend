@@ -1,5 +1,3 @@
-import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import CloseIcon from '@mui/icons-material/Close'
 import { useEffect, useMemo, useState } from 'react'
 import { TODAY_INSPECTION_MOCK_DATA } from '../mocks/mockData'
 import '../styles/checklist.css'
@@ -133,10 +131,6 @@ function ChecklistPage() {
   const [actionContent, setActionContent] = useState('')
   const [actionDetailContent, setActionDetailContent] = useState('')
   const [actionPhotoFiles, setActionPhotoFiles] = useState([])
-  const [isCreateInspectionOpen, setIsCreateInspectionOpen] = useState(false)
-  const [newInspection, setNewInspection] = useState({ text: '', location: '', date: today })
-  const [isCreateActionOpen, setIsCreateActionOpen] = useState(false)
-  const [newAction, setNewAction] = useState({ text: '', location: '', date: today, content: '' })
 
   useEffect(() => {
     const managementCreatedRecords = getStoredChecklistManagementRecords()
@@ -203,7 +197,6 @@ function ChecklistPage() {
       ? { ...task, inspectionStatus: '점검 완료', completed: true }
       : task))
     setSelectedTaskId(nextSelectedTask?.taskKey ?? null)
-    setActionContent('')
   }
 
   const registerAction = () => {
@@ -271,56 +264,6 @@ function ChecklistPage() {
     alert('조치가 완료되었습니다.')
   }
 
-  const createInspection = (event) => {
-    event.preventDefault()
-    if (!newInspection.text.trim() || !newInspection.location.trim()) {
-      alert('점검 이름과 구역을 입력해 주세요.')
-      return
-    }
-    const id = Date.now()
-    const task = {
-      id,
-      taskKey: createKey('inspection', id),
-      text: newInspection.text.trim(),
-      location: newInspection.location.trim(),
-      date: newInspection.date,
-      inspectedAt: newInspection.date,
-      inspector: '이안전',
-      inspectionStatus: '점검 대기',
-      movedToAction: false,
-    }
-    setInspectionTasks((current) => [task, ...current])
-    setSelectedTaskId(task.taskKey)
-    setNewInspection({ text: '', location: '', date: today })
-    setIsCreateInspectionOpen(false)
-  }
-
-  const createAction = (event) => {
-    event.preventDefault()
-    if (!newAction.text.trim() || !newAction.location.trim()) {
-      alert('조치 이름과 구역을 입력해 주세요.')
-      return
-    }
-    const id = Date.now()
-    const action = {
-      id,
-      taskKey: createKey('action', id),
-      inspectionRef: '직접 등록 조치',
-      inspectionLocation: newAction.location.trim(),
-      text: newAction.text.trim(),
-      location: newAction.location.trim(),
-      date: newAction.date,
-      status: '조치 대기',
-      assignee: '미배정',
-      content: newAction.content.trim(),
-      completed: false,
-    }
-    setActionTasks((current) => [action, ...current])
-    setSelectedTaskId(action.taskKey)
-    setNewAction({ text: '', location: '', date: today, content: '' })
-    setIsCreateActionOpen(false)
-  }
-
   return (
     <section className="checklist-page">
       <div className="checklist-grid">
@@ -379,7 +322,6 @@ function ChecklistPage() {
               )
             })}
             {!visibleTasks.length && <div className="checklist-empty">등록된 조치 항목이 없습니다.</div>}
-            <button className="task-create-plus-button" type="button" aria-label={activeTaskView === 'inspection' ? '점검 항목 추가' : '조치 항목 추가'} onClick={() => activeTaskView === 'inspection' ? setIsCreateInspectionOpen(true) : setIsCreateActionOpen(true)}><AddRoundedIcon /></button>
           </div>
         </article>
 
@@ -436,18 +378,8 @@ function ChecklistPage() {
         </article>
       </div>
 
-      {isCreateInspectionOpen && <InspectionCreateModal form={newInspection} onChange={(field, value) => setNewInspection((current) => ({ ...current, [field]: value }))} onClose={() => setIsCreateInspectionOpen(false)} onSubmit={createInspection} />}
-      {isCreateActionOpen && <ActionCreateModal form={newAction} onChange={(field, value) => setNewAction((current) => ({ ...current, [field]: value }))} onClose={() => setIsCreateActionOpen(false)} onSubmit={createAction} />}
     </section>
   )
-}
-
-function InspectionCreateModal({ form, onChange, onClose, onSubmit }) {
-  return <div className="assignment-modal-backdrop" role="presentation" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}><header><div><span>INSPECTION CREATE</span><h3>점검 항목 추가</h3><p>점검 테이블에 새 항목을 등록합니다.</p></div><button type="button" aria-label="닫기" onClick={onClose}><CloseIcon /></button></header><form className="checklist-create-form" onSubmit={onSubmit}><label className="is-wide"><span>점검 이름</span><input value={form.text} onChange={(event) => onChange('text', event.target.value)} placeholder="예: 소방설비 점검" /></label><label><span>구역</span><input value={form.location} onChange={(event) => onChange('location', event.target.value)} placeholder="예: A동 1층 복도" /></label><label><span>점검 일자</span><input type="date" value={form.date} onChange={(event) => onChange('date', event.target.value)} /></label><footer><span>새 항목은 점검 대기 상태로 등록됩니다.</span><div><button type="button" onClick={onClose}>취소</button><button type="submit">추가</button></div></footer></form></section></div>
-}
-
-function ActionCreateModal({ form, onChange, onClose, onSubmit }) {
-  return <div className="assignment-modal-backdrop" role="presentation" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ACTION CREATE</span><h3>조치 항목 추가</h3><p>점검과 별도로 바로 처리할 조치 업무를 등록합니다.</p></div><button type="button" aria-label="닫기" onClick={onClose}><CloseIcon /></button></header><form className="checklist-create-form" onSubmit={onSubmit}><label className="is-wide"><span>조치 이름</span><input value={form.text} onChange={(event) => onChange('text', event.target.value)} placeholder="예: 소화기 압력 게이지 교체" /></label><label><span>구역</span><input value={form.location} onChange={(event) => onChange('location', event.target.value)} placeholder="예: CCTV #1 구역" /></label><label><span>조치 일자</span><input type="date" value={form.date} onChange={(event) => onChange('date', event.target.value)} /></label><label className="is-wide"><span>내용</span><textarea value={form.content} onChange={(event) => onChange('content', event.target.value)} placeholder="필요한 조치 내용을 입력하세요." rows="3" /></label><footer><span>새 항목은 조치 대기 상태로 등록됩니다.</span><div><button type="button" onClick={onClose}>취소</button><button type="submit">추가</button></div></footer></form></section></div>
 }
 
 export default ChecklistPage
