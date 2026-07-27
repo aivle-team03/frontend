@@ -2,6 +2,7 @@ export const DEFAULT_ACCEPTABLE_RISK = 12
 export const SAFETY_RISK_THRESHOLD_KEY = 'boss:safety-risk-threshold'
 export const CHECKLIST_INSPECTION_RESULTS_KEY = 'boss:checklist-inspection-results'
 export const CHECKLIST_MANAGEMENT_RECORDS_KEY = 'boss:checklist-management-records'
+export const CHECKLIST_MANAGEMENT_ACTION_QUEUE_KEY = 'boss:checklist-management-action-queue'
 
 function canUseStorage() {
   return typeof window !== 'undefined' && Boolean(window.localStorage)
@@ -126,6 +127,22 @@ export function saveChecklistManagementRecords(records) {
   if (!canUseStorage()) return
 
   window.localStorage.setItem(CHECKLIST_MANAGEMENT_RECORDS_KEY, JSON.stringify(records))
+}
+
+export function getChecklistManagementActionQueue() {
+  if (!canUseStorage()) return []
+
+  try {
+    const records = JSON.parse(window.localStorage.getItem(CHECKLIST_MANAGEMENT_ACTION_QUEUE_KEY) || '[]')
+    return Array.isArray(records) ? records : []
+  } catch {
+    return []
+  }
+}
+
+export function saveChecklistManagementActionQueue(records) {
+  if (!canUseStorage()) return
+  window.localStorage.setItem(CHECKLIST_MANAGEMENT_ACTION_QUEUE_KEY, JSON.stringify(records))
 }
 
 export function mergeChecklistManagementRecords(baseRecords) {
