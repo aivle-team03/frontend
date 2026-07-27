@@ -680,6 +680,29 @@
 .action-required-button { border: 1px solid #d99b51; color: #9a5a16; background: #fff5e8; }
 .action-required-button:hover { color: #fff; background: #bc721d; }
 
+/* Checklist master management */
+.master-category-filter { height: 37px; min-width: 126px; padding: 0 10px; border: 1px solid #d7e2ed; border-radius: 8px; color: #536b86; background: #fff; font: inherit; font-size: 12px; font-weight: 750; }
+.master-checklist-table { min-width: 980px; }
+.master-detail-body { display: grid; gap: 22px; padding: 22px 27px 26px; }
+.master-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: hidden; border: 1px solid #dfe9f2; border-radius: 12px; background: #fbfdff; }
+.master-summary-grid > div { display: grid; gap: 6px; padding: 14px; border-right: 1px solid #e6edf4; }
+.master-summary-grid > div:last-child { border-right: 0; }
+.master-summary-grid span { color: #8192a5; font-size: 11px; font-weight: 800; }
+.master-summary-grid strong { color: #34506e; font-size: 14px; }
+.master-section-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.master-section-heading h4 { margin: 0; color: #344e6b; font-size: 15px; }
+.master-section-heading span { color: #7b8fa6; font-size: 11px; font-weight: 750; }
+.master-location-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.master-location-list span { display: inline-flex; align-items: center; gap: 4px; padding: 8px 10px; border: 1px solid #dce8f3; border-radius: 8px; color: #506b89; background: #f8fbff; font-size: 12px; font-weight: 750; }
+.master-location-list svg { color: #6e9acb; font-size: 15px; }
+.master-history-list { overflow: hidden; border: 1px solid #e0e9f2; border-radius: 10px; }
+.master-history-list > div { display: grid; grid-template-columns: 1.2fr 1.2fr .8fr auto; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid #edf2f6; color: #698098; font-size: 12px; font-weight: 700; }
+.master-history-list > div:last-child { border-bottom: 0; }
+.master-history-list strong { color: #3c5674; }
+.checklist-create-form select { width: 100%; height: 41px; padding: 0 10px; border: 1px solid #d7e3ef; border-radius: 8px; color: #465f7b; background: #fff; font: inherit; font-size: 13px; outline: none; }
+
+@media (max-width: 680px) { .master-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.master-summary-grid > div:nth-child(2) { border-right: 0; }.master-summary-grid > div:nth-child(-n + 2) { border-bottom: 1px solid #e6edf4; }.master-detail-body { padding-right: 18px; padding-left: 18px; }.master-history-list > div { grid-template-columns: 1fr auto; }.master-history-list > div span:nth-of-type(2) { display: none; } }
+
 @media (max-width: 560px) {
   .inspection-reference-card,
   .action-registration-form { grid-template-columns: 1fr; }

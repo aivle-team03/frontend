@@ -240,30 +240,10 @@ function MyPage() {
 
       <div className="my-page-content-grid">
         <article className="my-page-card notification-settings-card">
-          <div className="my-card-heading">
-            <span className="my-card-icon"><NotificationsActiveOutlinedIcon /></span>
-            <div>
-              <h3>알림 설정</h3>
-              <p>필요한 안전 알림만 선택해서 받을 수 있습니다.</p>
-            </div>
-          </div>
+
 
           <div className="notification-setting-list">
-            <label>
-              <span><strong>AI 위험 감지</strong><small>담당 구역에서 위험 요소가 감지되면 알립니다.</small></span>
-              <input type="checkbox" checked={notificationSettings.risk} onChange={() => toggleNotificationSetting('risk')} />
-              <i aria-hidden="true" />
-            </label>
-            <label>
-              <span><strong>점검 일정</strong><small>예정된 안전 점검 일정을 미리 알립니다.</small></span>
-              <input type="checkbox" checked={notificationSettings.schedule} onChange={() => toggleNotificationSetting('schedule')} />
-              <i aria-hidden="true" />
-            </label>
-            <label>
-              <span><strong>조치 완료</strong><small>담당 위험 항목의 조치 완료 결과를 알립니다.</small></span>
-              <input type="checkbox" checked={notificationSettings.completion} onChange={() => toggleNotificationSetting('completion')} />
-              <i aria-hidden="true" />
-            </label>
+          
           </div>
         </article>
 

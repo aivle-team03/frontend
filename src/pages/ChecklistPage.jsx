@@ -1,4 +1,3 @@
-import CloseIcon from '@mui/icons-material/Close'
 import { useEffect, useMemo, useState } from 'react'
 import { TODAY_INSPECTION_MOCK_DATA } from '../mocks/mockData'
 import '../styles/checklist.css'
@@ -185,6 +184,7 @@ function ChecklistPage() {
   useEffect(() => {
     if (activeTaskView !== 'action' || !currentTask) return
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActionDetailContent(currentTask.content || '')
     setActionPhotoFiles([])
   }, [activeTaskView, currentTask])
