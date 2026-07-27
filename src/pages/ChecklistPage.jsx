@@ -25,6 +25,15 @@ const INITIAL_NEW_INSPECTION = {
   date: '2026-07-25',
 }
 
+function getStoredUserName() {
+  try {
+    const storedUser = JSON.parse(window.localStorage.getItem('user') || '{}')
+    return storedUser.name || storedUser.user_id || '본인'
+  } catch {
+    return '본인'
+  }
+}
+
 function getRiskSelectionFromTask(task) {
   const strength = Number(task?.strength)
   const frequency = FREQUENCY_OPTIONS.find((option) => option.score === Number(task?.frequency))
@@ -60,6 +69,7 @@ function ChecklistPage() {
   const [selectedTaskId, setSelectedTaskId] = useState(null)
   const [isCreateInspectionOpen, setIsCreateInspectionOpen] = useState(false)
   const [newInspection, setNewInspection] = useState(INITIAL_NEW_INSPECTION)
+  const [currentUserName, setCurrentUserName] = useState(getStoredUserName)
 
   // 조치 보고용 입력 상태
   const [actionContent, setActionContent] = useState('')
@@ -91,6 +101,7 @@ function ChecklistPage() {
           status: item.status || '미조치',
           location: item.camera_id ? `CCTV #${item.camera_id} 구역` : '현장 구역',
           date: item.date ? String(item.date).slice(0, 10) : '-',
+          completedBy: item.target_user?.name || item.user?.name || item.user_name || item.completed_by || '',
           imageUrl: item.image_url || '',
           completed: item.status === '승인 대기' || item.status === '승인 완료' || item.status === '조치 완료',
           riskScore: item.risk_score ?? item.riskScore ?? item.before_risk_score,
@@ -135,6 +146,26 @@ function ChecklistPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchChecklists()
   }, [fetchChecklists])
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) return
+
+        const response = await axios.get(`${API_BASE_URL}/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const userData = response.data
+        const name = userData?.name || userData?.user_id
+        if (name) setCurrentUserName(name)
+      } catch (error) {
+        console.error('현재 사용자 조회 실패:', error)
+      }
+    }
+
+    fetchCurrentUser()
+  }, [])
 
   const { inspectionTasks, actionTasks, visibleTasks } = useMemo(() => {
     const isActionTask = (task) => task.type === '조치' || task.status === '조치 대기' || task.status === '조치 필요' || task.status === '반려'
@@ -343,6 +374,7 @@ function ChecklistPage() {
       status: '점검 대기',
       location: newInspection.location.trim(),
       date: newInspection.date,
+      completedBy: currentUserName,
       imageUrl: '',
       completed: false,
     }
@@ -430,7 +462,7 @@ function ChecklistPage() {
                       <div className="task-text-wrap">
                         <span className="task-title">{task.text}</span>
                         <small className="task-meta">
-                          {task.location} | {task.date}
+                          {task.location} | {task.date}{task.completedBy ? ` | 대상자: ${task.completedBy}` : ''}
                         </small>
                       </div>
                     </div>
@@ -471,7 +503,7 @@ function ChecklistPage() {
                   <span>선택 점검 항목 (#{currentTask.id})</span>
                   <h4>{currentTask.text}</h4>
                   <p>
-                    위치: {currentTask.location} | 현재 상태: <strong>{currentTask.status}</strong>
+                    위치: {currentTask.location} | 대상자: {currentTask.completedBy || '미지정'} | 현재 상태: <strong>{currentTask.status}</strong>
                   </p>
                 </div>
 
@@ -691,7 +723,7 @@ function InspectionCreateModal({ form, onChange, onClose, onSubmit }) {
           </label>
 
           <footer>
-            <span>새 항목은 점검 대기 상태로 추가됩니다.</span>
+            <span>대상자는 본인으로 자동 설정됩니다.</span>
             <div>
               <button type="button" onClick={onClose}>취소</button>
               <button type="submit">추가</button>
