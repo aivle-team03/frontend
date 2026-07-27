@@ -191,7 +191,7 @@ function MonitoringDetailPage() {
               <div><dt><AccessTimeRoundedIcon />감지 시간</dt><dd>14:28:32</dd></div>
               <div><dt>위험도</dt><dd className="detail-risk-level">주의</dd></div>
             </dl>
-            <button type="button" onClick={() => navigate('/actions')}>조치 이력 확인</button>
+            <button type="button" onClick={() => navigate('/checklists/management')}>체크리스트 확인</button>
           </section>
         </aside>
       </div>
