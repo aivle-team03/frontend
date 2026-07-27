@@ -9,8 +9,8 @@ const navigationItems = [
   {
     label: '체크리스트', icon: 'checklist',
     children: [
-      { path: '/checklists', label: '점검 목록', icon: 'checklist' },
-      { path: '/checklists/management', label: '점검 관리', icon: 'manage', requiresRole: 'safety-manager' },
+      { path: '/checklists', label: '체크리스트 목록', icon: 'checklist' },
+      { path: '/checklists/management', label: '체크리스트 관리', icon: 'manage', requiresRole: 'safety-manager' },
     ],
   },
   {

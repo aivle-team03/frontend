@@ -22,7 +22,11 @@ import actionPhoto3 from '../assets/actionhistory_3.jpg'
 import actionPhoto5 from '../assets/actionhistory_5.jpg'
 import actionPhoto7 from '../assets/actionhistory_7.jpg'
 import '../styles/checklist.css'
-import { applyChecklistInspectionResults } from '../utils/checklistStatusStorage'
+import {
+  getStoredChecklistManagementRecords,
+  mergeChecklistManagementRecords,
+  saveChecklistManagementRecords,
+} from '../utils/checklistStatusStorage'
 
 const CHECKLISTS = [
   { id: 1, name: '비상구·피난 통로 점검', location: 'B동 1층 현관', category: '시설 안전', assignee: '신지윤', completedBy: '이도현', date: '2026-07-09', progress: '점검 대기', assignment: '배정 완료', level: '높음', photo: true, images: [actionPhoto1, actionPhoto3], note: '현관 비상구 주변 적치물은 없으며, 유도등 작동 상태를 확인 중입니다.' },
@@ -57,6 +61,7 @@ const INITIAL_NEW_CHECKLIST = {
 
 function normalizeProgress(progress) {
   if (progress === '점검 중' || progress === '점검중') return '점검 대기'
+  if (progress === '조치 필요' || progress === '조치 중') return '조치 대기'
   return progress
 }
 
@@ -91,7 +96,7 @@ function getChecklistRiskScore(item) {
 }
 
 function ChecklistManagementPage() {
-  const [records, setRecords] = useState(() => applyChecklistInspectionResults(CHECKLISTS))
+  const [records, setRecords] = useState(() => mergeChecklistManagementRecords(CHECKLISTS))
   const [filters, setFilters] = useState({ location: '전체 구역', progress: '전체 상태', targetAssignment: '대상자 필터링', assignment: '담당자 필터링', query: '' })
   const [selected, setSelected] = useState(null)
   const [selectedIds, setSelectedIds] = useState([])
@@ -102,7 +107,7 @@ function ChecklistManagementPage() {
 
   useEffect(() => {
     const syncInspectionResults = () => {
-      setRecords((current) => applyChecklistInspectionResults(current))
+      setRecords(mergeChecklistManagementRecords(CHECKLISTS))
     }
 
     window.addEventListener('focus', syncInspectionResults)
@@ -179,13 +184,21 @@ function ChecklistManagementPage() {
 
   const assign = (member) => {
     if (selected.mode === 'assign-target') {
-      setRecords((current) => current.map((item) => (
-        selected.ids.includes(item.id) ? { ...item, completedBy: member.name } : item
-      )))
+      setRecords((current) => {
+        const nextRecords = current.map((item) => (
+          selected.ids.includes(item.id) ? { ...item, completedBy: member.name } : item
+        ))
+        saveChecklistManagementRecords(nextRecords)
+        return nextRecords
+      })
     } else {
-      setRecords((current) => current.map((item) => (
-        selected.ids.includes(item.id) ? { ...item, assignee: member.name } : item
-      )))
+      setRecords((current) => {
+        const nextRecords = current.map((item) => (
+          selected.ids.includes(item.id) ? { ...item, assignee: member.name, assignment: '배정 완료' } : item
+        ))
+        saveChecklistManagementRecords(nextRecords)
+        return nextRecords
+      })
     }
 
     setSelectedIds([])
@@ -213,7 +226,7 @@ function ChecklistManagementPage() {
     }
 
     const created = {
-      id: Date.now(),
+      id: `management-${Date.now()}`,
       name: newChecklist.name.trim(),
       location: newChecklist.location.trim(),
       category: newChecklist.category.trim(),
@@ -228,7 +241,11 @@ function ChecklistManagementPage() {
       note: '등록된 점검 항목입니다.',
     }
 
-    setRecords((current) => applyChecklistInspectionResults([created, ...current]))
+    setRecords((current) => {
+      const nextRecords = [created, ...current]
+      saveChecklistManagementRecords([created, ...getStoredChecklistManagementRecords()])
+      return nextRecords
+    })
     setSelectedMonth(created.date.slice(0, 7))
     setSelectedIds([])
     setPage(0)

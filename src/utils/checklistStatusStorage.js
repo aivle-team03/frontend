@@ -1,6 +1,7 @@
 export const DEFAULT_ACCEPTABLE_RISK = 12
 export const SAFETY_RISK_THRESHOLD_KEY = 'boss:safety-risk-threshold'
 export const CHECKLIST_INSPECTION_RESULTS_KEY = 'boss:checklist-inspection-results'
+export const CHECKLIST_MANAGEMENT_RECORDS_KEY = 'boss:checklist-management-records'
 
 function canUseStorage() {
   return typeof window !== 'undefined' && Boolean(window.localStorage)
@@ -108,4 +109,29 @@ export function applyChecklistInspectionResults(records) {
       actionRiskUpdatedAt: result.actionRiskUpdatedAt,
     }
   })
+}
+
+export function getStoredChecklistManagementRecords() {
+  if (!canUseStorage()) return []
+
+  try {
+    const records = JSON.parse(window.localStorage.getItem(CHECKLIST_MANAGEMENT_RECORDS_KEY) || '[]')
+    return Array.isArray(records) ? records : []
+  } catch {
+    return []
+  }
+}
+
+export function saveChecklistManagementRecords(records) {
+  if (!canUseStorage()) return
+
+  window.localStorage.setItem(CHECKLIST_MANAGEMENT_RECORDS_KEY, JSON.stringify(records))
+}
+
+export function mergeChecklistManagementRecords(baseRecords) {
+  const storedRecords = getStoredChecklistManagementRecords()
+  const storedIds = new Set(storedRecords.map((record) => String(record.id)))
+  const baseOnlyRecords = baseRecords.filter((record) => !storedIds.has(String(record.id)))
+
+  return applyChecklistInspectionResults([...storedRecords, ...baseOnlyRecords])
 }
