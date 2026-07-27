@@ -1,744 +1,252 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import CloseIcon from '@mui/icons-material/Close'
 import axios from 'axios'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { TODAY_INSPECTION_MOCK_DATA } from '../mocks/mockData'
 import '../styles/checklist.css'
-import {
-  applyChecklistInspectionResults,
-  getStoredSafetyRiskThreshold,
-  saveChecklistActionRiskResult,
-  saveChecklistInspectionResult,
-} from '../utils/checklistStatusStorage'
 
+const today = '2026-07-25'
 const API_BASE_URL = 'http://127.0.0.1:8000'
-const STRENGTH_OPTIONS = Array.from({ length: 9 }, (_, index) => String(index + 1))
-const FREQUENCY_OPTIONS = [
-  { key: 'frequent', label: '빈번', score: 3 },
-  { key: 'sometimes', label: '가끔', score: 2 },
-  { key: 'rare', label: '드묾', score: 1 },
-]
 
-const INITIAL_NEW_INSPECTION = {
-  text: '',
-  location: '',
-  date: '2026-07-25',
-}
-
-function getRiskSelectionFromTask(task) {
-  const strength = Number(task?.strength)
-  const frequency = FREQUENCY_OPTIONS.find((option) => option.score === Number(task?.frequency))
-
-  if (Number.isFinite(strength) && strength >= 1 && strength <= 9 && frequency) {
-    return { strength: String(strength), frequency }
-  }
-
-  return { strength: '5', frequency: FREQUENCY_OPTIONS[1] }
-}
-
-function applyStoredResultsToTasks(tasks) {
-  return applyChecklistInspectionResults(tasks.map((task) => ({ ...task, progress: task.status })))
-    .map((task) => ({
-      ...task,
-      status: task.progress,
-      completed: task.progress === '점검 완료' || task.completed,
-    }))
-}
-
-function createTaskKey(source, id, index) {
-  return `${source}-${id ?? index}`
-}
-
-function getTaskRiskScore(task) {
-  return Number(task.inspectionRiskScore ?? task.riskScore ?? task.beforeRiskScore ?? 0)
+function createKey(prefix, id) {
+  return `${prefix}-${id}`
 }
 
 function ChecklistPage() {
-  const [loading, setLoading] = useState(true)
-  const [tasks, setTasks] = useState([])
+  const [inspectionTasks, setInspectionTasks] = useState(() => TODAY_INSPECTION_MOCK_DATA.map((task) => ({
+    ...task,
+    taskKey: createKey('inspection', task.id),
+    inspectionStatus: task.status || '점검 대기',
+    inspectedAt: task.date || today,
+    inspector: '이안전',
+    movedToAction: false,
+  })))
+  const [actionTasks, setActionTasks] = useState([])
   const [activeTaskView, setActiveTaskView] = useState('inspection')
   const [selectedTaskId, setSelectedTaskId] = useState(null)
-  const [isCreateInspectionOpen, setIsCreateInspectionOpen] = useState(false)
-  const [newInspection, setNewInspection] = useState(INITIAL_NEW_INSPECTION)
-
-  // 조치 보고용 입력 상태
   const [actionContent, setActionContent] = useState('')
-  const [afterImages, setAfterImages] = useState([])
-  const [imageFiles, setImageFiles] = useState([]) // 실제 업로드할 File 객체
-  const [selectedImage, setSelectedImage] = useState(null)
-  const [submitting, setSubmitting] = useState(false)
-  const [selectedStrength, setSelectedStrength] = useState('5')
-  const [selectedFrequency, setSelectedFrequency] = useState(FREQUENCY_OPTIONS[1])
-  const [actionBeforeStrength, setActionBeforeStrength] = useState('5')
-  const [actionBeforeFrequency, setActionBeforeFrequency] = useState(FREQUENCY_OPTIONS[1])
+  const [isCreateInspectionOpen, setIsCreateInspectionOpen] = useState(false)
+  const [newInspection, setNewInspection] = useState({ text: '', location: '', date: today })
 
-  const afterInputRef = useRef(null)
+  useEffect(() => {
+    const loadChecklists = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const response = await axios.get(`${API_BASE_URL}/api/checklists`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        })
+        if (!Array.isArray(response.data) || response.data.length === 0) return
 
-  const fetchChecklists = useCallback(async () => {
-    try {
-      setLoading(true)
-      const token = localStorage.getItem('token')
-      const headers = { Authorization: `Bearer ${token}` }
-
-      const response = await axios.get(`${API_BASE_URL}/api/checklists`, { headers })
-
-      if (response.data && Array.isArray(response.data)) {
-        const formattedTasks = response.data.map((item, index) => ({
-          id: item.checklist_id,
-          taskKey: createTaskKey('api', item.checklist_id, index),
-          text: item.content || '지정된 점검/조치 항목',
-          type: item.type || (item.event_id ? '조치' : '점검'),
-          status: item.status || '미조치',
-          location: item.camera_id ? `CCTV #${item.camera_id} 구역` : '현장 구역',
-          date: item.date ? String(item.date).slice(0, 10) : '-',
-          imageUrl: item.image_url || '',
-          completed: item.status === '승인 대기' || item.status === '승인 완료' || item.status === '조치 완료',
-          riskScore: item.risk_score ?? item.riskScore ?? item.before_risk_score,
-          inspectionRiskScore: item.inspection_risk_score ?? item.before_risk_score,
-          actionRiskScore: item.action_risk_score ?? item.after_risk_score,
-          beforeRiskScore: item.before_risk_score,
-          strength: item.strength ?? item.severity ?? item.before_risk_strength,
-          frequency: item.frequency ?? item.before_risk_frequency,
-          actionStrength: item.action_strength ?? item.after_risk_strength,
-          actionFrequency: item.action_frequency ?? item.after_risk_frequency,
-        }))
-        const mockTasks = TODAY_INSPECTION_MOCK_DATA.map((task, index) => ({
-          ...task,
-          taskKey: createTaskKey('mock', task.id, index),
-        }))
-        const mergedTasks = applyStoredResultsToTasks([...mockTasks, ...formattedTasks])
-
-        setTasks(mergedTasks)
-
-        // 첫 번째 조치/점검 항목 기본 선택
-        if (mergedTasks.length > 0) {
-          setSelectedTaskId(mergedTasks[0].taskKey)
-        }
+        const inspections = []
+        const actions = []
+        response.data.forEach((item, index) => {
+          const isAction = item.type === '조치' || ['조치 대기', '조치 중', '조치 완료', '조치 필요'].includes(item.status)
+          const id = item.checklist_id ?? item.id ?? index
+          const task = {
+            id,
+            taskKey: createKey(isAction ? 'action' : 'inspection', id),
+            text: item.content || '점검 항목',
+            location: item.location || (item.camera_id ? `CCTV #${item.camera_id} 구역` : '현장 구역'),
+            date: item.date ? String(item.date).slice(0, 10) : today,
+            inspectedAt: item.inspected_at ? String(item.inspected_at).slice(0, 10) : (item.date ? String(item.date).slice(0, 10) : today),
+            inspector: item.inspector || item.manager || '미지정',
+          }
+          if (isAction) {
+            actions.push({
+              ...task,
+              inspectionRef: item.inspection_name || item.content || '점검 항목',
+              inspectionLocation: item.location || '현장 구역',
+              category: item.risk_category || '시설 안전',
+              risk: item.risk_level || '중',
+              status: item.status || '조치 대기',
+              assignee: item.assignee || item.manager || '미지정',
+              content: item.action_content || item.content || '',
+              completed: item.status === '조치 완료',
+            })
+          } else {
+            inspections.push({ ...task, inspectionStatus: item.status || '점검 대기', movedToAction: Boolean(item.moved_to_action) })
+          }
+        })
+        if (inspections.length) setInspectionTasks(inspections)
+        if (actions.length) setActionTasks(actions)
+      } catch (error) {
+        console.warn('체크리스트를 불러오지 못해 예시 데이터를 표시합니다.', error)
       }
-    } catch (error) {
-      console.error('체크리스트 로드 실패:', error)
-      const mockTasks = TODAY_INSPECTION_MOCK_DATA.map((task, index) => ({
-        ...task,
-        taskKey: createTaskKey('mock', task.id, index),
-      }))
-      setTasks(applyStoredResultsToTasks(mockTasks))
-      setSelectedTaskId(mockTasks[0]?.taskKey ?? null)
-    } finally {
-      setLoading(false)
     }
+    loadChecklists()
   }, [])
 
-  // ==========================================
-  // 1. 백엔드에서 체크리스트 목록 조회 (GET /api/checklists)
-  // ==========================================
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchChecklists()
-  }, [fetchChecklists])
-
-  const { inspectionTasks, actionTasks, visibleTasks } = useMemo(() => {
-    const isActionTask = (task) => task.type === '조치' || task.status === '조치 대기' || task.status === '조치 필요' || task.status === '반려'
-    const nextInspectionTasks = tasks.filter((task) => !isActionTask(task))
-    const nextActionTasks = tasks
-      .filter((task) => isActionTask(task))
-      .sort((a, b) => getTaskRiskScore(b) - getTaskRiskScore(a))
-
-    return {
-      inspectionTasks: nextInspectionTasks,
-      actionTasks: nextActionTasks,
-      visibleTasks: activeTaskView === 'inspection' ? nextInspectionTasks : nextActionTasks,
-    }
-  }, [activeTaskView, tasks])
-
-  // 진행률 계산
-  const completedCount = visibleTasks.filter((task) => task.completed).length
-  const totalCount = visibleTasks.length
-  const progressPercent = totalCount ? Math.round((completedCount / totalCount) * 100) : 0
-
+  const visibleTasks = activeTaskView === 'inspection' ? inspectionTasks : actionTasks
   const effectiveSelectedTaskId = visibleTasks.some((task) => task.taskKey === selectedTaskId)
     ? selectedTaskId
     : visibleTasks[0]?.taskKey
+  const currentTask = visibleTasks.find((task) => task.taskKey === effectiveSelectedTaskId)
 
-  // 현재 선택된 체크리스트 항목
-  const currentTask = tasks.find((t) => t.taskKey === effectiveSelectedTaskId)
+  const progress = useMemo(() => {
+    const done = activeTaskView === 'inspection'
+      ? inspectionTasks.filter((task) => task.inspectionStatus === '점검 완료' || task.movedToAction).length
+      : actionTasks.filter((task) => task.status === '조치 완료').length
+    return { done, total: visibleTasks.length, percent: visibleTasks.length ? Math.round((done / visibleTasks.length) * 100) : 0 }
+  }, [activeTaskView, actionTasks, inspectionTasks, visibleTasks.length])
 
-  useEffect(() => {
-    if (activeTaskView !== 'action' || !currentTask) return
-
-    const { strength, frequency } = getRiskSelectionFromTask(currentTask)
-    setActionBeforeStrength(strength)
-    setActionBeforeFrequency(frequency)
-  }, [activeTaskView, currentTask])
-
-  // 이미지 파일 선택 처리
-  const handleFileChange = (event) => {
-    const [file] = Array.from(event.target.files ?? [])
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setImageFiles([file])
-      setAfterImages([reader.result])
-    }
-    reader.readAsDataURL(file)
-
-    event.target.value = ''
+  const completeInspection = () => {
+    if (!currentTask) return
+    setInspectionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
+      ? { ...task, inspectionStatus: '점검 완료', completed: true }
+      : task))
   }
 
-  // 이미지 삭제
-  const deleteImage = (index) => {
-    setAfterImages((prev) => prev.filter((_, idx) => idx !== index))
-    setImageFiles((prev) => prev.filter((_, idx) => idx !== index))
-  }
-
-  // ==========================================
-  // 2. 조치 완료 보고 제출 (PATCH /api/checklists/{id}/complete)
-  // ==========================================
-  const handleSubmitAction = async () => {
-    if (!currentTask) {
-      alert('선택된 체크리스트 항목이 없습니다.')
-      return
-    }
-
-    if (!actionContent.trim()) {
-      alert('조치 내용을 입력해 주세요.')
-      return
-    }
-
-    if (imageFiles.length === 0) {
-      alert('조치 완료 사진을 1장 첨부해 주세요.')
-      return
-    }
-
-    try {
-      setSubmitting(true)
-      const token = localStorage.getItem('token')
-
-      const formData = new FormData()
-      formData.append('content', actionContent.trim())
-      formData.append('image', imageFiles[0])
-      formData.append('risk_score', String(Number(actionBeforeStrength) * actionBeforeFrequency.score))
-      formData.append('risk_strength', actionBeforeStrength)
-      formData.append('risk_frequency', String(actionBeforeFrequency.score))
-      formData.append('before_risk_score', String(Number(actionBeforeStrength) * actionBeforeFrequency.score))
-      formData.append('before_risk_strength', actionBeforeStrength)
-      formData.append('before_risk_frequency', String(actionBeforeFrequency.score))
-
-      await axios.patch(`${API_BASE_URL}/api/checklists/${currentTask.id}/complete`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-
-      saveChecklistActionRiskResult({
-        id: currentTask.id,
-        riskScore: Number(actionBeforeStrength) * actionBeforeFrequency.score,
-        strength: Number(actionBeforeStrength),
-        frequency: actionBeforeFrequency.score,
-      })
-
-      alert('조치 완료 보고가 성공적으로 등록되었습니다. (승인 대기 상태로 전환)')
-
-      // 입력 폼 초기화 후 리스트 재조회
-      setActionContent('')
-      setAfterImages([])
-      setImageFiles([])
-      fetchChecklists()
-    } catch (error) {
-      console.error('완료 보고 실패:', error)
-      alert('완료 보고 처리 실패: ' + (error.response?.data?.detail || error.message))
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  const handleSubmitStrength = () => {
-    if (!currentTask) {
-      alert('선택된 점검 항목이 없습니다.')
-      return
-    }
-
-    const riskScore = Number(selectedStrength) * selectedFrequency.score
-    const riskThreshold = getStoredSafetyRiskThreshold()
-    const result = saveChecklistInspectionResult({
-      id: currentTask.id,
-      riskScore,
-      riskThreshold,
-      strength: Number(selectedStrength),
-      frequency: selectedFrequency.score,
-    })
-    const nextStatus = result?.progress ?? '점검 완료'
-
-    setTasks((currentTasks) => currentTasks.map((task) => (
-      task.id === currentTask.id
-        ? {
-          ...task,
-          status: nextStatus,
-          completed: nextStatus === '점검 완료',
-          riskScore,
-          inspectionRiskScore: riskScore,
-          strength: Number(selectedStrength),
-          frequency: selectedFrequency.score,
-          inspectionStrength: Number(selectedStrength),
-          inspectionFrequency: selectedFrequency.score,
-        }
-        : task
-    )))
-
-    alert(`${currentTask.text} 항목의 강도 ${selectedStrength}, 빈도 ${selectedFrequency.label}(${selectedFrequency.score}점), 위험도 ${riskScore}점 제출이 완료되었습니다. 진행 상태: ${nextStatus}`)
-  }
-
-  const handleUpdateActionBeforeRisk = () => {
-    if (!currentTask) {
-      alert('선택된 조치 항목이 없습니다.')
-      return
-    }
-
-    const riskScore = Number(actionBeforeStrength) * actionBeforeFrequency.score
-    saveChecklistActionRiskResult({
-      id: currentTask.id,
-      riskScore,
-      strength: Number(actionBeforeStrength),
-      frequency: actionBeforeFrequency.score,
-    })
-
-    setTasks((currentTasks) => currentTasks.map((task) => (
-      task.id === currentTask.id
-        ? {
-          ...task,
-          actionRiskScore: riskScore,
-          actionStrength: Number(actionBeforeStrength),
-          actionFrequency: actionBeforeFrequency.score,
-        }
-        : task
-    )))
-
-    alert(`위험도가 ${riskScore}점으로 재설정되었습니다.`)
-  }
-
-  const openCreateInspection = () => {
-    setNewInspection(INITIAL_NEW_INSPECTION)
-    setIsCreateInspectionOpen(true)
-  }
-
-  const updateNewInspection = (field, value) => {
-    setNewInspection((current) => ({ ...current, [field]: value }))
-  }
-
-  const createInspectionTask = (event) => {
-    event.preventDefault()
-
-    if (!newInspection.text.trim() || !newInspection.location.trim() || !newInspection.date) {
-      alert('점검 항목명, 위치, 점검일을 입력해 주세요.')
-      return
-    }
-
-    const id = Date.now()
-    const createdTask = {
-      id,
-      taskKey: createTaskKey('created', id),
-      text: newInspection.text.trim(),
-      type: '점검',
-      status: '점검 대기',
-      location: newInspection.location.trim(),
-      date: newInspection.date,
-      imageUrl: '',
+  const registerAction = () => {
+    if (!currentTask) return
+    const actionId = Date.now()
+    const action = {
+      id: actionId,
+      taskKey: createKey('action', actionId),
+      inspectionRef: currentTask.text,
+      inspectionLocation: currentTask.location,
+      inspectionDate: currentTask.inspectedAt,
+      inspector: currentTask.inspector,
+      category: '미분류',
+      text: currentTask.text,
+      location: currentTask.location,
+      risk: '-',
+      date: today,
+      status: '조치 대기',
+      assignee: '미배정',
+      content: actionContent.trim(),
       completed: false,
     }
 
-    setTasks((currentTasks) => [createdTask, ...currentTasks])
-    setActiveTaskView('inspection')
-    setSelectedTaskId(createdTask.taskKey)
-    setIsCreateInspectionOpen(false)
+    setActionTasks((current) => [action, ...current])
+    setInspectionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
+      ? { ...task, movedToAction: true, inspectionStatus: '조치 등록 완료' }
+      : task))
+    setActionContent('')
+    setActiveTaskView('action')
+    setSelectedTaskId(action.taskKey)
   }
 
-  if (loading) {
-    return <div style={{ padding: '40px', textAlign: 'center' }}>체크리스트 데이터 연결 중...</div>
+  const createInspection = (event) => {
+    event.preventDefault()
+    if (!newInspection.text.trim() || !newInspection.location.trim()) {
+      alert('점검 이름과 구역을 입력해 주세요.')
+      return
+    }
+    const id = Date.now()
+    const task = {
+      id,
+      taskKey: createKey('inspection', id),
+      text: newInspection.text.trim(),
+      location: newInspection.location.trim(),
+      date: newInspection.date,
+      inspectedAt: newInspection.date,
+      inspector: '이안전',
+      inspectionStatus: '점검 대기',
+      movedToAction: false,
+    }
+    setInspectionTasks((current) => [task, ...current])
+    setSelectedTaskId(task.taskKey)
+    setNewInspection({ text: '', location: '', date: today })
+    setIsCreateInspectionOpen(false)
   }
 
   return (
     <section className="checklist-page">
       <div className="checklist-grid">
-        {/* 1. 오늘의 업무 (체크리스트 & 조치 필요 목록) */}
         <article className="checklist-card">
           <div className="checklist-card-header">
             <div>
-              <h2>점검 목록</h2>
-              <p>오늘 필요한 점검과 조치 업무를 구분해 확인하세요.</p>
+              <h2>점검 · 조치 목록</h2>
+              <p>점검 결과를 확인하고 조치가 필요한 건을 등록하세요.</p>
             </div>
-            <span className="task-badge-count">총 {totalCount}건</span>
+            <span className="task-badge-count">총 {visibleTasks.length}건</span>
           </div>
 
-          <div className="daily-task-tabs" role="tablist" aria-label="점검 목록 보기 전환">
-            <button
-              className={activeTaskView === 'inspection' ? 'is-active' : ''}
-              type="button"
-              role="tab"
-              aria-selected={activeTaskView === 'inspection'}
-              onClick={() => setActiveTaskView('inspection')}
-            >
-              오늘의 점검
-              <span>{inspectionTasks.length}</span>
+          <div className="daily-task-tabs" role="tablist" aria-label="점검 및 조치 목록 전환">
+            <button className={activeTaskView === 'inspection' ? 'is-active' : ''} type="button" onClick={() => setActiveTaskView('inspection')}>
+              점검 목록 <span>{inspectionTasks.length}</span>
             </button>
-            <button
-              className={activeTaskView === 'action' ? 'is-active' : ''}
-              type="button"
-              role="tab"
-              aria-selected={activeTaskView === 'action'}
-              onClick={() => setActiveTaskView('action')}
-            >
-              조치 업무
-              <span>{actionTasks.length}</span>
+            <button className={activeTaskView === 'action' ? 'is-active' : ''} type="button" onClick={() => setActiveTaskView('action')}>
+              조치 목록 <span>{actionTasks.length}</span>
             </button>
           </div>
 
           <div className="checklist-progress">
-            <div>
-              <strong>전체 진행률</strong>
-              <span>
-                {completedCount}/{totalCount} ({progressPercent}%)
-              </span>
-            </div>
-            <div className="progress-track">
-              <span style={{ width: `${progressPercent}%` }} />
-            </div>
+            <div><strong>전체 진행률</strong><span>{progress.done}/{progress.total} ({progress.percent}%)</span></div>
+            <div className="progress-track"><span style={{ width: `${progress.percent}%` }} /></div>
           </div>
 
           <div className="task-list">
-            {visibleTasks.length > 0 ? (
-              visibleTasks.map((task) => {
-                const isSelected = task.taskKey === effectiveSelectedTaskId
-                const isRejected = task.status === '조치 필요' || task.status === '반려'
-
-                return (
-                  <button
-                    className={`task-item ${task.completed ? 'is-completed' : ''} ${isSelected ? 'is-selected' : ''
-                      } ${isRejected ? 'is-rejected' : ''}`}
-                    key={task.taskKey}
-                    type="button"
-                    onClick={() => setSelectedTaskId(task.taskKey)}
-                    style={{
-                      borderLeft: isRejected ? '4px solid #ef4444' : undefined,
-                      backgroundColor: isSelected ? '#f3f4f6' : undefined,
-                    }}
-                  >
-                    <div className="task-item-content">
-                      <span className="task-check">
-                        {task.completed ? '✓' : isRejected ? '!' : '•'}
-                      </span>
-                      <div className="task-text-wrap">
-                        <span className="task-title">{task.text}</span>
-                        <small className="task-meta">
-                          {task.location} | {task.date}
-                        </small>
-                      </div>
-                    </div>
-                    {activeTaskView === 'action' && (
-                      <span className="task-risk-score">
-                        위험도 {getTaskRiskScore(task)}점
-                      </span>
-                    )}
-                  </button>
-                )
-              })
-            ) : (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#6b7280' }}>
-                {activeTaskView === 'inspection'
-                  ? '오늘 할당된 점검 항목이 없습니다.'
-                  : '현재 필요한 조치 업무가 없습니다.'}
-              </div>
-            )}
-            {activeTaskView === 'inspection' && (
-              <button className="task-create-plus-button" type="button" aria-label="오늘의 점검 항목 추가" onClick={openCreateInspection}>
-                <AddRoundedIcon />
-              </button>
-            )}
+            {visibleTasks.map((task) => {
+              const selected = task.taskKey === effectiveSelectedTaskId
+              const status = activeTaskView === 'inspection' ? task.inspectionStatus : task.status
+              return (
+                <button className={`task-item ${selected ? 'is-selected' : ''}`} key={task.taskKey} type="button" onClick={() => setSelectedTaskId(task.taskKey)}>
+                  <div className="task-item-content">
+                    <span className="task-check">{task.movedToAction || task.completed ? '✓' : '·'}</span>
+                    <div className="task-text-wrap"><span className="task-title">{task.text}</span><small className="task-meta">{task.location} | {task.date}</small></div>
+                  </div>
+                  <span className="task-risk-score">{status}</span>
+                </button>
+              )
+            })}
+            {!visibleTasks.length && <div className="checklist-empty">등록된 조치 항목이 없습니다.</div>}
+            {activeTaskView === 'inspection' && <button className="task-create-plus-button" type="button" aria-label="점검 항목 추가" onClick={() => setIsCreateInspectionOpen(true)}><AddRoundedIcon /></button>}
           </div>
         </article>
 
         <article className="checklist-card action-card">
-          {activeTaskView === 'inspection' ? (
-            currentTask ? (
-              <div className="strength-request-panel">
-                <div className="strength-request-header">
-                  <span>INSPECTION REVIEW</span>
-                  <h2>위험도 제출</h2>
-                  <p>오늘의 점검 항목 확인 후 강도와 빈도를 선택해 위험도를 제출하세요.</p>
-                </div>
-
-                <div className="selected-task-info">
-                  <span>선택 점검 항목 (#{currentTask.id})</span>
-                  <h4>{currentTask.text}</h4>
-                  <p>
-                    위치: {currentTask.location} | 현재 상태: <strong>{currentTask.status}</strong>
-                  </p>
-                </div>
-
-                <div className="strength-options" role="radiogroup" aria-label="강도 선택">
-                  {STRENGTH_OPTIONS.map((strength) => (
-                    <button
-                      className={selectedStrength === strength ? 'is-active' : ''}
-                      type="button"
-                      role="radio"
-                      aria-checked={selectedStrength === strength}
-                      key={strength}
-                      onClick={() => setSelectedStrength(strength)}
-                    >
-                      {strength}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="frequency-section">
-                  <div className="frequency-heading">
-                    <strong>빈도 선택</strong>
-                    <span>위험도 = 강도 x 빈도</span>
-                  </div>
-                  <div className="frequency-options" role="radiogroup" aria-label="빈도 선택">
-                    {FREQUENCY_OPTIONS.map((frequency) => (
-                      <button
-                        className={selectedFrequency.key === frequency.key ? 'is-active' : ''}
-                        type="button"
-                        role="radio"
-                        aria-checked={selectedFrequency.key === frequency.key}
-                        key={frequency.key}
-                        onClick={() => setSelectedFrequency(frequency)}
-                      >
-                        <strong>{frequency.label}</strong>
-                        <span>{frequency.score}점</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button className="strength-submit-button" type="button" onClick={handleSubmitStrength}>
-                  위험도 {Number(selectedStrength) * selectedFrequency.score}점 제출
-                </button>
-              </div>
-            ) : (
-              <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
-                목록에서 점검 항목을 선택해주세요.
-              </div>
-            )
-          ) : currentTask ? (
-            <>
-              <h2>조치 진행 보고</h2>
-              <div className="selected-task-info" style={{ marginBottom: '16px', padding: '12px', background: '#f9fafb', borderRadius: '8px' }}>
-                <span style={{ fontSize: '12px', color: '#6b7280' }}>선택 항목 (#{currentTask.id})</span>
-                <h4 style={{ margin: '4px 0', fontSize: '15px' }}>{currentTask.text}</h4>
-                <p style={{ fontSize: '13px', color: '#4b5563', margin: 0 }}>
-                  위치: {currentTask.location} | 현재 상태: <strong style={{ color: currentTask.status === '조치 필요' ? '#ef4444' : '#10b981' }}>{currentTask.status}</strong>
-                </p>
+          {activeTaskView === 'inspection' && currentTask ? (
+            <div className="action-registration-panel">
+              <div className="strength-request-header">
+                <span>ACTION REGISTRATION</span>
+                <h2>조치 등록</h2>
+                <p>점검 이력에서 조치가 필요한 항목을 선택해 조치 업무로 등록합니다.</p>
               </div>
 
-              {/* 현장 원본 사진 미리보기 (있을 경우) */}
-              {currentTask.imageUrl && (
-                <div className="upload-section">
-                  <div className="upload-label">
-                    <strong>현장 감지 사진</strong>
-                  </div>
-                  <div className="photo-preview" style={{ width: '120px', height: '120px' }}>
-                    <img
-                      src={currentTask.imageUrl}
-                      alt="현장 사진"
-                      onClick={() => setSelectedImage(currentTask.imageUrl)}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer' }}
-                    />
+              <section className="inspection-reference-card" aria-label="점검 이력 참조">
+                <div><span>점검 이름</span><strong>{currentTask.text}</strong></div>
+                <div><span>구역</span><strong>{currentTask.location}</strong></div>
+                <div><span>점검 일시</span><strong>{currentTask.inspectedAt}</strong></div>
+                <div><span>담당자</span><strong>{currentTask.inspector}</strong></div>
+                <div><span>점검 진행 상황</span><strong>{currentTask.inspectionStatus}</strong></div>
+                <div><span>조치 전환</span><strong>{currentTask.movedToAction ? '등록 완료' : '등록 가능'}</strong></div>
+              </section>
+
+              {currentTask.movedToAction ? (
+                <div className="action-already-registered">이 점검 건은 이미 조치 목록에 등록되어 있습니다.</div>
+              ) : (
+                <div className="action-registration-form">
+                  <label className="is-wide"><span>내용</span><textarea value={actionContent} onChange={(event) => setActionContent(event.target.value)} placeholder="점검 결과 또는 필요한 조치 내용을 입력하세요." rows="4" /></label>
+                  <div className="inspection-result-actions">
+                    <button className="inspection-complete-button" type="button" onClick={completeInspection}>점검 완료</button>
+                    <button className="action-required-button" type="button" onClick={registerAction}>조치 필요</button>
                   </div>
                 </div>
               )}
-
-              {/* 조치 내용 작성 입력란 */}
-              <div className="upload-section" style={{ marginTop: '12px' }}>
-                <div className="upload-label">
-                  <strong>조치 내용 입력</strong>
-                </div>
-                <textarea
-                  placeholder="현장에서 수행한 조치 작업 내용을 상세히 입력하세요."
-                  value={actionContent}
-                  onChange={(e) => setActionContent(e.target.value)}
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '6px',
-                    border: '1px solid #d1d5db',
-                    fontSize: '14px',
-                  }}
-                />
-              </div>
-
-              {/* 조치 완료 사진 업로드 */}
-              <ImageUploadSection
-                count={afterImages.length}
-                inputRef={afterInputRef}
-                label="조치 완료 사진 첨부"
-                images={afterImages}
-                onAdd={handleFileChange}
-                onDelete={deleteImage}
-                onPreview={setSelectedImage}
-              />
-
-              <div className="action-risk-editor">
-                <div className="frequency-heading">
-                  <strong>위험도 재설정</strong>
-                  <span>위험도 = 강도 x 빈도</span>
-                </div>
-                <div className="action-risk-current">
-                  <span>기본값</span>
-                  <strong>{Number(actionBeforeStrength) * actionBeforeFrequency.score}점</strong>
-                  <small>조치 전 위험도를 기준으로 표시됩니다.</small>
-                </div>
-                <div className="strength-options is-compact" role="radiogroup" aria-label="조치 전 강도 선택">
-                  {STRENGTH_OPTIONS.map((strength) => (
-                    <button
-                      className={actionBeforeStrength === strength ? 'is-active' : ''}
-                      type="button"
-                      role="radio"
-                      aria-checked={actionBeforeStrength === strength}
-                      key={`action-strength-${strength}`}
-                      onClick={() => setActionBeforeStrength(strength)}
-                    >
-                      {strength}
-                    </button>
-                  ))}
-                </div>
-                <div className="frequency-options" role="radiogroup" aria-label="조치 전 빈도 선택">
-                  {FREQUENCY_OPTIONS.map((frequency) => (
-                    <button
-                      className={actionBeforeFrequency.key === frequency.key ? 'is-active' : ''}
-                      type="button"
-                      role="radio"
-                      aria-checked={actionBeforeFrequency.key === frequency.key}
-                      key={`action-frequency-${frequency.key}`}
-                      onClick={() => setActionBeforeFrequency(frequency)}
-                    >
-                      <strong>{frequency.label}</strong>
-                      <span>{frequency.score}점</span>
-                    </button>
-                  ))}
-                </div>
-                <button className="action-risk-save-button" type="button" onClick={handleUpdateActionBeforeRisk}>
-                  위험도 {Number(actionBeforeStrength) * actionBeforeFrequency.score}점 저장
-                </button>
-              </div>
-
-              <button
-                className="submit-action-button"
-                type="button"
-                onClick={handleSubmitAction}
-                disabled={submitting || currentTask.completed}
-                style={{
-                  backgroundColor: currentTask.completed ? '#9ca3af' : '#2563eb',
-                  cursor: currentTask.completed ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {submitting ? '제출 중...' : currentTask.completed ? '보고 완료됨' : '완료 보고'}
-              </button>
-            </>
-          ) : (
-            <div style={{ padding: '40px', textAlign: 'center', color: '#6b7280' }}>
-              목록에서 조치할 항목을 선택해주세요.
             </div>
-          )}
+          ) : currentTask ? (
+            <div className="action-detail-panel">
+              <div className="strength-request-header"><span>ACTION DETAIL</span><h2>등록된 조치</h2><p>점검 이력이 연결된 조치 업무입니다.</p></div>
+              <section className="inspection-reference-card">
+                <div><span>점검 이름 (참조)</span><strong>{currentTask.inspectionRef}</strong></div><div><span>구역 (참조)</span><strong>{currentTask.inspectionLocation}</strong></div>
+                <div><span>위험도 카테고리</span><strong>{currentTask.category}</strong></div><div><span>위험도</span><strong>{currentTask.risk}</strong></div>
+                <div><span>조치 일자</span><strong>{currentTask.date}</strong></div><div><span>조치 진행 상황</span><strong>{currentTask.status}</strong></div>
+                <div><span>담당자</span><strong>{currentTask.assignee}</strong></div><div><span>조치 완료 사진</span><strong>미첨부</strong></div>
+              </section>
+              <div className="selected-task-info"><span>조치 내용</span><p>{currentTask.content}</p></div>
+            </div>
+          ) : <div className="checklist-empty">목록에서 항목을 선택해 주세요.</div>}
         </article>
       </div>
 
-      {/* 이미지 확대 모달 */}
-      {selectedImage && (
-        <div className="image-modal" role="presentation" onClick={() => setSelectedImage(null)}>
-          <img src={selectedImage} alt="업로드 이미지 확대 보기" />
-        </div>
-      )}
-      {isCreateInspectionOpen && (
-        <InspectionCreateModal
-          form={newInspection}
-          onChange={updateNewInspection}
-          onClose={() => setIsCreateInspectionOpen(false)}
-          onSubmit={createInspectionTask}
-        />
-      )}
+      {isCreateInspectionOpen && <InspectionCreateModal form={newInspection} onChange={(field, value) => setNewInspection((current) => ({ ...current, [field]: value }))} onClose={() => setIsCreateInspectionOpen(false)} onSubmit={createInspection} />}
     </section>
   )
 }
 
 function InspectionCreateModal({ form, onChange, onClose, onSubmit }) {
-  return (
-    <div className="assignment-modal-backdrop" role="presentation" onMouseDown={onClose}>
-      <section className="assignment-modal checklist-create-modal" role="dialog" aria-modal="true" aria-labelledby="inspection-create-title" onMouseDown={(event) => event.stopPropagation()}>
-        <header>
-          <div>
-            <span>INSPECTION CREATE</span>
-            <h3 id="inspection-create-title">오늘의 점검 항목 추가</h3>
-            <p>점검 목록에 새 점검 항목을 등록합니다.</p>
-          </div>
-          <button type="button" aria-label="오늘의 점검 항목 추가 창 닫기" onClick={onClose}><CloseIcon /></button>
-        </header>
-
-        <form className="checklist-create-form" onSubmit={onSubmit}>
-          <label className="is-wide">
-            <span>점검 항목명</span>
-            <input value={form.text} onChange={(event) => onChange('text', event.target.value)} placeholder="예: 소화기 압력 게이지 점검" />
-          </label>
-          <label>
-            <span>위치</span>
-            <input value={form.location} onChange={(event) => onChange('location', event.target.value)} placeholder="예: A동 1층 복도" />
-          </label>
-          <label>
-            <span>점검일</span>
-            <input type="date" value={form.date} onChange={(event) => onChange('date', event.target.value)} />
-          </label>
-
-          <footer>
-            <span>새 항목은 점검 대기 상태로 추가됩니다.</span>
-            <div>
-              <button type="button" onClick={onClose}>취소</button>
-              <button type="submit">추가</button>
-            </div>
-          </footer>
-        </form>
-      </section>
-    </div>
-  )
-}
-
-function ImageUploadSection({ count, images, inputRef, label, onAdd, onDelete, onPreview }) {
-  return (
-    <div className="upload-section">
-      <div className="upload-label">
-        <strong>{label}</strong>
-        <span>{count}장</span>
-      </div>
-      <div className="photo-grid">
-        {images.map((image, index) => (
-          <div className="photo-preview" key={`${label}-${index}`}>
-            <button type="button" onClick={() => onPreview(image)}>
-              <img src={image} alt={`${label} ${index + 1}`} />
-            </button>
-            <button
-              className="delete-photo-button"
-              type="button"
-              aria-label="사진 삭제"
-              onClick={() => onDelete(index)}
-            >
-              <CloseIcon fontSize="inherit" />
-            </button>
-          </div>
-        ))}
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={onAdd}
-        />
-        <button className="add-photo-button" type="button" onClick={() => inputRef.current?.click()}>
-          +
-        </button>
-      </div>
-    </div>
-  )
+  return <div className="assignment-modal-backdrop" role="presentation" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}><header><div><span>INSPECTION CREATE</span><h3>점검 항목 추가</h3><p>점검 테이블에 새 항목을 등록합니다.</p></div><button type="button" aria-label="닫기" onClick={onClose}><CloseIcon /></button></header><form className="checklist-create-form" onSubmit={onSubmit}><label className="is-wide"><span>점검 이름</span><input value={form.text} onChange={(event) => onChange('text', event.target.value)} placeholder="예: 소방설비 점검" /></label><label><span>구역</span><input value={form.location} onChange={(event) => onChange('location', event.target.value)} placeholder="예: A동 1층 복도" /></label><label><span>점검 일자</span><input type="date" value={form.date} onChange={(event) => onChange('date', event.target.value)} /></label><footer><span>새 항목은 점검 대기 상태로 등록됩니다.</span><div><button type="button" onClick={onClose}>취소</button><button type="submit">추가</button></div></footer></form></section></div>
 }
 
 export default ChecklistPage

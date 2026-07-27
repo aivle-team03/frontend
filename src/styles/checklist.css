@@ -584,6 +584,95 @@
   font-weight: 900;
 }
 
+/* Inspection-to-action registration */
+.action-registration-panel,
+.action-detail-panel {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.inspection-reference-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid #dce8f3;
+  border-radius: 12px;
+  background: #f9fbfe;
+}
+
+.inspection-reference-card > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-right: 1px solid #e6edf4;
+  border-bottom: 1px solid #e6edf4;
+}
+
+.inspection-reference-card > div:nth-child(2n) { border-right: 0; }
+.inspection-reference-card > div:nth-last-child(-n + 2) { border-bottom: 0; }
+.inspection-reference-card span { color: #7d8ea2; font-size: 11px; font-weight: 800; }
+.inspection-reference-card strong { overflow: hidden; color: #314b68; font-size: 13px; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
+
+.action-registration-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.action-registration-form label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.action-registration-form label.is-wide,
+.action-registration-form .strength-submit-button,
+.action-photo-note { grid-column: 1 / -1; }
+.action-registration-form label > span { color: #536b86; font-size: 12px; font-weight: 850; }
+.action-registration-form em { color: #d35f5f; font-style: normal; }
+.action-registration-form input,
+.action-registration-form select,
+.action-registration-form textarea {
+  width: 100%;
+  min-height: 40px;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid #d7e3ef;
+  border-radius: 8px;
+  color: #334e6d;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  outline: none;
+}
+
+.action-registration-form textarea { resize: vertical; }
+.action-registration-form input:focus,
+.action-registration-form select:focus,
+.action-registration-form textarea:focus { border-color: #7fa8d8; box-shadow: 0 0 0 3px rgba(72, 125, 187, .12); }
+.action-registration-form input[readonly] { color: #71849a; background: #f5f8fb; }
+.action-photo-note { margin: -2px 0 0; color: #7d8fa3; font-size: 11px; font-weight: 700; }
+.action-registration-form .strength-submit-button { margin-top: 4px; }
+.action-already-registered { padding: 15px; border: 1px solid #b9dfcc; border-radius: 10px; color: #227554; background: #effaf4; font-size: 13px; font-weight: 800; }
+.inspection-result-actions { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 4px; }
+.inspection-result-actions button { min-height: 48px; border-radius: 10px; cursor: pointer; font: inherit; font-size: 15px; font-weight: 900; }
+.inspection-complete-button { border: 1px solid #8dbfa9; color: #237553; background: #effaf4; }
+.inspection-complete-button:hover { color: #fff; background: #27815e; }
+.action-required-button { border: 1px solid #d99b51; color: #9a5a16; background: #fff5e8; }
+.action-required-button:hover { color: #fff; background: #bc721d; }
+
+@media (max-width: 560px) {
+  .inspection-reference-card,
+  .action-registration-form { grid-template-columns: 1fr; }
+  .inspection-result-actions { grid-template-columns: 1fr; }
+  .inspection-reference-card > div { border-right: 0; }
+  .inspection-reference-card > div:not(:last-child) { border-bottom: 1px solid #e6edf4; }
+}
+
 .image-modal {
   position: fixed;
   inset: 0;
