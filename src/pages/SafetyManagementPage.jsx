@@ -56,16 +56,18 @@ function SafetyManagementPage() {
 
   const [isWorkerRoleEditMode, setIsWorkerRoleEditMode] = useState(false)
   const [users, setUsers] = useState([])
+  const [categories, setCategories] = useState([])
   const [userPage, setUserPage] = useState(1)
-  const workerCategoryOptions = ['지게차 운전자', '화물트럭 운전', '토잉카/견인차 운전자', '팔레트작업자', '적재작업자', '현장관리자','설비 유지보수 기사','재고관리자', '위험물/화학물질 관리자', '공통'  ]
-  const companyOptions = ['AIVLE_TEAM', 'KT', 'AIVLE','FRONT','BACK']
-  const companyRoleOptions = ['일반 작업자', '신규 근로자', '안전 관리자']
+  const companyRoleOptions = ['일반관리자', '관제사', '현장관리자', '일반유저']
   const [companyCodeForm, setCompanyCodeForm] = useState({
-    companyName: '',
     role: '',
+    category: '',
   })
-  const companyCode = companyCodeForm.companyName && companyCodeForm.role
-    ? `${companyCodeForm.companyName}${companyRoleOptions.indexOf(companyCodeForm.role) + 1}`
+  const isGeneralUserRole = companyCodeForm.role === '일반유저'
+
+  const categoryCode = categories.indexOf(companyCodeForm.category) + 1
+  const companyCode = companyCodeForm.role && (!isGeneralUserRole || companyCodeForm.category)
+    ? `${companyCodeForm.role}${isGeneralUserRole ? categoryCode : ''}`
     : ''
 
   const userPageSize = 8
@@ -102,10 +104,56 @@ function SafetyManagementPage() {
     fetchUserProfile()
   }, [])
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) return
+
+        
+        const response = await axios.get('http://127.0.0.1:8000/api/admin/categories', {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+
+        const categoryList = Array.isArray(response.data) ? response.data : (response.data.categories ?? [])
+        setCategories(categoryList)
+      } catch (error) {
+        console.error('카테고리 리스트 연동 실패:', error)
+      }
+    }
+
+    fetchCategories()
+  }, [])
+
+    useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) return
+
+        
+         const me = await axios.get('http://127.0.0.1:8000/api/users/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      console.log('현재 로그인 유저:', me.data)
+      console.log('현재 role:', me.data.role)
+
+   
+      } catch (error) {
+        console.error('나의 유저 위치 연동 실패:', error)
+      }
+    }
+
+    fetchCategories()
+  }, [])
+
+
   const updateUserCategory = (userUid, value) => {
     setUsers((currentUsers) => currentUsers.map((user) => (
       user.uid === userUid ? { ...user, category: value } : user
     )))
+
   }
 
   return (
@@ -167,17 +215,17 @@ function SafetyManagementPage() {
 
         <div className="company-code-grid">
           <label>
-            <span>회사명</span>
-            <select value={companyCodeForm.companyName} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, companyName: event.target.value }))}>
+            <span>role</span>
+            <select value={companyCodeForm.role} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, role: event.target.value, category: event.target.value === '일반유저' ? current.category : '' }))}>
               <option value="">선택</option>
-              {companyOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+              {companyRoleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
           <label>
-            <span>role</span>
-            <select value={companyCodeForm.role} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, role: event.target.value }))}>
+            <span>category</span>
+            <select value={companyCodeForm.category} disabled={!isGeneralUserRole} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, category: event.target.value }))}>
               <option value="">선택</option>
-              {companyRoleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+              {categories.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
           <label>
@@ -218,7 +266,7 @@ function SafetyManagementPage() {
               {isWorkerRoleEditMode ? (
                 <select value={user.category} onChange={(event) => updateUserCategory(user.uid, event.target.value)}>
                   <option value="">미지정</option>
-                  {workerCategoryOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                  {categories.map((option) => <option key={option} value={option}>{option}</option>)}
                 </select>
               ) : (
                 <input value={user.category || '미지정'} readOnly />
