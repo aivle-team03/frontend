@@ -3,12 +3,14 @@ import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined'
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined'
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded'
 import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined'
-import { useMemo, useState } from 'react'
+import { useState, useEffect } from 'react'
 import '../styles/SafetyManagementPage.css'
 import {
   getStoredSafetyRiskThreshold,
   saveSafetyRiskThreshold,
 } from '../utils/checklistStatusStorage'
+
+import axios from 'axios'
 
 const initialPolicy = {
   policy: '근로자의 생명과 건강을 최우선 가치로 두고, 모든 작업에서 위험요인을 사전에 확인하고 개선한다.',
@@ -22,20 +24,8 @@ const initialRoles = [
   { id: 3, team: '근로자', owner: '전 직원', responsibility: '위험요인 발견 시 즉시 신고하고 안전수칙 준수' },
 ]
 
-const initialWorkerRoles = [
-  { id: 1, Name: '기석', role:  '신규 근로자' },
-  { id: 2, Name: '현수', role:  '일반 작업자' },
-  { id: 3, Name: '유진', role:  '일반 작업자' },
-  { id: 4, Name: '지함', role:  '일반 작업자' },
-  { id: 5, Name: '동준', role:  '일반 작업자' },
-  { id: 6, Name: '혁재', role:  '일반 작업자' },
-  { id: 7, Name: '다현', role:  '안전 관리자' },
-  { id: 8, Name: '원제', role:  '일반 작업자' },
-  { id: 9, Name: '11', role:  '신규 근로자' },
-]
-
-
 function SafetyManagementPage() {
+  
   const [policyForm, setPolicyForm] = useState(() => ({
     ...initialPolicy,
     acceptableRisk: getStoredSafetyRiskThreshold(),
@@ -64,31 +54,59 @@ function SafetyManagementPage() {
     alert('안전보건 관리 설정이 저장되었습니다.')
   }
 
-  const [workerroles, setWorkerRoles] = useState(initialWorkerRoles)
   const [isWorkerRoleEditMode, setIsWorkerRoleEditMode] = useState(false)
-  const [workerNameFilter, setWorkerNameFilter] = useState('')
-  const [workerRoleFilter, setWorkerRoleFilter] = useState('전체')
-  const [workerPage, setWorkerPage] = useState(1)
+  const [users, setUsers] = useState([])
+  const [userPage, setUserPage] = useState(1)
+  const workerCategoryOptions = ['지게차 운전자', '화물트럭 운전', '토잉카/견인차 운전자', '팔레트작업자', '적재작업자', '현장관리자','설비 유지보수 기사','재고관리자', '위험물/화학물질 관리자', '공통'  ]
+  const companyOptions = ['AIVLE_TEAM', 'KT', 'AIVLE','FRONT','BACK']
+  const companyRoleOptions = ['일반 작업자', '신규 근로자', '안전 관리자']
+  const [companyCodeForm, setCompanyCodeForm] = useState({
+    companyName: '',
+    role: '',
+  })
+  const companyCode = companyCodeForm.companyName && companyCodeForm.role
+    ? `${companyCodeForm.companyName}${companyRoleOptions.indexOf(companyCodeForm.role) + 1}`
+    : ''
 
-  const workerRoleOptions = ['일반 작업자', '안전 관리자','신규 근로자']
-
-  const updateWorkerRole = (workerId, value) => {
-    setWorkerRoles((currentRoles) => currentRoles.map((worker) => (
-      worker.id === workerId ? { ...worker, role: value } : worker
-    )))
-  }
-
-  const filteredWorkerRoles = useMemo(() => workerroles.filter((worker) => (
-    (!workerNameFilter.trim() || worker.Name.includes(workerNameFilter.trim()))
-    && (workerRoleFilter === '전체' || worker.role === workerRoleFilter)
-  )), [workerNameFilter, workerRoleFilter, workerroles])
-
-  const workerPageSize = 8
-  const workerPageCount = Math.max(1, Math.ceil(filteredWorkerRoles.length / workerPageSize))
-  const currentWorkerPage = Math.min(workerPage, workerPageCount)
-  const pagedWorkerRoles = filteredWorkerRoles.slice((currentWorkerPage - 1) * workerPageSize, currentWorkerPage * workerPageSize)
+  const userPageSize = 8
+  const userPageCount = Math.max(1, Math.ceil(users.length / userPageSize))
+  const currentUserPage = Math.min(userPage, userPageCount)
+  const pagedUsers = users.slice((currentUserPage - 1) * userPageSize, currentUserPage * userPageSize)
 
   const riskPercent = Math.round(((policyForm.acceptableRisk - 1) / 26) * 100)
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      const response = await axios.get('http://127.0.0.1:8000/api/users', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      const userList = Array.isArray(response.data) ? response.data : (response.data.value ?? [])
+      setUsers(userList.map((user) => ({
+        uid: user.uid,
+        user_id: user.user_id,
+        name: user.name,
+        role: user.role,
+        category: user.category ?? '',
+      })))
+      setUserPage(1)
+    } catch (error) {
+      console.error('사용자 리스트 연동 실패:', error)
+    }
+    }
+
+    fetchUserProfile()
+  }, [])
+
+  const updateUserCategory = (userUid, value) => {
+    setUsers((currentUsers) => currentUsers.map((user) => (
+      user.uid === userUid ? { ...user, category: value } : user
+    )))
+  }
 
   return (
     <section className="safety-management-page" aria-label="안전보건 관리 설정">
@@ -110,6 +128,7 @@ function SafetyManagementPage() {
         </div>
       </section>
 
+   
       <section className="safety-policy-card">
         <div className="safety-card-heading safety-heading-row">
           <div>
@@ -136,55 +155,84 @@ function SafetyManagementPage() {
           ))}
         </div>
       </section>
+
+
+      <section className="safety-policy-card">
+        <div className="safety-card-heading safety-heading-row">
+          <div>
+            <span><GroupsOutlinedIcon /> COMPANY CODE</span>
+            <h2>회사 코드 생성</h2>
+          </div>
+        </div>
+
+        <div className="company-code-grid">
+          <label>
+            <span>회사명</span>
+            <select value={companyCodeForm.companyName} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, companyName: event.target.value }))}>
+              <option value="">선택</option>
+              {companyOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>role</span>
+            <select value={companyCodeForm.role} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, role: event.target.value }))}>
+              <option value="">선택</option>
+              {companyRoleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>companycode</span>
+            <input className="company-code-output" value={companyCode} readOnly />
+          </label>
+          <button className="safety-add-button company-code-create-button" type="button">
+            <AddRoundedIcon /> 생성
+          </button>
+        </div>
+      </section>
+
+
+
       <section className="safety-policy-card">
         <div className="safety-card-heading safety-heading-row">
           <div>
             <span><GroupsOutlinedIcon /> 근무자 역할</span>
-            <h2>역할 리스트 및 변경</h2>
+            <h2>유저 리스트 및 카테고리 변경</h2>
           </div>
           <button className="safety-add-button" type="button" onClick={() => setIsWorkerRoleEditMode((current) => !current)}>
-            <AddRoundedIcon /> {isWorkerRoleEditMode ? '변경 완료' : '역할 변경'}
+            <AddRoundedIcon /> {isWorkerRoleEditMode ? '변경 완료' : '카테고리 변경'}
           </button>
-        </div>
-
-        <div className="worker-role-filters">
-          <label>
-            <input value={workerNameFilter} onChange={(event) => { setWorkerNameFilter(event.target.value); setWorkerPage(1) }} placeholder="이름 검색" />
-          </label>
-          <label>
-            <select value={workerRoleFilter} onChange={(event) => { setWorkerRoleFilter(event.target.value); setWorkerPage(1) }}>
-              <option value="전체">전체</option>
-              {workerRoleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-            </select>
-          </label>
         </div>
 
         <div className="safety-role-table safety-worker-role-table">
           <div className="safety-role-head">
-
+            <span>ID</span>
             <span>이름</span>
             <span>역할</span>
+            <span>유저카테고리</span>
           </div>
-          {pagedWorkerRoles.map((role) => (
-            <div className="safety-role-row" key={role.id}>
-              <input value={role.Name} readOnly />
+          {pagedUsers.map((user) => (
+            <div className="safety-role-row" key={user.uid}>
+              <input value={user.user_id} readOnly />
+              <input value={user.name} readOnly />
+              <input value={user.role} readOnly />
               {isWorkerRoleEditMode ? (
-                <select value={role.role} onChange={(event) => updateWorkerRole(role.id, event.target.value)}>
-                  {workerRoleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                <select value={user.category} onChange={(event) => updateUserCategory(user.uid, event.target.value)}>
+                  <option value="">미지정</option>
+                  {workerCategoryOptions.map((option) => <option key={option} value={option}>{option}</option>)}
                 </select>
               ) : (
-                <input value={role.role} readOnly />
+                <input value={user.category || '미지정'} readOnly />
               )}
             </div>
           ))}
-          {!pagedWorkerRoles.length && <div className="worker-role-empty">조건에 맞는 근무자가 없습니다.</div>}
+          {!pagedUsers.length && <div className="worker-role-empty">조건에 맞는 근무자가 없습니다.</div>}
         </div>
         <div className="worker-role-pagination">
-          <span>총 {filteredWorkerRoles.length}명</span>
+          <span>총 {users.length}명</span>
           <div>
-            <button type="button" disabled={currentWorkerPage === 1} onClick={() => setWorkerPage((page) => Math.max(1, page - 1))}>이전</button>
-            <strong>{currentWorkerPage} / {workerPageCount}</strong>
-            <button type="button" disabled={currentWorkerPage === workerPageCount} onClick={() => setWorkerPage((page) => Math.min(workerPageCount, page + 1))}>다음</button>
+            <button type="button" disabled={currentUserPage === 1} onClick={() => setUserPage((page) => Math.max(1, page - 1))}>이전</button>
+            <strong>{currentUserPage} / {userPageCount}</strong>
+            <button type="button" disabled={currentUserPage === userPageCount} onClick={() => setUserPage((page) => Math.min(userPageCount, page + 1))}>다음</button>
           </div>
         </div>
       </section>
