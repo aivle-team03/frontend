@@ -191,6 +191,121 @@
   border-radius: 0;
 }
 
+.safety-worker-role-table .safety-role-head,
+.safety-worker-role-table .safety-role-row {
+  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr);
+}
+
+.safety-role-row select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 0;
+  border-right: 1px solid #e7edf5;
+  border-radius: 0;
+  outline: 0;
+  color: #243247;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.safety-role-row select:focus {
+  box-shadow: inset 0 0 0 2px rgba(57, 116, 198, .24);
+}
+
+.safety-role-row select:last-child {
+  border-right: 0;
+}
+
+.worker-role-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 22px 4px;
+}
+
+.worker-role-filters label {
+  display: grid;
+  min-width: 180px;
+  gap: 7px;
+}
+
+.worker-role-filters span {
+  color: #53647b;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.worker-role-filters input,
+.worker-role-filters select {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #dce6f2;
+  border-radius: 8px;
+  outline: 0;
+  color: #334155;
+  background: #fff;
+  font: inherit;
+  font-weight: 700;
+}
+
+.worker-role-filters input:focus,
+.worker-role-filters select:focus {
+  border-color: #8db3df;
+  box-shadow: 0 0 0 3px rgba(57, 116, 198, .12);
+}
+
+.worker-role-empty {
+  padding: 28px;
+  border: 1px solid #e7edf5;
+  border-top: 0;
+  color: #718096;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.worker-role-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 22px 22px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.worker-role-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.worker-role-pagination button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid #d4e0eb;
+  border-radius: 8px;
+  color: #286dad;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.worker-role-pagination button:hover:not(:disabled) {
+  background: #f5f9ff;
+}
+
+.worker-role-pagination button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
 .safety-risk-slider-panel {
   display: grid;
   gap: 18px;
