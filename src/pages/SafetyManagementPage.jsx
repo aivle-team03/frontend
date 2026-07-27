@@ -58,6 +58,15 @@ function SafetyManagementPage() {
   const [users, setUsers] = useState([])
   const [userPage, setUserPage] = useState(1)
   const workerCategoryOptions = ['지게차 운전자', '화물트럭 운전', '토잉카/견인차 운전자', '팔레트작업자', '적재작업자', '현장관리자','설비 유지보수 기사','재고관리자', '위험물/화학물질 관리자', '공통'  ]
+  const companyOptions = ['AIVLE_TEAM', 'KT', 'AIVLE','FRONT','BACK']
+  const companyRoleOptions = ['일반 작업자', '신규 근로자', '안전 관리자']
+  const [companyCodeForm, setCompanyCodeForm] = useState({
+    companyName: '',
+    role: '',
+  })
+  const companyCode = companyCodeForm.companyName && companyCodeForm.role
+    ? `${companyCodeForm.companyName}${companyRoleOptions.indexOf(companyCodeForm.role) + 1}`
+    : ''
 
   const userPageSize = 8
   const userPageCount = Math.max(1, Math.ceil(users.length / userPageSize))
@@ -98,6 +107,7 @@ function SafetyManagementPage() {
       user.uid === userUid ? { ...user, category: value } : user
     )))
   }
+
   return (
     <section className="safety-management-page" aria-label="안전보건 관리 설정">
       <section className="safety-policy-card">
@@ -118,6 +128,7 @@ function SafetyManagementPage() {
         </div>
       </section>
 
+   
       <section className="safety-policy-card">
         <div className="safety-card-heading safety-heading-row">
           <div>
@@ -144,6 +155,42 @@ function SafetyManagementPage() {
           ))}
         </div>
       </section>
+
+
+      <section className="safety-policy-card">
+        <div className="safety-card-heading safety-heading-row">
+          <div>
+            <span><GroupsOutlinedIcon /> COMPANY CODE</span>
+            <h2>회사 코드 생성</h2>
+          </div>
+        </div>
+
+        <div className="company-code-grid">
+          <label>
+            <span>회사명</span>
+            <select value={companyCodeForm.companyName} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, companyName: event.target.value }))}>
+              <option value="">선택</option>
+              {companyOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>role</span>
+            <select value={companyCodeForm.role} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, role: event.target.value }))}>
+              <option value="">선택</option>
+              {companyRoleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>companycode</span>
+            <input className="company-code-output" value={companyCode} readOnly />
+          </label>
+          <button className="safety-add-button company-code-create-button" type="button">
+            <AddRoundedIcon /> 생성
+          </button>
+        </div>
+      </section>
+
+
 
       <section className="safety-policy-card">
         <div className="safety-card-heading safety-heading-row">
