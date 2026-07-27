@@ -193,7 +193,7 @@
 
 .safety-worker-role-table .safety-role-head,
 .safety-worker-role-table .safety-role-row {
-  grid-template-columns: minmax(180px, 1fr) minmax(220px, 1fr);
+  grid-template-columns: minmax(130px, .9fr) minmax(160px, 1fr) minmax(180px, 1.1fr) minmax(180px, 1.1fr);
 }
 
 .safety-role-row select {
