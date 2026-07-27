@@ -9,9 +9,12 @@ import PendingActionsOutlinedIcon from '@mui/icons-material/PendingActionsOutlin
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import '../styles/checklist.css'
-import { getChecklistManagementActionQueue } from '../utils/checklistStatusStorage'
+import {
+  getStoredChecklistManagementRecords,
+  saveChecklistManagementRecords,
+} from '../utils/checklistStatusStorage'
 
 const MANAGERS = ['이안전', '김안전', '박점검', '최점검']
 const rows = [
@@ -19,13 +22,10 @@ const rows = [
 ]
 export const CHECKLIST_MANAGEMENT_MOCK_RECORDS = rows.map(([name,category,location,cycle,inspectionAssignee,actionAssignee,dateTime,progress], index) => ({ id:index+1,name,category,location,cycle,inspectionAssignee,actionAssignee,dateTime,progress }))
 const rangeText = (monthValue) => { const [year, month] = monthValue.split('-').map(Number); return `${year}. ${String(month).padStart(2,'0')}. 01 - ${year}. ${String(month).padStart(2,'0')}. ${new Date(year, month, 0).getDate()}` }
+const getInitialRecords = () => { const stored = getStoredChecklistManagementRecords(); const storedIds = new Set(stored.map((item) => String(item.id))); return [...stored, ...INITIAL.filter((item) => !storedIds.has(String(item.id)))] }
 
 function ChecklistManagementPage() {
-  const [records, setRecords] = useState(() => {
-    const queuedActions = getChecklistManagementActionQueue()
-    const queuedIds = new Set(queuedActions.map((item) => String(item.id)))
-    return [...queuedActions, ...CHECKLIST_MANAGEMENT_MOCK_RECORDS.filter((item) => !queuedIds.has(String(item.id)))]
-  })
+  const [records, setRecords] = useState(() => getInitialRecords())
   const [filters, setFilters] = useState({ query:'', category:'분류', inspection:'점검 담당자', action:'조치 담당자', status:'진행 상태' })
   const [periodMonth, setPeriodMonth] = useState('2026-07')
   const [usePeriod, setUsePeriod] = useState(false)
@@ -36,6 +36,7 @@ function ChecklistManagementPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [assignmentMode, setAssignmentMode] = useState(null)
   const [memberQuery, setMemberQuery] = useState('')
+  useEffect(() => { const syncRecords = () => setRecords(getInitialRecords()); window.addEventListener('focus', syncRecords); window.addEventListener('storage', syncRecords); return () => { window.removeEventListener('focus', syncRecords); window.removeEventListener('storage', syncRecords) } }, [])
   const changeFilter = (key, value) => { setFilters((current) => ({ ...current, [key]:value })); setPage(0) }
   const filtered = useMemo(() => records.filter((item) => (!filters.query || item.name.includes(filters.query) || item.location.includes(filters.query)) && (filters.category === '분류' || item.category === filters.category) && (filters.inspection === '점검 담당자' || item.inspectionAssignee === filters.inspection) && (filters.action === '조치 담당자' || item.actionAssignee === filters.action) && (filters.status === '진행 상태' || item.progress === filters.status) && (!usePeriod || item.dateTime.startsWith(periodMonth))), [records, filters, periodMonth, usePeriod])
   const pageCount = Math.max(1, Math.ceil(filtered.length / 8)); const active = Math.min(page, pageCount - 1); const visible = filtered.slice(active * 8, active * 8 + 8)
@@ -43,8 +44,8 @@ function ChecklistManagementPage() {
   const stats = [['전체 체크리스트', records.length, '등록된 기준 항목', ChecklistOutlinedIcon],['점검 대기', records.filter((item) => item.progress === '점검 대기').length, '점검 진행이 필요해요', PendingActionsOutlinedIcon],['조치 대기', records.filter((item) => item.progress === '조치 대기').length, '조치 등록이 필요해요', PendingActionsOutlinedIcon],['담당자 미배정', records.filter((item) => !item.inspectionAssignee).length, '빠른 배정이 필요해요', TaskAltRoundedIcon]]
   const toggle = (id) => setSelected((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current,id])
   const reset = () => { setFilters({ query:'', category:'분류', inspection:'점검 담당자', action:'조치 담당자', status:'진행 상태' }); setPeriodMonth('2026-07'); setUsePeriod(false); setPage(0) }
-  const addItem = (item) => { setRecords((current) => [{ ...item, id: Date.now() }, ...current]); setIsCreateOpen(false); setPage(0) }
-  const assignMember = (member) => { const field = assignmentMode === 'inspection' ? 'inspectionAssignee' : 'actionAssignee'; setRecords((current) => current.map((item) => selected.includes(item.id) ? { ...item, [field]: member } : item)); setSelected([]); setMemberQuery(''); setAssignmentMode(null) }
+  const addItem = (item) => { setRecords((current) => { const next = [{ ...item, id: Date.now() }, ...current]; saveChecklistManagementRecords(next); return next }); setIsCreateOpen(false); setPage(0) }
+  const assignMember = (member) => { const field = assignmentMode === 'inspection' ? 'inspectionAssignee' : 'actionAssignee'; setRecords((current) => { const next = current.map((item) => selected.includes(item.id) ? { ...item, [field]: member } : item); saveChecklistManagementRecords(next); return next }); setSelected([]); setMemberQuery(''); setAssignmentMode(null) }
   const members = MANAGERS.filter((member) => member.includes(memberQuery.trim()))
   return <section className="checklist-management-page">
     <div className="checklist-metrics">{stats.map(([label,value,note,Icon], index) => <article className={`checklist-metric metric-${index}`} key={label}><span className="metric-heading"><i><Icon /></i>{label}</span><strong>{value}<small>건</small></strong><p>{note}</p></article>)}</div>
@@ -55,7 +56,7 @@ function ChecklistManagementPage() {
     <footer className="checklist-pagination"><span>총 <strong>{filtered.length}</strong>건</span><div><button type="button" disabled={active === 0} onClick={() => setPage((current) => current - 1)}><ChevronLeftRoundedIcon /></button><b>{active + 1} / {pageCount}</b><button type="button" disabled={active === pageCount - 1} onClick={() => setPage((current) => current + 1)}><ChevronRightRoundedIcon /></button></div></footer></article>{detailItem && <ChecklistDetailModal item={detailItem} onClose={() => setDetailItem(null)} />}{isCreateOpen && <CreateModal onClose={() => setIsCreateOpen(false)} onCreate={addItem} />}{assignmentMode && <AssignmentModal mode={assignmentMode} count={selected.length} members={members} query={memberQuery} onQueryChange={setMemberQuery} onAssign={assignMember} onClose={() => { setMemberQuery(''); setAssignmentMode(null) }} />}</section>
 }
 function Filter({ value, options, onChange }) { const [isOpen, setIsOpen] = useState(false); return <div className={`management-filter-select${isOpen ? ' is-open' : ''}`}><button type="button" onClick={() => setIsOpen((open) => !open)}><span>{value}</span><ExpandMoreRoundedIcon /></button>{isOpen && <div className="management-select-menu">{options.map((option) => <button type="button" className={option === value ? 'is-selected' : ''} key={option} onClick={() => { onChange(option); setIsOpen(false) }}>{option}{option === value && <span>✓</span>}</button>)}</div>}</div> }
-function Assignee({ value }) { return value ? <span className="assignee-cell"><i>{value[0]}</i>{value}</span> : <span className="no-photo">미배정</span> }
+function Assignee({ value }) { if (!value) return <span className="no-photo">미배정</span>; if (value === '게시판') return <span className="assignee-cell is-board-source"><i>게시판</i></span>; return <span className="assignee-cell"><i>{value[0]}</i>{value}</span> }
 function Status({ value }) { return <span className={`checklist-status ${value.endsWith('완료') ? 'is-complete' : value === '조치 대기' ? 'is-pending' : 'is-progress'}`}>{value}</span> }
 function ChecklistDetailModal({ item, onClose }) { const locations = item.location.split(',').map((location) => location.trim()).filter(Boolean); const inspectionHistory = [{ date:item.dateTime, location:item.location, manager:item.inspectionAssignee || '미배정', status:item.progress.startsWith('점검') ? item.progress : '점검 완료' },{ date:'2026-07-24 09:10', location:item.location, manager:item.inspectionAssignee || '미배정', status:'점검 완료' }]; const actionHistory = item.progress.startsWith('조치') ? [{ date:item.dateTime, manager:item.actionAssignee || '미배정', status:item.progress }] : []; return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="checklist-detail-modal master-detail-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>CHECKLIST DETAIL</span><h3>{item.name}</h3><p>{item.category} · {item.cycle} 점검</p></div><button type="button" aria-label="닫기" onClick={onClose}>×</button></header><div className="master-detail-body"><section className="master-summary-grid"><div><span>점검 주기</span><strong>{item.cycle}</strong></div><div><span>일시</span><strong>{item.dateTime}</strong></div><div><span>점검 담당자</span><strong>{item.inspectionAssignee || '미배정'}</strong></div><div><span>진행 상태</span><Status value={item.progress} /></div></section><section><div className="master-section-heading"><h4>적용 구역</h4><span>{locations.length}곳</span></div><div className="master-location-list">{locations.map((location) => <span key={location}>{location}</span>)}</div></section><section><div className="master-section-heading"><h4>점검 이력</h4><span>최근 {inspectionHistory.length}건</span></div><div className="master-history-list">{inspectionHistory.map((entry, index) => <div key={`${entry.date}-${index}`}><span>{entry.date}</span><strong>{entry.location}</strong><span>{entry.manager}</span><Status value={entry.status} /></div>)}</div></section><section><div className="master-section-heading"><h4>조치 이력</h4><span>{actionHistory.length}건</span></div>{actionHistory.length ? <div className="master-history-list">{actionHistory.map((entry) => <div key={entry.date}><span>{entry.date}</span><strong>{entry.manager}</strong><span>조치 담당자</span><Status value={entry.status} /></div>)}</div> : <div className="checklist-empty">등록된 조치 이력이 없습니다.</div>}</section></div><footer><span>점검 및 조치 진행 내역을 확인합니다.</span><button type="button" onClick={onClose}>닫기</button></footer></section></div> }
 function AssignmentModal({ mode, count, members, query, onQueryChange, onAssign, onClose }) { const title = mode === 'inspection' ? '점검 담당자 배정' : '조치 담당자 배정'; return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="assignment-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ASSIGNMENT</span><h3>{title}</h3><p>선택한 {count}개 항목에 담당자를 일괄 배정합니다.</p></div><button type="button" aria-label="닫기" onClick={onClose}>×</button></header><div className="assignment-member-section"><div className="assignment-section-heading"><div><span>MANAGER LIST</span><h4>담당자 선택</h4></div><label><input value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="이름 검색" /></label></div><div className="assignment-member-list">{members.map((member) => <button type="button" className="assignment-member" key={member} onClick={() => onAssign(member)}><span className="member-avatar">{member[0]}</span><span className="member-copy"><strong>{member}</strong><small>현장 담당자</small></span><span className="member-availability is-available">배정</span></button>)}{!members.length && <p className="member-empty">검색 결과가 없습니다.</p>}</div></div><footer><span>담당자를 선택하면 즉시 배정됩니다.</span><button type="button" onClick={onClose}>닫기</button></footer></section></div> }
