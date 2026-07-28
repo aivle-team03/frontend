@@ -950,6 +950,8 @@
 }
 
 .board-report-modal {
+  display: flex;
+  flex-direction: column;
   width: min(640px, 100%);
   max-height: min(760px, calc(100vh - 48px));
   overflow: hidden;
@@ -1007,7 +1009,8 @@
 
 .board-report-form {
   display: grid;
-  max-height: calc(100vh - 140px);
+  min-height: 0;
+  flex: 1 1 auto;
   gap: 14px;
   overflow-y: auto;
   padding: 22px;

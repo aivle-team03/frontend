@@ -13,6 +13,7 @@ import '../styles/board.css'
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
 const BOARD_CATEGORIES = ['전체', '소방시설', '피난동선', '전기설비', '위험물', '기타']
+const FALLBACK_BOARD_CATEGORY_OPTIONS = BOARD_CATEGORIES.slice(1).map((name) => ({ id: null, name }))
 
 const RISK_OPTIONS = [
   { level: 'high', label: '높음' },
@@ -138,6 +139,19 @@ function formatBoardItem(item) {
   }
 }
 
+function getBoardCategoryOptions(items) {
+  const options = new Map()
+
+  items.forEach((item) => {
+    const name = item.category_name || item.category
+    const id = item.event_category_id ?? item.category_id ?? null
+
+    if (name) options.set(String(id ?? name), { id, name })
+  })
+
+  return options.size ? [...options.values()] : FALLBACK_BOARD_CATEGORY_OPTIONS
+}
+
 function createChecklistActionFromReport(report) {
   return {
     id: `board-action-${report.id}`,
@@ -170,6 +184,7 @@ function saveBoardReportToChecklistManagement(report) {
 
 function BoardPage() {
   const [reports, setReports] = useState([])
+  const [boardCategoryOptions, setBoardCategoryOptions] = useState(FALLBACK_BOARD_CATEGORY_OPTIONS)
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('전체')
   const [selectedRiskLevel, setSelectedRiskLevel] = useState('전체')
@@ -190,9 +205,11 @@ function BoardPage() {
         params: { page: 1, size: 100 },
       })
       const rawItems = response.data.items || response.data || []
+      setBoardCategoryOptions(getBoardCategoryOptions(rawItems))
       setReports([...rawItems.map(formatBoardItem), REGISTERED_BOARD_MOCK_REPORT])
     } catch (error) {
       console.error('게시글 목록 로드 실패:', error)
+      setBoardCategoryOptions(getBoardCategoryOptions(MOCK_REPORTS))
       setReports(MOCK_REPORTS)
     } finally {
       setLoading(false)
@@ -358,7 +375,7 @@ function BoardPage() {
       </div>
 
       <Filtering
-        categories={BOARD_CATEGORIES}
+        categories={['전체', ...boardCategoryOptions.map((category) => category.name)]}
         riskOptions={RISK_OPTIONS}
         selectedCategory={selectedCategory}
         selectedRiskLevel={selectedRiskLevel}
@@ -382,7 +399,7 @@ function BoardPage() {
 
       {isReportModalOpen && (
         <FormModal
-          categories={BOARD_CATEGORIES}
+          categories={boardCategoryOptions}
           riskOptions={RISK_OPTIONS}
           onClose={() => setIsReportModalOpen(false)}
           onSubmit={createReport}
