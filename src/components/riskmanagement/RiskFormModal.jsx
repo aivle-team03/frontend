@@ -45,13 +45,16 @@ function RiskFormModal({ onClose, onSubmit }) {
         <form className="risk-form" onSubmit={submitRisk}>
           <label>
             <span>유형</span>
-            <input
-              type="text"
+            <select
               value={riskForm.type}
               onChange={(event) => updateRiskForm('type', event.target.value)}
-              placeholder="예: 소방"
               required
-            />
+            >
+              <option value="">유형 선택</option>
+              {CATEGORIES.map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
           </label>
 
           <label>
