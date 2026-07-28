@@ -13,7 +13,8 @@ import '../styles/board.css'
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
 const BOARD_CATEGORIES = ['전체', '소방시설', '피난동선', '전기설비', '위험물', '기타']
-const CATEGORIES = ['소방안전', '시설안전', '산업안전','기타']
+const FALLBACK_BOARD_CATEGORY_OPTIONS = BOARD_CATEGORIES.slice(1).map((name) => ({ id: null, name }))
+
 const RISK_OPTIONS = [
   { level: 'high', label: '높음' },
   { level: 'medium', label: '보통' },
@@ -23,7 +24,6 @@ const RISK_OPTIONS = [
 const STATUS_OPTIONS = [
   { key: 'registered', label: '등록' },
   { key: 'received', label: '접수' },
-  { key: 'progress', label: '조치 중' },
   { key: 'done', label: '완료' },
   { key: 'rejected', label: '반려' },
 ]
@@ -36,7 +36,7 @@ const SUMMARY_OPTIONS = [
 ]
 
 const REGISTERED_BOARD_MOCK_REPORT = {
-  id: 'mock-registered-report',
+  id: 3,
   category: '피난동선',
   title: '비상구 앞 적치물 신고',
   description: '비상구 앞에 박스가 쌓여 있어 통행 공간 확보가 필요합니다.',
@@ -51,7 +51,6 @@ const REGISTERED_BOARD_MOCK_REPORT = {
 }
 
 const MOCK_REPORTS = [
-  REGISTERED_BOARD_MOCK_REPORT,
   {
     id: 24,
     category: '피난동선',
@@ -94,12 +93,13 @@ const MOCK_REPORTS = [
     statusKey: 'done',
     actionContent: '보관함 잠금 장치를 교체했습니다.',
   },
+  REGISTERED_BOARD_MOCK_REPORT,
 ]
 
 function getStatusKey(status) {
   if (status === '등록' || status === 'registered') return 'registered'
   if (status === '접수' || status === 'received') return 'received'
-  if (status === '조치 중' || status === '조치중' || status === 'in_progress') return 'progress'
+  if (status === '조치 중' || status === '조치중' || status === 'in_progress') return 'received'
   if (status === '조치 완료' || status === '완료' || status === 'completed') return 'done'
   if (status === '반려' || status === 'rejected') return 'rejected'
   return 'registered'
@@ -139,13 +139,27 @@ function formatBoardItem(item) {
   }
 }
 
+function getBoardCategoryOptions(items) {
+  const options = new Map()
+
+  items.forEach((item) => {
+    const name = item.category_name || item.category
+    const id = item.event_category_id ?? item.category_id ?? null
+
+    if (name) options.set(String(id ?? name), { id, name })
+  })
+
+  return options.size ? [...options.values()] : FALLBACK_BOARD_CATEGORY_OPTIONS
+}
+
 function createChecklistActionFromReport(report) {
   return {
     id: `board-action-${report.id}`,
     name: report.title,
     category: report.category,
     location: report.location,
-    cycle: '수시',
+    type: 'action',
+    cycle: null,
     inspectionAssignee: '게시판',
     actionAssignee: '',
     dateTime: `${report.reportedAt} 09:00`,
@@ -170,6 +184,7 @@ function saveBoardReportToChecklistManagement(report) {
 
 function BoardPage() {
   const [reports, setReports] = useState([])
+  const [boardCategoryOptions, setBoardCategoryOptions] = useState(FALLBACK_BOARD_CATEGORY_OPTIONS)
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('전체')
   const [selectedRiskLevel, setSelectedRiskLevel] = useState('전체')
@@ -179,7 +194,6 @@ function BoardPage() {
   const [summaryFilter, setSummaryFilter] = useState('all')
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
   const [selectedReportId, setSelectedReportId] = useState(null)
-  const [selectedReportIds, setSelectedReportIds] = useState([])
 
   const fetchBoards = useCallback(async () => {
     try {
@@ -191,9 +205,11 @@ function BoardPage() {
         params: { page: 1, size: 100 },
       })
       const rawItems = response.data.items || response.data || []
-      setReports([REGISTERED_BOARD_MOCK_REPORT, ...rawItems.map(formatBoardItem)])
+      setBoardCategoryOptions(getBoardCategoryOptions(rawItems))
+      setReports([...rawItems.map(formatBoardItem), REGISTERED_BOARD_MOCK_REPORT])
     } catch (error) {
       console.error('게시글 목록 로드 실패:', error)
+      setBoardCategoryOptions(getBoardCategoryOptions(MOCK_REPORTS))
       setReports(MOCK_REPORTS)
     } finally {
       setLoading(false)
@@ -273,35 +289,6 @@ function BoardPage() {
     return true
   }
 
-  const toggleReportSelection = (reportId) => {
-    const report = reports.find((item) => item.id === reportId)
-    if (!report || report.statusKey !== 'registered') return
-
-    setSelectedReportIds((current) => (
-      current.includes(reportId)
-        ? current.filter((id) => id !== reportId)
-        : [...current, reportId]
-    ))
-  }
-
-  const toggleVisibleReports = (checked, visibleIds) => {
-    setSelectedReportIds((current) => (
-      checked
-        ? [...new Set([...current, ...visibleIds])]
-        : current.filter((id) => !visibleIds.includes(id))
-    ))
-  }
-
-  const receiveSelectedReports = async () => {
-    const receivableIds = selectedReportIds.filter((id) => (
-      reports.some((report) => report.id === id && report.statusKey === 'registered')
-    ))
-    if (receivableIds.length === 0) return
-
-    await Promise.all(receivableIds.map((reportId) => updateReportStatus(reportId, 'received')))
-    setSelectedReportIds([])
-  }
-
   const createReport = async (reportForm) => {
     try {
       const token = localStorage.getItem('token')
@@ -355,7 +342,6 @@ function BoardPage() {
     setEndDate('2026-12-31')
     setKeyword('')
     setSummaryFilter('all')
-    setSelectedReportIds([])
   }
 
   const openReportDetail = (reportId) => setSelectedReportId(reportId)
@@ -389,7 +375,7 @@ function BoardPage() {
       </div>
 
       <Filtering
-        categories={BOARD_CATEGORIES}
+        categories={['전체', ...boardCategoryOptions.map((category) => category.name)]}
         riskOptions={RISK_OPTIONS}
         selectedCategory={selectedCategory}
         selectedRiskLevel={selectedRiskLevel}
@@ -404,24 +390,16 @@ function BoardPage() {
         onReset={resetFilters}
       />
 
-      <div className="board-bulk-toolbar">
-        <span>선택 <strong>{selectedReportIds.length}</strong>건</span>
-        <button type="button" disabled={selectedReportIds.length === 0} onClick={receiveSelectedReports}>
-          접수
-        </button>
-      </div>
-
       <ReportList
         reports={filteredReports}
-        selectedReportIds={selectedReportIds}
-        onToggleReport={toggleReportSelection}
-        onToggleVisibleReports={toggleVisibleReports}
+        statusOptions={STATUS_OPTIONS}
         onOpenReport={openReportDetail}
+        onUpdateStatus={updateReportStatus}
       />
 
       {isReportModalOpen && (
         <FormModal
-          categories={CATEGORIES}
+          categories={boardCategoryOptions}
           riskOptions={RISK_OPTIONS}
           onClose={() => setIsReportModalOpen(false)}
           onSubmit={createReport}
