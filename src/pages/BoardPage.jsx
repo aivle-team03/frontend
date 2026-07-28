@@ -13,7 +13,9 @@ import '../styles/board.css'
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
 const BOARD_CATEGORIES = ['전체', '소방시설', '피난동선', '전기설비', '위험물', '기타']
-const FALLBACK_BOARD_CATEGORY_OPTIONS = BOARD_CATEGORIES.slice(1).map((name) => ({ id: null, name }))
+const CATEGORY=['소방안전','시설안전','산업안전','기타']
+
+const FALLBACK_BOARD_CATEGORY_OPTIONS = CATEGORY.slice(0).map((name) => ({ id: null, name }))
 
 const RISK_OPTIONS = [
   { level: 'high', label: '높음' },
@@ -184,7 +186,7 @@ function saveBoardReportToChecklistManagement(report) {
 
 function BoardPage() {
   const [reports, setReports] = useState([])
-  const [boardCategoryOptions, setBoardCategoryOptions] = useState(FALLBACK_BOARD_CATEGORY_OPTIONS)
+  const [boardCategoryOptions, setBoardCategoryOptions] = useState(CATEGORY)
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('전체')
   const [selectedRiskLevel, setSelectedRiskLevel] = useState('전체')
