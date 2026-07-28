@@ -149,11 +149,24 @@ function SafetyManagementPage() {
   }, [])
 
 
-  const updateUserCategory = (userUid, value) => {
-    setUsers((currentUsers) => currentUsers.map((user) => (
-      user.uid === userUid ? { ...user, category: value } : user
-    )))
+  const updateUserCategory = async (userUid, value) => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
 
+      const response = await axios.patch(
+        `http://127.0.0.1:8000/api/admin/users/${userUid}`,
+        { category: value },
+        { headers: { Authorization: `Bearer ${token}` } },
+      )
+
+      setUsers((currentUsers) => currentUsers.map((user) => (
+        user.uid === userUid ? { ...user, category: value } : user
+      )))
+      console.log('카테고리 수정 성공:', response.data)
+    } catch (error) {
+      console.error('카테고리 수정 실패:', error)
+    }
   }
 
   return (
