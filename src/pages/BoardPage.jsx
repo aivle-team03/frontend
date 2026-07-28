@@ -13,7 +13,7 @@ import '../styles/board.css'
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
 const BOARD_CATEGORIES = ['전체', '소방시설', '피난동선', '전기설비', '위험물', '기타']
-
+const CATEGORIES = ['소방안전', '시설안전', '산업안전','기타']
 const RISK_OPTIONS = [
   { level: 'high', label: '높음' },
   { level: 'medium', label: '보통' },
@@ -421,7 +421,7 @@ function BoardPage() {
 
       {isReportModalOpen && (
         <FormModal
-          categories={BOARD_CATEGORIES}
+          categories={CATEGORIES}
           riskOptions={RISK_OPTIONS}
           onClose={() => setIsReportModalOpen(false)}
           onSubmit={createReport}
