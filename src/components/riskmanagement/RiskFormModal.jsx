@@ -7,6 +7,8 @@ const initialRiskForm = {
   severity: '1',
 }
 
+const CATEGORIES = ['소방안전', '시설안전', '산업안전','기타']
+ 
 function RiskFormModal({ onClose, onSubmit }) {
   const [riskForm, setRiskForm] = useState(initialRiskForm)
 
@@ -43,13 +45,16 @@ function RiskFormModal({ onClose, onSubmit }) {
         <form className="risk-form" onSubmit={submitRisk}>
           <label>
             <span>유형</span>
-            <input
-              type="text"
+            <select
               value={riskForm.type}
               onChange={(event) => updateRiskForm('type', event.target.value)}
-              placeholder="예: 소방"
               required
-            />
+            >
+              <option value="">유형 선택</option>
+              {CATEGORIES.map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
           </label>
 
           <label>
@@ -64,20 +69,6 @@ function RiskFormModal({ onClose, onSubmit }) {
           </label>
 
           <div className="risk-form-grid">
-            <label>
-              <span>위험도</span>
-              <select
-                value={riskForm.risk}
-                onChange={(event) => updateRiskForm('risk', event.target.value)}
-                required
-              >
-                <option value="">위험도 선택</option>
-                <option value="상">상</option>
-                <option value="중">중</option>
-                <option value="하">하</option>
-              </select>
-            </label>
-
             <label>
               <span>강도</span>
               <select

@@ -100,7 +100,7 @@ function toActionTask(record) {
     risk: record.level || '-',
     date: record.date,
     status: normalizeActionStatus(record.progress),
-    assignee: record.assignee || '미배정',
+    assignee: record.assignee || record.actionAssignee || '미배정',
     inspectionContent: record.inspectionContent || record.note || '',
     content: record.actionContent || (isCompleted ? record.note : ''),
     completed: isCompleted,
@@ -168,7 +168,7 @@ function ChecklistPage() {
         const actions = []
         response.data.forEach((item, index) => {
           const id = item.checklist_id ?? item.id ?? index
-          const isAction = item.type === '조치' || ['조치 대기', '조치 완료', '승인 대기', '승인 완료'].includes(item.status)
+          const isAction = item.type === '조치' || ['미조치', '조치 대기', '조치 중', '조치 필요', '조치 완료', '승인 대기', '승인 완료'].includes(item.status)
           const task = {
             id,
             taskKey: createKey(isAction ? 'action' : 'inspection', id),
@@ -176,10 +176,10 @@ function ChecklistPage() {
             location: item.location || (item.camera_id ? `CCTV #${item.camera_id} 구역` : '현장 구역'),
             date: item.date ? String(item.date).slice(0, 10) : today,
             inspectedAt: item.inspected_at ? String(item.inspected_at).slice(0, 10) : (item.date ? String(item.date).slice(0, 10) : today),
-            inspector: item.inspector || item.manager || '미지정',
+            inspector: item.inspector || item.manager_name || item.manager || '미지정',
           }
           if (isAction) {
-            actions.push({ ...task, inspectionRef: item.inspection_name || item.name || '점검 항목', inspectionLocation: item.location || '현장 구역', category: item.risk_category || '시설 안전', risk: item.risk_level || '-', status: item.status || '조치 대기', assignee: item.assignee || item.manager || '미지정', inspectionContent: item.inspection_content || item.content || '', content: item.action_content || '', photos: item.image_url ? [{ name: '첨부 사진', url: resolveMediaUrl(item.image_url) }] : [], completed: ['조치 완료', '승인 대기', '승인 완료'].includes(item.status) })
+            actions.push({ ...task, inspectionRef: item.inspection_name || item.name || '점검 항목', inspectionLocation: item.location || '현장 구역', category: item.risk_category || '시설 안전', risk: item.risk_level || '-', status: normalizeActionStatus(item.status), assignee: item.assignee || item.manager_name || item.manager || '미지정', inspectionContent: item.inspection_content || item.content || '', content: item.action_content || '', photos: item.image_url ? [{ name: '첨부 사진', url: resolveMediaUrl(item.image_url) }] : [], completed: ['조치 완료', '승인 대기', '승인 완료'].includes(item.status) })
           } else {
             inspections.push({ ...task, category: item.risk_category || item.category || '미분류', inspectionStatus: item.status || '점검 대기', movedToAction: Boolean(item.moved_to_action) })
           }
@@ -376,10 +376,7 @@ function ChecklistPage() {
             <button
               className={activeTaskView === 'action' ? 'is-active' : ''}
               type="button"
-              onClick={() => {
-                setActionTasks(getInitialActionTasks())
-                setActiveTaskView('action')
-              }}
+              onClick={() => setActiveTaskView('action')}
             >
               조치 목록 <span>{visibleActionCount}</span>
             </button>
