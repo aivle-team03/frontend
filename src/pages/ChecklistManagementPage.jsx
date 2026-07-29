@@ -38,7 +38,7 @@ const rangeText = (monthValue) => { const [year, month] = monthValue.split('-').
 const getInitialRecords = () => {
   const stored = getStoredChecklistManagementRecords()
   const storedIds = new Set(stored.map((item) => String(item.id)))
-  return [...stored.map(normalizeRecord), ...CHECKLIST_MANAGEMENT_MOCK_RECORDS.filter((item) => !storedIds.has(String(item.id)))]
+  return [...stored.map((item) => normalizeRecord({ ...item, dateTime: item.dateTime?.replace('T', ' ') })), ...CHECKLIST_MANAGEMENT_MOCK_RECORDS.filter((item) => !storedIds.has(String(item.id)))]
 }
 const isInspectionRecord = (item) => item.type === 'inspection' || (!item.type && item.progress.startsWith('점검'))
 
@@ -86,6 +86,7 @@ function ChecklistManagementPage() {
       progress: item.type === 'inspection' ? '점검 대기' : '조치 대기',
       inspectionHistory: [],
       actionHistory: [],
+      dateTime: item.dateTime.replace('T', ' '),
       nextDue: item.dateTime.slice(0, 10),
     }
     setRecords((current) => { const next = [savedItem, ...current]; saveChecklistManagementRecords(next); return next })
