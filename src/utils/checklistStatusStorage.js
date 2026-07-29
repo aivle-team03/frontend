@@ -1,5 +1,6 @@
 export const CHECKLIST_MANAGEMENT_RECORDS_KEY = 'boss:checklist-management-records'
 export const CHECKLIST_MANAGEMENT_ACTION_QUEUE_KEY = 'boss:checklist-management-action-queue'
+export const INSPECTION_CATALOG_RECORDS_KEY = 'boss:inspection-catalog-records'
 
 function canUseStorage() {
   return typeof window !== 'undefined' && Boolean(window.localStorage)
@@ -20,6 +21,24 @@ export function saveChecklistManagementRecords(records) {
   if (!canUseStorage()) return
 
   window.localStorage.setItem(CHECKLIST_MANAGEMENT_RECORDS_KEY, JSON.stringify(records))
+}
+
+export function getStoredInspectionCatalogRecords() {
+  if (!canUseStorage()) return []
+
+  try {
+    const records = JSON.parse(window.localStorage.getItem(INSPECTION_CATALOG_RECORDS_KEY) || '[]')
+    return Array.isArray(records) ? records : []
+  } catch {
+    return []
+  }
+}
+
+export function saveInspectionCatalogRecords(records) {
+  if (!canUseStorage()) return
+
+  window.localStorage.setItem(INSPECTION_CATALOG_RECORDS_KEY, JSON.stringify(records))
+  window.dispatchEvent(new Event('inspection-catalog-updated'))
 }
 
 export function getChecklistManagementActionQueue() {

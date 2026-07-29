@@ -4,6 +4,7 @@ import MainLayout from '../components/layout/MainLayout.jsx'
 import ActionHistoryPage from '../pages/ActionHistoryPage.jsx'
 import ChecklistPage from '../pages/ChecklistPage.jsx'
 import ChecklistManagementPage from '../pages/ChecklistManagementPage.jsx'
+import InspectionListPage from '../pages/InspectionListPage.jsx'
 import EducationPage from '../pages/EducationPage.jsx'
 import EducationManagementPage from '../pages/EducationManagementPage.jsx'
 import HomePage from '../pages/HomePage.jsx'
@@ -36,6 +37,7 @@ function AppRouter() {
             <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="checklists" element={<ChecklistPage />} />
             <Route path="checklists/management" element={<ChecklistManagementPage />} />
+            <Route path="/checklists/inspections" element={<InspectionListPage />} />
             <Route path="actions" element={<ActionHistoryPage />} />
             <Route path="law-qa" element={<LawQaPage />} />
             <Route path="education" element={<EducationPage addedCourses={addedCourses} />} />

@@ -29,6 +29,7 @@ const NOTIFICATION_STORAGE_KEY = 'boss-read-notification-ids'
 
 const extraPageTitles = {
   '/checklists/management': '체크리스트 관리',
+  '/checklists/inspections': '점검 목록',
   '/education-management': '교육 관리',
   '/risk-management': '위험도 관리',
   '/mypage': '마이페이지',
@@ -37,8 +38,9 @@ const extraPageTitles = {
 const pageHeaderMeta = {
   '/': { icon: HomeOutlinedIcon, description: '오늘의 안전 현황과 조치 상태를 확인하세요.' },
   '/monitoring': { icon: VideocamOutlinedIcon, description: '현장 CCTV와 실시간 감지 상태를 확인하세요.' },
-  '/checklists': { icon: ChecklistOutlinedIcon, title: '체크리스트 목록', description: '오늘 확인할 안전 점검 항목과 조치 상태를 살펴보세요.' },
+  '/checklists': { icon: ChecklistOutlinedIcon, title: '오늘의 할일', description: '오늘 확인할 안전 점검 항목과 조치 상태를 살펴보세요.' },
   '/checklists/management': { icon: AdminPanelSettingsOutlinedIcon, description: '현장별 체크리스트를 확인하고 담당자를 배정하세요.' },
+  '/checklists/inspections': { icon: ChecklistOutlinedIcon, description: '주기적으로 확인해야 할 주요 점검 항목을 한눈에 살펴보세요.' },
   '/actions': { icon: HistoryOutlinedIcon, description: '안전 조치 이력과 처리 상태를 확인하세요.' },
   '/law-qa': { icon: GavelOutlinedIcon, description: '산업안전 관련 법규와 관리 기준을 확인하세요.' },
   '/education': { icon: SchoolOutlinedIcon, description: '현장에 필요한 안전 교육 콘텐츠와 이수 현황을 확인하세요.' },
