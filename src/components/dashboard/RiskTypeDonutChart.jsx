@@ -36,6 +36,7 @@ function RiskTypeDonutChart({ data }) {
           </div>
         ))}
       </div>
+      
     </Box>
   )
 }

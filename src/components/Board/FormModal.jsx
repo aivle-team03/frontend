@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const initialReportForm = {
   category: '소방시설',
+  categoryId: null,
   title: '',
   description: '',
   riskLevel: '',
@@ -9,11 +10,23 @@ const initialReportForm = {
   reporter: '',
   photoName: '',
   photoUrl: '',
+  photoFile: null,
 }
 
 function FormModal({ categories, riskOptions, onClose, onSubmit }) {
   const [reportForm, setReportForm] = useState(initialReportForm)
   const reportPhotoInputRef = useRef(null)
+
+  useEffect(() => {
+    if (!categories.length) return
+
+    setReportForm((currentForm) => {
+      const selectedCategory = categories.find((category) => category.name === currentForm.category)
+      if (selectedCategory) return { ...currentForm, categoryId: selectedCategory.id }
+
+      return { ...currentForm, category: categories[0].name, categoryId: categories[0].id }
+    })
+  }, [categories])
 
   const closeModal = () => {
     if (reportForm.photoUrl) {
@@ -35,13 +48,19 @@ function FormModal({ categories, riskOptions, onClose, onSubmit }) {
       }
 
       if (!file) {
-        return { ...currentForm, photoName: '', photoUrl: '' }
+        return {
+          ...currentForm,
+          photoName: '',
+          photoUrl: '',
+          photoFile: null,
+        }
       }
 
       return {
         ...currentForm,
         photoName: file.name,
         photoUrl: URL.createObjectURL(file),
+        photoFile: file,
       }
     })
 
@@ -54,7 +73,12 @@ function FormModal({ categories, riskOptions, onClose, onSubmit }) {
         URL.revokeObjectURL(currentForm.photoUrl)
       }
 
-      return { ...currentForm, photoName: '', photoUrl: '' }
+      return {
+        ...currentForm,
+        photoName: '',
+        photoUrl: '',
+        photoFile: null,
+      }
     })
   }
 
@@ -85,12 +109,17 @@ function FormModal({ categories, riskOptions, onClose, onSubmit }) {
             <label>
               <span>카테고리</span>
               <select
-                value={reportForm.category}
-                onChange={(event) => updateReportForm('category', event.target.value)}
+                value={String(reportForm.categoryId ?? reportForm.category)}
+                onChange={(event) => {
+                  const selectedCategory = categories.find((category) => String(category.id ?? category.name) === event.target.value)
+                  if (selectedCategory) {
+                    setReportForm((currentForm) => ({ ...currentForm, category: selectedCategory.name, categoryId: selectedCategory.id }))
+                  }
+                }}
                 required
               >
-                {categories.filter((category) => category !== '전체').map((category) => (
-                  <option key={category} value={category}>{category}</option>
+                {categories.map((category) => (
+                  <option key={category.id ?? category.name} value={String(category.id ?? category.name)}>{category.name}</option>
                 ))}
               </select>
             </label>

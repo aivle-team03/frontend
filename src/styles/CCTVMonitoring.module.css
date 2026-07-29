@@ -18,14 +18,14 @@
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
 }
 
-.monitoringOverview > div,
+.monitoringOverview>div,
 .overviewStats,
 .overviewStats span {
   display: flex;
   align-items: center;
 }
 
-.monitoringOverview > div:first-child {
+.monitoringOverview>div:first-child {
   gap: 12px;
 }
 
@@ -319,7 +319,7 @@
   background: linear-gradient(0deg, rgba(3, 7, 18, 0.86), transparent);
 }
 
-.cameraFooter > span {
+.cameraFooter>span {
   display: grid;
   gap: 2px;
   color: #9aa8ba;
@@ -396,7 +396,7 @@
   background: #1e293b;
 }
 
-.videoChangeFrame > svg {
+.videoChangeFrame>svg {
   flex: 0 0 auto;
   width: 22px;
   height: 22px;
@@ -499,7 +499,7 @@
   margin: 0;
 }
 
-.eventDetail dl > div {
+.eventDetail dl>div {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -530,7 +530,7 @@
   text-align: right;
 }
 
-.eventDetail > button {
+.eventDetail>button {
   display: inline-flex;
   min-height: 36px;
   align-items: center;
@@ -547,11 +547,11 @@
   transition: background-color 150ms ease;
 }
 
-.eventDetail > button:hover {
+.eventDetail>button:hover {
   background: #0043ce;
 }
 
-.eventDetail > button svg {
+.eventDetail>button svg {
   width: 16px;
   height: 16px;
 }
@@ -568,6 +568,7 @@
 }
 
 @media (max-width: 820px) {
+
   .monitoringOverview,
   .overviewStats {
     align-items: flex-start;
@@ -596,6 +597,7 @@
 }
 
 @media (max-width: 520px) {
+
   .cctvmonitoringSection,
   .videoChange,
   .liveEvent,
@@ -610,4 +612,70 @@
     overflow: hidden;
     font-size: 0;
   }
+}
+
+.videochangedashBoard {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: 8px;
+}
+
+.videoChangeFrame {
+  position: relative;
+  width: 220px;
+  height: 125px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: #0f172a;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.videoChangeFrame:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.videoChangeFrameActive {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3) !important;
+}
+
+.miniVideoWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.videoChangeInfo {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 4px 8px;
+  background: rgba(15, 23, 42, 0.75);
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+.videoChangeInfo strong {
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.videoChangeInfo small {
+  color: #cbd5e1;
+  font-size: 10px;
 }

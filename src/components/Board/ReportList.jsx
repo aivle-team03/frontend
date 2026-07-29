@@ -1,4 +1,9 @@
-function ReportList({ reports, statusOptions, canEditStatus, onOpenReport, onUpdateStatus }) {
+function ReportList({
+  reports,
+  statusOptions,
+  onOpenReport,
+  onUpdateStatus,
+}) {
   const handleReportRowKeyDown = (event, reportId) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
@@ -22,48 +27,49 @@ function ReportList({ reports, statusOptions, canEditStatus, onOpenReport, onUpd
           </tr>
         </thead>
         <tbody>
-          {reports.map((report) => (
-            <tr
-              className="board-clickable-row"
-              key={report.id}
-              role="button"
-              tabIndex="0"
-              onClick={() => onOpenReport(report.id)}
-              onKeyDown={(event) => handleReportRowKeyDown(event, report.id)}
-            >
-              <td>{report.id}</td>
-              <td>{report.category}</td>
-              <td className="board-title-cell">
-                <strong>{report.title}</strong>
-                <span>{report.description}</span>
-              </td>
-              <td>
-                <span className={`board-risk-badge risk-${report.riskLevel}`}>{report.riskLabel}</span>
-              </td>
-              <td>{report.location}</td>
-              <td>{report.reporter}</td>
-              <td>{report.reportedAt}</td>
-              <td>
-                <label
-                  className={`board-status-select status-${report.statusKey}`}
-                  onClick={(event) => event.stopPropagation()}
-                  onKeyDown={(event) => event.stopPropagation()}
-                >
-                  <span className="sr-only">{report.title} 상태 변경</span>
-                  <select
-                    value={report.statusKey}
+          {reports.map((report, index) => {
+            return (
+              <tr
+                className="board-clickable-row"
+                key={report.id}
+                role="button"
+                tabIndex="0"
+                onClick={() => onOpenReport(report.id)}
+                onKeyDown={(event) => handleReportRowKeyDown(event, report.id)}
+              >
+                <td>{index + 1}</td>
+                <td>{report.category}</td>
+                <td className="board-title-cell">
+                  <strong>{report.title}</strong>
+                  <span>{report.description}</span>
+                </td>
+                <td>
+                  <span className={`board-risk-badge risk-${report.riskLevel}`}>{report.riskLabel}</span>
+                </td>
+                <td>{report.location}</td>
+                <td>{report.reporter}</td>
+                <td>{report.reportedAt}</td>
+                <td>
+                  <label
+                    className={`board-status-select status-${report.statusKey}`}
                     onClick={(event) => event.stopPropagation()}
-                    onChange={(event) => onUpdateStatus(report.id, event.target.value)}
-                    disabled={!canEditStatus}
+                    onKeyDown={(event) => event.stopPropagation()}
                   >
-                    {statusOptions.map((status) => (
-                      <option key={status.key} value={status.key}>{status.label}</option>
-                    ))}
-                  </select>
-                </label>
-              </td>
-            </tr>
-          ))}
+                    <span className="sr-only">{report.title} 상태 변경</span>
+                    <select
+                      value={report.statusKey}
+                      onClick={(event) => event.stopPropagation()}
+                      onChange={(event) => onUpdateStatus(report.id, event.target.value)}
+                    >
+                      {statusOptions.map((status) => (
+                        <option key={status.key} value={status.key}>{status.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                </td>
+              </tr>
+            )
+          })}
           {!reports.length && (
             <tr>
               <td className="board-empty-cell" colSpan="8">검색 조건에 맞는 신고가 없습니다.</td>

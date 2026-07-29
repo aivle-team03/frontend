@@ -57,6 +57,13 @@ function ReportDetail({ report, onClose }) {
             <p>{report.description}</p>
           </section>
 
+          {report.actionContent && (
+            <section className="board-detail-description board-detail-action-content" aria-label="조치 내용">
+              <h3>조치내용</h3>
+              <p>{report.actionContent}</p>
+            </section>
+          )}
+
           {report.photoUrl && (
             <section className="board-detail-photo" aria-label="신고 사진">
               <h3>사진</h3>

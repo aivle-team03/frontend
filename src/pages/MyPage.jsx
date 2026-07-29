@@ -8,7 +8,7 @@ import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import { useEffect, useState } from 'react'
-import { MY_PAGE_MOCK_DATA } from '../mocks/mockData.js'
+import axios from 'axios'
 import '../styles/MyPage.css'
 
 const NOTIFICATION_SETTINGS_STORAGE_KEY = 'boss-notification-settings'
@@ -29,15 +29,49 @@ function getStoredNotificationSettings() {
 }
 
 function MyPage() {
-  const { user: defaultUser, workLogs, notifications } = MY_PAGE_MOCK_DATA
-  const [user, setUser] = useState(defaultUser)
+  const [user, setUser] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [draftProfile, setDraftProfile] = useState(() => ({ name: user.name, email: user.email }))
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [profileError, setProfileError] = useState({})
   const [profileSaved, setProfileSaved] = useState(false)
   const [notificationSettings, setNotificationSettings] = useState(getStoredNotificationSettings)
-  const myLogs = workLogs.filter((log) => log.userId === user.userId)
-  const unreadNotificationCount = notifications.filter((notification) => !notification.read).length
+
+  useEffect(() => {
+    fetchMyProfile();
+  }, []);
+
+  const fetchMyProfile = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+
+      const response = await axios.get('http://127.0.0.1:8000/api/users/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const userData = response.data;
+
+      const formattedUser = {
+        name: userData.name || userData.user_id || '관리자',
+        email: userData.email || '이메일 미등록',
+        role: userData.role || '소방안전 관리자',
+        department: userData.department || '시설관리팀',
+        area: userData.area || 'A동 전체 구역',
+        unreadNotifications: userData.unread_notifications || 0
+      };
+
+      setUser(formattedUser);
+      setDraftProfile({ name: formattedUser.name, email: formattedUser.email });
+    } catch (error) {
+      console.error('내 정보 조회 실패:', error);
+      alert('사용자 정보를 불러오지 못했습니다. 로그인 상태를 확인해주세요.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -83,8 +117,8 @@ function MyPage() {
     const trimmedEmail = draftProfile.email.trim()
 
     if (!trimmedName) nextError.name = '이름을 입력해 주세요.'
-    if (!trimmedEmail) nextError.email = '이메일을 입력해 주세요.'
-    else if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) nextError.email = '이메일 형식을 확인해 주세요.'
+    // if (!trimmedEmail) nextError.email = '이메일을 입력해 주세요.'
+    // else if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) nextError.email = '이메일 형식을 확인해 주세요.'
 
     if (Object.keys(nextError).length) {
       setProfileError(nextError)
@@ -97,6 +131,14 @@ function MyPage() {
     setDraftProfile({ name: trimmedName, email: trimmedEmail })
     setIsEditingProfile(false)
     setProfileSaved(true)
+  }
+
+  if (loading) {
+    return <div className="loading-container" style={{ padding: '40px', textAlign: 'center' }}>내 정보를 불러오는 중...</div>;
+  }
+
+  if (!user) {
+    return <div className="loading-container" style={{ padding: '40px', textAlign: 'center' }}>사용자 정보를 찾을 수 없습니다.</div>;
   }
 
   return (
@@ -120,7 +162,7 @@ function MyPage() {
           <div>
             <NotificationsActiveOutlinedIcon />
             <span>새 알림</span>
-            <strong>{unreadNotificationCount}건</strong>
+            <strong>{user.unreadNotifications}건</strong>
           </div>
         </div>
       </article>
@@ -198,30 +240,10 @@ function MyPage() {
 
       <div className="my-page-content-grid">
         <article className="my-page-card notification-settings-card">
-          <div className="my-card-heading">
-            <span className="my-card-icon"><NotificationsActiveOutlinedIcon /></span>
-            <div>
-              <h3>알림 설정</h3>
-              <p>필요한 안전 알림만 선택해서 받을 수 있습니다.</p>
-            </div>
-          </div>
+
 
           <div className="notification-setting-list">
-            <label>
-              <span><strong>AI 위험 감지</strong><small>담당 구역에서 위험 요소가 감지되면 알립니다.</small></span>
-              <input type="checkbox" checked={notificationSettings.risk} onChange={() => toggleNotificationSetting('risk')} />
-              <i aria-hidden="true" />
-            </label>
-            <label>
-              <span><strong>점검 일정</strong><small>예정된 안전 점검 일정을 미리 알립니다.</small></span>
-              <input type="checkbox" checked={notificationSettings.schedule} onChange={() => toggleNotificationSetting('schedule')} />
-              <i aria-hidden="true" />
-            </label>
-            <label>
-              <span><strong>조치 완료</strong><small>담당 위험 항목의 조치 완료 결과를 알립니다.</small></span>
-              <input type="checkbox" checked={notificationSettings.completion} onChange={() => toggleNotificationSetting('completion')} />
-              <i aria-hidden="true" />
-            </label>
+          
           </div>
         </article>
 
@@ -235,16 +257,14 @@ function MyPage() {
           </div>
 
           <div className="work-log-list">
-            {myLogs.map((log) => (
-              <div className="work-log-item" key={log.id}>
-                <span className="work-log-marker" />
-                <div>
-                  <strong>{log.action}</strong>
-                  <p>{log.detail}</p>
-                  <small>{log.time}</small>
-                </div>
+            <div className="work-log-item">
+              <span className="work-log-marker" />
+              <div>
+                <strong>로그인 성공</strong>
+                <p>마이페이지 접속 완료</p>
+                <small>방금 전</small>
               </div>
-            ))}
+            </div>
           </div>
         </article>
       </div>

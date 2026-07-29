@@ -1,22 +1,227 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
 import Filtering from '../components/Board/Filtering.jsx'
 import FormModal from '../components/Board/FormModal.jsx'
 import ReportList from '../components/Board/ReportList.jsx'
 import ReportDetail from '../components/Board/ReportDetail.jsx'
-import { BOARD_MOCK_DATA } from '../mocks/mockData.js'
+import {
+  getStoredChecklistManagementRecords,
+  saveChecklistManagementRecords,
+} from '../utils/checklistStatusStorage.js'
 import '../styles/board.css'
 
+const API_BASE_URL = 'http://127.0.0.1:8000'
+
+const BOARD_CATEGORIES = ['전체', '소방시설', '피난동선', '전기설비', '위험물', '기타']
+const CATEGORY=['소방안전','시설안전','산업안전','기타']
+
+const FALLBACK_BOARD_CATEGORY_OPTIONS = CATEGORY.slice(0).map((name) => ({ id: null, name }))
+
+const RISK_OPTIONS = [
+  { level: 'high', label: '높음' },
+  { level: 'medium', label: '보통' },
+  { level: 'low', label: '낮음' },
+]
+
+const STATUS_OPTIONS = [
+  { key: 'registered', label: '등록' },
+  { key: 'received', label: '접수' },
+  { key: 'done', label: '완료' },
+  { key: 'rejected', label: '반려' },
+]
+
+const SUMMARY_OPTIONS = [
+  { key: 'all', label: '전체신고' },
+  { key: 'registered', label: '등록' },
+  { key: 'received', label: '접수' },
+  { key: 'done', label: '완료' },
+]
+
+const REGISTERED_BOARD_MOCK_REPORT = {
+  id: 3,
+  category: '피난동선',
+  title: '비상구 앞 적치물 신고',
+  description: '비상구 앞에 박스가 쌓여 있어 통행 공간 확보가 필요합니다.',
+  riskLevel: 'high',
+  riskLabel: '높음',
+  location: 'A동 2층 복도',
+  reporter: '목업신고자',
+  reportedAt: '2026-07-20',
+  status: '등록',
+  statusKey: 'registered',
+  actionContent: '',
+}
+
+const MOCK_REPORTS = [
+  {
+    id: 24,
+    category: '피난동선',
+    title: '비상구 적치물 확인 요청',
+    description: '비상구 진입로에 박스가 쌓여 있어 대피 동선 확보가 필요합니다.',
+    riskLevel: 'high',
+    riskLabel: '높음',
+    location: 'A동 2층 복도',
+    reporter: '김민수',
+    reportedAt: '2026-07-20',
+    status: '등록',
+    statusKey: 'registered',
+    actionContent: '',
+  },
+  {
+    id: 23,
+    category: '소방시설',
+    title: '소화기 위치 표시 훼손',
+    description: '소화기 표지 일부가 떨어져 위치 확인이 어렵습니다.',
+    riskLevel: 'medium',
+    riskLabel: '보통',
+    location: 'B동 1층 출입구',
+    reporter: '이서연',
+    reportedAt: '2026-07-20',
+    status: '접수',
+    statusKey: 'received',
+    actionContent: '',
+  },
+  {
+    id: 21,
+    category: '위험물',
+    title: '인화성 물질 보관함 잠금 확인',
+    description: '보관함 잠금 장치가 느슨해져 점검이 필요합니다.',
+    riskLevel: 'high',
+    riskLabel: '높음',
+    location: 'A동 1층 창고',
+    reporter: '최유진',
+    reportedAt: '2026-07-19',
+    status: '완료',
+    statusKey: 'done',
+    actionContent: '보관함 잠금 장치를 교체했습니다.',
+  },
+  REGISTERED_BOARD_MOCK_REPORT,
+]
+
+function getStatusKey(status) {
+  if (status === '등록' || status === 'registered') return 'registered'
+  if (status === '접수' || status === 'received') return 'received'
+  if (status === '조치 중' || status === '조치중' || status === 'in_progress') return 'received'
+  if (status === '조치 완료' || status === '완료' || status === 'completed') return 'done'
+  if (status === '반려' || status === 'rejected') return 'rejected'
+  return 'registered'
+}
+
+function getStatusLabel(statusKey) {
+  return STATUS_OPTIONS.find((status) => status.key === statusKey)?.label ?? '등록'
+}
+
+function getRiskLabel(level) {
+  return RISK_OPTIONS.find((risk) => risk.level === level)?.label ?? '보통'
+}
+
+function formatBoardItem(item) {
+  let photoUrl = item.image_url || item.photoUrl || ''
+  if (photoUrl && photoUrl.startsWith('/static')) {
+    photoUrl = `${API_BASE_URL}${photoUrl}`
+  }
+
+  const statusKey = getStatusKey(item.status)
+
+  return {
+    id: item.board_id || item.id,
+    category: item.category_name || item.category || '기타',
+    title: item.title || '',
+    description: item.board_contents || item.description || '',
+    riskLevel: item.risk_level || item.riskLevel || 'medium',
+    riskLabel: item.risk_label || item.riskLabel || getRiskLabel(item.risk_level || item.riskLevel || 'medium'),
+    location: item.location || '위치 미입력',
+    reporter: item.user?.name || item.author || item.reporter || '익명',
+    photoName: item.image_url || item.photoName ? '첨부 이미지.jpg' : '',
+    photoUrl,
+    reportedAt: item.created_at ? item.created_at.slice(0, 10) : item.reportedAt || new Date().toISOString().slice(0, 10),
+    status: getStatusLabel(statusKey),
+    statusKey,
+    actionContent: item.action_content || item.actionContent || '',
+  }
+}
+
+function getBoardCategoryOptions(items) {
+  const options = new Map()
+
+  items.forEach((item) => {
+    const name = item.category_name || item.category
+    const id = item.event_category_id ?? item.category_id ?? null
+
+    if (name) options.set(String(id ?? name), { id, name })
+  })
+
+  return options.size ? [...options.values()] : FALLBACK_BOARD_CATEGORY_OPTIONS
+}
+
+function createChecklistActionFromReport(report) {
+  return {
+    id: `board-action-${report.id}`,
+    name: report.title,
+    category: report.category,
+    location: report.location,
+    type: 'action',
+    cycle: null,
+    inspectionAssignee: '게시판',
+    actionAssignee: '',
+    dateTime: `${report.reportedAt} 09:00`,
+    progress: '조치 대기',
+    source: 'board',
+    sourceReportId: report.id,
+    note: report.description,
+  }
+}
+
+function saveBoardReportToChecklistManagement(report) {
+  const storedRecords = getStoredChecklistManagementRecords()
+  const checklistRecord = createChecklistActionFromReport(report)
+  const exists = storedRecords.some((record) => String(record.id) === String(checklistRecord.id))
+
+  saveChecklistManagementRecords(
+    exists
+      ? storedRecords.map((record) => (String(record.id) === String(checklistRecord.id) ? { ...record, ...checklistRecord } : record))
+      : [checklistRecord, ...storedRecords],
+  )
+}
+
 function BoardPage() {
-  const [reports, setReports] = useState(BOARD_MOCK_DATA.reports)
+  const [reports, setReports] = useState([])
+  const [boardCategoryOptions, setBoardCategoryOptions] = useState(CATEGORY)
+  const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('전체')
   const [selectedRiskLevel, setSelectedRiskLevel] = useState('전체')
-  const [startDate, setStartDate] = useState('2026-07-20')
-  const [endDate, setEndDate] = useState('2026-07-20')
+  const [startDate, setStartDate] = useState('2026-01-01')
+  const [endDate, setEndDate] = useState('2026-12-31')
   const [keyword, setKeyword] = useState('')
   const [summaryFilter, setSummaryFilter] = useState('all')
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
   const [selectedReportId, setSelectedReportId] = useState(null)
-  const canEditStatus = true
+
+  const fetchBoards = useCallback(async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const response = await axios.get(`${API_BASE_URL}/api/boards`, {
+        headers,
+        params: { page: 1, size: 100 },
+      })
+      const rawItems = response.data.items || response.data || []
+      setBoardCategoryOptions(getBoardCategoryOptions(rawItems))
+      setReports([...rawItems.map(formatBoardItem), REGISTERED_BOARD_MOCK_REPORT])
+    } catch (error) {
+      console.error('게시글 목록 로드 실패:', error)
+      setBoardCategoryOptions(getBoardCategoryOptions(MOCK_REPORTS))
+      setReports(MOCK_REPORTS)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchBoards()
+  }, [fetchBoards])
 
   const boardSummary = useMemo(() => {
     const statusCount = reports.reduce((counts, report) => ({
@@ -24,7 +229,7 @@ function BoardPage() {
       [report.statusKey]: (counts[report.statusKey] ?? 0) + 1,
     }), {})
 
-    return BOARD_MOCK_DATA.summary.map((item) => ({
+    return SUMMARY_OPTIONS.map((item) => ({
       ...item,
       value: item.key === 'all' ? reports.length : statusCount[item.key] ?? 0,
     }))
@@ -46,62 +251,106 @@ function BoardPage() {
     [reports, selectedReportId],
   )
 
-  const updateReportStatus = (reportId, statusKey) => {
-    const nextStatus = BOARD_MOCK_DATA.statusOptions.find((status) => status.key === statusKey)
-    if (!nextStatus) return
+  const updateReportStatus = async (reportId, statusKey) => {
+    const nextStatus = STATUS_OPTIONS.find((status) => status.key === statusKey)
+    if (!nextStatus) return false
 
-    setReports((currentReports) => currentReports.map((report) => (
-      report.id === reportId
-        ? { ...report, status: nextStatus.label, statusKey: nextStatus.key }
-        : report
-    )))
+    const reportToUpdate = reports.find((report) => report.id === reportId)
+    const applyLocalUpdate = (serverStatus = nextStatus.label) => {
+      const nextStatusKey = getStatusKey(serverStatus)
+      setReports((currentReports) => currentReports.map((report) => (
+        report.id === reportId
+          ? {
+              ...report,
+              status: getStatusLabel(nextStatusKey),
+              statusKey: nextStatusKey,
+            }
+          : report
+      )))
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.patch(`${API_BASE_URL}/api/boards/${reportId}/status`, { status: nextStatus.label }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      applyLocalUpdate(response.data.status)
+    } catch (error) {
+      console.error(`게시글 #${reportId} 상태 변경 실패:`, error)
+      applyLocalUpdate()
+    }
+
+    if (statusKey === 'received' && reportToUpdate) {
+      saveBoardReportToChecklistManagement({ ...reportToUpdate, status: '접수', statusKey: 'received' })
+    }
+
+    return true
+  }
+
+  const createReport = async (reportForm) => {
+    try {
+      const token = localStorage.getItem('token')
+      const formData = new FormData()
+
+      formData.append('title', reportForm.title.trim())
+      formData.append('board_contents', reportForm.description.trim())
+      formData.append('status', '등록')
+
+      if (reportForm.location) formData.append('location', reportForm.location.trim())
+      if (reportForm.categoryId) formData.append('event_category_id', reportForm.categoryId)
+      if (reportForm.photoFile instanceof File) formData.append('image', reportForm.photoFile)
+
+      await axios.post(`${API_BASE_URL}/api/boards`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+
+      alert('위험 신고가 등록되었습니다.')
+      setIsReportModalOpen(false)
+      fetchBoards()
+    } catch (error) {
+      console.error('게시글 등록 실패:', error)
+      const createdReport = {
+        id: Date.now(),
+        category: reportForm.category,
+        title: reportForm.title.trim(),
+        description: reportForm.description.trim(),
+        riskLevel: reportForm.riskLevel,
+        riskLabel: getRiskLabel(reportForm.riskLevel),
+        location: reportForm.location.trim(),
+        reporter: reportForm.reporter.trim(),
+        photoName: reportForm.photoName,
+        photoUrl: reportForm.photoUrl,
+        reportedAt: new Date().toISOString().slice(0, 10),
+        status: '등록',
+        statusKey: 'registered',
+        actionContent: '',
+      }
+      setReports((current) => [createdReport, ...current])
+      setIsReportModalOpen(false)
+    }
   }
 
   const resetFilters = () => {
     setSelectedCategory('전체')
     setSelectedRiskLevel('전체')
-    setStartDate('2026-07-20')
-    setEndDate('2026-07-20')
+    setStartDate('2026-01-01')
+    setEndDate('2026-12-31')
     setKeyword('')
     setSummaryFilter('all')
   }
 
-  const createReport = (reportForm) => {
-    const selectedRisk = BOARD_MOCK_DATA.riskOptions.find((risk) => risk.level === reportForm.riskLevel)
-    if (!selectedRisk) return
+  const openReportDetail = (reportId) => setSelectedReportId(reportId)
+  const closeReportDetail = () => setSelectedReportId(null)
 
-    const today = new Date().toISOString().slice(0, 10)
-    const nextId = Math.max(...reports.map((report) => report.id), 0) + 1
-
-    setReports((currentReports) => [
-      {
-        id: nextId,
-        category: reportForm.category,
-        title: reportForm.title.trim(),
-        description: reportForm.description.trim(),
-        riskLevel: selectedRisk.level,
-        riskLabel: selectedRisk.label,
-        location: reportForm.location.trim(),
-        reporter: reportForm.reporter.trim(),
-        photoName: reportForm.photoName,
-        photoUrl: reportForm.photoUrl,
-        reportedAt: today,
-        status: '등록',
-        statusKey: 'registered',
-      },
-      ...currentReports,
-    ])
-    setStartDate((currentStartDate) => (today < currentStartDate ? today : currentStartDate))
-    setEndDate((currentEndDate) => (today > currentEndDate ? today : currentEndDate))
-    setIsReportModalOpen(false)
-  }
-
-  const openReportDetail = (reportId) => {
-    setSelectedReportId(reportId)
-  }
-
-  const closeReportDetail = () => {
-    setSelectedReportId(null)
+  if (loading) {
+    return <div className="board-page board-loading">게시글 데이터를 불러오는 중...</div>
   }
 
   return (
@@ -128,8 +377,8 @@ function BoardPage() {
       </div>
 
       <Filtering
-        categories={BOARD_MOCK_DATA.categories}
-        riskOptions={BOARD_MOCK_DATA.riskOptions}
+        categories={['전체', ...boardCategoryOptions.map((category) => category.name)]}
+        riskOptions={RISK_OPTIONS}
         selectedCategory={selectedCategory}
         selectedRiskLevel={selectedRiskLevel}
         startDate={startDate}
@@ -145,16 +394,15 @@ function BoardPage() {
 
       <ReportList
         reports={filteredReports}
-        statusOptions={BOARD_MOCK_DATA.statusOptions}
-        canEditStatus={canEditStatus}
+        statusOptions={STATUS_OPTIONS}
         onOpenReport={openReportDetail}
         onUpdateStatus={updateReportStatus}
       />
 
       {isReportModalOpen && (
         <FormModal
-          categories={BOARD_MOCK_DATA.categories}
-          riskOptions={BOARD_MOCK_DATA.riskOptions}
+          categories={boardCategoryOptions}
+          riskOptions={RISK_OPTIONS}
           onClose={() => setIsReportModalOpen(false)}
           onSubmit={createReport}
         />

@@ -413,10 +413,20 @@
   height: 40px;
 }
 
-.profile-dropdown-overview > div {
+.profile-account-summary {
   display: grid;
   flex: 1;
   min-width: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.profile-account-summary:hover strong {
+  color: #2f64b7;
 }
 
 .profile-logout-button {
