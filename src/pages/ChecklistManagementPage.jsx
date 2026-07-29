@@ -45,6 +45,7 @@ const normalizeRecord = (record) => {
   const inspectionHistory = record.inspectionHistory || (type === 'inspection' && record.progress?.endsWith('완료') ? [{ id: `inspection-history-${record.id}`, inspectionName: record.name, location: record.location, dateTime: record.dateTime, manager: record.inspectionAssignee || '미배정', progress: '점검 완료', movedToAction: false, content: '' }] : [])
   return { ...record, name: type === 'action' ? ACTION_NAME_BY_INSPECTION[record.name] || record.name : record.name, type, nextDue, progress: isDue ? toPendingStatus(type) : record.progress, inspectionHistory, actionHistory }
 }
+// eslint-disable-next-line react-refresh/only-export-components
 export const CHECKLIST_MANAGEMENT_MOCK_RECORDS = rows.map(([name,category,location,cycle,inspectionAssignee,actionAssignee,dateTime,progress], index) => {
   const isAction = progress.startsWith('조치')
   const actionName = isAction ? ACTION_NAME_BY_INSPECTION[name] || name : name
@@ -128,6 +129,7 @@ function ChecklistManagementPage() {
           content: '',
           sourceType: item.type === 'action' ? '점검이력' : undefined,
           approvalStatus: item.type === 'action' ? '승인대기' : undefined,
+          sourceReportId: item.sourceReportId,
         }
         return { ...item, progress: toCompleteStatus(item.type), dateTime: history.dateTime, nextDue: getNextDueDate(item.cycle, completedAt), [historyKey]: [history, ...(item[historyKey] || [])] }
       })

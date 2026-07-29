@@ -12,7 +12,11 @@ import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import PieChartRoundedIcon from '@mui/icons-material/PieChartRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import { CHECKLIST_MANAGEMENT_MOCK_RECORDS } from './ChecklistManagementPage'
-import { getStoredChecklistManagementRecords } from '../utils/checklistStatusStorage'
+import {
+  getStoredChecklistManagementRecords,
+  saveBoardReportStatus,
+  saveChecklistManagementRecords,
+} from '../utils/checklistStatusStorage'
 
 function ActionHistoryPage() {
   const [loading, setLoading] = useState(false);
@@ -27,16 +31,50 @@ function ActionHistoryPage() {
   // 반려 사유 상태 관리
   const [rejectReason, setRejectReason] = useState('')
 
-  useEffect(() => {
-    loadManagementHistory()
-  }, []);
+  const updateStoredApprovalStatus = (targetRecord, approvalStatus) => {
+    const managementRecords = getStoredChecklistManagementRecords()
+    const approvedAt = new Date().toLocaleString('ko-KR')
+    saveChecklistManagementRecords(managementRecords.map((item) => ({
+      ...item,
+      actionHistory: (item.actionHistory || []).map((history) => (
+        String(history.id) === String(targetRecord.id)
+          ? {
+            ...history,
+            approvalStatus,
+            approver: '안전 관리자',
+            approvedAt,
+          }
+          : history
+      )),
+    })))
+    return approvedAt
+  }
 
-  const loadManagementHistory = () => {
+  function loadManagementHistory() {
     setLoading(true)
     const storedRecords = getStoredChecklistManagementRecords()
     const sourceRecords = storedRecords.length ? storedRecords : CHECKLIST_MANAGEMENT_MOCK_RECORDS
     const fallbackById = new Map(CHECKLIST_MANAGEMENT_MOCK_RECORDS.map((item) => [String(item.id), item]))
-    const completedRecords = sourceRecords.flatMap((item) => ((item.actionHistory?.length ? item.actionHistory : fallbackById.get(String(item.id))?.actionHistory) || []).map((history, index) => ({
+    const completedRecords = sourceRecords.flatMap((item) => {
+      const fallbackHistory = fallbackById.get(String(item.id))?.actionHistory
+      const actionHistory = item.actionHistory?.length
+        ? item.actionHistory
+        : fallbackHistory?.length
+          ? fallbackHistory
+          : item.type === 'action' && item.progress?.endsWith('완료')
+            ? [{
+              id: `management-${item.id}-0`,
+              actionName: item.name,
+              location: item.location,
+              dateTime: item.dateTime,
+              manager: item.actionAssignee || '미배정',
+              progress: '조치 완료',
+              approvalStatus: '승인대기',
+              sourceReportId: item.sourceReportId,
+            }]
+            : []
+
+      return actionHistory.map((history, index) => ({
       id: history.id || `management-${item.id}-${index}`,
       isLocalMock: true,
       completedAt: history.dateTime || item.dateTime,
@@ -48,10 +86,17 @@ function ActionHistoryPage() {
       approvalStatus: history.approvalStatus === '승인완료' ? 'approved' : history.approvalStatus === '반려' ? 'rejected' : 'pending',
       approver: history.approver || '-',
       approvedAt: history.approvedAt || '-',
-    })))
+      sourceReportId: history.sourceReportId || item.sourceReportId,
+      }))
+    })
     setRecords(completedRecords)
     setLoading(false)
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadManagementHistory()
+  }, []);
 
   // 1. 조치 이력 전용 API 호출 (/api/checklists/history)
   const fetchActionHistory = async () => {
@@ -103,8 +148,11 @@ function ActionHistoryPage() {
     if (!selectedRecord) return;
 
     if (selectedRecord.isLocalMock || String(selectedRecord.id).startsWith('management-')) {
-      const approvedAt = new Date().toLocaleString('ko-KR')
+      const approvedAt = updateStoredApprovalStatus(selectedRecord, '승인완료')
       setRecords((current) => current.map((record) => record.id === selectedRecord.id ? { ...record, approvalStatus: 'approved', approver: '안전 관리자', approvedAt } : record))
+      if (selectedRecord.sourceReportId) {
+        saveBoardReportStatus(selectedRecord.sourceReportId, { status: '완료', statusKey: 'done' })
+      }
       setSelectedRecord(null)
       return
     }
@@ -120,6 +168,9 @@ function ActionHistoryPage() {
       );
 
       alert('승인 처리가 완료되었습니다.');
+      if (selectedRecord.sourceReportId) {
+        saveBoardReportStatus(selectedRecord.sourceReportId, { status: '완료', statusKey: 'done' })
+      }
       setSelectedRecord(null);
       fetchActionHistory(); // 목록 최신화
     } catch (error) {
@@ -138,6 +189,7 @@ function ActionHistoryPage() {
     }
 
     if (selectedRecord.isLocalMock || String(selectedRecord.id).startsWith('management-')) {
+      updateStoredApprovalStatus(selectedRecord, '반려')
       setRecords((current) => current.map((record) => record.id === selectedRecord.id ? { ...record, approvalStatus: 'rejected' } : record))
       setSelectedRecord(null)
       setRejectReason('')
