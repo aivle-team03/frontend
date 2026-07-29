@@ -27,13 +27,29 @@ const getDateKey = (date = new Date()) => `${date.getFullYear()}-${String(date.g
 const getNextDueDate = (cycle, fromDate = new Date()) => { const next = new Date(fromDate); if (cycle === '매일') next.setDate(next.getDate() + 1); else if (cycle === '매주') next.setDate(next.getDate() + 7); else next.setMonth(next.getMonth() + 1); return getDateKey(next) }
 const toPendingStatus = (type) => type === 'action' ? '조치 대기' : '점검 대기'
 const toCompleteStatus = (type) => type === 'action' ? '조치 완료' : '점검 완료'
+const ACTION_NAME_BY_INSPECTION = {
+  '소화기 및 소방설비 점검': '소화기 및 소방설비 보수 조치',
+  '전기 분전반 및 차단기 점검': '전기 분전반 차단기 이상 조치',
+  '적재물 전도 위험 점검': '적재물 전도 위험 해소 조치',
+  '가스 차단 밸브 점검': '가스 차단 밸브 보수 조치',
+  '작업장 바닥 미끄럼 점검': '작업장 바닥 미끄럼 위험 조치',
+  '산업용 배터리 보관 점검': '산업용 배터리 보관 상태 개선 조치',
+  '하역장 안전 난간 점검': '하역장 안전 난간 보수 조치',
+  '휴게실 소화 설비 점검': '휴게실 소화 설비 보수 조치',
+}
 const normalizeRecord = (record) => {
   const type = record.type || (record.progress?.startsWith('조치') ? 'action' : 'inspection')
   const nextDue = record.nextDue || record.dateTime?.slice(0, 10) || getDateKey()
-  const isDue = record.progress?.endsWith('완료') && nextDue <= getDateKey()
-  return { ...record, type, nextDue, progress: isDue ? toPendingStatus(type) : record.progress, inspectionHistory: record.inspectionHistory || [], actionHistory: record.actionHistory || [] }
+  const isDue = type === 'inspection' && record.progress?.endsWith('완료') && nextDue <= getDateKey()
+  const actionHistory = record.actionHistory || (type === 'action' && record.progress?.endsWith('완료') ? [{ id: `action-history-${record.id}`, actionName: record.name, location: record.location, dateTime: record.dateTime, manager: record.actionAssignee || '미배정', progress: '조치 완료', approvalStatus: '승인대기', sourceType: '점검이력' }] : [])
+  const inspectionHistory = record.inspectionHistory || (type === 'inspection' && record.progress?.endsWith('완료') ? [{ id: `inspection-history-${record.id}`, inspectionName: record.name, location: record.location, dateTime: record.dateTime, manager: record.inspectionAssignee || '미배정', progress: '점검 완료', movedToAction: false, content: '' }] : [])
+  return { ...record, name: type === 'action' ? ACTION_NAME_BY_INSPECTION[record.name] || record.name : record.name, type, nextDue, progress: isDue ? toPendingStatus(type) : record.progress, inspectionHistory, actionHistory }
 }
-export const CHECKLIST_MANAGEMENT_MOCK_RECORDS = rows.map(([name,category,location,cycle,inspectionAssignee,actionAssignee,dateTime,progress], index) => normalizeRecord({ id:index+1,name,category,location,cycle,inspectionAssignee,actionAssignee,dateTime,progress, nextDue: dateTime.slice(0, 10) }))
+export const CHECKLIST_MANAGEMENT_MOCK_RECORDS = rows.map(([name,category,location,cycle,inspectionAssignee,actionAssignee,dateTime,progress], index) => {
+  const isAction = progress.startsWith('조치')
+  const actionName = isAction ? ACTION_NAME_BY_INSPECTION[name] || name : name
+  return normalizeRecord({ id:index+1,name:actionName,category,location,cycle:isAction ? null : cycle,inspectionAssignee,actionAssignee,dateTime,progress, type:isAction ? 'action' : 'inspection', nextDue:isAction ? null : dateTime.slice(0, 10) })
+})
 const rangeText = (monthValue) => { const [year, month] = monthValue.split('-').map(Number); return `${year}. ${String(month).padStart(2,'0')}. 01 - ${year}. ${String(month).padStart(2,'0')}. ${new Date(year, month, 0).getDate()}` }
 const getInitialRecords = () => {
   const stored = getStoredChecklistManagementRecords()

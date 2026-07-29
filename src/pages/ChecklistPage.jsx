@@ -154,6 +154,7 @@ function ChecklistPage() {
   const [actionPhotoFilesByTask, setActionPhotoFilesByTask] = useState({})
   const [previewPhoto, setPreviewPhoto] = useState(null)
   const actionPhotoInputRef = useRef(null)
+  const isApiActionTasksLoaded = useRef(false)
 
   useEffect(() => {
     const fetchChecklists = async () => {
@@ -185,7 +186,7 @@ function ChecklistPage() {
           }
         })
         if (inspections.length) setInspectionTasks(inspections)
-        if (actions.length) setActionTasks(actions)
+        if (actions.length) { setActionTasks(actions); isApiActionTasksLoaded.current = true }
       } catch (error) {
         console.warn('체크리스트 API 조회에 실패해 기존 데이터를 표시합니다.', error)
       }
@@ -195,6 +196,7 @@ function ChecklistPage() {
 
   useEffect(() => {
     const syncAssignedActions = () => {
+      if (isApiActionTasksLoaded.current) return
       const managementActions = getStoredChecklistManagementRecords()
         .filter((record) => ['조치 대기', '조치 완료'].includes(record.progress))
         .map(toActionTask)
