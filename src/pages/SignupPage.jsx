@@ -21,6 +21,7 @@ function SignupPage() {
     const [name, setName] = useState('');
     const [companyCode, setCompanyCode] = useState('');
     const [role, setRole] = useState('field_worker');
+    const [category, setCategory] = useState('');
     const [message, setMessage] = useState('');
     const [isError, setIsError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -83,6 +84,7 @@ function SignupPage() {
                     password: pw,
                     name: name,
                     role: role,
+                    category: category,
                     company_code: companyCode
                 }),
             });
@@ -178,8 +180,8 @@ function SignupPage() {
                     <div className="select-wrapper">
                         <label className="label">역할 설정</label>
                         <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
                             className="select"
                             disabled={isLoading}
                         >

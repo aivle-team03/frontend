@@ -17,14 +17,15 @@ function SafetyManagementPage() {
   const [userPage, setUserPage] = useState(1)
   const companyRoleOptions = ['일반관리자', '관제사', '현장관리자', '일반유저']
   const [companyCodeForm, setCompanyCodeForm] = useState({
+    companyName: '',
     role: '',
-    category: '',
   })
-  const isGeneralUserRole = companyCodeForm.role === '일반유저'
 
-  const categoryCode = categories.indexOf(companyCodeForm.category) + 1
-  const companyCode = companyCodeForm.role && (!isGeneralUserRole || companyCodeForm.category)
-    ? `${companyCodeForm.role}${isGeneralUserRole ? categoryCode : ''}`
+  const roleCode = companyRoleOptions.includes(companyCodeForm.role)
+    ? String(companyRoleOptions.indexOf(companyCodeForm.role) + 1).padStart(2, '0')
+    : ''
+  const companyCode = companyCodeForm.companyName.trim() && roleCode
+    ? `${companyCodeForm.companyName.trim()}${roleCode}`
     : ''
 
   const userPageSize = 8
@@ -136,17 +137,14 @@ function SafetyManagementPage() {
 
         <div className="company-code-grid">
           <label>
-            <span>role</span>
-            <select value={companyCodeForm.role} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, role: event.target.value, category: event.target.value === '일반유저' ? current.category : '' }))}>
-              <option value="">선택</option>
-              {companyRoleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
-            </select>
+            <span>회사명</span>
+            <input value={companyCodeForm.companyName} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, companyName: event.target.value }))} placeholder="회사명 입력" />
           </label>
           <label>
-            <span>category</span>
-            <select value={companyCodeForm.category} disabled={!isGeneralUserRole} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, category: event.target.value }))}>
+            <span>role</span>
+            <select value={companyCodeForm.role} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, role: event.target.value }))}>
               <option value="">선택</option>
-              {categories.map((option) => <option key={option} value={option}>{option}</option>)}
+              {companyRoleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
           <label>
