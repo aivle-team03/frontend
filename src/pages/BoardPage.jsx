@@ -95,6 +95,52 @@ const MOCK_REPORTS = [
     statusKey: 'done',
     actionContent: '보관함 잠금 장치를 교체했습니다.',
   },
+
+  
+  {
+    id: 60,
+    category: '소방안전',
+    title: '인화성 물질 보관함 잠금 확인',
+    description: '보관함 잠금 장치가 느슨해져 점검이 필요합니다.',
+    riskLevel: 'high',
+    riskLabel: '높음',
+    location: 'A동 1층 창고',
+    reporter: '최유진',
+    reportedAt: '2026-07-19',
+    status: '완료',
+    statusKey: 'done',
+    actionContent: '보관함 잠금 장치를 교체했습니다.',
+  },
+
+  {
+    id: 61,
+    category: '시설안전',
+    title: '인화성 물질 보관함 잠금 확인',
+    description: '보관함 잠금 장치가 느슨해져 점검이 필요합니다.',
+    riskLevel: 'high',
+    riskLabel: '높음',
+    location: 'A동 1층 창고',
+    reporter: '최유진',
+    reportedAt: '2026-07-19',
+    status: '완료',
+    statusKey: 'done',
+    actionContent: '보관함 잠금 장치를 교체했습니다.',
+  },
+
+  {
+    id: 62,
+    category: '산업안전',
+    title: '인화성 물질 보관함 잠금 확인',
+    description: '보관함 잠금 장치가 느슨해져 점검이 필요합니다.',
+    riskLevel: 'high',
+    riskLabel: '높음',
+    location: 'A동 1층 창고',
+    reporter: '최유진',
+    reportedAt: '2026-07-19',
+    status: '완료',
+    statusKey: 'done',
+    actionContent: '보관함 잠금 장치를 교체했습니다.',
+  },
   REGISTERED_BOARD_MOCK_REPORT,
 ]
 
