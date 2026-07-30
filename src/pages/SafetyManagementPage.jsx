@@ -15,7 +15,7 @@ function SafetyManagementPage() {
   const [users, setUsers] = useState([])
   const [categories, setCategories] = useState([])
   const [userPage, setUserPage] = useState(1)
-  const companyRoleOptions = ['일반관리자', '관제사', '현장관리자', '일반유저']
+  const companyRoleOptions = ['안전관리자', '관제사', '현장관리자', '일반유저']
   const [companyCodeForm, setCompanyCodeForm] = useState({
     companyName: '',
     role: '',
@@ -105,19 +105,19 @@ function SafetyManagementPage() {
   }, [])
 
 
-  const updateUserCategory = async (userUid, value) => {
+  const updateUserCategory = async (userUid, field, value) => {
     try {
       const token = localStorage.getItem('token')
       if (!token) return
 
       const response = await axios.patch(
         `http://127.0.0.1:8000/api/admin/users/${userUid}`,
-        { category: value },
+        { [field]: value },
         { headers: { Authorization: `Bearer ${token}` } },
       )
 
       setUsers((currentUsers) => currentUsers.map((user) => (
-        user.uid === userUid ? { ...user, category: value } : user
+        user.uid === userUid ? { ...user, [field]: value } : user
       )))
       console.log('카테고리 수정 성공:', response.data)
     } catch (error) {
@@ -166,7 +166,7 @@ function SafetyManagementPage() {
             <h2>유저 리스트 및 카테고리 변경</h2>
           </div>
           <button className="safety-add-button" type="button" onClick={() => setIsWorkerRoleEditMode((current) => !current)}>
-            <AddRoundedIcon /> {isWorkerRoleEditMode ? '변경 완료' : '카테고리 변경'}
+            <AddRoundedIcon /> {isWorkerRoleEditMode ? '변경 완료' : '역할/카테고리 변경'}
           </button>
         </div>
 
@@ -181,9 +181,16 @@ function SafetyManagementPage() {
             <div className="safety-role-row" key={user.uid}>
               <input value={user.user_id} readOnly />
               <input value={user.name} readOnly />
-              <input value={user.role} readOnly />
               {isWorkerRoleEditMode ? (
-                <select value={user.category} onChange={(event) => updateUserCategory(user.uid, event.target.value)}>
+                <select value={user.role} onChange={(event) => updateUserCategory(user.uid, 'role', event.target.value)}>
+                  <option value="">선택</option>
+                  {companyRoleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
+              ) : (
+                <input value={user.role} readOnly />
+              )}
+              {isWorkerRoleEditMode ? (
+                <select value={user.category} onChange={(event) => updateUserCategory(user.uid, 'category', event.target.value)}>
                   <option value="">미지정</option>
                   {categories.map((option) => <option key={option} value={option}>{option}</option>)}
                 </select>
@@ -203,12 +210,6 @@ function SafetyManagementPage() {
           </div>
         </div>
       </section>
-
-      <div className="safety-page-actions">
-        <button type="button" onClick={saveSettings}>
-          <SaveRoundedIcon /> 저장
-        </button>
-      </div>
     </section>
   )
 }
