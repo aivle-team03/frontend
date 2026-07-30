@@ -15,16 +15,17 @@ function SafetyManagementPage() {
   const [users, setUsers] = useState([])
   const [categories, setCategories] = useState([])
   const [userPage, setUserPage] = useState(1)
-  const companyRoleOptions = ['일반관리자', '관제사', '현장관리자', '일반유저']
+  const companyRoleOptions = ['안전관리자', '관제사', '현장관리자', '일반유저']
   const [companyCodeForm, setCompanyCodeForm] = useState({
     role: '',
     category: '',
   })
-  const isGeneralUserRole = companyCodeForm.role === '일반유저'
 
-  const categoryCode = categories.indexOf(companyCodeForm.category) + 1
-  const companyCode = companyCodeForm.role && (!isGeneralUserRole || companyCodeForm.category)
-    ? `${companyCodeForm.role}${isGeneralUserRole ? categoryCode : ''}`
+  const roleCode = companyRoleOptions.includes(companyCodeForm.role)
+    ? String(companyRoleOptions.indexOf(companyCodeForm.role) + 1).padStart(2, '0')
+    : ''
+  const companyCode = companyCodeForm.companyName.trim() && roleCode
+    ? `${companyCodeForm.companyName.trim()}${roleCode}`
     : ''
 
   const userPageSize = 8
@@ -38,7 +39,7 @@ function SafetyManagementPage() {
       const token = localStorage.getItem('token')
       if (!token) return
 
-      const response = await axios.get('http://127.0.0.1:8000/api/users', {
+      const response = await axios.get('http://127.0.0.1:8000/api/admin/users', {
         headers: { Authorization: `Bearer ${token}` },
       })
 
@@ -104,19 +105,20 @@ function SafetyManagementPage() {
   }, [])
 
 
-  const updateUserCategory = async (userUid, value) => {
+  const updateUserCategory = async (userUid, field, value) => {
     try {
       const token = localStorage.getItem('token')
       if (!token) return
 
+      const nextValue = field === 'category' && value === '' ? '미지정' : value
       const response = await axios.patch(
         `http://127.0.0.1:8000/api/admin/users/${userUid}`,
-        { category: value },
+        { [field]: nextValue },
         { headers: { Authorization: `Bearer ${token}` } },
       )
 
       setUsers((currentUsers) => currentUsers.map((user) => (
-        user.uid === userUid ? { ...user, category: value } : user
+        user.uid === userUid ? { ...user, [field]: nextValue } : user
       )))
       console.log('카테고리 수정 성공:', response.data)
     } catch (error) {
@@ -137,14 +139,14 @@ function SafetyManagementPage() {
         <div className="company-code-grid">
           <label>
             <span>role</span>
-            <select value={companyCodeForm.role} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, role: event.target.value, category: event.target.value === '일반유저' ? current.category : '' }))}>
+            <select value={companyCodeForm.role} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, role: event.target.value }))}>
               <option value="">선택</option>
               {companyRoleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
           <label>
-            <span>category</span>
-            <select value={companyCodeForm.category} disabled={!isGeneralUserRole} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, category: event.target.value }))}>
+            <span>Category</span>
+            <select value={companyCodeForm.category} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, category: event.target.value }))}>
               <option value="">선택</option>
               {categories.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
@@ -168,7 +170,7 @@ function SafetyManagementPage() {
             <h2>유저 리스트 및 카테고리 변경</h2>
           </div>
           <button className="safety-add-button" type="button" onClick={() => setIsWorkerRoleEditMode((current) => !current)}>
-            <AddRoundedIcon /> {isWorkerRoleEditMode ? '변경 완료' : '카테고리 변경'}
+            <AddRoundedIcon /> {isWorkerRoleEditMode ? '변경 완료' : '역할/카테고리 변경'}
           </button>
         </div>
 
@@ -183,9 +185,16 @@ function SafetyManagementPage() {
             <div className="safety-role-row" key={user.uid}>
               <input value={user.user_id} readOnly />
               <input value={user.name} readOnly />
-              <input value={user.role} readOnly />
               {isWorkerRoleEditMode ? (
-                <select value={user.category} onChange={(event) => updateUserCategory(user.uid, event.target.value)}>
+                <select value={user.role} onChange={(event) => updateUserCategory(user.uid, 'role', event.target.value)}>
+                  <option value="">선택</option>
+                  {companyRoleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+                </select>
+              ) : (
+                <input value={user.role} readOnly />
+              )}
+              {isWorkerRoleEditMode ? (
+                <select value={user.category === '미지정' ? '' : (user.category ?? '')} onChange={(event) => updateUserCategory(user.uid, 'category', event.target.value)}>
                   <option value="">미지정</option>
                   {categories.map((option) => <option key={option} value={option}>{option}</option>)}
                 </select>
@@ -205,12 +214,6 @@ function SafetyManagementPage() {
           </div>
         </div>
       </section>
-
-      <div className="safety-page-actions">
-        <button type="button" onClick={saveSettings}>
-          <SaveRoundedIcon /> 저장
-        </button>
-      </div>
     </section>
   )
 }

@@ -8,6 +8,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
 import axios from 'axios'
 import { useEffect, useMemo, useState } from 'react'
 import '../styles/checklist.css'
+import { BASE_INSPECTION_RECORDS } from './InspectionListPage'
 import {
   getStoredChecklistManagementRecords,
   saveChecklistManagementRecords,
@@ -98,7 +99,8 @@ const getInitialRecords = () => {
 const isInspectionRecord = (item) => getRecordType(item) === 'inspection'
 
 function ChecklistManagementPage() {
-  const [records, setRecords] = useState(() => getInitialRecords())
+//const [records, setRecords] = useState(() => getInitialRecords())   -   localStorage/목업을 넣으면 실제 DB 데이터가 표시되기 전 잠깐 목업 목록이 나올 수 있음
+  const [records, setRecords] = useState([])
   const [filters, setFilters] = useState({ query:'', category:'분류', status:'진행 상태' })
   const [recordTypeFilter, setRecordTypeFilter] = useState('inspection')
   const [dateOffsetFilter, setDateOffsetFilter] = useState('all')
@@ -110,15 +112,66 @@ function ChecklistManagementPage() {
   const [memberQuery, setMemberQuery] = useState('')
   const [managerOptions, setManagerOptions] = useState([])
   const [cctvs, setCctvs] = useState([])
-  useEffect(() => { const syncRecords = () => setRecords(getInitialRecords()); window.addEventListener('focus', syncRecords); window.addEventListener('storage', syncRecords); return () => { window.removeEventListener('focus', syncRecords); window.removeEventListener('storage', syncRecords) } }, [])
+  useEffect(() => {
+    const loadRecords = async () => {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined
+
+      try {
+        const [inspectionResponse, actionResponse] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/inspection/histories/all`, { headers }),
+          axios.get(`${API_BASE_URL}/api/action-histories`, { headers }),
+        ])
+        const inspectionHistories = Array.isArray(inspectionResponse.data) ? inspectionResponse.data : []
+        const actions = Array.isArray(actionResponse.data?.items) ? actionResponse.data.items : []
+        const inspectionRecords = inspectionHistories
+          .filter((item) => !item.is_action_required)
+          .map((item) => normalizeRecord({
+            id: `inspection-${item.inspection_history_id}`,
+            rawId: item.inspection_history_id,
+            sourceKind: 'inspection',
+            name: item.name || '점검 이력',
+            category: item.category_name || '기타',
+            location: item.location || '구역 미지정',
+            cycle: '정기',
+            inspectionAssignee: item.user_name || '',
+            actionAssignee: '',
+            dateTime: String(item.date || '').replace('T', ' ').slice(0, 16),
+            progress: item.status || '점검 대기',
+            type: 'inspection',
+          }))
+        const actionRecords = actions.map((item) => normalizeRecord({
+          id: `action-${item.action_history_id}`,
+          rawId: item.action_history_id,
+          sourceKind: 'action',
+          name: item.action_name || '조치 이력',
+          category: item.category_name || item.category || '기타',
+          location: item.location || '구역 미지정',
+          cycle: '수시',
+          inspectionAssignee: item.approver_name || '',
+          actionAssignee: item.handler_name || '',
+          dateTime: String(item.created_at || '').replace('T', ' ').slice(0, 16),
+          progress: item.action_status || '조치 대기',
+          type: 'action',
+        }))
+        setRecords([...inspectionRecords, ...actionRecords])
+      } catch (error) {
+        console.warn('체크리스트 이력을 불러오지 못했습니다.', error)
+      }
+    }
+    loadRecords()
+  }, [])
   useEffect(() => {
     const loadOptions = async () => {
       try {
+        const token = localStorage.getItem('token')
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined
         const [managerResponse, cctvResponse] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/checklists/managers`, { params: { keyword: '' } }),
+          axios.get(`${API_BASE_URL}/api/action-histories/handlers`, { headers }),
           axios.get(`${API_BASE_URL}/api/cctvs`),
         ])
-        setManagerOptions((managerResponse.data || []).map((manager) => ({ name: manager.name, userId: manager.user_id })))
+        const managerItems = Array.isArray(managerResponse.data?.items) ? managerResponse.data.items : []
+        setManagerOptions(managerItems.map((manager) => ({ name: manager.name, userId: manager.uid })))
         setCctvs(cctvResponse.data || [])
       } catch (error) {
         console.warn('체크리스트 등록 옵션을 불러오지 못했습니다.', error)
@@ -206,18 +259,20 @@ function ChecklistManagementPage() {
     const field = assignmentMode === 'inspection' ? 'inspectionAssignee' : 'actionAssignee'
     const targetRecords = records.filter((item) => selected.includes(item.id))
     try {
-      await Promise.all(targetRecords.filter((item) => item.databaseId).map((item) => axios.patch(`${API_BASE_URL}/api/checklists/${item.databaseId}/assign`, { user_id: member.userId })))
-      setRecords((current) => { const next = current.map((item) => {
-        if (!selected.includes(item.id)) return item
-        if (field === 'inspectionAssignee') {
-          const dueDateTime = getInspectionDueDate(item)
-          return { ...item, [field]: member.name, dateTime: dueDateTime, nextDue: dueDateTime.slice(0, 10) }
-        }
-        return { ...item, [field]: member.name }
-      }); saveChecklistManagementRecords(next); return next })
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined
+      if (assignmentMode === 'inspection') {
+        await Promise.all(targetRecords
+          .filter((item) => item.sourceKind === 'inspection' && item.rawId)
+          .map((item) => axios.patch(`${API_BASE_URL}/api/inspection/histories/${item.rawId}`, { uid: member.userId }, { headers })))
+      } else {
+        const actionIds = targetRecords.filter((item) => item.sourceKind === 'action' && item.rawId).map((item) => item.rawId)
+        if (actionIds.length) await axios.patch(`${API_BASE_URL}/api/action-histories/assignments`, { action_history_ids: actionIds, handler_uid: member.userId }, { headers })
+      }
+      setRecords((current) => current.map((item) => selected.includes(item.id) ? { ...item, [field]: member.name } : item))
       setSelected([]); setMemberQuery(''); setAssignmentMode(null)
     } catch (error) {
-      console.error('체크리스트 담당자 DB 배정 실패:', error)
+      console.error('담당자 DB 배정 실패:', error)
       alert('담당자 배정에 실패했습니다.')
     }
   }
@@ -231,8 +286,10 @@ function ChecklistManagementPage() {
 }
 function Filter({ value, options, onChange }) { const [isOpen, setIsOpen] = useState(false); return <div className={`management-filter-select${isOpen ? ' is-open' : ''}`}><button type="button" onClick={() => setIsOpen((open) => !open)}><span>{value}</span><ExpandMoreRoundedIcon /></button>{isOpen && <div className="management-select-menu">{options.map((option) => <button type="button" className={option === value ? 'is-selected' : ''} key={option} onClick={() => { onChange(option); setIsOpen(false) }}>{option}{option === value && <span>✓</span>}</button>)}</div>}</div> }
 function Assignee({ value }) { if (!value) return <span className="no-photo">미배정</span>; if (value === '게시판') return <span className="assignee-cell is-board-source"><i>게시판</i></span>; return <span className="assignee-cell"><i>{value[0]}</i>{value}</span> }
-function Status({ value }) { return <span className={`checklist-status ${value.endsWith('완료') ? 'is-complete' : value === '조치 대기' ? 'is-pending' : 'is-progress'}`}>{value}</span> }
+function Status({ value = '' }) { return <span className={`checklist-status ${value.endsWith('완료') ? 'is-complete' : value === '조치 대기' ? 'is-pending' : 'is-progress'}`}>{value || '-'}</span> }
 function ChecklistDetailModal({ item, onCycleChange, onClose }) {
+  const inspectionCycle = item.cycle || '수시'
+  const inspectionContent = item.content || '-'
   const locations = item.location.split(',').map((location) => location.trim()).filter(Boolean)
   const isInspection = isInspectionRecord(item)
   const inspectionHistory = (item.inspectionHistory || []).map((entry) => ({
@@ -247,16 +304,10 @@ function ChecklistDetailModal({ item, onCycleChange, onClose }) {
     status: entry.status || entry.progress || item.progress,
   }))
 
-  return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="checklist-detail-modal master-detail-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>CHECKLIST DETAIL</span><h3>{item.name}</h3><p>{isInspection ? `${item.category} · ${item.cycle} 점검` : `${item.category} · 조치 항목`}</p></div><button type="button" aria-label="닫기" onClick={onClose}>×</button></header><div className="master-detail-body"><section className="master-summary-grid">{isInspection && <div><span>점검 주기</span><select className="detail-cycle-select" aria-label="점검 주기" value={item.cycle} onChange={(event) => onCycleChange(item.id, event.target.value)}><option>매일</option><option>매주</option><option>매월</option></select></div>}<div><span>일시</span><strong>{item.dateTime}</strong></div><div><span>점검 담당자</span><strong>{item.inspectionAssignee || '미배정'}</strong></div><div><span>진행 상태</span><Status value={item.progress} /></div></section><section><div className="master-section-heading"><h4>적용 구역</h4><span>{locations.length}곳</span></div><div className="master-location-list">{locations.map((location) => <span key={location}>{location}</span>)}</div></section><section><div className="master-section-heading"><h4>점검 이력</h4><span>최근 {inspectionHistory.length}건</span></div><div className="master-history-list">{inspectionHistory.map((entry, index) => <div key={`${entry.date}-${index}`}><span>{entry.date}</span><strong>{entry.location}</strong><span>{entry.manager}</span><Status value={entry.status} /></div>)}</div></section><section><div className="master-section-heading"><h4>조치 이력</h4><span>{actionHistory.length}건</span></div>{actionHistory.length ? <div className="master-history-list">{actionHistory.map((entry) => <div key={entry.date}><span>{entry.date}</span><strong>{entry.manager}</strong><span>조치 담당자</span><Status value={entry.status} /></div>)}</div> : <div className="checklist-empty">등록된 조치 이력이 없습니다.</div>}</section></div><footer><span>점검 및 조치 진행 내역을 확인합니다.</span><button type="button" onClick={onClose}>닫기</button></footer></section></div>
+  return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="checklist-detail-modal master-detail-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>CHECKLIST DETAIL</span><h3>{item.name}</h3><p>{isInspection ? `${item.category} · ${item.cycle} 점검` : `${item.category} · 조치 항목`}</p></div><button type="button" aria-label="닫기" onClick={onClose}>×</button></header><div className="master-detail-body"><section className="master-summary-grid"><div><span>점검 주기</span><strong>{inspectionCycle}</strong></div><div><span>일시</span><strong>{item.dateTime}</strong></div><div><span>점검 담당자</span><strong>{item.inspectionAssignee || '미배정'}</strong></div><div><span>진행 상태</span><Status value={item.progress} /></div></section><section className="master-info-grid"><div className="is-wide"><span>내용</span><p>{inspectionContent}</p></div></section><section><div className="master-section-heading"><h4>적용 구역</h4><span>{locations.length}곳</span></div><div className="master-location-list">{locations.map((location) => <span key={location}>{location}</span>)}</div></section><section><div className="master-section-heading"><h4>점검 이력</h4><span>최근 {inspectionHistory.length}건</span></div><div className="master-history-list">{inspectionHistory.map((entry, index) => <div key={`${entry.date}-${index}`}><span>{entry.date}</span><strong>{entry.location}</strong><span>{entry.manager}</span><Status value={entry.status} /></div>)}</div></section><section><div className="master-section-heading"><h4>조치 이력</h4><span>{actionHistory.length}건</span></div>{actionHistory.length ? <div className="master-history-list">{actionHistory.map((entry) => <div key={entry.date}><span>{entry.date}</span><strong>{entry.manager}</strong><span>조치 담당자</span><Status value={entry.status} /></div>)}</div> : <div className="checklist-empty">등록된 조치 이력이 없습니다.</div>}</section></div><footer><span>점검 및 조치 진행 내역을 확인합니다.</span><button type="button" onClick={onClose}>닫기</button></footer></section></div>
 }
 function AssignmentModal({ mode, count, members, query, onQueryChange, onAssign, onClose }) { const title = mode === 'inspection' ? '점검 담당자 배정' : '조치 담당자 배정'; return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="assignment-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ASSIGNMENT</span><h3>{title}</h3><p>선택한 {count}개 항목에 담당자를 일괄 배정합니다.</p></div><button type="button" aria-label="닫기" onClick={onClose}>×</button></header><div className="assignment-member-section"><div className="assignment-section-heading"><div><span>MANAGER LIST</span><h4>담당자 선택</h4></div><label><input value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="이름 검색" /></label></div><div className="assignment-member-list">{members.map((member) => <button type="button" className="assignment-member" key={member.userId ?? member.name} onClick={() => onAssign(member)}><span className="member-avatar">{member.name[0]}</span><span className="member-copy"><strong>{member.name}</strong><small>현장 담당자</small></span><span className="member-availability is-available">배정</span></button>)}{!members.length && <p className="member-empty">검색 결과가 없습니다.</p>}</div></div><footer><span>담당자를 선택하면 즉시 배정됩니다.</span><button type="button" onClick={onClose}>닫기</button></footer></section></div> }
-function CreateModal({ onClose, onCreate }) {
-  const [type, setType] = useState('inspection')
-  const [form, setForm] = useState({ name: '', location: '', category: CATEGORY[0], cycle: '매일', dateTime: '2026-07-29T09:00' })
-  const update = (key, value) => setForm((current) => ({ ...current, [key]: value }))
-  const submit = (event) => { event.preventDefault(); if (form.name.trim() && form.location.trim()) onCreate({ ...form, type, name: form.name.trim(), location: form.location.trim(), inspectionAssignee: '', actionAssignee: '' }) }
-  return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ITEM CREATE</span><h3>{type === 'inspection' ? '점검 항목 추가' : '조치 항목 추가'}</h3><p>전체 체크리스트에 새 항목을 등록합니다.</p></div><button type="button" onClick={onClose}>×</button></header><form className="checklist-create-form" onSubmit={submit}><div className="item-type-toggle"><button className={type === 'inspection' ? 'is-active' : ''} type="button" onClick={() => setType('inspection')}>점검 항목</button><button className={type === 'action' ? 'is-active' : ''} type="button" onClick={() => setType('action')}>조치 항목</button></div><label className="is-wide"><span>{type === 'inspection' ? '점검 이름' : '조치 이름'}</span><input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={type === 'inspection' ? '예: 비상구 피난 통로 점검' : '예: 소화기 압력 게이지 교체'} /></label><label><span>분류</span><select value={form.category} onChange={(event) => update('category', event.target.value)}>{CATEGORY.map((category) => <option key={category} value={category}>{category}</option>)}</select></label><label><span>점검 주기</span><select value={form.cycle} onChange={(event) => update('cycle', event.target.value)}><option>매일</option><option>매주</option><option>매월</option></select></label><label className="is-wide"><span>적용 구역</span><input value={form.location} onChange={(event) => update('location', event.target.value)} placeholder="여러 구역은 쉼표(,)로 구분하세요" /></label><label><span>시작 일시</span><input type="datetime-local" value={form.dateTime} onChange={(event) => update('dateTime', event.target.value)} /></label><footer><span>{type === 'inspection' ? '점검 대기 상태로 등록됩니다.' : '조치 대기 상태로 등록됩니다.'}</span><div><button type="button" onClick={onClose}>취소</button><button type="submit">등록</button></div></footer></form></section></div>
-}
+function CreateModal({ cctvs, onClose, onCreate }) { const [form, setForm] = useState({ name:'', location:'', category:CATEGORY[0], cycle:'매일', dateTime:'2026-07-25T09:00', cameraId:'' }); const update = (key, value) => setForm((current) => ({ ...current, [key]: value })); const submit = (event) => { event.preventDefault(); if (!form.name.trim() || !form.location.trim() || !form.cameraId) return; onCreate({ ...form, cameraId:Number(form.cameraId), type:'action', cycle:null, name:form.name.trim(), location:form.location.trim(), inspectionAssignee:'', actionAssignee:'', progress:'조치 대기' }) }; return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ITEM CREATE</span><h3>조치 항목 추가</h3><p>전체 체크리스트에 새 항목을 등록합니다.</p></div><button type="button" onClick={onClose}>×</button></header><form className="checklist-create-form" onSubmit={submit}><label className="is-wide"><span>조치 이름</span><input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder="예: 소화기 압력 게이지 교체" /></label><label><span>CCTV</span><select required value={form.cameraId} onChange={(event) => update('cameraId', event.target.value)}><option value="">CCTV 선택</option>{cctvs.map((cctv) => <option key={cctv.cctv_id} value={cctv.cctv_id}>{cctv.cctv_name} · {cctv.location}</option>)}</select></label><label><span>분류</span><select value={form.category} onChange={(event) => update('category', event.target.value)}>{CATEGORY.map((category) => <option key={category} value={category}>{category}</option>)}</select></label><label className="is-wide"><span>적용 구역</span><input value={form.location} onChange={(event) => update('location', event.target.value)} placeholder="여러 구역은 쉼표(,)로 구분하세요" /></label><label><span>일시</span><input type="datetime-local" value={form.dateTime} onChange={(event) => update('dateTime', event.target.value)} /></label><footer><span>조치 대기 상태로 등록됩니다.</span><div><button type="button" onClick={onClose}>취소</button><button type="submit">등록</button></div></footer></form></section></div> }
 export default ChecklistManagementPage
 
 
