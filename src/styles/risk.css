@@ -3,6 +3,7 @@
   gap: 18px;
   color: #172033;
 }
+.risk-loading-skeleton .risk-skeleton-kpi,.risk-loading-skeleton .risk-skeleton-card,.risk-loading-skeleton .risk-skeleton-list span,.risk-loading-skeleton .risk-skeleton-actions span { display: block; border-radius: 14px; background: linear-gradient(100deg,#edf2f7 25%,#f8fafc 37%,#edf2f7 63%); background-size: 400% 100%; animation: risk-skeleton-shimmer 1.35s ease-in-out infinite; }.risk-loading-skeleton .risk-skeleton-kpi { min-height: 112px; }.risk-loading-skeleton .risk-skeleton-card { min-height: 300px; }.risk-loading-skeleton .risk-skeleton-list { display: grid; gap: 1px; min-height: 390px; padding: 18px; border-radius: 14px; background: #fff; }.risk-loading-skeleton .risk-skeleton-list span { height: 48px; border-radius: 7px; }.risk-loading-skeleton .risk-skeleton-actions { display: grid; align-content: start; gap: 12px; }.risk-loading-skeleton .risk-skeleton-actions span { height: 44px; }@keyframes risk-skeleton-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
 
 .risk-page-header,
 .count-card,

@@ -69,6 +69,7 @@ function InspectionListPage() {
   const [category, setCategory] = useState('전체 카테고리')
   const [selectedId, setSelectedId] = useState(null)
   const [page, setPage] = useState(0)
+  const [isCatalogLoading, setIsCatalogLoading] = useState(true)
   useEffect(() => {
     const loadInspections = async () => {
       try {
@@ -81,6 +82,8 @@ function InspectionListPage() {
         })))
       } catch (error) {
         console.warn('정기 점검 목록을 불러오지 못했습니다.', error)
+      } finally {
+        setIsCatalogLoading(false)
       }
     }
     loadInspections()
@@ -122,7 +125,7 @@ function InspectionListPage() {
   }
 
   return (
-    <section className="inspection-list-page">
+    <section className={`inspection-list-page${isCatalogLoading ? ' is-data-loading' : ''}`} aria-busy={isCatalogLoading}>
       <article className="inspection-table-card">
         <header>
           <div><span>INSPECTION DIRECTORY</span><h3>점검 목록</h3><p>주기적으로 확인해야 할 핵심 안전 점검 항목입니다. 행을 선택하면 점검 주기를 변경할 수 있습니다.</p></div>
@@ -132,10 +135,10 @@ function InspectionListPage() {
           </div>
         </header>
         <div className="inspection-table-scroll"><table className="inspection-table"><thead><tr><th>번호</th><th>점검 이름</th><th>카테고리</th><th>적용 구역</th><th>점검 주기</th><th>내용</th></tr></thead><tbody>
-          {visibleRecords.map((record, index) => <tr key={record.id} onClick={() => setSelectedId(record.id)} tabIndex="0" onKeyDown={(event) => event.key === 'Enter' && setSelectedId(record.id)}>
+          {isCatalogLoading ? <InspectionTableSkeletonRows /> : visibleRecords.map((record, index) => <tr key={record.id} onClick={() => setSelectedId(record.id)} tabIndex="0" onKeyDown={(event) => event.key === 'Enter' && setSelectedId(record.id)}>
             <td><span className="inspection-id">{activePage * 10 + index + 1}</span></td><td><strong>{record.name}</strong></td><td><span className="inspection-category">{record.category}</span></td><td title={record.areas.join(', ')}>{areaLabel(record.areas)}</td><td><span className="inspection-cycle">{record.cycle}</span></td><td className="inspection-content-cell">{record.content}</td>
           </tr>)}
-          {!records.length && <tr><td className="inspection-empty" colSpan="6">조건에 맞는 점검 항목이 없습니다.</td></tr>}
+          {!isCatalogLoading && !records.length && <tr><td className="inspection-empty" colSpan="6">조건에 맞는 점검 항목이 없습니다.</td></tr>}
         </tbody></table></div><footer className="checklist-pagination inspection-pagination"><span>총 <strong>{records.length}</strong>건</span><div><button type="button" disabled={activePage === 0} onClick={() => setPage((current) => current - 1)}><ChevronLeftRoundedIcon /></button><b>{activePage + 1} / {pageCount}</b><button type="button" disabled={activePage === pageCount - 1} onClick={() => setPage((current) => current + 1)}><ChevronRightRoundedIcon /></button></div></footer>
       </article>
 
@@ -147,5 +150,7 @@ function InspectionListPage() {
     </section>
   )
 }
+
+function InspectionTableSkeletonRows() { return Array.from({ length: 8 }, (_, rowIndex) => <tr className="table-skeleton-row" key={rowIndex}>{Array.from({ length: 6 }, (_, columnIndex) => <td key={columnIndex}><span className={`table-skeleton-block column-${columnIndex}`} /></td>)}</tr>) }
 
 export default InspectionListPage
