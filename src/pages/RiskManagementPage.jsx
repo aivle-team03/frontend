@@ -1,5 +1,4 @@
 import '../styles/risk.css'
-import { EVENT_CATEGORY_MOCKUP_DATA } from '../mocks/mockData.js'
 import RiskFactorTypeChart from '../components/riskmanagement/RiskFactorTypeChart.jsx'
 import EventCategoryTable from '../components/riskmanagement/EventCategoryTable.jsx'
 import RiskFormModal from '../components/riskmanagement/RiskFormModal.jsx'
@@ -69,7 +68,8 @@ function RiskManagementPage() {
 
   const [isRiskModalOpen, setIsRiskModalOpen] = useState(false)
   const [isDeleteMode, setIsDeleteMode] = useState(false)
-  const [risks, setRisks] = useState(EVENT_CATEGORY_MOCKUP_DATA)
+  const [risks, setRisks] = useState([])
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
 
   const fetchRisks = async () => {
     const response = await axios.get(`${API_BASE_URL}/api/risk/list`)
@@ -79,7 +79,7 @@ function RiskManagementPage() {
   useEffect(() => {
     fetchRisks().catch((error) => {
       console.error('위험 요인 목록 조회 실패:', error)
-    })
+    }).finally(() => setIsInitialLoading(false))
   }, [])
 
   const createRisk = async (riskForm) => {
@@ -140,6 +140,8 @@ function RiskManagementPage() {
   ]
 
 
+
+  if (isInitialLoading) return <RiskManagementLoadingSkeleton />
 
   return (
     <section className="risk-page-layout" aria-label="위험도 관리">
@@ -249,6 +251,14 @@ function RiskManagementPage() {
       )}
     </section>
   )
+}
+
+function RiskManagementLoadingSkeleton() {
+  return <section className="risk-page-layout risk-loading-skeleton" aria-busy="true" aria-label="위험도 데이터를 불러오는 중입니다">
+    <header className="risk-page-header"><div className="risk-kpi-grid">{Array.from({ length: 3 }, (_, index) => <div className="risk-skeleton-kpi" key={index} />)}</div></header>
+    <div className="risk-top-layout"><div className="risk-skeleton-card" /><div className="risk-skeleton-card is-chart" /></div>
+    <div className="risk-bottom-layout"><div className="risk-skeleton-list">{Array.from({ length: 7 }, (_, index) => <span key={index} />)}</div><aside className="risk-list-button risk-skeleton-actions"><span /><span /><span /></aside></div>
+  </section>
 }
 
 export default RiskManagementPage

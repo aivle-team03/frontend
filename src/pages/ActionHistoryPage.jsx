@@ -14,19 +14,23 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 
 function ActionHistoryPage() {
   const [loading, setLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [selectedPeriod, setSelectedPeriod] = useState('전체')
   const [customPeriod, setCustomPeriod] = useState(null)
+  const [historyType, setHistoryType] = useState('점검')
 
   const [reportSnapshot, setReportSnapshot] = useState(null)
   const [records, setRecords] = useState([])
-  const [selectedRecord, setSelectedRecord] = useState(null)
+  const [inspectionhistory, setinspectionHistory] = useState([])
+  const [selectedRecord, setSelectedRecord] = useState()
   const [photoPreviewRecord, setPhotoPreviewRecord] = useState(null)
 
   // 반려 사유 상태 관리
   const [rejectReason, setRejectReason] = useState('')
 
   useEffect(() => {
-    fetchActionHistory();
+    Promise.all([fetchActionHistory(), fetchInspectionHistory()])
+      .finally(() => setIsInitialLoading(false))
   }, []);
 
   // 1. 조치 이력 전용 API 호출 (/api/checklists/history)
@@ -35,40 +39,83 @@ function ActionHistoryPage() {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await axios.get("http://127.0.0.1:8000/api/checklists/history", {
+      const response = await axios.get("http://127.0.0.1:8000/api/action-histories", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          approval_status: '승인 완료',
+          size: 100,
+        },
+      });
+
+      const actionItems = Array.isArray(response.data) ? response.data : (response.data?.items ?? [])
+      if (actionItems.length) {
+        const fetchedRecords = actionItems.filter((item) => item.approval_status === '승인 완료').map((item) => {
+          // 백엔드 status 값에 맞춘 승인 상태 매핑
+
+          return {
+            id: item.action_history_id,
+            completedAt: item.completed_at ? String(item.completed_at).replace('T', ' ').slice(0, 16) : '-',
+            location: item.location || "지정 안 됨",
+            type: item.action_name || "현장 조치 항목",
+            assignee: item.handler_name || "담당자 미지정",
+            imageUrl: item.image_url || "",
+            statusRaw: item.approval_status,
+            approvalStatus: 'approved',
+            approver: item.approver_name ?? '안전 관리자',
+            approvedAt: item.approval_date ? String(item.approval_date).replace('T', ' ').slice(0, 16) : '-',
+          }
+        });
+        setRecords(fetchedRecords);
+      } else {
+        setRecords([]);
+      }
+    } catch (error) {
+      console.error("조치 이력 로드 실패:", error);
+      alert("조치 이력 데이터를 불러오지 못했습니다. 로그인 상태를 확인하세요.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+   const fetchInspectionHistory = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      const response = await axios.get("http://127.0.0.1:8000/api/inspection/histories/all", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (response.data && Array.isArray(response.data)) {
-        const fetchedRecords = response.data.map((item) => {
+        const fetchedRecords = response.data.filter((item) => item.status === '점검 완료').map((item) => {
           // 백엔드 status 값에 맞춘 승인 상태 매핑
-          let appStatus = 'pending';
-          if (item.status === '승인 완료') {
-            appStatus = 'approved';
-          } else if (item.status === '조치 필요') {
-            appStatus = 'rejected';
-          }
+       
 
           return {
-            id: item.checklist_id,
+            id: item.inspection_history_id ?? item.inspection_id,
             completedAt: item.date ? String(item.date).replace('T', ' ').slice(0, 16) : '-',
-            location: item.camera_id ? `CCTV #${item.camera_id} 구역` : "지정 안 됨",
-            type: item.content || "현장 조치 항목",
-            assignee: item.name ? `${item.name}` : "담당자 미지정",
-            imageUrl: item.image_url || "/static/uploads/default.jpg",
-            statusRaw: item.status, // 백엔드 원본 status
-            approvalStatus: appStatus,
-            approver: item.approver ?? '안전 관리자',
-            approvedAt: item.approved_at ?? '-',
+            location: item.location ? item.location : "지정 안 됨",
+            type: item.name || "현장 점검 항목",
+            assignee: item.user_name || "담당자 미지정",
+            imageUrl: item.image_url || "",
+            statusRaw: item.status, 
+            
+           
           }
         });
-        setRecords(fetchedRecords);
+        const uniqueRecords = Array.from(new Map(fetchedRecords.map((record) => [
+          `${record.id}-${record.completedAt}-${record.location}-${record.type}-${record.assignee}`,
+          record,
+        ])).values())
+        setinspectionHistory(uniqueRecords);
       }
     } catch (error) {
-      console.error("조치 이력 로드 실패:", error);
-      alert("조치 이력 데이터를 불러오지 못했습니다. 로그인 상태를 확인하세요.");
+      console.error("점검 이력 로드 실패:", error);
+      alert("점검 이력 데이터를 불러오지 못했습니다. 로그인 상태를 확인하세요.");
     } finally {
       setLoading(false);
     }
@@ -89,6 +136,9 @@ function ActionHistoryPage() {
       );
 
       alert('승인 처리가 완료되었습니다.');
+      if (selectedRecord.sourceReportId) {
+        saveBoardReportStatus(selectedRecord.sourceReportId, { status: '완료', statusKey: 'done' })
+      }
       setSelectedRecord(null);
       fetchActionHistory(); // 목록 최신화
     } catch (error) {
@@ -205,42 +255,25 @@ function ActionHistoryPage() {
     URL.revokeObjectURL(downloadUrl)
   }
 
-  if (loading) return <div className="loading-container">조치 이력을 가져오는 중...</div>;
-
   return (
     <section className="approval-history-page" aria-label="조치 이력">
       <div className="approval-summary-row">
         <div className="approval-summary-grid">
+           <article className="approval-summary-card pending-summary">
+           <span className="approval-summary-icon"><CheckCircleOutlineRoundedIcon /></span>
+            <div>
+              <span>전체 점검</span>
+              <strong>{inspectionhistory.length}건</strong>
+              <small>점검 완료 건수</small>
+            </div>
+          </article>
+
           <article className="approval-summary-card total-summary">
             <span className="approval-summary-icon"><AssignmentTurnedInRoundedIcon /></span>
             <div className="summary-text-wrap">
-              <span className="summary-label">누적 조치</span>
+              <span className="summary-label">전체 조치</span>
               <strong className="summary-count">{records.length}건</strong>
-              <small>전체 등록 건수</small>
-            </div>
-          </article>
-          <article className="approval-summary-card pending-summary">
-            <span className="approval-summary-icon"><HourglassTopRoundedIcon /></span>
-            <div>
-              <span>승인 대기</span>
-              <strong>{pendingCount}건</strong>
-              <small>검토가 필요한 조치 완료 건</small>
-            </div>
-          </article>
-          <article className="approval-summary-card approved-summary">
-            <span className="approval-summary-icon"><CheckCircleOutlineRoundedIcon /></span>
-            <div>
-              <span>승인 완료</span>
-              <strong>{approvedCount}건</strong>
-              <small>승인 처리가 완료된 조치 건</small>
-            </div>
-          </article>
-          <article className="approval-summary-card rate-summary">
-            <span className="approval-summary-icon"><PieChartRoundedIcon /></span>
-            <div className="summary-text-wrap">
-              <span className="summary-label">조치 승인율</span>
-              <strong className="summary-count">{approvalRate}%</strong>
-              <small>전체 {records.length}건 중 {approvedCount}건 완료</small>
+              <small>조치 완료 건수</small>
             </div>
           </article>
         </div>
@@ -250,76 +283,134 @@ function ActionHistoryPage() {
         <article className="approval-history-card">
           <div className="approval-history-heading">
             <div>
-              <h2>조치 완료 내역</h2>
-              <p>현장 담당자가 조치 사진을 첨부해 완료한 건만 확인하고 승인합니다.</p>
+              <h2>{historyType === '점검' ? '점검 완료 내역' : '조치 완료 내역'}</h2>
+              <p>{historyType === '점검' ? '현장 담당자가 점검을 완료한 것만 확인합니다.' : '현장 담당자가 조치 사진을 첨부해 완료한 건만 확인하고 승인합니다.'}</p>
+            </div>
+            <div className="approval-history-toggle" role="group" aria-label="조치 점검 선택">
+              {['점검', '조치'].map((type) => (
+                <button
+                  key={type}
+                  className={historyType === type ? 'is-active' : ''}
+                  type="button"
+                  onClick={() => setHistoryType(type)}
+                >
+                  {type}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="approval-table-wrap">
-            <table className="approval-history-table">
-              <thead>
-                <tr>
-                  <th>완료 일시</th>
-                  <th>위치</th>
-                  <th>유형</th>
-                  <th>조치 담당자</th>
-                  <th>조치 사진</th>
-                  <th>승인 상태</th>
-                  <th>승인자 / 승인 일시</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRecords.map((record) => (
-                  <tr key={record.id}>
-                    <td>{record.completedAt}</td>
-                    <td>{record.location}</td>
-                    <td><span className="approval-type"><TaskAltRoundedIcon />{record.type}</span></td>
-                    <td>{record.assignee}</td>
-                    <td>
-                      <button
-                        className="approval-photo-button"
-                        type="button"
-                        onClick={() => setPhotoPreviewRecord(record)}
-                        aria-label={`${record.location} 조치 사진 크게 보기`}
-                      >
-                        <img
-                          className="approval-photo-thumbnail"
-                          src={record.imageUrl}
-                          alt=""
-                        />
-                      </button>
-                    </td>
-                    <td>
-                      <span className={`approval-status ${record.approvalStatus}`}>
-                        {record.approvalStatus === 'approved'
-                          ? '승인 완료'
-                          : record.approvalStatus === 'rejected'
-                            ? '조치 필요 (반려)'
-                            : '승인 대기'}
-                      </span>
-                    </td>
-                    <td>
-                      {record.approvalStatus === 'approved'
-                        ? <span className="approval-meta">{record.approver}<small>{record.approvedAt}</small></span>
-                        : (
+          {historyType === '점검' ? (
+            <>
+              <div className="approval-table-wrap">
+                <table className="approval-history-table">
+                  <thead>
+                    <tr>
+                      <th>완료 일시</th>
+                      <th>위치</th>
+                      <th>유형</th>
+                      <th>점검 담당자</th>
+                      <th>점검 사진</th>
+                      <th>점검 상태</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isInitialLoading ? <HistoryTableSkeletonRows columns={6} /> : inspectionhistory.map((record) => (
+                      <tr key={record.id}>
+                        <td>{record.completedAt}</td>
+                        <td>{record.location}</td>
+                        <td><span className="approval-type"><TaskAltRoundedIcon />{record.type}</span></td>
+                        <td>{record.assignee}</td>
+                        <td>
                           <button
-                            className="approval-review-button"
+                            className="approval-photo-button"
                             type="button"
-                            onClick={() => {
-                              setSelectedRecord(record);
-                              setRejectReason('');
-                            }}
+                            disabled={!record.imageUrl}
+                            onClick={() => setPhotoPreviewRecord(record)}
+                            aria-label={`${record.location} 점검 사진 크게 보기`}
                           >
-                            승인 검토
+                            {record.imageUrl ? <img className="approval-photo-thumbnail" src={record.imageUrl} alt="" /> : <span className="no-photo">사진 없음</span>}
                           </button>
-                        )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="approval-history-footer">전체 {filteredRecords.length}건</div>
+                        </td>
+                        <td>
+      
+                          <span className="approval-status approved">
+                            {record.statusRaw}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="approval-history-footer">전체 {inspectionhistory.length}건</div>
+            </>
+          ) : (
+            <>
+              <div className="approval-table-wrap">
+                <table className="approval-history-table">
+                  <thead>
+                    <tr>
+                      <th>완료 일시</th>
+                      <th>위치</th>
+                      <th>유형</th>
+                      <th>조치 담당자</th>
+                      <th>조치 사진</th>
+                      <th>승인 상태</th>
+                      <th>승인자 / 승인 일시</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isInitialLoading ? <HistoryTableSkeletonRows columns={7} /> : filteredRecords.map((record) => (
+                      <tr key={record.id}>
+                        <td>{record.completedAt}</td>
+                        <td>{record.location}</td>
+                        <td><span className="approval-type"><TaskAltRoundedIcon />{record.type}</span></td>
+                        <td>{record.assignee}</td>
+                        <td>
+                          <button
+                            className="approval-photo-button"
+                            type="button"
+                            disabled={!record.imageUrl}
+                            onClick={() => setPhotoPreviewRecord(record)}
+                            aria-label={`${record.location} 조치 사진 크게 보기`}
+                          >
+                            {record.imageUrl ? <img className="approval-photo-thumbnail" src={record.imageUrl} alt="" /> : <span className="no-photo">사진 없음</span>}
+                          </button>
+                        </td>
+                        <td>
+                          <span className={`approval-status ${record.approvalStatus}`}>
+                            {record.approvalStatus === 'approved'
+                              ? '승인 완료'
+                              : record.approvalStatus === 'rejected'
+                                ? '조치 필요 (반려)'
+                                : '승인 대기'}
+                          </span>
+                        </td>
+                        <td>
+                          {record.approvalStatus === 'approved'
+                            ? <span className="approval-meta">{record.approver}<small>{record.approvedAt}</small></span>
+                            : (
+                              <button
+                                className="approval-review-button"
+                                type="button"
+                                onClick={() => {
+                                  setSelectedRecord(record);
+                                  setRejectReason('');
+                                }}
+                              >
+                                승인 검토
+                              </button>
+                            )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="approval-history-footer">전체 {filteredRecords.length}건</div>
+            </>
+          )}
         </article>
         <aside className="approval-control-panel">
           <div>
@@ -495,5 +586,7 @@ function ActionHistoryPage() {
     </section>
   )
 }
+
+function HistoryTableSkeletonRows({ columns }) { return Array.from({ length: 7 }, (_, rowIndex) => <tr className="history-table-skeleton-row" key={rowIndex}>{Array.from({ length: columns }, (_, columnIndex) => <td key={columnIndex}><span className={`history-table-skeleton-block column-${columnIndex}`} /></td>)}</tr>) }
 
 export default ActionHistoryPage

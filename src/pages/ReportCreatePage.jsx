@@ -1,6 +1,7 @@
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import ReportPreview from '../components/Report/ReportPreview.jsx'
 import { REPORT_PAGE_MOCK_DATA } from '../mocks/mockData.js'
 import { loadGeneratedReports, saveGeneratedReport } from '../utils/reportArchiveStorage.js'
 import '../styles/report.css'
@@ -21,17 +22,29 @@ function ReportCreatePage() {
     return `${reportForm.startDate} ~ ${reportForm.endDate}`
   }, [reportForm.endDate, reportForm.startDate])
 
+  const selectedTypeOption = useMemo(
+    () => REPORT_PAGE_MOCK_DATA.reportTypes.find((item) => item.key === reportForm.type),
+    [reportForm.type],
+  )
+
+  const previewTitle = useMemo(() => {
+    if (reportForm.type === 'etc' && reportForm.customTitle.trim()) {
+      return reportForm.customTitle.trim()
+    }
+
+    return `${selectedPeriodLabel} ${selectedTypeOption?.label ?? '보고서'}`
+  }, [reportForm.customTitle, reportForm.type, selectedPeriodLabel, selectedTypeOption?.label])
+
   const updateReportForm = (field, value) => {
     setReportForm((currentForm) => ({ ...currentForm, [field]: value }))
   }
 
   const createReport = () => {
-    const typeOption = REPORT_PAGE_MOCK_DATA.reportTypes.find((item) => item.key === reportForm.type)
     const isEtcReport = reportForm.type === 'etc'
     const isIncidentReport = reportForm.type === 'incident-investigation'
     const reportTitle = isEtcReport && reportForm.customTitle.trim()
       ? reportForm.customTitle.trim()
-      : `${selectedPeriodLabel} ${typeOption?.label ?? '보고서'}`
+      : `${selectedPeriodLabel} ${selectedTypeOption?.label ?? '보고서'}`
     const allReports = [...loadGeneratedReports(), ...REPORT_PAGE_MOCK_DATA.reports]
     const nextId = Math.max(...allReports.map((report) => report.id), 0) + 1
     const today = new Date().toISOString().slice(0, 10)
@@ -39,7 +52,7 @@ function ReportCreatePage() {
     saveGeneratedReport({
       id: nextId,
       title: reportTitle,
-      type: typeOption?.label ?? '리포트',
+      type: selectedTypeOption?.label ?? '리포트',
       createdAt: today,
       period: selectedPeriodLabel,
       owner: reportForm.author,
@@ -131,6 +144,14 @@ function ReportCreatePage() {
           </button>
         </div>
       </section>
+
+      <ReportPreview
+        title={previewTitle}
+        type={selectedTypeOption?.label ?? '보고서'}
+        period={selectedPeriodLabel}
+        author={reportForm.author}
+        overview={reportForm.type === 'incident-investigation' ? reportForm.incidentOverview : ''}
+      />
     </section>
   )
 }

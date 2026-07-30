@@ -53,6 +53,13 @@ function StreamViewer({ streamUrl, cameraId }) {
   );
 }
 
+function MonitoringDetailLoadingSkeleton() {
+  return <section className="monitoring-detail-page monitoring-detail-skeleton" aria-busy="true" aria-label="상세 모니터링 정보를 불러오는 중입니다">
+    <header className="monitoring-detail-toolbar"><span className="detail-skeleton-block detail-skeleton-back" /><div><span className="detail-skeleton-block detail-skeleton-line short" /><span className="detail-skeleton-block detail-skeleton-line medium" /></div><span className="detail-skeleton-block detail-skeleton-live" /></header>
+    <div className="page-Layout"><div className="cctv-main-Layout"><section className="subCard cctv-primary-view"><div className="primary-view-header"><span className="detail-skeleton-block detail-skeleton-line medium" /><span className="detail-skeleton-block detail-skeleton-line short" /></div><div className="detail-skeleton-block detail-skeleton-video" /></section><section className="subCard camera-thumbnail-panel"><div className="detail-section-heading"><span className="detail-skeleton-block detail-skeleton-line medium" /><span className="detail-skeleton-block detail-skeleton-line short" /></div><div className="detail-thumbnail-list">{[1, 2, 3, 4].map((item) => <span className="detail-skeleton-block detail-skeleton-thumbnail" key={item} />)}</div></section></div><aside className="detection-main-Layout"><div className="detection-Section">{[1, 2].map((item) => <article className="subCard detection-status-card" key={item}><span className="detail-skeleton-block detail-skeleton-status-icon" /><div><span className="detail-skeleton-block detail-skeleton-line short" /><span className="detail-skeleton-block detail-skeleton-line medium" /><span className="detail-skeleton-block detail-skeleton-line long" /></div></article>)}</div><section className="subCard detail-event-card"><div className="detail-section-heading"><span className="detail-skeleton-block detail-skeleton-line medium" /><span className="detail-skeleton-block detail-skeleton-line short" /></div><span className="detail-skeleton-block detail-skeleton-event" />{[1, 2, 3].map((item) => <span className="detail-skeleton-block detail-skeleton-row" key={item} />)}<span className="detail-skeleton-block detail-skeleton-button" /></section></aside></div>
+  </section>
+}
+
 function MonitoringDetailPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -97,7 +104,7 @@ function MonitoringDetailPage() {
   ) || cameraList[0] || { id: 1, area: '1구역', location: '위치 미지정', cctv_name: '카메라', streamUrl: '' };
 
   if (loading) {
-    return <div className="monitoring-detail-page" style={{ padding: '40px', textAlign: 'center' }}>상세 모니터링 정보를 불러오는 중...</div>;
+    return <MonitoringDetailLoadingSkeleton />
   }
 
   return (
@@ -191,7 +198,7 @@ function MonitoringDetailPage() {
               <div><dt><AccessTimeRoundedIcon />감지 시간</dt><dd>14:28:32</dd></div>
               <div><dt>위험도</dt><dd className="detail-risk-level">주의</dd></div>
             </dl>
-            <button type="button" onClick={() => navigate('/actions')}>조치 이력 확인</button>
+            <button type="button" onClick={() => navigate('/checklists/management')}>체크리스트 확인</button>
           </section>
         </aside>
       </div>

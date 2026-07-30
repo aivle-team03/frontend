@@ -144,6 +144,35 @@
   font-weight: 700;
 }
 
+.approval-history-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid #d9e5f1;
+  border-radius: 8px;
+  background: #f3f7fc;
+}
+
+.approval-history-toggle button {
+  min-width: 62px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  color: #71839a;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.approval-history-toggle button.is-active {
+  color: #236cb4;
+  background: #fff;
+  box-shadow: 0 2px 7px rgba(53, 93, 137, .16);
+}
+
 .approval-history-count {
   flex: 0 0 auto;
   padding: 6px 9px;
@@ -261,6 +290,8 @@
   background: #f1f5f9 !important;
   cursor: not-allowed;
 }
+
+.history-table-skeleton-row td { height: 68px; }.history-table-skeleton-block { display: block; width: 74%; height: 14px; border-radius: 6px; background: linear-gradient(100deg,#edf2f7 25%,#f8fafc 37%,#edf2f7 63%); background-size: 400% 100%; animation: history-skeleton-shimmer 1.35s ease-in-out infinite; }.history-table-skeleton-row .column-2,.history-table-skeleton-row .column-4 { width: 54%; }.history-table-skeleton-row .column-5,.history-table-skeleton-row .column-6 { width: 62%; }@keyframes history-skeleton-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
 
 /* ==========================================================================
    3. 데이터 테이블

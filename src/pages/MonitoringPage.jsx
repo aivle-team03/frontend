@@ -56,6 +56,29 @@ function StreamViewer({ streamUrl, cameraId }) {
   );
 }
 
+function MonitoringLoadingSkeleton() {
+  return <section className={`${styles.dashboardFrame} ${styles.monitoringSkeleton}`} aria-busy="true" aria-label="CCTV 모니터링 데이터를 불러오는 중입니다">
+    <div className={styles.monitoringOverview}>
+      <div className={styles.skeletonOverviewCopy}><span className={`${styles.skeletonBlock} ${styles.skeletonOverviewIcon}`} /><div><span className={`${styles.skeletonBlock} ${styles.skeletonLine} ${styles.skeletonLineMedium}`} /><span className={`${styles.skeletonBlock} ${styles.skeletonLine} ${styles.skeletonLineLong}`} /></div></div>
+      <div className={styles.skeletonOverviewStats}>{[1, 2, 3].map((item) => <span className={styles.skeletonBlock} key={item} />)}</div>
+    </div>
+    <div className={styles.cctvemptyarea}>
+      <div className={styles.cctvSection}>
+        <section className={styles.cctvmonitoringSection}><SkeletonSectionHeading action /> <div className={styles.videodashBoard}>{[1, 2, 3, 4].map((item) => <div className={`${styles.skeletonBlock} ${styles.skeletonVideo}`} key={item} />)}</div></section>
+        <section className={styles.videoChange}><SkeletonSectionHeading /><div className={styles.videochangedashBoard}>{[1, 2, 3, 4].map((item) => <div className={`${styles.skeletonBlock} ${styles.skeletonVideoChange}`} key={item} />)}</div></section>
+      </div>
+      <div className={styles.EventSection}>
+        <section className={styles.liveEvent}><SkeletonSectionHeading badge /><div className={styles.skeletonEventTable}><span className={`${styles.skeletonBlock} ${styles.skeletonTableHeader}`} />{[1, 2, 3, 4, 5].map((item) => <span className={`${styles.skeletonBlock} ${styles.skeletonTableRow}`} key={item} />)}</div></section>
+        <section className={styles.emptyBox}><SkeletonSectionHeading /><div className={styles.skeletonEventDetail}><span className={`${styles.skeletonBlock} ${styles.skeletonDetailHeadline}`} />{[1, 2, 3].map((item) => <span className={`${styles.skeletonBlock} ${styles.skeletonDetailRow}`} key={item} />)}<span className={`${styles.skeletonBlock} ${styles.skeletonDetailButton}`} /></div></section>
+      </div>
+    </div>
+  </section>
+}
+
+function SkeletonSectionHeading({ action = false, badge = false }) {
+  return <header className={styles.sectionHeader}><div className={styles.skeletonSectionTitle}><span className={`${styles.skeletonBlock} ${styles.skeletonSectionIcon}`} /><div><span className={`${styles.skeletonBlock} ${styles.skeletonLine} ${styles.skeletonLineMedium}`} /><span className={`${styles.skeletonBlock} ${styles.skeletonLine} ${styles.skeletonLineLong}`} /></div></div>{(action || badge) && <span className={`${styles.skeletonBlock} ${action ? styles.skeletonAction : styles.skeletonBadge}`} />}</header>
+}
+
 function MonitoringPage() {
   const navigate = useNavigate()
 
@@ -146,7 +169,7 @@ function MonitoringPage() {
   }
 
   if (loading) {
-    return <div className={styles.dashboardFrame} style={{ padding: '40px', textAlign: 'center' }}>CCTV 시스템 연결 중...</div>
+    return <MonitoringLoadingSkeleton />
   }
 
   return (
@@ -288,8 +311,8 @@ function MonitoringPage() {
                   <div><dt><AccessTimeRoundedIcon />감지 시간</dt><dd>{selectedEvent.time}</dd></div>
                   <div><dt>담당자</dt><dd>{selectedEvent.manager}</dd></div>
                 </dl>
-                <button type="button" onClick={() => navigate('/actions')}>
-                  조치 이력에서 확인 <ArrowForwardRoundedIcon />
+                <button type="button" onClick={() => navigate('/checklists/management')}>
+                  체크리스트 확인 <ArrowForwardRoundedIcon />
                 </button>
               </div>
             ) : (

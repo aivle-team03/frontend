@@ -15,6 +15,19 @@ export const CHECKLIST_MOCK_DATA = {
   ],
 }
 
+export const TODAY_INSPECTION_MOCK_DATA = [
+  {
+    id: 2,
+    text: '소화기 및 소방설비 점검',
+    type: '점검',
+    status: '점검 대기',
+    location: 'A동 1층 복도',
+    date: '2026-07-25',
+    imageUrl: '',
+    completed: false,
+  },
+]
+
 export const CHATBOT_MOCK_DATA = {
   recommendedQuestions: [
     '소방시설 설치 및 관리에 관한 법률 제12조',
@@ -400,7 +413,7 @@ export const REPORT_PAGE_MOCK_DATA = {
     { key: 'risk-assessment', label: '위험성평가보고서' },
     { key: 'safety-inspection', label: '안전점검 보고서' },
     { key: 'incident-investigation', label: '산업재해조사보고서' },
-    { key: 'safety-education', label: '안전보건교육 기록' },
+    { key: 'safety-education', label: '안전보건교육보고서' },
     { key: 'etc', label: '기타' },
   ],
   siteOptions: ['A동 전체', 'A동 2층 복도', 'B동 1층 출입구', 'C동 3층 전기실', '지하 주차장'],

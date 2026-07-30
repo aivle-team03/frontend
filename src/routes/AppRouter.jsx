@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { useState } from 'react'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import MainLayout from '../components/layout/MainLayout.jsx'
 import ActionHistoryPage from '../pages/ActionHistoryPage.jsx'
 import ChecklistPage from '../pages/ChecklistPage.jsx'
 import ChecklistManagementPage from '../pages/ChecklistManagementPage.jsx'
+import InspectionListPage from '../pages/InspectionListPage.jsx'
 import EducationPage from '../pages/EducationPage.jsx'
 import EducationManagementPage from '../pages/EducationManagementPage.jsx'
 import HomePage from '../pages/HomePage.jsx'
@@ -18,34 +19,30 @@ import ReportCreatePage from '../pages/ReportCreatePage.jsx'
 import ReportListPage from '../pages/ReportListPage.jsx'
 import ReportPage from '../pages/ReportPage.jsx'
 import RiskManagementPage from '../pages/RiskManagementPage.jsx'
+import SafetyManagementPage from '../pages/SafetyManagementPage.jsx'
+import ServiceFooter from '../components/common/ServiceFooter.jsx'
+import { PrivacyPolicyPage, TermsPage } from '../pages/PolicyDocumentPage.jsx'
 
 function AppRouter() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [addedCourses, setAddedCourses] = useState([])
-
-  useEffect(() => {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const token = localStorage.getItem('token');
     const loggedInStatus = localStorage.getItem('isLoggedIn') === 'true';
-
-    if (token && loggedInStatus) {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-    }
-    setIsLoading(false);
-  }, []);
-
-  if (isLoading) return <div>로딩 중...</div>;
+    return Boolean(token && loggedInStatus)
+  });
+  const [addedCourses, setAddedCourses] = useState([])
   return (
     <BrowserRouter>
+      <>
       <Routes>
+        <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="terms" element={<TermsPage />} />
         {isLoggedIn ? (
           <Route element={<MainLayout setIsLoggedIn={setIsLoggedIn} />}>
             <Route index element={<HomePage />} />
             <Route path="monitoring" element={<MonitoringPage />} />
             <Route path="checklists" element={<ChecklistPage />} />
             <Route path="checklists/management" element={<ChecklistManagementPage />} />
+            <Route path="/checklists/inspections" element={<InspectionListPage />} />
             <Route path="actions" element={<ActionHistoryPage />} />
             <Route path="law-qa" element={<LawQaPage />} />
             <Route path="education" element={<EducationPage addedCourses={addedCourses} />} />
@@ -63,6 +60,7 @@ function AppRouter() {
               }
             />
             <Route path="risk-management" element={<RiskManagementPage />} />
+            <Route path="safety-management" element={<SafetyManagementPage />} />
             <Route path="mypage" element={<MyPage />} />
             <Route path="monitoringdetail" element={<MonitoringDetailPage />} />
             <Route path="*" element={<Navigate replace to="/" />} />
@@ -75,8 +73,15 @@ function AppRouter() {
           </>
         )}
       </Routes>
+      <PublicFooter />
+      </>
     </BrowserRouter>
   )
+}
+
+function PublicFooter() {
+  const { pathname } = useLocation()
+  return pathname === '/login' || pathname === '/signup' || pathname === '/privacy-policy' || pathname === '/terms' ? <ServiceFooter /> : null
 }
 
 export default AppRouter

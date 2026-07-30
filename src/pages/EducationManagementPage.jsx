@@ -19,7 +19,6 @@ import VideoLibraryOutlinedIcon from '@mui/icons-material/VideoLibraryOutlined'
 import VideoFileOutlinedIcon from '@mui/icons-material/VideoFileOutlined'
 import axios from 'axios'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { EDUCATION_MOCK_DATA } from '../mocks/mockData.js'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
@@ -44,125 +43,119 @@ const courseMetrics = [
 const workTypes = ['지게차 작업', '고소 작업', '설비 점검', '화재 예방', '화학물질 취급', '기타']
 const targetGroups = ['전체 임직원', '신규 입사자', '일반 작업자', '특수 작업자', '안전 관리자']
 const completionColors = ['#4f75d1', '#2f9b73', '#c48a22', '#df7a32', '#df626c']
+const ALL_EMPLOYEE_CATEGORIES = new Set(['전체', '공통'])
 const targetCompletionColors = {
   전체: '#4f75d1',
-  '필수 교육': '#2f9b73',
-  '정기 교육': '#c48a22',
-  '기타 교육': '#df7a32',
+  '신규 근로자': '#2f9b73',
+  '일반 작업자': '#c48a22',
+  '특수 작업자': '#df7a32',
+  '안전 관리자': '#df626c',
 }
-const attendeeNames = ['신지함', '박동준', '한기석', '정유진', '홍혁재', '유다현', '윤도현', '서하은', '강민석', '임수빈', '조현우', '문채원', '신재윤', '오유나', '장도윤', '배수아']
-const attendeeTeams = ['물류운영팀', '생산1팀', '생산2팀', '설비관리팀', '안전관리팀']
-
-function EducationManagementPage({ addedCourses = [], onAddCourse = () => { } }) {
-  const [apiCourses, setApiCourses] = useState([])
-  const [typeStats, setTypeStats] = useState([])
+function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) {
+  const [apiCourses, setApiCourses] = useState(null)
+  const [apiCompletion, setApiCompletion] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [notice, setNotice] = useState('')
+  const [apiError, setApiError] = useState('')
+  const educationDashboardRef = useRef(null)
 
   const fetchAdminEducationData = async () => {
-    try {
-      setLoading(true)
-      const token = localStorage.getItem('token')
-      const headers = token ? { Authorization: `Bearer ${token}` } : {}
-
-      const res = await axios.get(`${API_BASE_URL}/api/admin/education/status`, { headers })
-
-      if (res.data && Array.isArray(res.data)) {
-        const formattedCourses = res.data.map((course) => {
-          const completedObj = course.status_counts?.find((item) => item.status === '이수')
-          const completedCount = completedObj ? completedObj.count : 0
-          const totalCount = course.target_count ?? 0
-
-          return {
-            id: `api-${course.education_id}`,
-            title: course.title,
-            target: course.type || '필수',
-            category: course.category || '공통',
-            deadline: course.due_date ? String(course.due_date).slice(0, 10) : '-',
-            status: completedCount === totalCount && totalCount > 0 ? '이수 완료' : '진행 중',
-            apiMetric: {
-              progress: course.completion_rate ?? 0,
-              assigned: totalCount,
-              completed: completedCount,
-            },
-          }
-        })
-        setApiCourses(formattedCourses)
-
-        const totalAssigned = formattedCourses.reduce((sum, c) => sum + c.apiMetric.assigned, 0)
-        const totalCompleted = formattedCourses.reduce((sum, c) => sum + c.apiMetric.completed, 0)
-        const totalRate = totalAssigned > 0 ? Number(((totalCompleted / totalAssigned) * 100).toFixed(1)) : 0
-
-        const calcType = (typeName) => {
-          const sub = formattedCourses.filter((c) => c.target === typeName)
-          const assigned = sub.reduce((sum, c) => sum + c.apiMetric.assigned, 0)
-          const completed = sub.reduce((sum, c) => sum + c.apiMetric.completed, 0)
-          const value = assigned > 0 ? Number(((completed / assigned) * 100).toFixed(1)) : 0
-          return { label: `${typeName} 교육`, value, total: assigned, completed }
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+    const response = await axios.get(`${API_BASE_URL}/api/admin/education/dashboard`, { headers })
+    const dashboard = response.data
+    educationDashboardRef.current = dashboard
+    setApiCourses((dashboard.courses ?? []).map((course) => {
+        const completed = course.completed_count ?? course.status_counts?.find((item) => item.status === '이수')?.count ?? 0
+        return {
+          id: `api-${course.education_id}`,
+          educationId: course.education_id,
+          title: course.title,
+          target: course.category ?? '전체',
+          deadline: course.due_date ?? '-',
+          status: completed === course.target_count ? '이수 완료' : '진행 중',
+          apiMetric: {
+            progress: course.completion_rate ?? 0,
+            assigned: course.target_count ?? 0,
+            completed,
+          },
         }
+      }))
 
-        setTypeStats([
-          { label: '전체', value: totalRate, total: totalAssigned, completed: totalCompleted },
-          calcType('필수'),
-          calcType('정기'),
-        ])
-      }
-    } catch (error) {
-      console.error('교육 관리 API 조회 실패:', error)
-    } finally {
-      setLoading(false)
-    }
+    const categoryItems = (dashboard.categories ?? []).filter((item) => !ALL_EMPLOYEE_CATEGORIES.has(item.category))
+    setApiCompletion([
+        {
+          label: '전체',
+          value: dashboard.total_completion_rate ?? 0,
+          total: dashboard.total_target_count ?? 0,
+          completed: dashboard.total_completed_count ?? 0,
+        },
+        ...categoryItems.map((item) => ({
+          label: item.category,
+          value: item.completion_rate ?? 0,
+          total: item.target_count ?? 0,
+          completed: item.completed_count ?? 0,
+        })),
+      ])
   }
 
   useEffect(() => {
     fetchAdminEducationData()
+      .catch((error) => {
+        console.error('교육 관리 API 조회 실패:', error)
+        setApiError('교육 관리 데이터를 불러오지 못해 기존 화면 데이터를 표시합니다.')
+      })
+      .finally(() => setLoading(false))
   }, [])
 
-  const allCourses = useMemo(() => [...addedCourses, ...apiCourses], [addedCourses, apiCourses])
-
+  const baseCourses = apiCourses ?? []
+  const displayedCompletion = apiCompletion ?? []
+  const allCourses = useMemo(() => [...addedCourses, ...baseCourses], [addedCourses, baseCourses])
   const [selectedTarget, setSelectedTarget] = useState('전체')
   const [courseSearch, setCourseSearch] = useState('')
   const [tableTarget, setTableTarget] = useState('전체')
   const [coursePage, setCoursePage] = useState(0)
-
+  const [notice, setNotice] = useState('')
   const [videoAction, setVideoAction] = useState('register')
   const [videoSourceType, setVideoSourceType] = useState('file')
   const [videoFile, setVideoFile] = useState(null)
-  const [courseForm, setCourseForm] = useState({ title: '', target: '전체 임직원', deadline: '', videoUrl: '' })
-  const [aiForm, setAiForm] = useState({ workType: workTypes[0], equipment: '', riskFactor: '' })
+  const [courseForm, setCourseForm] = useState({
+    title: '',
+    target: targetGroups[0],
+    deadline: '',
+    videoUrl: '',
+  })
+  const [aiForm, setAiForm] = useState({
+    workType: workTypes[0],
+    equipment: '',
+    riskFactor: '',
+  })
   const [materialFile, setMaterialFile] = useState(null)
   const [aiStatus, setAiStatus] = useState('idle')
-
   const [attendanceDetail, setAttendanceDetail] = useState(null)
+  const [attendanceList, setAttendanceList] = useState([])
+  const [attendanceLoading, setAttendanceLoading] = useState(false)
   const [attendanceFilter, setAttendanceFilter] = useState('전체')
   const [attendeeSearch, setAttendeeSearch] = useState('')
-
   const videoInputRef = useRef(null)
   const materialInputRef = useRef(null)
 
-  const orderedCompletion = useMemo(() => {
-    if (!typeStats || typeStats.length === 0) return []
-    return [...typeStats.filter((item) => item.label === '전체'), ...typeStats.filter((item) => item.label !== '전체')]
-  }, [typeStats])
-
-  const selectedCompletion = typeStats.find((item) => item.label === selectedTarget) ?? orderedCompletion[0] ?? { value: 0, completed: 0, total: 0, label: '전체' }
+  const orderedCompletion = [
+    ...displayedCompletion.filter((item) => item.label === '전체'),
+    ...displayedCompletion.filter((item) => item.label !== '전체'),
+  ]
+  const selectedCompletion = displayedCompletion.find((item) => item.label === selectedTarget) ?? orderedCompletion[0] ?? { label: '전체', value: 0, total: 0, completed: 0 }
   const selectedTargetCourses = allCourses.filter(
-    (course) => selectedTarget === '전체' || course.target.includes(selectedTarget.replace(' 교육', ''))
+    (course) => selectedTarget === '전체' || course.target === selectedTarget || course.target === '전체',
   )
-  const targetOptions = ['전체', ...new Set(allCourses.map((c) => c.target).filter(Boolean))]
-
-  const filteredCourses = useMemo(() => {
-    return allCourses.filter((course) => {
-      const matchesSearch = course.title.toLowerCase().includes(courseSearch.trim().toLowerCase())
-      const matchesTarget = tableTarget === '전체' || course.target === tableTarget
-      return matchesSearch && matchesTarget
-    })
-  }, [allCourses, courseSearch, tableTarget])
-
+  const targetOptions = ['전체', ...new Set(allCourses.map((course) => course.target).filter((target) => target !== '전체'))]
+  const filteredCourses = useMemo(() => allCourses.filter((course) => {
+    const matchesSearch = course.title.toLowerCase().includes(courseSearch.trim().toLowerCase())
+    const matchesTarget = tableTarget === '전체' || course.target === tableTarget || course.target === '전체'
+    return matchesSearch && matchesTarget
+  }), [allCourses, courseSearch, tableTarget])
   const coursePageCount = Math.max(1, Math.ceil(filteredCourses.length / 5))
   const activeCoursePage = Math.min(coursePage, coursePageCount - 1)
   const visibleCourses = filteredCourses.slice(activeCoursePage * 5, (activeCoursePage + 1) * 5)
-  const attendanceList = useMemo(() => attendanceDetail ? createAttendanceList(attendanceDetail) : [], [attendanceDetail])
   const visibleAttendees = attendanceList.filter((person) => {
     const matchesStatus = attendanceFilter === '전체' || person.status === attendanceFilter
     const query = attendeeSearch.trim()
@@ -172,11 +165,79 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => { } })
 
   const updateCourseForm = (key, value) => setCourseForm((current) => ({ ...current, [key]: value }))
   const updateAiForm = (key, value) => setAiForm((current) => ({ ...current, [key]: value }))
+  /* 이전 개별 사용자 조회 방식: 단일 dashboard 응답으로 대체됨
+  const openAttendanceModalLegacy = async (detail) => {
+    setAttendanceDetail(detail)
+    setAttendanceFilter('전체')
+    setAttendeeSearch('')
+    setAttendanceList([])
+    try {
+      setAttendanceLoading(true)
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const users = await getAdminUsers(headers)
+      const targetUsers = detail.educationId
+        ? targetUsersForCourse(users, detail.target)
+        : detail.target === '전체' ? users : users.filter((user) => user.category === detail.target)
+      const userEducations = await Promise.all(targetUsers.map(async (user) => [user, await getUserEducations(user, headers)]))
+      const attendees = userEducations.map(([user, educations]) => {
+        if (detail.educationId) {
+          const education = courseStatusForUser(educations, detail.educationId)
+          return {
+            id: `${user.uid}-${detail.educationId}`,
+            name: user.name,
+            educationTitle: detail.title,
+            team: user.category ?? '-',
+            status: education?.status ?? '미이수',
+            date: education?.completed_date ? String(education.completed_date).replaceAll('-', '. ') : null,
+          }
+        }
+        const applicableCourses = educations.filter((education) => ALL_EMPLOYEE_CATEGORIES.has(education.category) || education.category === user.category)
+        const completed = applicableCourses.length > 0 && applicableCourses.every((education) => education.status === '이수')
+        return {
+          id: `${user.uid}-summary`, name: user.name, educationTitle: `${detail.target} 교육 현황`, team: user.category ?? '-', status: completed ? '이수' : '미이수', date: null,
+        }
+      })
+      const completedCount = attendees.filter((attendee) => attendee.status === '이수').length
+      setAttendanceDetail((current) => current ? { ...current, total: attendees.length, completed: completedCount } : current)
+      setAttendanceList(attendees)
+    } catch (error) {
+      console.error('교육 대상자 목록 조회 실패:', error)
+    } finally {
+      setAttendanceLoading(false)
+    }
+  }
+  */
 
   const openAttendanceModal = (detail) => {
     setAttendanceDetail(detail)
     setAttendanceFilter('전체')
     setAttendeeSearch('')
+    setAttendanceLoading(false)
+
+    const dashboard = educationDashboardRef.current
+    const source = detail.educationId
+      ? dashboard?.courses?.find((course) => Number(course.education_id) === Number(detail.educationId))
+      : detail.target === '전체'
+        ? {
+            target_count: dashboard?.total_target_count ?? 0,
+            completed_count: dashboard?.total_completed_count ?? 0,
+            attendees: dashboard?.attendees ?? [],
+          }
+        : dashboard?.categories?.find((category) => category.category === detail.target)
+    const attendees = source?.attendees ?? []
+    const completed = source?.completed_count ?? attendees.filter((attendee) => attendee.status === '이수').length
+    const total = source?.target_count ?? attendees.length
+
+    setAttendanceDetail((current) => current ? { ...current, total, completed } : current)
+    setAttendanceList(attendees.map((attendee) => ({
+      id: `${attendee.uid}-${attendee.education_id ?? detail.educationId ?? detail.target ?? 'all'}`,
+      name: attendee.name,
+      educationTitle: attendee.education_title ?? detail.title,
+      team: attendee.category ?? '-',
+      status: attendee.status,
+      date: attendee.completed_date ? String(attendee.completed_date).replaceAll('-', '. ') : null,
+    })))
   }
 
   const addVideoCourse = (event) => {
@@ -218,33 +279,42 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => { } })
       setAiStatus('queued')
       const token = localStorage.getItem('token')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const response = await axios.post(`${API_BASE_URL}/api/admin/education/ai-generate`, {
+        work_type: aiForm.workType,
+        equipment: aiForm.equipment.trim(),
+        risk_factor: aiForm.riskFactor.trim(),
+      }, { headers })
 
-      const response = await axios.post(
-        `${API_BASE_URL}/api/admin/education/ai-generate`,
-        {
-          work_type: aiForm.workType,
-          equipment: aiForm.equipment.trim(),
-          risk_factor: aiForm.riskFactor.trim(),
-        },
-        { headers }
-      )
-
-      alert(`AI 교육 자료가 생성되었습니다! 제목: ${response.data.title}`)
-      fetchAdminEducationData()
+      const generatedCourse = response.data
+      onAddCourse({
+        id: `ai-${generatedCourse.education_id ?? Date.now()}`,
+        contentId: `ai-content-${generatedCourse.education_id ?? Date.now()}`,
+        title: generatedCourse.title,
+        target: '전체 임직원',
+        deadline: '-',
+        status: '대기',
+        progress: 0,
+        duration: 'AI 생성 영상',
+        category: 'AI 생성 교육',
+        videoUrl: generatedCourse.generated_video_url ?? '',
+        isCustom: true,
+      })
+      await fetchAdminEducationData()
+      setNotice(`AI 교육 자료가 생성되었습니다. ${generatedCourse.summary ?? ''}`)
       setAiStatus('complete')
     } catch (error) {
-      console.error('AI 생성 실패:', error)
+      console.error('AI 교육 자료 생성 실패:', error)
       setAiStatus('error')
+      setNotice(`AI 교육 자료 생성에 실패했습니다. ${error.response?.data?.detail ?? ''}`)
     }
   }
 
   if (loading) {
-    return <div style={{ padding: '40px', textAlign: 'center' }}>교육 관리 데이터 연결 중...</div>
+    return <EducationManagementLoadingSkeleton />
   }
 
   return (
     <section className="education-page education-management-page">
-      {statusStyles}
       <div className="education-creation-grid">
         <article className={`education-panel video-register-card${videoAction !== 'register' ? ' is-action-hidden' : ''}`}>
           <div className="card-heading-row">
@@ -281,7 +351,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => { } })
               </FormField>
             )}
             <button className="primary-course-button" type="submit"><AddCircleOutlineRoundedIcon /> 교육 리스트에 추가</button>
-            {(notice) && <p className={`form-notice${notice.includes('추가되었습니다') ? ' is-success' : ''}`} role="status">{notice}</p>}
+            {(notice || apiError) && <p className={`form-notice${notice.includes('추가되었습니다') ? ' is-success' : ''}`} role="status">{notice || apiError}</p>}
           </form>
         </article>
 
@@ -328,6 +398,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => { } })
           )}
         </article>
 
+        {/* 하단 테이블: 대상자별 교육 리스트 */}
         <article className="education-panel management-course-table-card">
           <div className="management-card-heading table-card-heading"><PanelTitle icon={GroupsOutlinedIcon} kicker="교육 대상자" title="대상자별 교육 리스트" /><span className="course-count">총 {allCourses.length}개 과정</span></div>
           <div className="course-table-toolbar">
@@ -336,10 +407,10 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => { } })
           </div>
           <div className="management-table-wrap">
             <table className="management-course-table">
-              <thead><tr><th>교육명</th><th>구분</th><th>마감일</th><th>이수 대상</th><th>이수 완료</th><th>이수율</th><th>상태</th></tr></thead>
+              <thead><tr><th>교육명</th><th>대상</th><th>마감일</th><th>이수 대상</th><th>이수 완료</th><th>이수율</th><th>상태</th></tr></thead>
               <tbody>{visibleCourses.map((course, index) => {
-                const metric = course.isCustom ? { progress: 0, assigned: 24, completed: 0 } : (course.apiMetric ?? courseMetrics[index] ?? { progress: 0, assigned: 0, completed: 0 })
-                return <tr className={`${course.isCustom ? 'is-new-course ' : ''}is-course-row`} key={course.id} role="button" tabIndex="0" onClick={() => openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed })} onKeyDown={(event) => event.key === 'Enter' && openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed })}><td>{course.title}{course.isCustom && <span className="new-course-dot">NEW</span>}</td><td>{course.target}</td><td>{course.deadline}</td><td>{metric.assigned}명</td><td>{metric.completed}명</td><td><span className="course-rate"><b>{metric.progress}%</b><i><em style={{ width: `${metric.progress}%` }} /></i></span></td><td><span className={`education-status${course.isCustom ? ' status-waiting' : course.status === '이수 완료' ? ' status-yellow' : ' status-blue'}`}>{course.status}</span></td></tr>
+                const metric = course.isCustom ? { progress: 0, assigned: course.target === '전체 임직원' ? 152 : 24, completed: 0 } : (course.apiMetric ?? courseMetrics[course.id - 1] ?? courseMetrics[index])
+                return <tr className={`${course.isCustom ? 'is-new-course ' : ''}is-course-row`} key={course.id} role="button" tabIndex="0" onClick={() => openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed, educationId: course.educationId })} onKeyDown={(event) => event.key === 'Enter' && openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed, educationId: course.educationId })}><td>{course.title}{course.isCustom && <span className="new-course-dot">NEW</span>}</td><td>{course.target}</td><td>{course.deadline}</td><td>{metric.assigned}명</td><td>{metric.completed}명</td><td><span className="course-rate"><b>{metric.progress}%</b><i><em style={{ width: `${metric.progress}%` }} /></i></span></td><td><span className={`education-status${course.isCustom ? ' status-waiting' : ` status-${course.id}`}`}>{course.status}</span></td></tr>
               })}</tbody>
             </table>
           </div>
@@ -353,27 +424,34 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => { } })
           </div>
         </article>
       </div>
-      {attendanceDetail && <AttendanceModal detail={attendanceDetail} attendees={visibleAttendees} filter={attendanceFilter} onFilterChange={setAttendanceFilter} search={attendeeSearch} onSearchChange={setAttendeeSearch} onClose={() => setAttendanceDetail(null)} />}
+      {attendanceDetail && <AttendanceModal detail={attendanceDetail} attendees={visibleAttendees} loading={attendanceLoading} filter={attendanceFilter} onFilterChange={setAttendanceFilter} search={attendeeSearch} onSearchChange={setAttendeeSearch} onClose={() => setAttendanceDetail(null)} />}
     </section>
   )
 }
 
-function CompletionMetric({ item, overall, metricIndex, onOpen }) {
-  const MetricIcon = completionMetricIcons[metricIndex] ?? GroupsOutlinedIcon
-  return <div className={`completion-metric metric-tone-${metricIndex}${overall ? ' is-featured is-overall' : ''}`} style={{ '--metric-color': completionColors[metricIndex], '--animation-delay': `${metricIndex * 90}ms` }} role="button" tabIndex="0" onClick={onOpen} onKeyDown={(event) => event.key === 'Enter' && onOpen()}><div className="metric-label"><span className="metric-icon"><MetricIcon /></span><strong>{item.label}</strong></div><div className="metric-value-row"><strong>{item.value}<small>%</small></strong><span className="metric-ring" style={{ '--completion-rate': `${item.value}%` }}><i /></span></div><small>{item.completed} / {item.total}명</small></div>
+function EducationManagementLoadingSkeleton() {
+  return <section className="education-page education-management-page education-management-loading-skeleton" aria-busy="true" aria-label="교육 관리 데이터를 불러오는 중입니다">
+    <div className="education-creation-grid skeleton-creation-grid"><article className="education-panel video-register-card skeleton-form-card"><div className="skeleton-card-heading"><div><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line title" /></div><span className="skeleton-block skeleton-tabs" /></div><span className="skeleton-block skeleton-line long" /><div className="skeleton-form-fields"><span className="skeleton-block skeleton-input" /><div><span className="skeleton-block skeleton-input" /><span className="skeleton-block skeleton-input" /></div></div><span className="skeleton-block skeleton-tabs" /><span className="skeleton-block skeleton-upload" /><span className="skeleton-block skeleton-button" /></article><article className="education-panel ai-video-card skeleton-form-card"><div className="skeleton-card-heading"><div><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line title" /></div><span className="skeleton-block skeleton-tabs" /></div><span className="skeleton-block skeleton-line long" /><div className="skeleton-form-fields"><span className="skeleton-block skeleton-input" /><span className="skeleton-block skeleton-input" /><span className="skeleton-block skeleton-upload" /></div><span className="skeleton-block skeleton-button" /></article></div>
+    <div className="management-overview-row"><article className="education-panel completion-summary-card skeleton-completion-card"><div className="skeleton-card-heading"><div><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line title" /></div><span className="skeleton-block skeleton-select" /></div><div className="skeleton-metrics">{[1, 2, 3, 4, 5].map((item) => <span className="skeleton-block" key={item} />)}</div></article><article className="education-panel management-course-table-card skeleton-course-table-card"><div className="skeleton-card-heading"><div><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line title" /></div><span className="skeleton-block skeleton-count" /></div><div className="skeleton-toolbar"><span className="skeleton-block" /><span className="skeleton-block" /></div><div className="skeleton-management-table"><span className="skeleton-block skeleton-table-header" />{[1, 2, 3, 4, 5].map((item) => <span className="skeleton-block skeleton-table-row" key={item} />)}</div><div className="skeleton-table-footer"><span className="skeleton-block" /><span className="skeleton-block" /></div></article></div>
+  </section>
 }
 
-function AttendanceModal({ detail, attendees, filter, onFilterChange, search, onSearchChange, onClose }) {
+function CompletionMetric({ item, overall, metricIndex, onOpen }) {
+  const MetricIcon = completionMetricIcons[metricIndex] ?? GroupsOutlinedIcon
+  return <div className={`completion-metric metric-tone-${metricIndex}${overall ? ' is-featured is-overall' : ''}`} style={{ '--metric-color': completionColors[metricIndex % completionColors.length], '--animation-delay': `${metricIndex * 90}ms` }} role="button" tabIndex="0" onClick={onOpen} onKeyDown={(event) => event.key === 'Enter' && onOpen()}><div className="metric-label"><span className="metric-icon"><MetricIcon /></span><strong>{item.label}</strong></div><div className="metric-value-row"><strong>{item.value}<small>%</small></strong><span className="metric-ring" style={{ '--completion-rate': `${item.value}%` }}><i /></span></div><small>{item.completed} / {item.total}명</small></div>
+}
+
+function AttendanceModal({ detail, attendees, loading, filter, onFilterChange, search, onSearchChange, onClose }) {
   const filters = ['전체', '이수', '미이수']
   const total = detail.total
   const incomplete = Math.max(0, total - detail.completed)
   const rate = total ? Math.round((detail.completed / total) * 100) : 0
   return <div className="attendance-modal-backdrop" role="presentation" onMouseDown={onClose}>
-    <section className="attendance-modal" role="dialog" aria-modal="true" aria-label={`${detail.title} 대상자 현황`} onMouseDown={(event) => event.stopPropagation()}>
+    <section className="attendance-modal" role="dialog" aria-modal="true" aria-busy={loading} aria-label={`${detail.title} 대상자 현황`} onMouseDown={(event) => event.stopPropagation()}>
       <header className="attendance-modal-header"><div><span>교육 대상자 현황</span><h3>{detail.title}</h3><p>{detail.target} · 이수 현황을 확인하고 대상자를 검색할 수 있습니다.</p></div><button type="button" aria-label="상세 창 닫기" onClick={onClose}><CloseRoundedIcon /></button></header>
       <div className="attendance-summary"><div className="attendance-total"><span>이수 대상</span><AnimatedNumber value={total} suffix="명" /></div><div className="attendance-complete"><span>이수 완료</span><AnimatedNumber value={detail.completed} suffix="명" /></div><div className="attendance-incomplete"><span>미이수</span><AnimatedNumber value={incomplete} suffix="명" /></div><div className="attendance-rate"><span>이수율</span><AnimatedNumber value={rate} suffix="%" /><i><em style={{ width: `${rate}%` }} /></i></div></div>
       <div className="attendance-tools"><div className="attendance-filter-tabs" role="tablist">{filters.map((item) => <button className={filter === item ? 'is-active' : ''} key={item} type="button" onClick={() => onFilterChange(item)}>{item}</button>)}</div><label className="attendance-search"><SearchRoundedIcon /><input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="이름 또는 부서 검색" /></label></div>
-      <div className="attendance-list" key={`${filter}-${search}`}><div className="attendance-list-head"><span>대상자</span><span>소속</span><span>이수 상태</span><span>이수 일시</span></div>{attendees.length ? attendees.map((person, index) => <div className="attendance-list-row" key={person.id} style={{ '--row-delay': `${Math.min(index, 10) * 45}ms` }}><span><b>{person.name.slice(0, 1)}</b>{person.name}</span><span>{person.team}</span><span><i className={person.status === '이수' ? 'is-complete' : ''}>{person.status}</i></span><span>{person.date ?? '-'}</span></div>) : <p className="attendance-empty">조건에 맞는 대상자가 없습니다.</p>}</div>
+      <div className="attendance-list" key={`${filter}-${search}`}><div className="attendance-list-head"><span>대상자</span><span>교육명</span><span>소속</span><span>이수 상태</span><span>이수 일시</span></div>{attendees.length ? attendees.map((person, index) => <div className="attendance-list-row" key={person.id} style={{ '--row-delay': `${Math.min(index, 10) * 45}ms` }}><span><b>{person.name.slice(0, 1)}</b>{person.name}</span><span className="attendance-education-title">{person.educationTitle}</span><span>{person.team}</span><span><i className={person.status === '이수' ? 'is-complete' : ''}>{person.status}</i></span><span>{person.date ?? '-'}</span></div>) : <p className="attendance-empty">조건에 맞는 대상자가 없습니다.</p>}</div>
     </section>
   </div>
 }
@@ -396,16 +474,6 @@ function AnimatedNumber({ value, suffix }) {
   }, [value])
 
   return <strong>{displayValue}<small>{suffix}</small></strong>
-}
-
-function createAttendanceList({ total, completed, target }) {
-  return Array.from({ length: total }, (_, index) => ({
-    id: `${target}-${index}`,
-    name: attendeeNames[index % attendeeNames.length],
-    team: attendeeTeams[index % attendeeTeams.length],
-    status: index < completed ? '이수' : '미이수',
-    date: index < completed ? `2026. 07. ${String((index % 20) + 1).padStart(2, '0')}` : null,
-  }))
 }
 
 function EducationSelect({ label, value, options, onChange }) {
@@ -490,24 +558,7 @@ const statusStyles = (
       background-color: #fefce8;
       border: 1px solid #fef08a;
     }
-
-    .completion-metric-grid {
-      display: grid !important;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important; 
-      gap: 16px !important;
-      width: 100% !important;
-    }
-
-    .completion-metric {
-      position: relative !important;
-      display: flex !important;
-      flex-direction: column !important;
-      justify-content: space-between !important;
-      padding: 16px 20px !important;
-      overflow: hidden !important;
-      box-sizing: border-box !important;
-    }
-  `}</style>
+  `}`</style>
 )
 
 export default EducationManagementPage
