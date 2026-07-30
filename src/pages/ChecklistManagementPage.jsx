@@ -11,7 +11,7 @@ import '../styles/checklist.css'
 import {
   getStoredChecklistManagementRecords,
   saveChecklistManagementRecords,
-} from '../utils/checklistStatusStorage'
+} from '../utils/checklistStatusStorage' 
 
 const CATEGORY = [ '소방안전' , '시설안전' , '산업안전' ,'기타']
 const MANAGERS = ['이안전', '김안전', '박점검', '최점검']
