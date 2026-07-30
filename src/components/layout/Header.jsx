@@ -29,7 +29,7 @@ import '../../styles/Header.css'
 const NOTIFICATION_STORAGE_KEY = 'boss-read-notification-ids'
 
 const extraPageTitles = {
-  '/checklists/management': '체크리스트 관리',
+  '/checklists/management': '담당자 배정',
   '/checklists/inspections': '정기 점검 목록',
   '/education-management': '교육 관리',
   '/risk-management': '위험도 관리',
