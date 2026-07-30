@@ -144,6 +144,35 @@
   font-weight: 700;
 }
 
+.approval-history-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid #d9e5f1;
+  border-radius: 8px;
+  background: #f3f7fc;
+}
+
+.approval-history-toggle button {
+  min-width: 62px;
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  color: #71839a;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.approval-history-toggle button.is-active {
+  color: #236cb4;
+  background: #fff;
+  box-shadow: 0 2px 7px rgba(53, 93, 137, .16);
+}
+
 .approval-history-count {
   flex: 0 0 auto;
   padding: 6px 9px;
