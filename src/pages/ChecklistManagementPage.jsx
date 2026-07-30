@@ -1,13 +1,10 @@
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import AssignmentIndOutlinedIcon from '@mui/icons-material/AssignmentIndOutlined'
-import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined'
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
-import PendingActionsOutlinedIcon from '@mui/icons-material/PendingActionsOutlined'
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
-import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import axios from 'axios'
 import { useEffect, useMemo, useState } from 'react'
 import '../styles/checklist.css'
@@ -74,8 +71,13 @@ const ACTION_NAME_BY_INSPECTION = {
   '하역장 안전 난간 점검': '하역장 안전 난간 보수 조치',
   '휴게실 소화 설비 점검': '휴게실 소화 설비 보수 조치',
 }
+const getRecordType = (record) => {
+  if (record.progress?.startsWith('조치')) return 'action'
+  if (record.progress?.startsWith('점검')) return 'inspection'
+  return record.type || 'inspection'
+}
 const normalizeRecord = (record) => {
-  const type = record.type || (record.progress?.startsWith('조치') ? 'action' : 'inspection')
+  const type = getRecordType(record)
   const nextDue = record.nextDue || record.dateTime?.slice(0, 10) || getDateKey()
   const isDue = type === 'inspection' && record.progress?.endsWith('완료') && nextDue <= getDateKey()
   const actionHistory = record.actionHistory || (type === 'action' && record.progress?.endsWith('완료') ? [{ id: `action-history-${record.id}`, actionName: record.name, location: record.location, dateTime: record.dateTime, manager: record.actionAssignee || '미배정', progress: '조치 완료', approvalStatus: '승인대기', sourceType: '점검이력' }] : [])
@@ -93,7 +95,7 @@ const getInitialRecords = () => {
   const storedIds = new Set(stored.map((item) => String(item.id)))
   return [...stored.map((item) => normalizeRecord({ ...item, dateTime: item.dateTime?.replace('T', ' ') })), ...CHECKLIST_MANAGEMENT_MOCK_RECORDS.filter((item) => !storedIds.has(String(item.id)))]
 }
-const isInspectionRecord = (item) => item.type === 'inspection' || (!item.type && item.progress.startsWith('점검'))
+const isInspectionRecord = (item) => getRecordType(item) === 'inspection'
 
 function ChecklistManagementPage() {
   const [records, setRecords] = useState(() => getInitialRecords())
@@ -127,7 +129,7 @@ function ChecklistManagementPage() {
   const changeFilter = (key, value) => { setFilters((current) => ({ ...current, [key]:value })); setPage(0) }
   const typeRecords = useMemo(() => records
     .filter((item) => {
-      if (item.type !== recordTypeFilter) return false
+      if (getRecordType(item) !== recordTypeFilter) return false
       if (recordTypeFilter === 'inspection') return item.progress === '점검 대기' && !item.inspectionAssignee
       return item.progress === '조치 대기' && !item.actionAssignee
     })
@@ -149,9 +151,7 @@ function ChecklistManagementPage() {
     return (!query || searchTarget.includes(query)) && (filters.category === '분류' || item.category === filters.category) && (filters.status === '진행 상태' || item.progress === filters.status) && (recordTypeFilter !== 'inspection' || matchesDateOffset(item.dateTime, dateOffsetFilter))
   }).sort((a, b) => Number(b.progress.endsWith('대기')) - Number(a.progress.endsWith('대기'))), [typeRecords, filters, dateOffsetFilter, recordTypeFilter])
   const pageCount = Math.max(1, Math.ceil(filtered.length / 8)); const active = Math.min(page, pageCount - 1); const visible = filtered.slice(active * 8, active * 8 + 8)
-  const chosen = records.filter((item) => selected.includes(item.id)); const actionEnabled = chosen.length > 0 && chosen.every((item) => item.progress === '조치 대기')
-  const assigneeField = recordTypeFilter === 'action' ? 'actionAssignee' : 'inspectionAssignee'
-  const stats = [['배정 대기', typeRecords.length, '담당자 배정이 필요한 항목', ChecklistOutlinedIcon],['점검 대기', typeRecords.filter((item) => item.progress === '점검 대기').length, '점검 진행이 필요해요', PendingActionsOutlinedIcon],['조치 대기', typeRecords.filter((item) => item.progress === '조치 대기').length, '조치 등록이 필요해요', PendingActionsOutlinedIcon],['담당자 미배정', typeRecords.filter((item) => !item[assigneeField]).length, '빠른 배정이 필요해요', TaskAltRoundedIcon]]
+  const chosen = records.filter((item) => selected.includes(item.id)); const actionEnabled = chosen.length > 0 && chosen.every((item) => getRecordType(item) === 'action' && item.progress === '조치 대기')
   const toggle = (id) => setSelected((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current,id])
   const reset = () => { setFilters({ query:'', category:'분류', status:'진행 상태' }); setRecordTypeFilter('inspection'); setDateOffsetFilter('all'); setSelected([]); setPage(0) }
   const changeRecordType = (type) => {
@@ -223,7 +223,6 @@ function ChecklistManagementPage() {
   }
   const members = (managerOptions.length ? managerOptions : MANAGERS.map((name) => ({ name, userId: null }))).filter((member) => member.name.includes(memberQuery.trim()))
   return <section className="checklist-management-page">
-    <div className="checklist-metrics">{stats.map(([label,value,note,Icon], index) => <article className={`checklist-metric metric-${index}`} key={label}><span className="metric-heading"><i><Icon /></i>{label}</span><strong>{value}<small>건</small></strong><p>{note}</p></article>)}</div>
     <article className="management-table-card"><div className="management-table-header"><div><span className="section-kicker">CHECKLIST OVERVIEW</span><h3>담당자 배정</h3><p>일시를 확인하고 점검·조치 담당자를 배정합니다.</p></div><div className="management-header-actions"><button className="checklist-create-button" type="button" onClick={() => setIsCreateOpen(true)}><AddRoundedIcon /> 항목 추가</button><div className="assignment-type-toggle" role="tablist" aria-label="항목 유형"><button className={recordTypeFilter === 'inspection' ? 'is-active' : ''} type="button" role="tab" aria-selected={recordTypeFilter === 'inspection'} onClick={() => changeRecordType('inspection')}>점검</button><button className={recordTypeFilter === 'action' ? 'is-active' : ''} type="button" role="tab" aria-selected={recordTypeFilter === 'action'} onClick={() => changeRecordType('action')}>조치</button></div></div></div>
     <div className="management-filters"><Filter value={filters.category} onChange={(value) => changeFilter('category',value)} options={CATEGORY} /><label className="management-search"><SearchRoundedIcon /><input value={filters.query} onChange={(event) => changeFilter('query', event.target.value)} placeholder="점검 이름, 구역, 담당자 검색" /></label><Filter value={filters.status} onChange={(value) => changeFilter('status',value)} options={STATUS_FILTER_OPTIONS[recordTypeFilter]} />{recordTypeFilter === 'inspection' && <div className="assignment-date-toggle" aria-label="점검 예정일">{DATE_FILTER_OPTIONS.map((option) => <button className={dateOffsetFilter === option.value ? 'is-active' : ''} type="button" key={option.key} onClick={() => { setDateOffsetFilter(option.value); setPage(0) }}>{option.label}</button>)}</div>}<button className="filter-reset" type="button" onClick={reset}><RestartAltRoundedIcon /> 초기화</button></div>
     <div className="bulk-assign-toolbar"><span>선택 <strong>{selected.length}</strong>건</span><div>{recordTypeFilter === 'inspection' ? <button type="button" disabled={!chosen.length} onClick={() => setAssignmentMode('inspection')}><AssignmentIndOutlinedIcon /> 점검 담당자 배정</button> : <button type="button" disabled={!actionEnabled} onClick={() => setAssignmentMode('action')}><AssignmentIndOutlinedIcon /> 조치 담당자 배정</button>}</div></div>
