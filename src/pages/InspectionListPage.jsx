@@ -12,7 +12,7 @@ import {
 } from '../utils/checklistStatusStorage'
 
 const CATEGORIES = ['소방안전', '산업안전', '시설안전', '기타']
-const BASE_INSPECTION_RECORDS = [
+export const BASE_INSPECTION_RECORDS = [
   { id: 'INSP-001', name: '비상구 및 피난 통로 확보 점검', category: '소방안전', areas: ['본관 1층 복도', '본관 2층 복도', '별관 출입구'], cycle: '매일', content: '비상구 잠금 상태, 적치물 유무와 피난 유도등의 점등 상태를 확인합니다.' },
   { id: 'INSP-002', name: '고소 작업대 안전장치 점검', category: '산업안전', areas: ['A동 옥상', 'B동 외벽 작업구역'], cycle: '매주', content: '난간, 아웃트리거, 비상정지 장치 및 안전대 체결 상태를 확인합니다.' },
   { id: 'INSP-003', name: '전기실 배전반 이상 유무 점검', category: '시설안전', areas: ['A동 전기실', 'B동 전기실', '지하 기계실'], cycle: '매주', content: '배전반의 과열, 누전 차단기 상태, 경고 표지와 주변 정리 상태를 점검합니다.' },

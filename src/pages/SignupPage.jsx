@@ -2,12 +2,26 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/signup.css';
 
+const DEFAULT_CATEGORIES = [
+    '지게차',
+    '화물트럭',
+    '토잉카',
+    '팔레트',
+    '적재',
+    '현장보조',
+    '유지보수',
+    '재고',
+    '위험물',
+    '공통',
+];
+
 function SignupPage() {
     const [userId, setUserId] = useState('');
     const [pw, setPw] = useState('');
     const [name, setName] = useState('');
     const [companyCode, setCompanyCode] = useState('');
     const [role, setRole] = useState('field_worker');
+    const [category, setCategory] = useState('');
     const [message, setMessage] = useState('');
     const [isError, setIsError] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -70,6 +84,7 @@ function SignupPage() {
                     password: pw,
                     name: name,
                     role: role,
+                    category: category,
                     company_code: companyCode
                 }),
             });
@@ -163,15 +178,16 @@ function SignupPage() {
                     />
 
                     <div className="select-wrapper">
-                        <label className="label">권한 설정</label>
+                        <label className="label">역할 설정</label>
                         <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
                             className="select"
                             disabled={isLoading}
                         >
-                            <option value="field_worker">현장 작업자 (Field Worker)</option>
-                            <option value="admin">시스템 관리자 (Admin)</option>
+                            {DEFAULT_CATEGORIES.map((category) => (
+                                <option key={category} value={category}>{category}</option>
+                            ))}
                         </select>
                     </div>
 
