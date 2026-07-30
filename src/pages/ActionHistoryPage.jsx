@@ -22,28 +22,21 @@ function ActionHistoryPage() {
   const [records, setRecords] = useState([])
   const [inspectionhistory, setinspectionHistory] = useState([])
   const [selectedRecord, setSelectedRecord] = useState()
-  const [userData, setUserData] = useState([])
   const [photoPreviewRecord, setPhotoPreviewRecord] = useState(null)
 
   // 반려 사유 상태 관리
   const [rejectReason, setRejectReason] = useState('')
 
   useEffect(() => {
-    const fetchPageData = async () => {
-      const users = await fetchUserData()
-      fetchActionHistory(users)
-      fetchInspectionHistory(users)
-    }
-
-    fetchPageData()
+    fetchActionHistory()
+    fetchInspectionHistory()
   }, []);
 
   // 1. 조치 이력 전용 API 호출 (/api/checklists/history)
-  const fetchActionHistory = async (users = userData) => {
+  const fetchActionHistory = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const userList = users ?? []
 
       const response = await axios.get("http://127.0.0.1:8000/api/action-histories", {
         headers: {
@@ -59,14 +52,13 @@ function ActionHistoryPage() {
       if (actionItems.length) {
         const fetchedRecords = actionItems.filter((item) => item.approval_status === '승인 완료').map((item) => {
           // 백엔드 status 값에 맞춘 승인 상태 매핑
-          const matchedUser = userList.find((user) => String(user.id) === String(item.handler_uid) || String(user.userId) === String(item.handler_uid))
 
           return {
             id: item.action_history_id,
             completedAt: item.completed_at ? String(item.completed_at).replace('T', ' ').slice(0, 16) : '-',
             location: item.location || "지정 안 됨",
             type: item.action_name || "현장 조치 항목",
-            assignee: item.handler_name || matchedUser?.name || "담당자 미지정",
+            assignee: item.handler_name || "담당자 미지정",
             imageUrl: item.image_url || "",
             statusRaw: item.approval_status,
             approvalStatus: 'approved',
@@ -86,11 +78,10 @@ function ActionHistoryPage() {
     }
   };
 
-   const fetchInspectionHistory = async (users = userData) => {
+   const fetchInspectionHistory = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const userList = users ?? []
 
       const response = await axios.get("http://127.0.0.1:8000/api/inspection/histories/all", {
         headers: {
@@ -101,7 +92,6 @@ function ActionHistoryPage() {
       if (response.data && Array.isArray(response.data)) {
         const fetchedRecords = response.data.filter((item) => item.status === '점검 완료').map((item) => {
           // 백엔드 status 값에 맞춘 승인 상태 매핑
-          const matchedUser = userList.find((user) => String(user.id) === String(item.uid) || String(user.userId) === String(item.uid))
        
 
           return {
@@ -109,7 +99,7 @@ function ActionHistoryPage() {
             completedAt: item.date ? String(item.date).replace('T', ' ').slice(0, 16) : '-',
             location: item.location ? item.location : "지정 안 됨",
             type: item.name || "현장 점검 항목",
-            assignee: matchedUser?.name || "담당자 미지정",
+            assignee: item.user_name || "담당자 미지정",
             imageUrl: item.image_url || "",
             statusRaw: item.status, 
             
@@ -125,38 +115,6 @@ function ActionHistoryPage() {
     } catch (error) {
       console.error("점검 이력 로드 실패:", error);
       alert("점검 이력 데이터를 불러오지 못했습니다. 로그인 상태를 확인하세요.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-   const fetchUserData = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-
-      const response = await axios.get("http://127.0.0.1:8000/api/admin/users", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.data && Array.isArray(response.data)) {
-        const fetchedRecords = response.data.map((item) => {
-          return {
-            id: item.uid,
-            userId: item.user_id,
-            name : item.name
-          }
-        });
-        setUserData(fetchedRecords);
-        return fetchedRecords
-      }
-      return []
-    } catch (error) {
-      console.error("사용자 이력 로드 실패:", error);
-      alert("사용자 이력 데이터를 불러오지 못했습니다. 로그인 상태를 확인하세요.");
-      return []
     } finally {
       setLoading(false);
     }
