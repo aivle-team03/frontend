@@ -17,8 +17,8 @@ function SafetyManagementPage() {
   const [userPage, setUserPage] = useState(1)
   const companyRoleOptions = ['안전관리자', '관제사', '현장관리자', '일반유저']
   const [companyCodeForm, setCompanyCodeForm] = useState({
-    companyName: '',
     role: '',
+    category: '',
   })
 
   const roleCode = companyRoleOptions.includes(companyCodeForm.role)
@@ -39,7 +39,7 @@ function SafetyManagementPage() {
       const token = localStorage.getItem('token')
       if (!token) return
 
-      const response = await axios.get('http://127.0.0.1:8000/api/users', {
+      const response = await axios.get('http://127.0.0.1:8000/api/admin/users', {
         headers: { Authorization: `Bearer ${token}` },
       })
 
@@ -138,14 +138,17 @@ function SafetyManagementPage() {
 
         <div className="company-code-grid">
           <label>
-            <span>회사명</span>
-            <input value={companyCodeForm.companyName} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, companyName: event.target.value }))} placeholder="회사명 입력" />
-          </label>
-          <label>
             <span>role</span>
             <select value={companyCodeForm.role} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, role: event.target.value }))}>
               <option value="">선택</option>
               {companyRoleOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </label>
+          <label>
+            <span>Category</span>
+            <select value={companyCodeForm.category} onChange={(event) => setCompanyCodeForm((current) => ({ ...current, category: event.target.value }))}>
+              <option value="">선택</option>
+              {categories.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
           <label>
