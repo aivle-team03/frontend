@@ -1,9 +1,21 @@
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
 import Filtering from '../components/Report/Filtering.jsx'
-import { REPORT_PAGE_MOCK_DATA } from '../mocks/mockData.js'
-import { loadGeneratedReports } from '../utils/reportArchiveStorage.js'
 import '../styles/report.css'
+
+const API_BASE_URL = 'http://127.0.0.1:8000'
+
+function mapReport(report) {
+  const createdAt = String(report.created_at ?? '').slice(0, 10)
+  return {
+    id: report.report_id,
+    title: report.summary || report.content?.split('\n')[0] || `보고서 #${report.report_id}`,
+    createdAt,
+    period: createdAt,
+    owner: report.writer || `사용자 #${report.uid}`,
+  }
+}
 
 const formatDate = (date) => date.toISOString().slice(0, 10)
 
@@ -21,9 +33,23 @@ const getInitialFilters = () => {
 }
 
 function ReportListPage() {
-  const [reports] = useState(() => [...loadGeneratedReports(), ...REPORT_PAGE_MOCK_DATA.reports])
+  const [reports, setReports] = useState([])
   const [filters, setFilters] = useState(getInitialFilters)
   const [selectedReportId, setSelectedReportId] = useState(reports[0]?.id ?? null)
+
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/api/report`, { params: { page: 1, size: 100 } })
+      .then((response) => {
+        const items = response.data?.items ?? []
+        const mappedReports = items.map(mapReport)
+        setReports(mappedReports)
+        setSelectedReportId(mappedReports[0]?.id ?? null)
+      })
+      .catch((error) => {
+        console.error('보고서 목록 조회 실패:', error)
+        setReports([])
+      })
+  }, [])
 
   const filteredReports = useMemo(() => reports.filter((report) => {
     const keyword = filters.keyword.trim().toLowerCase()

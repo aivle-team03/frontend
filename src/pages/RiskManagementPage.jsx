@@ -1,5 +1,4 @@
 import '../styles/risk.css'
-import { EVENT_CATEGORY_MOCKUP_DATA } from '../mocks/mockData.js'
 import RiskFactorTypeChart from '../components/riskmanagement/RiskFactorTypeChart.jsx'
 import EventCategoryTable from '../components/riskmanagement/EventCategoryTable.jsx'
 import RiskFormModal from '../components/riskmanagement/RiskFormModal.jsx'
@@ -69,7 +68,7 @@ function RiskManagementPage() {
 
   const [isRiskModalOpen, setIsRiskModalOpen] = useState(false)
   const [isDeleteMode, setIsDeleteMode] = useState(false)
-  const [risks, setRisks] = useState(EVENT_CATEGORY_MOCKUP_DATA)
+  const [risks, setRisks] = useState([])
 
   const fetchRisks = async () => {
     const response = await axios.get(`${API_BASE_URL}/api/risk/list`)

@@ -1,7 +1,6 @@
 import axios from 'axios'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { TODAY_INSPECTION_MOCK_DATA } from '../mocks/mockData'
 import '../styles/checklist.css'
 import {
   getStoredChecklistManagementRecords,
@@ -131,20 +130,12 @@ function getInitialActionTasks() {
     .filter((record) => ['조치 대기', '조치 완료'].includes(record.progress))
     .map(toActionTask)
 
-  return managementActions.length ? managementActions : ACTION_MOCK_DATA
+  return managementActions
 }
 
 function ChecklistPage() {
   const navigate = useNavigate()
-  const [inspectionTasks, setInspectionTasks] = useState(() => TODAY_INSPECTION_MOCK_DATA.map((task) => ({
-    ...task,
-    taskKey: createKey('inspection', task.id),
-    category: task.category || '미분류',
-    inspectionStatus: task.status || '점검 대기',
-    inspectedAt: task.date || today,
-    inspector: '이안전',
-    movedToAction: false,
-  })))
+  const [inspectionTasks, setInspectionTasks] = useState([])
   const [actionTasks, setActionTasks] = useState(getInitialActionTasks)
   const [activeTaskView, setActiveTaskView] = useState('inspection')
   const [selectedTaskId, setSelectedTaskId] = useState(null)
@@ -201,7 +192,7 @@ function ChecklistPage() {
         .filter((record) => ['조치 대기', '조치 완료'].includes(record.progress))
         .map(toActionTask)
 
-      setActionTasks(managementActions.length ? managementActions : ACTION_MOCK_DATA)
+      setActionTasks(managementActions)
     }
 
     window.addEventListener('focus', syncAssignedActions)

@@ -19,7 +19,6 @@ import VideoLibraryOutlinedIcon from '@mui/icons-material/VideoLibraryOutlined'
 import VideoFileOutlinedIcon from '@mui/icons-material/VideoFileOutlined'
 import axios from 'axios'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { EDUCATION_MOCK_DATA } from '../mocks/mockData.js'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
@@ -51,11 +50,7 @@ const targetCompletionColors = {
   '특수 작업자': '#df7a32',
   '안전 관리자': '#df626c',
 }
-const attendeeNames = ['신지함', '박동준', '한기석', '정유진', '홍혁재', '유다현', '윤도현', '서하은', '강민석', '임수빈', '조현우', '문채원', '신재윤', '오유나', '장도윤', '배수아']
-const attendeeTeams = ['물류운영팀', '생산1팀', '생산2팀', '설비관리팀', '안전관리팀']
-
 function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) {
-  const { completion, requiredCourses } = EDUCATION_MOCK_DATA
   const [apiCourses, setApiCourses] = useState(null)
   const [apiCompletion, setApiCompletion] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -74,6 +69,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
         const completed = course.status_counts?.find((item) => item.status === '이수')?.count ?? 0
         return {
           id: `api-${course.education_id}`,
+          educationId: course.education_id,
           title: course.title,
           target: course.role,
           deadline: course.due_date ?? '-',
@@ -117,8 +113,8 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       .finally(() => setLoading(false))
   }, [])
 
-  const baseCourses = apiCourses?.length ? apiCourses : requiredCourses
-  const displayedCompletion = apiCompletion?.length ? apiCompletion : completion
+  const baseCourses = apiCourses ?? []
+  const displayedCompletion = apiCompletion ?? []
   const allCourses = useMemo(() => [...addedCourses, ...baseCourses], [addedCourses, baseCourses])
   const [selectedTarget, setSelectedTarget] = useState('전체')
   const [courseSearch, setCourseSearch] = useState('')
@@ -142,6 +138,8 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   const [materialFile, setMaterialFile] = useState(null)
   const [aiStatus, setAiStatus] = useState('idle')
   const [attendanceDetail, setAttendanceDetail] = useState(null)
+  const [attendanceList, setAttendanceList] = useState([])
+  const [attendanceLoading, setAttendanceLoading] = useState(false)
   const [attendanceFilter, setAttendanceFilter] = useState('전체')
   const [attendeeSearch, setAttendeeSearch] = useState('')
   const videoInputRef = useRef(null)
@@ -151,7 +149,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
     ...displayedCompletion.filter((item) => item.label === '전체'),
     ...displayedCompletion.filter((item) => item.label !== '전체'),
   ]
-  const selectedCompletion = displayedCompletion.find((item) => item.label === selectedTarget) ?? orderedCompletion[0]
+  const selectedCompletion = displayedCompletion.find((item) => item.label === selectedTarget) ?? orderedCompletion[0] ?? { label: '전체', value: 0, total: 0, completed: 0 }
   const selectedTargetCourses = allCourses.filter(
     (course) => selectedTarget === '전체' || course.target === selectedTarget || course.target === '전체',
   )
@@ -164,7 +162,6 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   const coursePageCount = Math.max(1, Math.ceil(filteredCourses.length / 5))
   const activeCoursePage = Math.min(coursePage, coursePageCount - 1)
   const visibleCourses = filteredCourses.slice(activeCoursePage * 5, (activeCoursePage + 1) * 5)
-  const attendanceList = useMemo(() => attendanceDetail ? createAttendanceList(attendanceDetail) : [], [attendanceDetail])
   const visibleAttendees = attendanceList.filter((person) => {
     const matchesStatus = attendanceFilter === '전체' || person.status === attendanceFilter
     const query = attendeeSearch.trim()
@@ -174,10 +171,33 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
 
   const updateCourseForm = (key, value) => setCourseForm((current) => ({ ...current, [key]: value }))
   const updateAiForm = (key, value) => setAiForm((current) => ({ ...current, [key]: value }))
-  const openAttendanceModal = (detail) => {
+  const openAttendanceModal = async (detail) => {
     setAttendanceDetail(detail)
     setAttendanceFilter('전체')
     setAttendeeSearch('')
+    setAttendanceList([])
+    try {
+      setAttendanceLoading(true)
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const request = detail.educationId
+        ? axios.get(`${API_BASE_URL}/api/admin/education/${detail.educationId}/attendees`, { headers })
+        : axios.get(`${API_BASE_URL}/api/admin/education/role-attendees`, { headers, params: { role: detail.target } })
+      const { data } = await request
+      setAttendanceDetail((current) => current ? { ...current, total: data.target_count, completed: data.completed_count } : current)
+      setAttendanceList((data.attendees ?? []).map((attendee) => ({
+        id: `${attendee.uid}-${attendee.education_id ?? detail.educationId ?? 'all'}`,
+        name: attendee.name,
+        educationTitle: attendee.education_title ?? detail.title,
+        team: attendee.category ?? '-',
+        status: attendee.status,
+        date: attendee.completed_date ? String(attendee.completed_date).replaceAll('-', '. ') : null,
+      })))
+    } catch (error) {
+      console.error('교육 대상자 목록 조회 실패:', error)
+    } finally {
+      setAttendanceLoading(false)
+    }
   }
 
   const addVideoCourse = (event) => {
@@ -350,7 +370,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
               <thead><tr><th>교육명</th><th>대상</th><th>마감일</th><th>이수 대상</th><th>이수 완료</th><th>이수율</th><th>상태</th></tr></thead>
               <tbody>{visibleCourses.map((course, index) => {
                 const metric = course.isCustom ? { progress: 0, assigned: course.target === '전체 임직원' ? 152 : 24, completed: 0 } : (course.apiMetric ?? courseMetrics[course.id - 1] ?? courseMetrics[index])
-                return <tr className={`${course.isCustom ? 'is-new-course ' : ''}is-course-row`} key={course.id} role="button" tabIndex="0" onClick={() => openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed })} onKeyDown={(event) => event.key === 'Enter' && openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed })}><td>{course.title}{course.isCustom && <span className="new-course-dot">NEW</span>}</td><td>{course.target}</td><td>{course.deadline}</td><td>{metric.assigned}명</td><td>{metric.completed}명</td><td><span className="course-rate"><b>{metric.progress}%</b><i><em style={{ width: `${metric.progress}%` }} /></i></span></td><td><span className={`education-status${course.isCustom ? ' status-waiting' : ` status-${course.id}`}`}>{course.status}</span></td></tr>
+                return <tr className={`${course.isCustom ? 'is-new-course ' : ''}is-course-row`} key={course.id} role="button" tabIndex="0" onClick={() => openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed, educationId: course.educationId })} onKeyDown={(event) => event.key === 'Enter' && openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed, educationId: course.educationId })}><td>{course.title}{course.isCustom && <span className="new-course-dot">NEW</span>}</td><td>{course.target}</td><td>{course.deadline}</td><td>{metric.assigned}명</td><td>{metric.completed}명</td><td><span className="course-rate"><b>{metric.progress}%</b><i><em style={{ width: `${metric.progress}%` }} /></i></span></td><td><span className={`education-status${course.isCustom ? ' status-waiting' : ` status-${course.id}`}`}>{course.status}</span></td></tr>
               })}</tbody>
             </table>
           </div>
@@ -364,7 +384,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
           </div>
         </article>
       </div>
-      {attendanceDetail && <AttendanceModal detail={attendanceDetail} attendees={visibleAttendees} filter={attendanceFilter} onFilterChange={setAttendanceFilter} search={attendeeSearch} onSearchChange={setAttendeeSearch} onClose={() => setAttendanceDetail(null)} />}
+      {attendanceDetail && <AttendanceModal detail={attendanceDetail} attendees={visibleAttendees} loading={attendanceLoading} filter={attendanceFilter} onFilterChange={setAttendanceFilter} search={attendeeSearch} onSearchChange={setAttendeeSearch} onClose={() => setAttendanceDetail(null)} />}
     </section>
   )
 }
@@ -384,17 +404,17 @@ function CompletionMetric({ item, overall, metricIndex, onOpen }) {
   return <div className={`completion-metric metric-tone-${metricIndex}${overall ? ' is-featured is-overall' : ''}`} style={{ '--metric-color': completionColors[metricIndex], '--animation-delay': `${metricIndex * 90}ms` }} role="button" tabIndex="0" onClick={onOpen} onKeyDown={(event) => event.key === 'Enter' && onOpen()}><div className="metric-label"><span className="metric-icon"><MetricIcon /></span><strong>{item.label}</strong></div><div className="metric-value-row"><strong>{item.value}<small>%</small></strong><span className="metric-ring" style={{ '--completion-rate': `${item.value}%` }}><i /></span></div><small>{item.completed} / {item.total}명</small></div>
 }
 
-function AttendanceModal({ detail, attendees, filter, onFilterChange, search, onSearchChange, onClose }) {
+function AttendanceModal({ detail, attendees, loading, filter, onFilterChange, search, onSearchChange, onClose }) {
   const filters = ['전체', '이수', '미이수']
   const total = detail.total
   const incomplete = Math.max(0, total - detail.completed)
   const rate = total ? Math.round((detail.completed / total) * 100) : 0
   return <div className="attendance-modal-backdrop" role="presentation" onMouseDown={onClose}>
-    <section className="attendance-modal" role="dialog" aria-modal="true" aria-label={`${detail.title} 대상자 현황`} onMouseDown={(event) => event.stopPropagation()}>
+    <section className="attendance-modal" role="dialog" aria-modal="true" aria-busy={loading} aria-label={`${detail.title} 대상자 현황`} onMouseDown={(event) => event.stopPropagation()}>
       <header className="attendance-modal-header"><div><span>교육 대상자 현황</span><h3>{detail.title}</h3><p>{detail.target} · 이수 현황을 확인하고 대상자를 검색할 수 있습니다.</p></div><button type="button" aria-label="상세 창 닫기" onClick={onClose}><CloseRoundedIcon /></button></header>
       <div className="attendance-summary"><div className="attendance-total"><span>이수 대상</span><AnimatedNumber value={total} suffix="명" /></div><div className="attendance-complete"><span>이수 완료</span><AnimatedNumber value={detail.completed} suffix="명" /></div><div className="attendance-incomplete"><span>미이수</span><AnimatedNumber value={incomplete} suffix="명" /></div><div className="attendance-rate"><span>이수율</span><AnimatedNumber value={rate} suffix="%" /><i><em style={{ width: `${rate}%` }} /></i></div></div>
       <div className="attendance-tools"><div className="attendance-filter-tabs" role="tablist">{filters.map((item) => <button className={filter === item ? 'is-active' : ''} key={item} type="button" onClick={() => onFilterChange(item)}>{item}</button>)}</div><label className="attendance-search"><SearchRoundedIcon /><input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="이름 또는 부서 검색" /></label></div>
-      <div className="attendance-list" key={`${filter}-${search}`}><div className="attendance-list-head"><span>대상자</span><span>소속</span><span>이수 상태</span><span>이수 일시</span></div>{attendees.length ? attendees.map((person, index) => <div className="attendance-list-row" key={person.id} style={{ '--row-delay': `${Math.min(index, 10) * 45}ms` }}><span><b>{person.name.slice(0, 1)}</b>{person.name}</span><span>{person.team}</span><span><i className={person.status === '이수' ? 'is-complete' : ''}>{person.status}</i></span><span>{person.date ?? '-'}</span></div>) : <p className="attendance-empty">조건에 맞는 대상자가 없습니다.</p>}</div>
+      <div className="attendance-list" key={`${filter}-${search}`}><div className="attendance-list-head"><span>대상자</span><span>교육명</span><span>소속</span><span>이수 상태</span><span>이수 일시</span></div>{attendees.length ? attendees.map((person, index) => <div className="attendance-list-row" key={person.id} style={{ '--row-delay': `${Math.min(index, 10) * 45}ms` }}><span><b>{person.name.slice(0, 1)}</b>{person.name}</span><span className="attendance-education-title">{person.educationTitle}</span><span>{person.team}</span><span><i className={person.status === '이수' ? 'is-complete' : ''}>{person.status}</i></span><span>{person.date ?? '-'}</span></div>) : <p className="attendance-empty">조건에 맞는 대상자가 없습니다.</p>}</div>
     </section>
   </div>
 }
@@ -417,16 +437,6 @@ function AnimatedNumber({ value, suffix }) {
   }, [value])
 
   return <strong>{displayValue}<small>{suffix}</small></strong>
-}
-
-function createAttendanceList({ total, completed, target }) {
-  return Array.from({ length: total }, (_, index) => ({
-    id: `${target}-${index}`,
-    name: attendeeNames[index % attendeeNames.length],
-    team: attendeeTeams[index % attendeeTeams.length],
-    status: index < completed ? '이수' : '미이수',
-    date: index < completed ? `2026. 07. ${String((index % 20) + 1).padStart(2, '0')}` : null,
-  }))
 }
 
 function EducationSelect({ label, value, options, onChange }) {

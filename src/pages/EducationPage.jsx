@@ -8,7 +8,6 @@ import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineR
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
 import axios from 'axios'
 import { useEffect, useMemo, useState } from 'react'
-import { EDUCATION_MOCK_DATA } from '../mocks/mockData.js'
 import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
@@ -23,7 +22,6 @@ const completionRingColors = ['#4f78d1', '#2f9d75', '#8b63d6', '#e18a3f']
 const progressByContent = { 'forklift-basics': 86, 'fire-response': 35, 'conveyor-safety': 0, 'ppe-basics': 100, 'chemical-safety': 62, 'work-at-height': 72, 'electrical-safety': 48 }
 
 function EducationPage({ addedCourses = [] }) {
-  const { content, requiredCourses } = EDUCATION_MOCK_DATA
   const [apiCourses, setApiCourses] = useState(null)
   const [apiSummary, setApiSummary] = useState(null)
   const [apiRates, setApiRates] = useState(null)
@@ -71,9 +69,8 @@ function EducationPage({ addedCourses = [] }) {
     duration: course.duration,
     videoUrl: course.videoUrl,
   })), [addedCourses])
-  const baseCourses = apiCourseItems.length ? apiCourseItems : requiredCourses
-  const baseContent = apiCourseItems.length
-    ? apiCourseItems.map((course) => ({
+  const baseCourses = apiCourseItems
+  const baseContent = apiCourseItems.map((course) => ({
       id: course.contentId,
       title: course.title,
       category: course.category,
@@ -83,13 +80,12 @@ function EducationPage({ addedCourses = [] }) {
       status: course.status,
       isApiCourse: true,
     }))
-    : content
   const allContent = [...customContent, ...baseContent]
   const allCourses = [...addedCourses, ...baseCourses]
   const [contentId, setContentId] = useState(allContent[0]?.id)
   const [requiredPage, setRequiredPage] = useState(0)
   const [summaryModal, setSummaryModal] = useState(null)
-  const currentContent = allContent.find((item) => item.id === contentId) ?? allContent[0]
+  const currentContent = allContent.find((item) => item.id === contentId) ?? allContent[0] ?? {}
   const currentYouTubeEmbedUrl = getYouTubeEmbedUrl(currentContent?.videoUrl)
   const getCourseProgress = (course) => {
     if (course?.isApiCourse) {

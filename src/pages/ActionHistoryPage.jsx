@@ -11,8 +11,6 @@ import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import PieChartRoundedIcon from '@mui/icons-material/PieChartRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
-import { CHECKLIST_MANAGEMENT_MOCK_RECORDS } from './ChecklistManagementPage'
-import { getStoredChecklistManagementRecords } from '../utils/checklistStatusStorage'
 
 function ActionHistoryPage() {
   const [loading, setLoading] = useState(false);
@@ -28,30 +26,8 @@ function ActionHistoryPage() {
   const [rejectReason, setRejectReason] = useState('')
 
   useEffect(() => {
-    loadManagementHistory()
+    fetchActionHistory()
   }, []);
-
-  const loadManagementHistory = () => {
-    setLoading(true)
-    const storedRecords = getStoredChecklistManagementRecords()
-    const sourceRecords = storedRecords.length ? storedRecords : CHECKLIST_MANAGEMENT_MOCK_RECORDS
-    const fallbackById = new Map(CHECKLIST_MANAGEMENT_MOCK_RECORDS.map((item) => [String(item.id), item]))
-    const completedRecords = sourceRecords.flatMap((item) => ((item.actionHistory?.length ? item.actionHistory : fallbackById.get(String(item.id))?.actionHistory) || []).map((history, index) => ({
-      id: history.id || `management-${item.id}-${index}`,
-      isLocalMock: true,
-      completedAt: history.dateTime || item.dateTime,
-      location: history.location || item.location,
-      type: history.actionName || item.name,
-      assignee: history.manager || item.actionAssignee || '담당자 미지정',
-      imageUrl: history.completedPhoto || '',
-      statusRaw: history.progress || '조치 완료',
-      approvalStatus: history.approvalStatus === '승인완료' ? 'approved' : history.approvalStatus === '반려' ? 'rejected' : 'pending',
-      approver: history.approver || '-',
-      approvedAt: history.approvedAt || '-',
-    })))
-    setRecords(completedRecords)
-    setLoading(false)
-  }
 
   // 1. 조치 이력 전용 API 호출 (/api/checklists/history)
   const fetchActionHistory = async () => {
@@ -102,13 +78,6 @@ function ActionHistoryPage() {
   const handleApprove = async () => {
     if (!selectedRecord) return;
 
-    if (selectedRecord.isLocalMock || String(selectedRecord.id).startsWith('management-')) {
-      const approvedAt = new Date().toLocaleString('ko-KR')
-      setRecords((current) => current.map((record) => record.id === selectedRecord.id ? { ...record, approvalStatus: 'approved', approver: '안전 관리자', approvedAt } : record))
-      setSelectedRecord(null)
-      return
-    }
-
     try {
       const token = localStorage.getItem("token");
       const headers = { Authorization: `Bearer ${token}` };
@@ -135,13 +104,6 @@ function ActionHistoryPage() {
     if (!rejectReason.trim()) {
       alert('반려 사유를 입력해주세요.');
       return;
-    }
-
-    if (selectedRecord.isLocalMock || String(selectedRecord.id).startsWith('management-')) {
-      setRecords((current) => current.map((record) => record.id === selectedRecord.id ? { ...record, approvalStatus: 'rejected' } : record))
-      setSelectedRecord(null)
-      setRejectReason('')
-      return
     }
 
     try {
