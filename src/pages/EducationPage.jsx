@@ -27,6 +27,7 @@ function EducationPage({ addedCourses = [] }) {
   const [apiCourses, setApiCourses] = useState(null)
   const [apiSummary, setApiSummary] = useState(null)
   const [apiRates, setApiRates] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [isCompleting, setIsCompleting] = useState(false)
 
   const fetchEducationData = async () => {
@@ -43,9 +44,11 @@ function EducationPage({ addedCourses = [] }) {
   }
 
   useEffect(() => {
-    fetchEducationData().catch((error) => {
-      console.error('교육 데이터 조회 실패:', error)
-    })
+    fetchEducationData()
+      .catch((error) => {
+        console.error('교육 데이터 조회 실패:', error)
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const apiCourseItems = useMemo(() => (apiCourses ?? []).map((course) => ({
@@ -143,6 +146,8 @@ function EducationPage({ addedCourses = [] }) {
     setRequiredPage(Math.floor(previousIndex / 5))
   }
 
+  if (loading) return <EducationLoadingSkeleton />
+
   return <section className="education-page learner-education-page">
     {addedCourses.length > 0 && <div className="learner-new-course-banner"><span><PlayCircleOutlineRoundedIcon /><strong>새 교육이 배정되었습니다.</strong> 교육 관리에서 등록한 {addedCourses[0].title}을 확인해 보세요.</span><button type="button" onClick={() => setContentId(addedCourses[0].contentId)}>지금 보기</button></div>}
 
@@ -193,6 +198,19 @@ function EducationPage({ addedCourses = [] }) {
       <article className="education-panel learning-guide-card"><div className="guide-copy"><span className="panel-kicker">학습 안내</span><h3><SchoolOutlinedIcon /> 수강 전 확인하세요</h3><ul><li>영상의 80% 이상을 시청하면 이수 완료 버튼이 활성화됩니다.</li><li>필수 교육은 마감일까지 반드시 수강해야 합니다.</li><li>재생 중 페이지를 벗어나도 진도율이 저장됩니다.</li></ul></div><div className="guide-illustration"><MenuBookOutlinedIcon /><CheckCircleOutlineRoundedIcon /></div></article>
     </div>
     {summaryModal && <LearningSummaryModal summary={summaryModal} getProgress={getCourseProgress} onClose={() => setSummaryModal(null)} />}
+  </section>
+}
+
+function EducationLoadingSkeleton() {
+  return <section className="education-page learner-education-page education-loading-skeleton" aria-busy="true" aria-label="교육 데이터를 불러오는 중입니다">
+    <div className="education-summary rich-summary">
+      {[1, 2, 3].map((item) => <article className="summary-card" key={item}><span className="skeleton-block skeleton-icon" /><div><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line medium" /><span className="skeleton-block skeleton-line long" /></div></article>)}
+    </div>
+    <div className="education-top-grid learner-grid">
+      <article className="education-panel"><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line title" /><div className="skeleton-block skeleton-video" /><span className="skeleton-block skeleton-line long" /><div className="skeleton-actions"><span className="skeleton-block" /><span className="skeleton-block" /></div></article>
+      <article className="education-panel learner-list-panel"><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line title" /><div className="skeleton-table">{[1, 2, 3, 4, 5].map((item) => <span className="skeleton-block" key={item} />)}</div></article>
+    </div>
+    <div className="learner-bottom-grid"><article className="education-panel skeleton-panel" /><article className="education-panel skeleton-panel" /></div>
   </section>
 }
 

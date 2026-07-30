@@ -250,11 +250,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   }
 
   if (loading) {
-    return (
-      <div style={{ padding: '40px', textAlign: 'center' }}>
-        교육 관리 데이터 연결 중...
-      </div>
-    )
+    return <EducationManagementLoadingSkeleton />
   }
 
   return (
@@ -371,6 +367,16 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       {attendanceDetail && <AttendanceModal detail={attendanceDetail} attendees={visibleAttendees} filter={attendanceFilter} onFilterChange={setAttendanceFilter} search={attendeeSearch} onSearchChange={setAttendeeSearch} onClose={() => setAttendanceDetail(null)} />}
     </section>
   )
+}
+
+function EducationManagementLoadingSkeleton() {
+  return <section className="education-page education-management-page education-management-loading-skeleton" aria-busy="true" aria-label="교육 관리 데이터를 불러오는 중입니다">
+    <div className="management-overview-row">
+      <article className="education-panel completion-summary-card skeleton-completion-card"><div className="skeleton-card-heading"><div><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line title" /></div><span className="skeleton-block skeleton-select" /></div><div className="skeleton-metrics">{[1, 2, 3, 4, 5].map((item) => <span className="skeleton-block" key={item} />)}</div></article>
+      <article className="education-panel management-course-table-card skeleton-course-table-card"><div className="skeleton-card-heading"><div><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line title" /></div><span className="skeleton-block skeleton-count" /></div><div className="skeleton-toolbar"><span className="skeleton-block" /><span className="skeleton-block" /></div><div className="skeleton-management-table"><span className="skeleton-block skeleton-table-header" />{[1, 2, 3, 4, 5].map((item) => <span className="skeleton-block skeleton-table-row" key={item} />)}</div><div className="skeleton-table-footer"><span className="skeleton-block" /><span className="skeleton-block" /></div></article>
+    </div>
+    <div className="education-creation-grid"><article className="education-panel video-register-card skeleton-form-card"><div className="skeleton-card-heading"><div><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line title" /></div><span className="skeleton-block skeleton-tabs" /></div><span className="skeleton-block skeleton-line long" /><div className="skeleton-form-fields"><span className="skeleton-block skeleton-input" /><div><span className="skeleton-block skeleton-input" /><span className="skeleton-block skeleton-input" /></div></div><span className="skeleton-block skeleton-tabs" /><span className="skeleton-block skeleton-upload" /><span className="skeleton-block skeleton-button" /></article></div>
+  </section>
 }
 
 function CompletionMetric({ item, overall, metricIndex, onOpen }) {
