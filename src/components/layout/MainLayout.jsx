@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Header from './Header.jsx'
 import Sidebar from './Sidebar.jsx'
+import ServiceFooter from '../common/ServiceFooter.jsx'
 
 const navigationItems = [
   { path: '/', label: '홈', icon: 'home' },
@@ -60,6 +61,7 @@ function MainLayout({ setIsLoggedIn }) {
         <main className="app-main">
           <Outlet />
         </main>
+        <ServiceFooter />
       </div>
     </div>
   )

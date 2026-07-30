@@ -22,6 +22,7 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { clearAuthSession } from '../../api/authInterceptor.js'
 import { MY_PAGE_MOCK_DATA } from '../../mocks/mockData.js'
 import '../../styles/Header.css'
 
@@ -112,16 +113,16 @@ function Header({ items }) {
     fetchUserProfile()
   }, [])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (window.confirm('로그아웃 하시겠습니까?')) {
+      try {
+        await axios.post('http://127.0.0.1:8000/api/auth/logout')
+      } catch (error) {
+        console.warn('로그아웃 토큰 무효화 요청 실패:', error)
+      }
 
-      localStorage.removeItem('token');
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('user');
-
+      clearAuthSession()
       setActiveMenu(null);
-
       window.location.href = '/login';
     }
   }

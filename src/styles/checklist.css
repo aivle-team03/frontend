@@ -244,6 +244,23 @@
   background: #2f64b7;
 }
 
+.task-item.is-selected {
+  margin: 0 -10px;
+  padding: 14px 10px;
+  border-bottom-color: transparent;
+  border-radius: 9px;
+  color: #1d4f91;
+  background: #edf5ff;
+}
+
+.task-item.is-selected.is-completed { color: #5e7da6; }
+
+.task-check {
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
 .action-card {
   gap: 22px;
 }

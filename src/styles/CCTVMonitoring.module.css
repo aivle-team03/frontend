@@ -679,3 +679,22 @@
   color: #cbd5e1;
   font-size: 10px;
 }
+
+.monitoringSkeleton .skeletonBlock {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(100deg, #edf2f7 25%, #f7f9fc 37%, #edf2f7 63%);
+  background-size: 400% 100%;
+  animation: monitoring-skeleton-shimmer 1.35s ease-in-out infinite;
+}
+
+.skeletonOverviewCopy,.skeletonSectionTitle { display: flex; align-items: center; gap: 12px; }
+.skeletonOverviewIcon { width: 42px; height: 42px; border-radius: 11px !important; }.skeletonSectionIcon { width: 36px; height: 36px; border-radius: 10px !important; }
+.skeletonOverviewCopy > div,.skeletonSectionTitle > div { display: grid; gap: 8px; }.skeletonLine { height: 11px; }.skeletonLineMedium { width: 118px; }.skeletonLineLong { width: 180px; }
+.skeletonOverviewStats { display: flex; gap: 18px; }.skeletonOverviewStats .skeletonBlock { width: 66px; height: 22px; }
+.skeletonAction { width: 120px; height: 34px; }.skeletonBadge { width: 38px; height: 25px; border-radius: 999px !important; }
+.skeletonVideo { aspect-ratio: 16 / 9; border-radius: 12px !important; }.skeletonVideoChange { width: 220px; height: 125px; border-radius: 10px !important; }
+.skeletonEventTable { display: grid; gap: 1px; }.skeletonTableHeader { height: 38px; }.skeletonTableRow { height: 50px; }
+.skeletonEventDetail { display: grid; gap: 14px; }.skeletonDetailHeadline { height: 58px; }.skeletonDetailRow { height: 30px; }.skeletonDetailButton { width: 100%; height: 36px; margin-top: 4px; }
+@keyframes monitoring-skeleton-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .monitoringSkeleton .skeletonBlock { animation: none; } }

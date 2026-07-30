@@ -231,11 +231,11 @@ function BoardPage() {
       })
       const rawItems = response.data.items || response.data || []
       setBoardCategoryOptions(getBoardCategoryOptions(rawItems))
-      setReports([...rawItems.map(formatBoardItem), REGISTERED_BOARD_MOCK_REPORT].map(applyStoredBoardStatus))
+      setReports(rawItems.map(formatBoardItem))
     } catch (error) {
       console.error('게시글 목록 로드 실패:', error)
-      setBoardCategoryOptions(getBoardCategoryOptions(MOCK_REPORTS))
-      setReports(MOCK_REPORTS.map(applyStoredBoardStatus))
+      setBoardCategoryOptions([])
+      setReports([])
     } finally {
       setLoading(false)
     }

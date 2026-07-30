@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import MainLayout from '../components/layout/MainLayout.jsx'
 import ActionHistoryPage from '../pages/ActionHistoryPage.jsx'
 import ChecklistPage from '../pages/ChecklistPage.jsx'
@@ -20,6 +20,8 @@ import ReportListPage from '../pages/ReportListPage.jsx'
 import ReportPage from '../pages/ReportPage.jsx'
 import RiskManagementPage from '../pages/RiskManagementPage.jsx'
 import SafetyManagementPage from '../pages/SafetyManagementPage.jsx'
+import ServiceFooter from '../components/common/ServiceFooter.jsx'
+import { PrivacyPolicyPage, TermsPage } from '../pages/PolicyDocumentPage.jsx'
 
 function AppRouter() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -30,7 +32,10 @@ function AppRouter() {
   const [addedCourses, setAddedCourses] = useState([])
   return (
     <BrowserRouter>
+      <>
       <Routes>
+        <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="terms" element={<TermsPage />} />
         {isLoggedIn ? (
           <Route element={<MainLayout setIsLoggedIn={setIsLoggedIn} />}>
             <Route index element={<HomePage />} />
@@ -68,8 +73,15 @@ function AppRouter() {
           </>
         )}
       </Routes>
+      <PublicFooter />
+      </>
     </BrowserRouter>
   )
+}
+
+function PublicFooter() {
+  const { pathname } = useLocation()
+  return pathname === '/login' || pathname === '/signup' || pathname === '/privacy-policy' || pathname === '/terms' ? <ServiceFooter /> : null
 }
 
 export default AppRouter
