@@ -59,9 +59,9 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   const fetchAdminEducationData = async () => {
     const token = localStorage.getItem('token')
     const headers = token ? { Authorization: `Bearer ${token}` } : {}
-    const [statusResult, roleStatsResult] = await Promise.allSettled([
+    const [statusResult, categoryStatsResult] = await Promise.allSettled([
       axios.get(`${API_BASE_URL}/api/admin/education/status`, { headers }),
-      axios.get(`${API_BASE_URL}/api/admin/education/role-stats`, { headers }),
+      axios.get(`${API_BASE_URL}/api/admin/education/category-stats`, { headers }),
     ])
 
     if (statusResult.status === 'fulfilled') {
@@ -71,7 +71,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
           id: `api-${course.education_id}`,
           educationId: course.education_id,
           title: course.title,
-          target: course.role,
+          target: course.category ?? '전체',
           deadline: course.due_date ?? '-',
           status: completed === course.target_count ? '이수 완료' : '진행 중',
           apiMetric: {
@@ -85,17 +85,18 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       setApiError('교육 관리 데이터를 불러오지 못해 기존 화면 데이터를 표시합니다.')
     }
 
-    if (roleStatsResult.status === 'fulfilled') {
-      const roleItems = roleStatsResult.value.data.roles ?? []
+    if (categoryStatsResult.status === 'fulfilled') {
+      const categoryItems = categoryStatsResult.value.data.categories ?? []
+      const visibleCategoryItems = categoryItems.filter((item) => item.category !== '전체')
       setApiCompletion([
         {
           label: '전체',
-          value: roleStatsResult.value.data.total_completion_rate ?? 0,
-          total: roleItems.reduce((sum, item) => sum + (item.target_count ?? 0), 0),
-          completed: roleItems.reduce((sum, item) => sum + (item.completed_count ?? 0), 0),
+          value: categoryStatsResult.value.data.total_completion_rate ?? 0,
+          total: categoryItems.reduce((sum, item) => sum + (item.target_count ?? 0), 0),
+          completed: categoryItems.reduce((sum, item) => sum + (item.completed_count ?? 0), 0),
         },
-        ...roleItems.map((item) => ({
-          label: item.role,
+        ...visibleCategoryItems.map((item) => ({
+          label: item.category,
           value: item.completion_rate ?? 0,
           total: item.target_count ?? 0,
           completed: item.completed_count ?? 0,
@@ -182,7 +183,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
       const request = detail.educationId
         ? axios.get(`${API_BASE_URL}/api/admin/education/${detail.educationId}/attendees`, { headers })
-        : axios.get(`${API_BASE_URL}/api/admin/education/role-attendees`, { headers, params: { role: detail.target } })
+        : axios.get(`${API_BASE_URL}/api/admin/education/category-attendees`, { headers, params: { category: detail.target === '전체' ? undefined : detail.target } })
       const { data } = await request
       setAttendanceDetail((current) => current ? { ...current, total: data.target_count, completed: data.completed_count } : current)
       setAttendanceList((data.attendees ?? []).map((attendee) => ({
@@ -401,7 +402,7 @@ function EducationManagementLoadingSkeleton() {
 
 function CompletionMetric({ item, overall, metricIndex, onOpen }) {
   const MetricIcon = completionMetricIcons[metricIndex] ?? GroupsOutlinedIcon
-  return <div className={`completion-metric metric-tone-${metricIndex}${overall ? ' is-featured is-overall' : ''}`} style={{ '--metric-color': completionColors[metricIndex], '--animation-delay': `${metricIndex * 90}ms` }} role="button" tabIndex="0" onClick={onOpen} onKeyDown={(event) => event.key === 'Enter' && onOpen()}><div className="metric-label"><span className="metric-icon"><MetricIcon /></span><strong>{item.label}</strong></div><div className="metric-value-row"><strong>{item.value}<small>%</small></strong><span className="metric-ring" style={{ '--completion-rate': `${item.value}%` }}><i /></span></div><small>{item.completed} / {item.total}명</small></div>
+  return <div className={`completion-metric metric-tone-${metricIndex}${overall ? ' is-featured is-overall' : ''}`} style={{ '--metric-color': completionColors[metricIndex % completionColors.length], '--animation-delay': `${metricIndex * 90}ms` }} role="button" tabIndex="0" onClick={onOpen} onKeyDown={(event) => event.key === 'Enter' && onOpen()}><div className="metric-label"><span className="metric-icon"><MetricIcon /></span><strong>{item.label}</strong></div><div className="metric-value-row"><strong>{item.value}<small>%</small></strong><span className="metric-ring" style={{ '--completion-rate': `${item.value}%` }}><i /></span></div><small>{item.completed} / {item.total}명</small></div>
 }
 
 function AttendanceModal({ detail, attendees, loading, filter, onFilterChange, search, onSearchChange, onClose }) {
