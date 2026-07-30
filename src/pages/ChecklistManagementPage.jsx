@@ -63,13 +63,15 @@ function ChecklistManagementPage() {
 
       // (1) 점검 이력 변환 (점검만 있는 경우 & 점검+조치 연결)
       inspectionData.forEach((item) => {
+        // is_action_required가 true인 항목(점검+조치 건)은 점검 목록에서 제외하고, 조치 데이터 기준으로만 출력
+        if (Boolean(item.is_action_required)) {
+          return;
+        }
+
         const locations = item.location ? item.location.split(',').map((l) => l.trim()).filter(Boolean) : ['구역 미지정']
         locations.forEach((loc, locIdx) => {
           const idKey = `insp-${item.inspection_history_id}-${locIdx}`
-          let progressStatus = item.status || '점검 대기'
-          if (item.status === '점검 완료' && item.is_action_required) {
-            progressStatus = '조치 대기' // 점검 완료되었으나 추가 조치가 필요한 건
-          }
+          const progressStatus = item.status || '점검 완료'
 
           normalizedList.push({
             id: idKey,
@@ -84,13 +86,13 @@ function ChecklistManagementPage() {
             actionAssignee: '',
             dateTime: item.date ? String(item.date).replace('T', ' ').slice(0, 16) : '',
             progress: progressStatus,
-            isActionRequired: Boolean(item.is_action_required),
+            isActionRequired: false,
             rawItem: item,
           })
         })
       })
 
-      // (2) 조치 이력 변환 (게시판+조치, 이벤트+조치, 직접추가 조치)
+      // (2) 조치 이력 변환 -> 조치 기준 데이터 모두 표시 (점검+조치, 게시판+조치, 이벤트+조치 등)
       actionData.forEach((item) => {
         // 출처에 따른 점검 담당자(출처 제공자) 표기 결정
         let inspectionAssigneeText = ''
@@ -99,7 +101,7 @@ function ChecklistManagementPage() {
         } else if (item.source_type === '이벤트') {
           inspectionAssigneeText = 'CCTV'
         } else if (item.source_type === '점검이력') {
-          inspectionAssigneeText = item.handler_name || '점검 담당자'
+          inspectionAssigneeText = item.inspector_name || item.user_name || '점검 담당자'
         } else {
           inspectionAssigneeText = item.approver_name || '관리자'
         }
@@ -119,6 +121,7 @@ function ChecklistManagementPage() {
           actionAssignee: item.handler_name || '',
           dateTime: item.created_at ? String(item.created_at).replace('T', ' ').slice(0, 16) : '',
           progress: item.action_status || '조치 대기',
+          isActionRequired: true,
           rawItem: item,
         })
       })
