@@ -43,6 +43,7 @@ const courseMetrics = [
 const workTypes = ['지게차 작업', '고소 작업', '설비 점검', '화재 예방', '화학물질 취급', '기타']
 const targetGroups = ['전체 임직원', '신규 입사자', '일반 작업자', '특수 작업자', '안전 관리자']
 const completionColors = ['#4f75d1', '#2f9b73', '#c48a22', '#df7a32', '#df626c']
+const ALL_EMPLOYEE_CATEGORIES = new Set(['전체', '공통'])
 const targetCompletionColors = {
   전체: '#4f75d1',
   '신규 근로자': '#2f9b73',
@@ -55,18 +56,16 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   const [apiCompletion, setApiCompletion] = useState(null)
   const [loading, setLoading] = useState(true)
   const [apiError, setApiError] = useState('')
+  const educationDashboardRef = useRef(null)
 
   const fetchAdminEducationData = async () => {
     const token = localStorage.getItem('token')
     const headers = token ? { Authorization: `Bearer ${token}` } : {}
-    const [statusResult, categoryStatsResult] = await Promise.allSettled([
-      axios.get(`${API_BASE_URL}/api/admin/education/status`, { headers }),
-      axios.get(`${API_BASE_URL}/api/admin/education/category-stats`, { headers }),
-    ])
-
-    if (statusResult.status === 'fulfilled') {
-      setApiCourses(statusResult.value.data.map((course) => {
-        const completed = course.status_counts?.find((item) => item.status === '이수')?.count ?? 0
+    const response = await axios.get(`${API_BASE_URL}/api/admin/education/dashboard`, { headers })
+    const dashboard = response.data
+    educationDashboardRef.current = dashboard
+    setApiCourses((dashboard.courses ?? []).map((course) => {
+        const completed = course.completed_count ?? course.status_counts?.find((item) => item.status === '이수')?.count ?? 0
         return {
           id: `api-${course.education_id}`,
           educationId: course.education_id,
@@ -81,28 +80,22 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
           },
         }
       }))
-    } else {
-      setApiError('교육 관리 데이터를 불러오지 못해 기존 화면 데이터를 표시합니다.')
-    }
 
-    if (categoryStatsResult.status === 'fulfilled') {
-      const categoryItems = categoryStatsResult.value.data.categories ?? []
-      const visibleCategoryItems = categoryItems.filter((item) => item.category !== '전체')
-      setApiCompletion([
+    const categoryItems = (dashboard.categories ?? []).filter((item) => !ALL_EMPLOYEE_CATEGORIES.has(item.category))
+    setApiCompletion([
         {
           label: '전체',
-          value: categoryStatsResult.value.data.total_completion_rate ?? 0,
-          total: categoryItems.reduce((sum, item) => sum + (item.target_count ?? 0), 0),
-          completed: categoryItems.reduce((sum, item) => sum + (item.completed_count ?? 0), 0),
+          value: dashboard.total_completion_rate ?? 0,
+          total: dashboard.total_target_count ?? 0,
+          completed: dashboard.total_completed_count ?? 0,
         },
-        ...visibleCategoryItems.map((item) => ({
+        ...categoryItems.map((item) => ({
           label: item.category,
           value: item.completion_rate ?? 0,
           total: item.target_count ?? 0,
           completed: item.completed_count ?? 0,
         })),
       ])
-    }
   }
 
   useEffect(() => {
@@ -172,7 +165,8 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
 
   const updateCourseForm = (key, value) => setCourseForm((current) => ({ ...current, [key]: value }))
   const updateAiForm = (key, value) => setAiForm((current) => ({ ...current, [key]: value }))
-  const openAttendanceModal = async (detail) => {
+  /* 이전 개별 사용자 조회 방식: 단일 dashboard 응답으로 대체됨
+  const openAttendanceModalLegacy = async (detail) => {
     setAttendanceDetail(detail)
     setAttendanceFilter('전체')
     setAttendeeSearch('')
@@ -181,24 +175,69 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       setAttendanceLoading(true)
       const token = localStorage.getItem('token')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
-      const request = detail.educationId
-        ? axios.get(`${API_BASE_URL}/api/admin/education/${detail.educationId}/attendees`, { headers })
-        : axios.get(`${API_BASE_URL}/api/admin/education/category-attendees`, { headers, params: { category: detail.target === '전체' ? undefined : detail.target } })
-      const { data } = await request
-      setAttendanceDetail((current) => current ? { ...current, total: data.target_count, completed: data.completed_count } : current)
-      setAttendanceList((data.attendees ?? []).map((attendee) => ({
-        id: `${attendee.uid}-${attendee.education_id ?? detail.educationId ?? 'all'}`,
-        name: attendee.name,
-        educationTitle: attendee.education_title ?? detail.title,
-        team: attendee.category ?? '-',
-        status: attendee.status,
-        date: attendee.completed_date ? String(attendee.completed_date).replaceAll('-', '. ') : null,
-      })))
+      const users = await getAdminUsers(headers)
+      const targetUsers = detail.educationId
+        ? targetUsersForCourse(users, detail.target)
+        : detail.target === '전체' ? users : users.filter((user) => user.category === detail.target)
+      const userEducations = await Promise.all(targetUsers.map(async (user) => [user, await getUserEducations(user, headers)]))
+      const attendees = userEducations.map(([user, educations]) => {
+        if (detail.educationId) {
+          const education = courseStatusForUser(educations, detail.educationId)
+          return {
+            id: `${user.uid}-${detail.educationId}`,
+            name: user.name,
+            educationTitle: detail.title,
+            team: user.category ?? '-',
+            status: education?.status ?? '미이수',
+            date: education?.completed_date ? String(education.completed_date).replaceAll('-', '. ') : null,
+          }
+        }
+        const applicableCourses = educations.filter((education) => ALL_EMPLOYEE_CATEGORIES.has(education.category) || education.category === user.category)
+        const completed = applicableCourses.length > 0 && applicableCourses.every((education) => education.status === '이수')
+        return {
+          id: `${user.uid}-summary`, name: user.name, educationTitle: `${detail.target} 교육 현황`, team: user.category ?? '-', status: completed ? '이수' : '미이수', date: null,
+        }
+      })
+      const completedCount = attendees.filter((attendee) => attendee.status === '이수').length
+      setAttendanceDetail((current) => current ? { ...current, total: attendees.length, completed: completedCount } : current)
+      setAttendanceList(attendees)
     } catch (error) {
       console.error('교육 대상자 목록 조회 실패:', error)
     } finally {
       setAttendanceLoading(false)
     }
+  }
+  */
+
+  const openAttendanceModal = (detail) => {
+    setAttendanceDetail(detail)
+    setAttendanceFilter('전체')
+    setAttendeeSearch('')
+    setAttendanceLoading(false)
+
+    const dashboard = educationDashboardRef.current
+    const source = detail.educationId
+      ? dashboard?.courses?.find((course) => Number(course.education_id) === Number(detail.educationId))
+      : detail.target === '전체'
+        ? {
+            target_count: dashboard?.total_target_count ?? 0,
+            completed_count: dashboard?.total_completed_count ?? 0,
+            attendees: dashboard?.attendees ?? [],
+          }
+        : dashboard?.categories?.find((category) => category.category === detail.target)
+    const attendees = source?.attendees ?? []
+    const completed = source?.completed_count ?? attendees.filter((attendee) => attendee.status === '이수').length
+    const total = source?.target_count ?? attendees.length
+
+    setAttendanceDetail((current) => current ? { ...current, total, completed } : current)
+    setAttendanceList(attendees.map((attendee) => ({
+      id: `${attendee.uid}-${attendee.education_id ?? detail.educationId ?? detail.target ?? 'all'}`,
+      name: attendee.name,
+      educationTitle: attendee.education_title ?? detail.title,
+      team: attendee.category ?? '-',
+      status: attendee.status,
+      date: attendee.completed_date ? String(attendee.completed_date).replaceAll('-', '. ') : null,
+    })))
   }
 
   const addVideoCourse = (event) => {

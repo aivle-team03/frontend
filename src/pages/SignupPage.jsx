@@ -12,7 +12,6 @@ const DEFAULT_CATEGORIES = [
     '유지보수',
     '재고',
     '위험물',
-    '공통',
 ];
 
 function SignupPage() {
