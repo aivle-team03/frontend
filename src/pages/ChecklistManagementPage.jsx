@@ -40,14 +40,6 @@ const getInspectionDueDate = (item) => {
 
   return `${getDateKey(dueDate)} ${timePart}`
 }
-const isWithinUpcomingDays = (dateTime, days) => {
-  const dateKey = dateTime?.slice(0, 10)
-  if (!dateKey) return false
-
-  const today = getDateKey()
-  const endDate = getDateKey(addDays(new Date(), days))
-  return dateKey >= today && dateKey <= endDate
-}
 const matchesDateOffset = (dateTime, offset) => offset === 'all' || dateTime?.slice(0, 10) === getDateKey(addDays(new Date(), offset))
 const DATE_FILTER_OPTIONS = [
   { key: 'all', label: '전체', value: 'all' },
@@ -181,17 +173,12 @@ function ChecklistManagementPage() {
   }, [])
   const changeFilter = (key, value) => { setFilters((current) => ({ ...current, [key]:value })); setPage(0) }
   const typeRecords = useMemo(() => records
-    .filter((item) => {
-      if (getRecordType(item) !== recordTypeFilter) return false
-      if (recordTypeFilter === 'inspection') return item.progress === '점검 대기' && !item.inspectionAssignee
-      return item.progress === '조치 대기' && !item.actionAssignee
-    })
+    .filter((item) => getRecordType(item) === recordTypeFilter)
     .map((item) => {
       if (recordTypeFilter !== 'inspection') return item
       const dueDateTime = getInspectionDueDate(item)
       return { ...item, dateTime: dueDateTime, nextDue: dueDateTime.slice(0, 10) }
-    })
-    .filter((item) => recordTypeFilter !== 'inspection' || isWithinUpcomingDays(item.dateTime, 2)), [records, recordTypeFilter])
+    }), [records, recordTypeFilter])
   const filtered = useMemo(() => typeRecords.filter((item) => {
     const query = filters.query.trim().toLowerCase()
     const searchTarget = [

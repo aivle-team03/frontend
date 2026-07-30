@@ -167,8 +167,9 @@ function getInitialInspectionTasks() {
 
 function ChecklistPage() {
   const navigate = useNavigate()
-  const [inspectionTasks, setInspectionTasks] = useState(getInitialInspectionTasks)
-  const [actionTasks, setActionTasks] = useState(getInitialActionTasks)
+  const [inspectionTasks, setInspectionTasks] = useState([])
+  const [actionTasks, setActionTasks] = useState([])
+  const [taskRefreshKey, setTaskRefreshKey] = useState(0)
   const [activeTaskView, setActiveTaskView] = useState('inspection')
   const [selectedTaskId, setSelectedTaskId] = useState(null)
   const [actionContent, setActionContent] = useState('')
@@ -219,15 +220,7 @@ function ChecklistPage() {
 
   useEffect(() => {
     const syncAssignedActions = () => {
-      if (!isApiActionTasksLoaded.current) {
-        const managementActions = getStoredChecklistManagementRecords()
-          .filter((record) => ['조치 대기', '조치 완료'].includes(record.progress))
-          .map(toActionTask)
-
-        setActionTasks(managementActions)
-      }
-
-      setInspectionTasks(getInitialInspectionTasks())
+      setTaskRefreshKey((current) => current + 1)
     }
 
     window.addEventListener('focus', syncAssignedActions)
@@ -273,7 +266,7 @@ function ChecklistPage() {
       }
     }
     loadMyTasks()
-  }, [])
+  }, [taskRefreshKey])
 
   const rawVisibleTasks = activeTaskView === 'inspection' ? inspectionTasks : actionTasks.filter(isAssignedAction)
   const visibleTasks = sortTasksByCompletion(rawVisibleTasks, activeTaskView)
