@@ -8,7 +8,7 @@ import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBullete
 import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded'
 import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded'
 import axios from 'axios'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
@@ -66,29 +66,46 @@ function getTopEntry(counts) {
 }
 
 function RiskManagementPage() {
-
   const [isRiskModalOpen, setIsRiskModalOpen] = useState(false)
   const [isDeleteMode, setIsDeleteMode] = useState(false)
   const [risks, setRisks] = useState(EVENT_CATEGORY_MOCKUP_DATA)
 
-  const fetchRisks = async () => {
-    const response = await axios.get(`${API_BASE_URL}/api/risk/list`)
-    setRisks(Array.isArray(response.data) ? response.data.map(mapRiskFactor) : [])
+  // 1. 공통 인증 헤더 생성 함수
+  const getAuthHeader = () => {
+    const token = localStorage.getItem('token')
+    return {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    }
   }
 
-  useEffect(() => {
-    fetchRisks().catch((error) => {
+  // 2. 위험 요인 목록 조회 API
+  const fetchRisks = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/risk/list`, getAuthHeader())
+      setRisks(Array.isArray(response.data) ? response.data.map(mapRiskFactor) : [])
+    } catch (error) {
       console.error('위험 요인 목록 조회 실패:', error)
-    })
+    }
   }, [])
 
+  useEffect(() => {
+    fetchRisks()
+  }, [fetchRisks])
+
+  // 3. 위험 요인 카테고리 추가 API (토큰 추가)
   const createRisk = async (riskForm) => {
     try {
-      await axios.post(`${API_BASE_URL}/api/risk/category`, {
-        category: riskForm.type.trim(),
-        category_name: riskForm.item.trim(),
-        level: riskForm.severity,
-      })
+      await axios.post(
+        `${API_BASE_URL}/api/risk/category`,
+        {
+          category: riskForm.type.trim(),
+          category_name: riskForm.item.trim(),
+          level: riskForm.severity,
+        },
+        getAuthHeader()
+      )
       await fetchRisks()
       setIsRiskModalOpen(false)
     } catch (error) {
@@ -97,9 +114,10 @@ function RiskManagementPage() {
     }
   }
 
+  // 4. 위험 요인 삭제 API (토큰 추가)
   const deleteRisk = async (riskId) => {
     try {
-      await axios.delete(`${API_BASE_URL}/api/risk/category/${riskId}`)
+      await axios.delete(`${API_BASE_URL}/api/risk/category/${riskId}`, getAuthHeader())
       await fetchRisks()
     } catch (error) {
       console.error('위험 요인 삭제 실패:', error)
@@ -107,14 +125,19 @@ function RiskManagementPage() {
     }
   }
 
+  // 5. 위험 요인 강도 변경 API (토큰 추가)
   const updateRiskSeverity = async (riskId, severity) => {
     const previousRisks = risks
-    setRisks((currentRisks) => currentRisks.map((risk) => (
-      risk.id === riskId ? { ...risk, severity } : risk
-    )))
+    setRisks((currentRisks) =>
+      currentRisks.map((risk) => (risk.id === riskId ? { ...risk, severity } : risk))
+    )
 
     try {
-      await axios.patch(`${API_BASE_URL}/api/risk/category/${riskId}/level`, { level: severity })
+      await axios.patch(
+        `${API_BASE_URL}/api/risk/category/${riskId}/level`,
+        { level: severity },
+        getAuthHeader()
+      )
       await fetchRisks()
     } catch (error) {
       setRisks(previousRisks)
@@ -139,15 +162,15 @@ function RiskManagementPage() {
     { label: '총 빈도', value: totalFrequency, unit: '회', icon: RepeatRoundedIcon, tone: 'frequency' },
   ]
 
-
-
   return (
     <section className="risk-page-layout" aria-label="위험도 관리">
       <header className="risk-page-header">
         <div className="risk-kpi-grid" aria-label="위험도 요약">
           {summaryCards.map((card) => (
             <div className={`risk-kpi-card risk-kpi-${card.tone}`} key={card.label}>
-              <span className="risk-kpi-icon"><card.icon /></span>
+              <span className="risk-kpi-icon">
+                <card.icon />
+              </span>
               <div>
                 <span>{card.label}</span>
                 <strong>
@@ -230,7 +253,7 @@ function RiskManagementPage() {
           </div>
 
           <div className="risk-button-layout">
-            <button className="risk-add-button" type="button"  onClick={() => setIsRiskModalOpen(true)}>
+            <button className="risk-add-button" type="button" onClick={() => setIsRiskModalOpen(true)}>
               항목 추가
             </button>
 

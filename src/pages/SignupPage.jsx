@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/signup.css';
 
+const API_BASE_URL = 'http://127.0.0.1:8000';
+
 function SignupPage() {
     const [userId, setUserId] = useState('');
     const [pw, setPw] = useState('');
@@ -30,7 +32,7 @@ function SignupPage() {
         }
 
         try {
-            const response = await fetch(`http://127.0.0.1:8000/api/auth/checkid?user_id=${userId}`);
+            const response = await fetch(`${API_BASE_URL}/api/auth/checkid?user_id=${userId}`);
             const data = await response.json();
 
             if (data.message === 'duplicated') {
@@ -60,7 +62,7 @@ function SignupPage() {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/auth/signup', {
+            const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -70,7 +72,7 @@ function SignupPage() {
                     password: pw,
                     name: name,
                     role: role,
-                    company_code: companyCode
+                    company_code: companyCode // 🚀 핵심: 백엔드 UserCreate 스키마의 키 이름인 'company_code'로 전달
                 }),
             });
 
@@ -171,7 +173,7 @@ function SignupPage() {
                             disabled={isLoading}
                         >
                             <option value="field_worker">현장 작업자 (Field Worker)</option>
-                            <option value="admin">시스템 관리자 (Admin)</option>
+                            <option value="안전관리자">시스템 관리자 (Admin)</option>
                         </select>
                     </div>
 
