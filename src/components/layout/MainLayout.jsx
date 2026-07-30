@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Header from './Header.jsx'
 import Sidebar from './Sidebar.jsx'
+import ServiceFooter from '../common/ServiceFooter.jsx'
 
 const navigationItems = [
   { path: '/', label: '홈', icon: 'home' },
@@ -11,7 +12,7 @@ const navigationItems = [
     children: [
       { path: '/checklists', label: '오늘의 할일', icon: 'checklist' },
       { path: '/checklists/management', label: '체크리스트 관리', icon: 'manage', requiresRole: 'safety-manager' },
-      { path: '/checklists/inspections', label: '점검 목록', icon: 'check', requiresRole: 'safety-manager' },
+      { path: '/checklists/inspections', label: '정기 점검 목록', icon: 'checklist', requiresRole: 'safety-manager' },
     ],
   },
   {
@@ -60,6 +61,7 @@ function MainLayout({ setIsLoggedIn }) {
         <main className="app-main">
           <Outlet />
         </main>
+        <ServiceFooter />
       </div>
     </div>
   )

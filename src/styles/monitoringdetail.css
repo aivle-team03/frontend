@@ -532,3 +532,8 @@
   font-size: 10px !important;
   line-height: 1.2 !important;
 }
+
+.monitoring-detail-skeleton .detail-skeleton-block { display: block; border-radius: 8px; background: linear-gradient(100deg,#edf2f7 25%,#f7f9fc 37%,#edf2f7 63%); background-size: 400% 100%; animation: detail-skeleton-shimmer 1.35s ease-in-out infinite; }
+.monitoring-detail-skeleton .monitoring-detail-toolbar > div { display: grid; gap: 8px; flex: 1; }.detail-skeleton-back { width: 38px; height: 38px; border-radius: 10px !important; }.detail-skeleton-line { height: 11px; }.detail-skeleton-line.short { width: 30%; }.detail-skeleton-line.medium { width: 52%; }.detail-skeleton-line.long { width: 82%; }.detail-skeleton-live { width: 46px; height: 25px; border-radius: 6px !important; }.detail-skeleton-video { height: 420px; border-radius: 12px !important; }.detail-skeleton-thumbnail { width: 180px; height: 105px; flex: 0 0 180px; border-radius: 10px !important; }.detail-skeleton-status-icon { width: 40px; height: 40px; border-radius: 11px !important; }.monitoring-detail-skeleton .detection-status-card > div { display: grid; width: 100%; gap: 8px; }.detail-skeleton-event { height: 58px; margin-bottom: 16px; }.detail-skeleton-row { height: 29px; margin: 10px 0; }.detail-skeleton-button { width: 100%; height: 38px; margin-top: 12px; }
+@keyframes detail-skeleton-shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .monitoring-detail-skeleton .detail-skeleton-block { animation: none; } }

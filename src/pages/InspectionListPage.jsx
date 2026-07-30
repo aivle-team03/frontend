@@ -44,6 +44,23 @@ const getRecords = () => {
 }
 const areaLabel = (areas) => areas.length > 1 ? `${areas[0]} 외 ${areas.length - 1}개 구역` : areas[0]
 
+const INSPECTION_HISTORY_MANAGERS = ['이안전', '박동준', '최유진', '김민수']
+const INSPECTION_HISTORY_STATUSES = ['점검 완료', '점검 완료', '조치 필요']
+
+function getAreaLatestInspectionHistories(record) {
+  return record.areas.map((area, index) => {
+    const inspectedDate = new Date(2026, 6, 25 - ((index + record.id.length) % 6), 9 + (index % 4), index % 2 ? 30 : 0)
+    const dateTime = `${inspectedDate.toISOString().slice(0, 10)} ${String(inspectedDate.getHours()).padStart(2, '0')}:${String(inspectedDate.getMinutes()).padStart(2, '0')}`
+
+    return {
+      area,
+      dateTime,
+      manager: INSPECTION_HISTORY_MANAGERS[index % INSPECTION_HISTORY_MANAGERS.length],
+      status: INSPECTION_HISTORY_STATUSES[(index + record.id.length) % INSPECTION_HISTORY_STATUSES.length],
+    }
+  })
+}
+
 function InspectionListPage() {
   const [catalogRecords, setCatalogRecords] = useState(getRecords)
   const [query, setQuery] = useState('')
@@ -58,6 +75,7 @@ function InspectionListPage() {
   const activePage = Math.min(page, pageCount - 1)
   const visibleRecords = records.slice(activePage * 10, activePage * 10 + 10)
   const selectedRecord = catalogRecords.find((record) => record.id === selectedId)
+  const selectedAreaHistories = selectedRecord ? getAreaLatestInspectionHistories(selectedRecord) : []
 
   const updateCycle = (cycle) => {
     if (!selectedRecord) return
@@ -95,7 +113,7 @@ function InspectionListPage() {
 
       {selectedRecord && <div className="inspection-modal-backdrop" role="presentation" onMouseDown={() => setSelectedId(null)}><section className="inspection-detail-modal" role="dialog" aria-modal="true" aria-labelledby="inspection-detail-title" onMouseDown={(event) => event.stopPropagation()}>
         <header><div><span>INSPECTION DETAIL</span><h3 id="inspection-detail-title">{selectedRecord.name}</h3><p>점검 기준과 적용 구역을 확인하세요.</p></div><button type="button" aria-label="상세 창 닫기" onClick={() => setSelectedId(null)}><CloseRoundedIcon /></button></header>
-        <div className="inspection-detail-body"><div className="inspection-detail-meta"><div><span>카테고리</span><strong>{selectedRecord.category}</strong></div><div><span>점검 주기</span><select className="inspection-cycle-select" aria-label="점검 주기 변경" value={selectedRecord.cycle} onChange={(event) => updateCycle(event.target.value)}><option>매일</option><option>매주</option><option>매월</option></select></div><div><span>적용 구역</span><strong>{selectedRecord.areas.length}개 구역</strong></div></div><div className="inspection-detail-section"><span>점검 내용</span><p>{selectedRecord.content}</p></div><div className="inspection-detail-section"><span>적용 구역 전체</span><div className="inspection-area-chips">{selectedRecord.areas.map((area) => <b key={area}>{area}</b>)}</div></div></div>
+        <div className="inspection-detail-body"><div className="inspection-detail-meta"><div><span>카테고리</span><strong>{selectedRecord.category}</strong></div><div><span>점검 주기</span><select className="inspection-cycle-select" aria-label="점검 주기 변경" value={selectedRecord.cycle} onChange={(event) => updateCycle(event.target.value)}><option>매일</option><option>매주</option><option>매월</option></select></div><div><span>적용 구역</span><strong>{selectedRecord.areas.length}개 구역</strong></div></div><div className="inspection-detail-section"><span>점검 내용</span><p>{selectedRecord.content}</p></div><div className="inspection-detail-section"><span>적용 구역 전체</span><div className="inspection-area-chips">{selectedRecord.areas.map((area) => <b key={area}>{area}</b>)}</div></div><div className="inspection-detail-section"><span>구역별 마지막 점검 이력</span><div className="area-history-list">{selectedAreaHistories.map((history) => <div className="area-history-item" key={history.area}><strong>{history.area}</strong><span>{history.dateTime}</span><span>{history.manager}</span><b className={history.status === '조치 필요' ? 'needs-action' : ''}>{history.status}</b></div>)}</div></div></div>
         <footer><span>점검 주기를 변경하면 연결된 체크리스트 관리 항목에도 동일하게 반영됩니다.</span><button type="button" onClick={() => setSelectedId(null)}>닫기</button></footer>
       </section></div>}
     </section>

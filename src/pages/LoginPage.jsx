@@ -42,6 +42,7 @@ function LoginPage({ setIsLoggedIn }) {
 
       if (response.ok) {
         localStorage.setItem('token', data.access_token);
+        localStorage.setItem('refresh_token', data.refresh_token);
         localStorage.setItem('isLoggedIn', 'true');
         setIsLoggedIn(true);
       } else {

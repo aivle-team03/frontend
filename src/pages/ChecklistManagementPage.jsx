@@ -46,6 +46,7 @@ const normalizeRecord = (record) => {
   const inspectionHistory = record.inspectionHistory || (type === 'inspection' && record.progress?.endsWith('완료') ? [{ id: `inspection-history-${record.id}`, inspectionName: record.name, location: record.location, dateTime: record.dateTime, manager: record.inspectionAssignee || '미배정', progress: '점검 완료', movedToAction: false, content: '' }] : [])
   return { ...record, name: type === 'action' ? ACTION_NAME_BY_INSPECTION[record.name] || record.name : record.name, type, nextDue, progress: isDue ? toPendingStatus(type) : record.progress, inspectionHistory, actionHistory }
 }
+// eslint-disable-next-line react-refresh/only-export-components
 export const CHECKLIST_MANAGEMENT_MOCK_RECORDS = rows.map(([name,category,location,cycle,inspectionAssignee,actionAssignee,dateTime,progress], index) => {
   const isAction = progress.startsWith('조치')
   const actionName = isAction ? ACTION_NAME_BY_INSPECTION[name] || name : name
@@ -129,6 +130,7 @@ function ChecklistManagementPage() {
           content: '',
           sourceType: item.type === 'action' ? '점검이력' : undefined,
           approvalStatus: item.type === 'action' ? '승인대기' : undefined,
+          sourceReportId: item.sourceReportId,
         }
         return { ...item, progress: toCompleteStatus(item.type), dateTime: history.dateTime, nextDue: getNextDueDate(item.cycle, completedAt), [historyKey]: [history, ...(item[historyKey] || [])] }
       })
@@ -164,11 +166,17 @@ function Status({ value }) { return <span className={`checklist-status ${value.e
 function ChecklistDetailModal({ item, onCycleChange, onClose }) {
   const locations = item.location.split(',').map((location) => location.trim()).filter(Boolean)
   const isInspection = isInspectionRecord(item)
-  const inspectionDetail = BASE_INSPECTION_RECORDS.find((record) => String(record.id) === String(item.inspectionId ?? item.inspectionCatalogId ?? item.id) || record.name === item.name)
-  const inspectionCycle = inspectionDetail?.cycle || ''
-  const inspectionContent = inspectionDetail?.content || ''
-  const inspectionHistory = [{ date:item.dateTime, location:item.location, manager:item.inspectionAssignee || '미배정', status:'점검 완료' },{ date:'2026-07-24 09:10', location:item.location, manager:item.inspectionAssignee || '미배정', status:'점검 완료' }]
-  const actionHistory = item.progress.startsWith('조치') ? [{ date:item.dateTime, manager:item.actionAssignee || '미배정', status:item.progress }] : []
+  const inspectionHistory = (item.inspectionHistory || []).map((entry) => ({
+    date: entry.date || entry.dateTime || item.dateTime,
+    location: entry.location || item.location,
+    manager: entry.manager || item.inspectionAssignee || '',
+    status: entry.status || entry.progress || item.progress,
+  }))
+  const actionHistory = (item.actionHistory || (item.progress.startsWith('조치') ? [{ date:item.dateTime, manager:item.actionAssignee || '', status:item.progress }] : [])).map((entry) => ({
+    date: entry.date || entry.dateTime || item.dateTime,
+    manager: entry.manager || item.actionAssignee || '',
+    status: entry.status || entry.progress || item.progress,
+  }))
 
   return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="checklist-detail-modal master-detail-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>CHECKLIST DETAIL</span><h3>{item.name}</h3><p>{isInspection ? `${item.category} · ${item.cycle} 점검` : `${item.category} · 조치 항목`}</p></div><button type="button" aria-label="닫기" onClick={onClose}>×</button></header><div className="master-detail-body"><section className="master-summary-grid"><div><span>점검 주기</span><strong>{inspectionCycle}</strong></div><div><span>일시</span><strong>{item.dateTime}</strong></div><div><span>점검 담당자</span><strong>{item.inspectionAssignee || '미배정'}</strong></div><div><span>진행 상태</span><Status value={item.progress} /></div></section><section className="master-info-grid"><div className="is-wide"><span>내용</span><p>{inspectionContent}</p></div></section><section><div className="master-section-heading"><h4>적용 구역</h4><span>{locations.length}곳</span></div><div className="master-location-list">{locations.map((location) => <span key={location}>{location}</span>)}</div></section><section><div className="master-section-heading"><h4>점검 이력</h4><span>최근 {inspectionHistory.length}건</span></div><div className="master-history-list">{inspectionHistory.map((entry, index) => <div key={`${entry.date}-${index}`}><span>{entry.date}</span><strong>{entry.location}</strong><span>{entry.manager}</span><Status value={entry.status} /></div>)}</div></section><section><div className="master-section-heading"><h4>조치 이력</h4><span>{actionHistory.length}건</span></div>{actionHistory.length ? <div className="master-history-list">{actionHistory.map((entry) => <div key={entry.date}><span>{entry.date}</span><strong>{entry.manager}</strong><span>조치 담당자</span><Status value={entry.status} /></div>)}</div> : <div className="checklist-empty">등록된 조치 이력이 없습니다.</div>}</section></div><footer><span>점검 및 조치 진행 내역을 확인합니다.</span><button type="button" onClick={onClose}>닫기</button></footer></section></div>
 }

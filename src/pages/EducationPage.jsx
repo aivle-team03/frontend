@@ -8,7 +8,6 @@ import PlayCircleOutlineRoundedIcon from '@mui/icons-material/PlayCircleOutlineR
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
 import axios from 'axios'
 import { useEffect, useMemo, useState } from 'react'
-import { EDUCATION_MOCK_DATA } from '../mocks/mockData.js'
 import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
@@ -23,10 +22,10 @@ const completionRingColors = ['#4f78d1', '#2f9d75', '#8b63d6', '#e18a3f']
 const progressByContent = { 'forklift-basics': 86, 'fire-response': 35, 'conveyor-safety': 0, 'ppe-basics': 100, 'chemical-safety': 62, 'work-at-height': 72, 'electrical-safety': 48 }
 
 function EducationPage({ addedCourses = [] }) {
-  const { content, requiredCourses } = EDUCATION_MOCK_DATA
   const [apiCourses, setApiCourses] = useState(null)
   const [apiSummary, setApiSummary] = useState(null)
   const [apiRates, setApiRates] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [isCompleting, setIsCompleting] = useState(false)
 
   const fetchEducationData = async () => {
@@ -43,9 +42,11 @@ function EducationPage({ addedCourses = [] }) {
   }
 
   useEffect(() => {
-    fetchEducationData().catch((error) => {
-      console.error('교육 데이터 조회 실패:', error)
-    })
+    fetchEducationData()
+      .catch((error) => {
+        console.error('교육 데이터 조회 실패:', error)
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const apiCourseItems = useMemo(() => (apiCourses ?? []).map((course) => ({
@@ -68,9 +69,8 @@ function EducationPage({ addedCourses = [] }) {
     duration: course.duration,
     videoUrl: course.videoUrl,
   })), [addedCourses])
-  const baseCourses = apiCourseItems.length ? apiCourseItems : requiredCourses
-  const baseContent = apiCourseItems.length
-    ? apiCourseItems.map((course) => ({
+  const baseCourses = apiCourseItems
+  const baseContent = apiCourseItems.map((course) => ({
       id: course.contentId,
       title: course.title,
       category: course.category,
@@ -80,13 +80,12 @@ function EducationPage({ addedCourses = [] }) {
       status: course.status,
       isApiCourse: true,
     }))
-    : content
   const allContent = [...customContent, ...baseContent]
   const allCourses = [...addedCourses, ...baseCourses]
   const [contentId, setContentId] = useState(allContent[0]?.id)
   const [requiredPage, setRequiredPage] = useState(0)
   const [summaryModal, setSummaryModal] = useState(null)
-  const currentContent = allContent.find((item) => item.id === contentId) ?? allContent[0]
+  const currentContent = allContent.find((item) => item.id === contentId) ?? allContent[0] ?? {}
   const currentYouTubeEmbedUrl = getYouTubeEmbedUrl(currentContent?.videoUrl)
   const getCourseProgress = (course) => {
     if (course?.isApiCourse) {
@@ -143,6 +142,8 @@ function EducationPage({ addedCourses = [] }) {
     setRequiredPage(Math.floor(previousIndex / 5))
   }
 
+  if (loading) return <EducationLoadingSkeleton />
+
   return <section className="education-page learner-education-page">
     {addedCourses.length > 0 && <div className="learner-new-course-banner"><span><PlayCircleOutlineRoundedIcon /><strong>새 교육이 배정되었습니다.</strong> 교육 관리에서 등록한 {addedCourses[0].title}을 확인해 보세요.</span><button type="button" onClick={() => setContentId(addedCourses[0].contentId)}>지금 보기</button></div>}
 
@@ -193,6 +194,19 @@ function EducationPage({ addedCourses = [] }) {
       <article className="education-panel learning-guide-card"><div className="guide-copy"><span className="panel-kicker">학습 안내</span><h3><SchoolOutlinedIcon /> 수강 전 확인하세요</h3><ul><li>영상의 80% 이상을 시청하면 이수 완료 버튼이 활성화됩니다.</li><li>필수 교육은 마감일까지 반드시 수강해야 합니다.</li><li>재생 중 페이지를 벗어나도 진도율이 저장됩니다.</li></ul></div><div className="guide-illustration"><MenuBookOutlinedIcon /><CheckCircleOutlineRoundedIcon /></div></article>
     </div>
     {summaryModal && <LearningSummaryModal summary={summaryModal} getProgress={getCourseProgress} onClose={() => setSummaryModal(null)} />}
+  </section>
+}
+
+function EducationLoadingSkeleton() {
+  return <section className="education-page learner-education-page education-loading-skeleton" aria-busy="true" aria-label="교육 데이터를 불러오는 중입니다">
+    <div className="education-summary rich-summary">
+      {[1, 2, 3].map((item) => <article className="summary-card" key={item}><span className="skeleton-block skeleton-icon" /><div><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line medium" /><span className="skeleton-block skeleton-line long" /></div></article>)}
+    </div>
+    <div className="education-top-grid learner-grid">
+      <article className="education-panel"><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line title" /><div className="skeleton-block skeleton-video" /><span className="skeleton-block skeleton-line long" /><div className="skeleton-actions"><span className="skeleton-block" /><span className="skeleton-block" /></div></article>
+      <article className="education-panel learner-list-panel"><span className="skeleton-block skeleton-line short" /><span className="skeleton-block skeleton-line title" /><div className="skeleton-table">{[1, 2, 3, 4, 5].map((item) => <span className="skeleton-block" key={item} />)}</div></article>
+    </div>
+    <div className="learner-bottom-grid"><article className="education-panel skeleton-panel" /><article className="education-panel skeleton-panel" /></div>
   </section>
 }
 
