@@ -565,9 +565,18 @@
 .item-type-toggle { display: inline-flex; grid-column: 1 / -1; gap: 3px; width: max-content; padding: 4px; border: 1px solid #d9e5f1; border-radius: 13px; background: #f3f7fc; }
 .item-type-toggle button { min-width: 96px; min-height: 42px; border: 0; border-radius: 9px; color: #71839a; background: transparent; cursor: pointer; font: inherit; font-size: 13px; font-weight: 850; }
 .item-type-toggle button.is-active { color: #236cb4; background: #fff; box-shadow: 0 2px 7px rgba(53,93,137,.16); }
-.management-header-actions { display: flex; align-items: center; gap: 10px; }
+.assignment-type-toggle { display: inline-flex; flex: 0 0 auto; gap: 3px; padding: 3px; border: 1px solid #d9e5f1; border-radius: 11px; background: #f3f7fc; }
+.assignment-type-toggle button { min-width: 70px; height: 30px; border: 0; border-radius: 8px; color: #71839a; background: transparent; cursor: pointer; font: inherit; font-size: 12px; font-weight: 850; }
+.assignment-type-toggle button:hover { color: #316eae; }
+.assignment-type-toggle button.is-active { color: #236cb4; background: #fff; box-shadow: 0 2px 7px rgba(53,93,137,.16); }
+.assignment-date-toggle { display: inline-flex; flex: 0 0 auto; gap: 3px; padding: 3px; border: 1px solid #d9e5f1; border-radius: 11px; background: #f3f7fc; }
+.assignment-date-toggle button { min-width: 54px; height: 30px; border: 0; border-radius: 8px; color: #71839a; background: transparent; cursor: pointer; font: inherit; font-size: 12px; font-weight: 850; }
+.assignment-date-toggle button:hover { color: #316eae; }
+.assignment-date-toggle button.is-active { color: #236cb4; background: #fff; box-shadow: 0 2px 7px rgba(53,93,137,.16); }
+.management-header-actions { display: flex; align-items: center; gap: 18px; }
 .date-filter { position: relative; }
 .date-filter > button { display: inline-flex; min-height: 42px; align-items: center; gap: 8px; padding: 0 13px; border: 1px solid #d7e3ef; border-radius: 9px; color: #5d7693; background: #fff; cursor: pointer; font: inherit; font-size: 12px; font-weight: 800; }
+.management-filters .date-filter > button { min-height: 38px; }
 .date-filter > button svg { color: #4c80bb; font-size: 18px; }
 .date-filter-menu { position: absolute; z-index: 30; top: calc(100% + 7px); right: 0; display: grid; gap: 9px; width: 205px; padding: 12px; border: 1px solid #d7e3ef; border-radius: 10px; background: #fff; box-shadow: 0 12px 25px rgba(37,66,97,.16); }
 .date-filter-menu label { display: grid; gap: 4px; color: #607993; font-size: 11px; font-weight: 800; }
@@ -657,7 +666,7 @@
 .management-header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 18px;
 }
 
 .checklist-create-button {

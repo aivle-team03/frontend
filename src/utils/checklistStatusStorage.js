@@ -22,6 +22,7 @@ export function saveChecklistManagementRecords(records) {
   if (!canUseStorage()) return
 
   window.localStorage.setItem(CHECKLIST_MANAGEMENT_RECORDS_KEY, JSON.stringify(records))
+  window.dispatchEvent(new Event('checklist-management-records-updated'))
 }
 
 export function getStoredInspectionCatalogRecords() {

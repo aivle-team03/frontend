@@ -118,6 +118,21 @@ function toActionTask(record) {
   }
 }
 
+function toInspectionTask(record) {
+  return {
+    id: record.id,
+    taskKey: createKey('inspection-record', record.id),
+    text: record.name,
+    location: record.location,
+    date: record.dateTime?.slice(0, 10) || today,
+    inspectedAt: record.dateTime?.slice(0, 10) || today,
+    inspector: record.inspectionAssignee || '미배정',
+    category: record.category || '미분류',
+    inspectionStatus: record.progress || '점검 대기',
+    movedToAction: false,
+  }
+}
+
 function toManagementActionQueueRecord(action) {
   return {
     id: `action-queue-${action.id}`,
@@ -144,9 +159,15 @@ function getInitialActionTasks() {
   return managementActions
 }
 
+function getInitialInspectionTasks() {
+  return getStoredChecklistManagementRecords()
+    .filter((record) => record.type === 'inspection' && record.progress === '점검 대기' && record.inspectionAssignee && record.inspectionAssignee !== '미배정')
+    .map(toInspectionTask)
+}
+
 function ChecklistPage() {
   const navigate = useNavigate()
-  const [inspectionTasks, setInspectionTasks] = useState([])
+  const [inspectionTasks, setInspectionTasks] = useState(getInitialInspectionTasks)
   const [actionTasks, setActionTasks] = useState(getInitialActionTasks)
   const [activeTaskView, setActiveTaskView] = useState('inspection')
   const [selectedTaskId, setSelectedTaskId] = useState(null)
@@ -198,20 +219,25 @@ function ChecklistPage() {
 
   useEffect(() => {
     const syncAssignedActions = () => {
-      if (isApiActionTasksLoaded.current) return
-      const managementActions = getStoredChecklistManagementRecords()
-        .filter((record) => ['조치 대기', '조치 완료'].includes(record.progress))
-        .map(toActionTask)
+      if (!isApiActionTasksLoaded.current) {
+        const managementActions = getStoredChecklistManagementRecords()
+          .filter((record) => ['조치 대기', '조치 완료'].includes(record.progress))
+          .map(toActionTask)
 
-      setActionTasks(managementActions)
+        setActionTasks(managementActions)
+      }
+
+      setInspectionTasks(getInitialInspectionTasks())
     }
 
     window.addEventListener('focus', syncAssignedActions)
     window.addEventListener('storage', syncAssignedActions)
+    window.addEventListener('checklist-management-records-updated', syncAssignedActions)
 
     return () => {
       window.removeEventListener('focus', syncAssignedActions)
       window.removeEventListener('storage', syncAssignedActions)
+      window.removeEventListener('checklist-management-records-updated', syncAssignedActions)
     }
   }, [])
 
