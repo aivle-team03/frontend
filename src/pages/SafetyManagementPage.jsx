@@ -110,14 +110,15 @@ function SafetyManagementPage() {
       const token = localStorage.getItem('token')
       if (!token) return
 
+      const nextValue = field === 'category' && value === '' ? '미지정' : value
       const response = await axios.patch(
         `http://127.0.0.1:8000/api/admin/users/${userUid}`,
-        { [field]: value },
+        { [field]: nextValue },
         { headers: { Authorization: `Bearer ${token}` } },
       )
 
       setUsers((currentUsers) => currentUsers.map((user) => (
-        user.uid === userUid ? { ...user, [field]: value } : user
+        user.uid === userUid ? { ...user, [field]: nextValue } : user
       )))
       console.log('카테고리 수정 성공:', response.data)
     } catch (error) {
@@ -190,7 +191,7 @@ function SafetyManagementPage() {
                 <input value={user.role} readOnly />
               )}
               {isWorkerRoleEditMode ? (
-                <select value={user.category} onChange={(event) => updateUserCategory(user.uid, 'category', event.target.value)}>
+                <select value={user.category === '미지정' ? '' : (user.category ?? '')} onChange={(event) => updateUserCategory(user.uid, 'category', event.target.value)}>
                   <option value="">미지정</option>
                   {categories.map((option) => <option key={option} value={option}>{option}</option>)}
                 </select>
