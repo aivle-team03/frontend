@@ -89,6 +89,9 @@ function ActionHistoryPage() {
       );
 
       alert('승인 처리가 완료되었습니다.');
+      if (selectedRecord.sourceReportId) {
+        saveBoardReportStatus(selectedRecord.sourceReportId, { status: '완료', statusKey: 'done' })
+      }
       setSelectedRecord(null);
       fetchActionHistory(); // 목록 최신화
     } catch (error) {

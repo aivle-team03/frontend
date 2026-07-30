@@ -7,19 +7,19 @@ const initialReportForm = {
   description: '',
   riskLevel: '',
   location: '',
-  reporter: '',
   photoName: '',
   photoUrl: '',
   photoFile: null,
 }
 
-function FormModal({ categories, riskOptions, onClose, onSubmit }) {
+function FormModal({ categories, riskOptions, reporterName, onClose, onSubmit }) {
   const [reportForm, setReportForm] = useState(initialReportForm)
   const reportPhotoInputRef = useRef(null)
 
   useEffect(() => {
     if (!categories.length) return
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReportForm((currentForm) => {
       const selectedCategory = categories.find((category) => category.name === currentForm.category)
       if (selectedCategory) return { ...currentForm, categoryId: selectedCategory.id }
@@ -84,7 +84,7 @@ function FormModal({ categories, riskOptions, onClose, onSubmit }) {
 
   const submitReport = (event) => {
     event.preventDefault()
-    onSubmit(reportForm)
+    onSubmit({ ...reportForm, reporter: reporterName || '익명' })
   }
 
   return (
@@ -157,17 +157,6 @@ function FormModal({ categories, riskOptions, onClose, onSubmit }) {
               value={reportForm.location}
               onChange={(event) => updateReportForm('location', event.target.value)}
               placeholder="예: A동 2층 복도"
-              required
-            />
-          </label>
-
-          <label>
-            <span>신고자</span>
-            <input
-              type="text"
-              value={reportForm.reporter}
-              onChange={(event) => updateReportForm('reporter', event.target.value)}
-              placeholder="신고자 이름"
               required
             />
           </label>

@@ -85,6 +85,16 @@ const ACTION_MOCK_DATA = [
 function toActionTask(record) {
   const actionName = getActionName(record.name, record.location)
   const isCompleted = normalizeActionStatus(record.progress) === '조치 완료'
+  const actionHistoryPhotos = (record.actionHistory || [])
+    .map((history) => history.completedPhoto)
+    .filter(Boolean)
+    .map((url, index) => ({ name: record.photoNames?.[index] || `조치완료 사진 ${index + 1}`, url: resolveMediaUrl(url) }))
+  const photos = Array.isArray(record.photos) && record.photos.length
+    ? record.photos.map((photo, index) => ({
+      name: photo.name || record.photoNames?.[index] || `조치완료 사진 ${index + 1}`,
+      url: resolveMediaUrl(typeof photo === 'string' ? photo : photo.url),
+    }))
+    : actionHistoryPhotos
 
   return {
     id: record.id,
@@ -103,7 +113,8 @@ function toActionTask(record) {
     inspectionContent: record.inspectionContent || record.note || '',
     content: record.actionContent || (isCompleted ? record.note : ''),
     completed: isCompleted,
-    photoNames: record.photo ? ['attached-photo.jpg'] : [],
+    photoNames: record.photoNames || (photos.length ? photos.map((photo) => photo.name) : (record.photo ? ['attached-photo.jpg'] : [])),
+    photos,
   }
 }
 
@@ -212,6 +223,9 @@ function ChecklistPage() {
     ? selectedTaskId
     : selectableTasks[0]?.taskKey
   const currentTask = selectableTasks.find((task) => task.taskKey === effectiveSelectedTaskId)
+  const currentTaskKey = currentTask?.taskKey
+  const currentTaskContent = currentTask?.content || ''
+  const currentTaskPhotos = useMemo(() => currentTask?.photos || [], [currentTask?.photos])
 
   const progress = useMemo(() => {
     const done = activeTaskView === 'inspection'
@@ -221,12 +235,18 @@ function ChecklistPage() {
   }, [activeTaskView, actionTasks, inspectionTasks, visibleTasks.length])
 
   useEffect(() => {
-    if (activeTaskView !== 'action' || !currentTask) return
+    if (activeTaskView !== 'action' || !currentTaskKey) return
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setActionDetailContent(currentTask.content || '')
-    setActionPhotoFiles(actionPhotoFilesByTask[currentTask.taskKey] ?? (currentTask.photos || []))
-  }, [actionPhotoFilesByTask, activeTaskView, currentTask])
+    setActionDetailContent(currentTaskContent)
+  }, [activeTaskView, currentTaskContent, currentTaskKey])
+
+  useEffect(() => {
+    if (activeTaskView !== 'action' || !currentTaskKey) return
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActionPhotoFiles(actionPhotoFilesByTask[currentTaskKey] ?? currentTaskPhotos)
+  }, [actionPhotoFilesByTask, activeTaskView, currentTaskKey, currentTaskPhotos])
 
   const completeInspection = () => {
     if (!currentTask) return
@@ -332,15 +352,33 @@ function ChecklistPage() {
       : task))
 
     const managementRecords = getStoredChecklistManagementRecords()
+    const completedAt = new Date()
+    const completedDateTime = `${completedAt.toISOString().slice(0, 10)} ${String(completedAt.getHours()).padStart(2, '0')}:${String(completedAt.getMinutes()).padStart(2, '0')}`
     saveChecklistManagementRecords(managementRecords.map((record) => (
       String(record.id) === String(currentTask.id)
         ? {
           ...record,
           progress: '조치 완료',
+          dateTime: completedDateTime,
           actionContent: actionDetailContent.trim(),
           note: record.inspectionContent || record.note,
           photo: true,
           photoNames: attachedPhotos.map((photo) => photo.name),
+          photos: attachedPhotos.map(({ name, url }) => ({ name, url })),
+          actionHistory: [
+            {
+              id: `action-history-${Date.now()}`,
+              actionName: record.name,
+              location: record.location,
+              dateTime: completedDateTime,
+              manager: record.actionAssignee || currentTask.assignee || '미배정',
+              progress: '조치 완료',
+              approvalStatus: '승인대기',
+              completedPhoto: attachedPhotos[0]?.url || '',
+              sourceReportId: record.sourceReportId,
+            },
+            ...(record.actionHistory || []),
+          ],
         }
         : record
     )))
@@ -447,7 +485,27 @@ function ChecklistPage() {
                   <span>조치내용</span>
                   <textarea value={actionDetailContent} readOnly={currentTask.completed} onChange={(event) => setActionDetailContent(event.target.value)} placeholder="수행한 조치 내용을 입력하세요." rows="5" />
                 </label>
-                {!currentTask.completed && (
+                {currentTask.completed ? (
+                  <div className="upload-section">
+                    <div className="upload-label">
+                      <strong>조치완료 사진</strong>
+                      <span>{actionPhotoFiles.length}장</span>
+                    </div>
+                    {actionPhotoFiles.length ? (
+                      <div className="photo-grid">
+                        {actionPhotoFiles.map((photo) => (
+                          <div className="photo-preview" key={photo.url}>
+                            <button type="button" aria-label={`${photo.name} 크게 보기`} onClick={() => setPreviewPhoto(photo)}>
+                              <img src={photo.url} alt={photo.name} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="checklist-empty">등록된 사진이 없습니다.</div>
+                    )}
+                  </div>
+                ) : (
                   <div className="upload-section">
                     <div className="upload-label">
                       <strong>사진 첨부</strong>

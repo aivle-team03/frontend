@@ -5,14 +5,15 @@ import FormModal from '../components/Board/FormModal.jsx'
 import ReportList from '../components/Board/ReportList.jsx'
 import ReportDetail from '../components/Board/ReportDetail.jsx'
 import {
+  getStoredBoardReportStatuses,
   getStoredChecklistManagementRecords,
+  saveBoardReportStatus,
   saveChecklistManagementRecords,
 } from '../utils/checklistStatusStorage.js'
 import '../styles/board.css'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
-const BOARD_CATEGORIES = ['전체', '소방시설', '피난동선', '전기설비', '위험물', '기타']
 const CATEGORY=['소방안전','시설안전','산업안전','기타']
 
 const FALLBACK_BOARD_CATEGORY_OPTIONS = CATEGORY.slice(0).map((name) => ({ id: null, name }))
@@ -102,7 +103,7 @@ function getStatusKey(status) {
   if (status === '등록' || status === 'registered') return 'registered'
   if (status === '접수' || status === 'received') return 'received'
   if (status === '조치 중' || status === '조치중' || status === 'in_progress') return 'received'
-  if (status === '조치 완료' || status === '완료' || status === 'completed') return 'done'
+  if (status === '조치 완료' || status === '완료' || status === 'done' || status === 'completed') return 'done'
   if (status === '반려' || status === 'rejected') return 'rejected'
   return 'registered'
 }
@@ -139,6 +140,26 @@ function formatBoardItem(item) {
     statusKey,
     actionContent: item.action_content || item.actionContent || '',
   }
+}
+
+function applyStoredBoardStatus(report) {
+  const storedStatus = getStoredBoardReportStatuses()[String(report.id)]
+  if (!storedStatus) return report
+
+  const statusKey = getStatusKey(storedStatus.statusKey || storedStatus.status)
+  return {
+    ...report,
+    status: getStatusLabel(statusKey),
+    statusKey,
+  }
+}
+
+function getSortableReportId(reportId) {
+  const numericId = Number(reportId)
+  if (Number.isFinite(numericId)) return numericId
+
+  const idDigits = String(reportId).replace(/\D/g, '')
+  return Number(idDigits) || 0
 }
 
 function getBoardCategoryOptions(items) {
@@ -186,7 +207,9 @@ function saveBoardReportToChecklistManagement(report) {
 
 function BoardPage() {
   const [reports, setReports] = useState([])
+  const [selectedReportIds, setSelectedReportIds] = useState([])
   const [boardCategoryOptions, setBoardCategoryOptions] = useState(CATEGORY)
+  const [currentUserName, setCurrentUserName] = useState('익명')
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('전체')
   const [selectedRiskLevel, setSelectedRiskLevel] = useState('전체')
@@ -223,6 +246,41 @@ function BoardPage() {
     fetchBoards()
   }, [fetchBoards])
 
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) return
+
+        const response = await axios.get(`${API_BASE_URL}/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const userData = response.data
+        setCurrentUserName(userData?.name || userData?.user_id || '익명')
+      } catch (error) {
+        console.error('현재 사용자 정보 로드 실패:', error)
+      }
+    }
+
+    fetchCurrentUser()
+  }, [])
+
+  useEffect(() => {
+    const syncStoredStatuses = () => {
+      setReports((currentReports) => currentReports.map(applyStoredBoardStatus))
+    }
+
+    window.addEventListener('focus', syncStoredStatuses)
+    window.addEventListener('storage', syncStoredStatuses)
+    window.addEventListener('board-report-statuses-updated', syncStoredStatuses)
+
+    return () => {
+      window.removeEventListener('focus', syncStoredStatuses)
+      window.removeEventListener('storage', syncStoredStatuses)
+      window.removeEventListener('board-report-statuses-updated', syncStoredStatuses)
+    }
+  }, [])
+
   const boardSummary = useMemo(() => {
     const statusCount = reports.reduce((counts, report) => ({
       ...counts,
@@ -235,21 +293,29 @@ function BoardPage() {
     }))
   }, [reports])
 
-  const filteredReports = useMemo(() => reports.filter((report) => {
-    const matchesCategory = selectedCategory === '전체' || report.category === selectedCategory
-    const matchesRisk = selectedRiskLevel === '전체' || report.riskLevel === selectedRiskLevel
-    const matchesSummary = summaryFilter === 'all' || report.statusKey === summaryFilter
-    const matchesDate = report.reportedAt >= startDate && report.reportedAt <= endDate
-    const searchTarget = `${report.title} ${report.description} ${report.location}`.toLowerCase()
-    const matchesKeyword = searchTarget.includes(keyword.trim().toLowerCase())
+  const filteredReports = useMemo(() => reports
+    .filter((report) => {
+      const matchesCategory = selectedCategory === '전체' || report.category === selectedCategory
+      const matchesRisk = selectedRiskLevel === '전체' || report.riskLevel === selectedRiskLevel
+      const matchesSummary = summaryFilter === 'all' || report.statusKey === summaryFilter
+      const matchesDate = report.reportedAt >= startDate && report.reportedAt <= endDate
+      const searchTarget = `${report.title} ${report.description} ${report.location}`.toLowerCase()
+      const matchesKeyword = searchTarget.includes(keyword.trim().toLowerCase())
 
-    return matchesCategory && matchesRisk && matchesSummary && matchesDate && matchesKeyword
-  }), [endDate, keyword, reports, selectedCategory, selectedRiskLevel, startDate, summaryFilter])
+      return matchesCategory && matchesRisk && matchesSummary && matchesDate && matchesKeyword
+    })
+    .sort((a, b) => {
+      const dateOrder = b.reportedAt.localeCompare(a.reportedAt)
+      if (dateOrder !== 0) return dateOrder
+
+      return getSortableReportId(b.id) - getSortableReportId(a.id)
+    }), [endDate, keyword, reports, selectedCategory, selectedRiskLevel, startDate, summaryFilter])
 
   const selectedReport = useMemo(
     () => reports.find((report) => report.id === selectedReportId),
     [reports, selectedReportId],
   )
+  const selectedReceivableCount = reports.filter((report) => selectedReportIds.includes(report.id) && report.statusKey === 'registered').length
 
   const updateReportStatus = async (reportId, statusKey) => {
     const nextStatus = STATUS_OPTIONS.find((status) => status.key === statusKey)
@@ -267,6 +333,7 @@ function BoardPage() {
             }
           : report
       )))
+      saveBoardReportStatus(reportId, { status: getStatusLabel(nextStatusKey), statusKey: nextStatusKey })
     }
 
     try {
@@ -289,6 +356,34 @@ function BoardPage() {
     }
 
     return true
+  }
+
+  const toggleSelectedReport = (reportId) => {
+    setSelectedReportIds((current) => (
+      current.includes(reportId)
+        ? current.filter((id) => id !== reportId)
+        : [...current, reportId]
+    ))
+  }
+
+  const toggleAllVisibleReports = (checked) => {
+    const receivableIds = filteredReports
+      .filter((report) => report.statusKey === 'registered')
+      .map((report) => report.id)
+
+    setSelectedReportIds((current) => (
+      checked
+        ? [...new Set([...current, ...receivableIds])]
+        : current.filter((id) => !receivableIds.includes(id))
+    ))
+  }
+
+  const receiveSelectedReports = async () => {
+    const selectedReports = reports.filter((report) => selectedReportIds.includes(report.id) && report.statusKey === 'registered')
+    if (!selectedReports.length) return
+
+    await Promise.all(selectedReports.map((report) => updateReportStatus(report.id, 'received')))
+    setSelectedReportIds((current) => current.filter((id) => !selectedReports.some((report) => report.id === id)))
   }
 
   const createReport = async (reportForm) => {
@@ -392,17 +487,26 @@ function BoardPage() {
         onReset={resetFilters}
       />
 
+      <div className="board-bulk-toolbar">
+        <span>선택 <strong>{selectedReceivableCount}</strong>건</span>
+        <button type="button" disabled={!selectedReceivableCount} onClick={receiveSelectedReports}>
+          접수
+        </button>
+      </div>
+
       <ReportList
         reports={filteredReports}
-        statusOptions={STATUS_OPTIONS}
+        selectedReportIds={selectedReportIds}
         onOpenReport={openReportDetail}
-        onUpdateStatus={updateReportStatus}
+        onToggleReport={toggleSelectedReport}
+        onToggleAllReports={toggleAllVisibleReports}
       />
 
       {isReportModalOpen && (
         <FormModal
           categories={boardCategoryOptions}
           riskOptions={RISK_OPTIONS}
+          reporterName={currentUserName}
           onClose={() => setIsReportModalOpen(false)}
           onSubmit={createReport}
         />
