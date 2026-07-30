@@ -2,7 +2,8 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
 import '../styles/checklist.css'
 import {
   getStoredChecklistManagementRecords,
@@ -48,8 +49,9 @@ const INSPECTION_HISTORY_MANAGERS = ['이안전', '박동준', '최유진', '김
 const INSPECTION_HISTORY_STATUSES = ['점검 완료', '점검 완료', '조치 필요']
 
 function getAreaLatestInspectionHistories(record) {
+  const recordIdLength = String(record.id ?? '').length
   return record.areas.map((area, index) => {
-    const inspectedDate = new Date(2026, 6, 25 - ((index + record.id.length) % 6), 9 + (index % 4), index % 2 ? 30 : 0)
+    const inspectedDate = new Date(2026, 6, 25 - ((index + recordIdLength) % 6), 9 + (index % 4), index % 2 ? 30 : 0)
     const dateTime = `${inspectedDate.toISOString().slice(0, 10)} ${String(inspectedDate.getHours()).padStart(2, '0')}:${String(inspectedDate.getMinutes()).padStart(2, '0')}`
 
     return {
@@ -62,11 +64,27 @@ function getAreaLatestInspectionHistories(record) {
 }
 
 function InspectionListPage() {
-  const [catalogRecords, setCatalogRecords] = useState(getRecords)
+  const [catalogRecords, setCatalogRecords] = useState([])
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('전체 카테고리')
   const [selectedId, setSelectedId] = useState(null)
   const [page, setPage] = useState(0)
+  useEffect(() => {
+    const loadInspections = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const response = await axios.get('http://127.0.0.1:8000/api/inspection', { headers: token ? { Authorization: `Bearer ${token}` } : undefined })
+        const items = Array.isArray(response.data) ? response.data : []
+        setCatalogRecords(items.map((item) => ({
+          id: item.inspection_id, name: item.name, category: item.category || '기타', categoryId: item.category_id,
+          areas: String(item.location || '').split(',').map((area) => area.trim()).filter(Boolean), cycle: item.cycle, content: item.content || '',
+        })))
+      } catch (error) {
+        console.warn('정기 점검 목록을 불러오지 못했습니다.', error)
+      }
+    }
+    loadInspections()
+  }, [])
   const records = useMemo(() => catalogRecords.filter((record) => (
     (category === '전체 카테고리' || record.category === category)
     && (!query.trim() || `${record.name} ${record.content} ${record.areas.join(' ')}`.includes(query.trim()))
@@ -77,8 +95,18 @@ function InspectionListPage() {
   const selectedRecord = catalogRecords.find((record) => record.id === selectedId)
   const selectedAreaHistories = selectedRecord ? getAreaLatestInspectionHistories(selectedRecord) : []
 
-  const updateCycle = (cycle) => {
+  const updateCycle = async (cycle) => {
     if (!selectedRecord) return
+    try {
+      const token = localStorage.getItem('token')
+      await axios.patch(`http://127.0.0.1:8000/api/inspection/${selectedRecord.id}`, { cycle }, { headers: token ? { Authorization: `Bearer ${token}` } : undefined })
+      setCatalogRecords((current) => current.map((record) => record.id === selectedRecord.id ? { ...record, cycle } : record))
+      return
+    } catch (error) {
+      console.error('점검 주기 변경 실패:', error)
+      alert('점검 주기 변경에 실패했습니다.')
+      return
+    }
     const next = catalogRecords.map((record) => record.id === selectedRecord.id ? { ...record, cycle } : record)
     setCatalogRecords(next)
     saveInspectionCatalogRecords(next)

@@ -215,6 +215,40 @@ function ChecklistPage() {
     }
   }, [])
 
+  useEffect(() => {
+    const loadMyTasks = async () => {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined
+      try {
+        const [inspectionResponse, actionResponse] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/inspection/histories/me`, { headers }),
+          axios.get(`${API_BASE_URL}/api/action-histories/me`, { headers }),
+        ])
+        const inspections = Array.isArray(inspectionResponse.data) ? inspectionResponse.data : []
+        const actions = Array.isArray(actionResponse.data?.items) ? actionResponse.data.items : []
+        setInspectionTasks(inspections.map((item) => ({
+          id: item.inspection_history_id, taskKey: createKey('inspection', item.inspection_history_id),
+          text: item.name || '점검 항목', location: item.location || '현장 구역',
+          date: String(item.date || '').slice(0, 10), inspectedAt: String(item.date || '').slice(0, 10),
+          inspector: item.user_name || '담당자', category: item.category_name || '정기 점검',
+          categoryId: item.category_id || 1, inspectionStatus: item.status || '점검 대기',
+          movedToAction: Boolean(item.is_action_required), content: item.content || '', completed: item.status === '점검 완료',
+        })))
+        setActionTasks(actions.map((item) => ({
+          id: item.action_history_id, taskKey: createKey('action', item.action_history_id),
+          inspectionRef: item.action_name, text: item.action_name || '조치 항목', location: item.location || '현장 구역',
+          date: String(item.created_at || '').slice(0, 10), category: item.category_name || '기타',
+          status: item.action_status || '조치 대기', assignee: item.handler_name || '', content: item.content || '',
+          completed: item.action_status === '조치 완료', photos: item.image_url ? [{ name: '조치 사진', url: resolveMediaUrl(item.image_url) }] : [],
+        })))
+        isApiActionTasksLoaded.current = true
+      } catch (error) {
+        console.warn('내 점검·조치 이력을 불러오지 못했습니다.', error)
+      }
+    }
+    loadMyTasks()
+  }, [])
+
   const rawVisibleTasks = activeTaskView === 'inspection' ? inspectionTasks : actionTasks.filter(isAssignedAction)
   const visibleTasks = sortTasksByCompletion(rawVisibleTasks, activeTaskView)
   const visibleActionCount = actionTasks.filter(isAssignedAction).length
@@ -248,18 +282,52 @@ function ChecklistPage() {
     setActionPhotoFiles(actionPhotoFilesByTask[currentTaskKey] ?? currentTaskPhotos)
   }, [actionPhotoFilesByTask, activeTaskView, currentTaskKey, currentTaskPhotos])
 
-  const completeInspection = () => {
+  const completeInspection = async () => {
     if (!currentTask) return
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined
+    try {
+      await axios.patch(`${API_BASE_URL}/api/inspection/histories/${currentTask.id}`, {
+        status: '점검 완료',
+        is_action_required: false,
+        content: actionContent.trim() || currentTask.content || undefined,
+      }, { headers })
     const nextSelectedTask = inspectionTasks.find((task) => task.taskKey !== currentTask.taskKey && task.inspectionStatus !== '점검 완료' && !task.movedToAction)
 
     setInspectionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
       ? { ...task, inspectionStatus: '점검 완료', completed: true }
       : task))
     setSelectedTaskId(nextSelectedTask?.taskKey ?? null)
+    } catch (error) {
+      console.error('점검 완료 처리 실패:', error)
+      alert('점검 완료 처리에 실패했습니다.')
+    }
   }
 
-  const registerAction = () => {
+  const registerAction = async () => {
     if (!currentTask) return
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined
+    const content = actionContent.trim() || currentTask.content || 'Action is required for this inspection.'
+    try {
+      await axios.patch(`${API_BASE_URL}/api/inspection/histories/${currentTask.id}`, {
+        status: '점검 완료', is_action_required: true, content,
+      }, { headers })
+      await axios.post(`${API_BASE_URL}/api/action-histories`, {
+        source_type: '점검이력', source_id: currentTask.id, action_name: currentTask.text,
+        category_id: currentTask.categoryId || 1, location: currentTask.location, content,
+      }, { headers })
+      setInspectionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
+        ? { ...task, movedToAction: true, inspectionStatus: '점검 완료', completed: true }
+        : task))
+      setActionContent('')
+      navigate('/checklists/management')
+      return
+    } catch (error) {
+      console.error('Action registration failed:', error)
+      alert(error.response?.data?.detail || '조치 등록에 실패했습니다.')
+      return
+    }
     const actionId = Date.now()
     const action = {
       id: actionId,
@@ -321,7 +389,7 @@ function ChecklistPage() {
     return nextPhotos
   })
 
-  const completeAction = () => {
+  const completeAction = async () => {
     if (!currentTask) return
 
     if (!actionDetailContent.trim()) {
@@ -333,6 +401,29 @@ function ChecklistPage() {
 
     if (!attachedPhotos.length) {
       alert('조치 사진을 첨부해 주세요.')
+      return
+    }
+
+    const photoToUpload = attachedPhotos.find((photo) => photo.file)
+    if (!photoToUpload) {
+      alert('새로 첨부한 조치 완료 사진이 필요합니다.')
+      return
+    }
+    try {
+      const token = localStorage.getItem('token')
+      const formData = new FormData()
+      formData.append('content', actionDetailContent.trim())
+      formData.append('image', photoToUpload.file)
+      const response = await axios.patch(`${API_BASE_URL}/api/action-histories/${currentTask.id}/complete`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      })
+      setActionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
+        ? { ...task, status: '조치 완료', completed: true, content: response.data.content || actionDetailContent.trim() }
+        : task))
+      return
+    } catch (error) {
+      console.error('Action completion failed:', error)
+      alert(error.response?.data?.detail || '조치 완료 처리에 실패했습니다.')
       return
     }
 

@@ -61,7 +61,7 @@ const getInitialRecords = () => {
 const isInspectionRecord = (item) => item.type === 'inspection' || (!item.type && item.progress.startsWith('점검'))
 
 function ChecklistManagementPage() {
-  const [records, setRecords] = useState(() => getInitialRecords())
+  const [records, setRecords] = useState([])
   const [filters, setFilters] = useState({ query:'', category:'분류', inspection:'점검 담당자', action:'조치 담당자', status:'진행 상태' })
   const [periodMonth, setPeriodMonth] = useState('2026-07')
   const [usePeriod, setUsePeriod] = useState(false)
@@ -74,15 +74,66 @@ function ChecklistManagementPage() {
   const [memberQuery, setMemberQuery] = useState('')
   const [managerOptions, setManagerOptions] = useState([])
   const [cctvs, setCctvs] = useState([])
-  useEffect(() => { const syncRecords = () => setRecords(getInitialRecords()); window.addEventListener('focus', syncRecords); window.addEventListener('storage', syncRecords); return () => { window.removeEventListener('focus', syncRecords); window.removeEventListener('storage', syncRecords) } }, [])
+  useEffect(() => {
+    const loadRecords = async () => {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined
+
+      try {
+        const [inspectionResponse, actionResponse] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/inspection/histories/all`, { headers }),
+          axios.get(`${API_BASE_URL}/api/action-histories`, { headers }),
+        ])
+        const inspectionHistories = Array.isArray(inspectionResponse.data) ? inspectionResponse.data : []
+        const actions = Array.isArray(actionResponse.data?.items) ? actionResponse.data.items : []
+        const inspectionRecords = inspectionHistories
+          .filter((item) => !item.is_action_required)
+          .map((item) => normalizeRecord({
+            id: `inspection-${item.inspection_history_id}`,
+            rawId: item.inspection_history_id,
+            sourceKind: 'inspection',
+            name: item.name || '점검 이력',
+            category: item.category_name || '기타',
+            location: item.location || '구역 미지정',
+            cycle: '정기',
+            inspectionAssignee: item.user_name || '',
+            actionAssignee: '',
+            dateTime: String(item.date || '').replace('T', ' ').slice(0, 16),
+            progress: item.status || '점검 대기',
+            type: 'inspection',
+          }))
+        const actionRecords = actions.map((item) => normalizeRecord({
+          id: `action-${item.action_history_id}`,
+          rawId: item.action_history_id,
+          sourceKind: 'action',
+          name: item.action_name || '조치 이력',
+          category: item.category_name || item.category || '기타',
+          location: item.location || '구역 미지정',
+          cycle: '수시',
+          inspectionAssignee: item.approver_name || '',
+          actionAssignee: item.handler_name || '',
+          dateTime: String(item.created_at || '').replace('T', ' ').slice(0, 16),
+          progress: item.action_status || '조치 대기',
+          type: 'action',
+        }))
+        setRecords([...inspectionRecords, ...actionRecords])
+      } catch (error) {
+        console.warn('체크리스트 이력을 불러오지 못했습니다.', error)
+      }
+    }
+    loadRecords()
+  }, [])
   useEffect(() => {
     const loadOptions = async () => {
       try {
+        const token = localStorage.getItem('token')
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined
         const [managerResponse, cctvResponse] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/checklists/managers`, { params: { keyword: '' } }),
+          axios.get(`${API_BASE_URL}/api/action-histories/handlers`, { headers }),
           axios.get(`${API_BASE_URL}/api/cctvs`),
         ])
-        setManagerOptions((managerResponse.data || []).map((manager) => ({ name: manager.name, userId: manager.user_id })))
+        const managerItems = Array.isArray(managerResponse.data?.items) ? managerResponse.data.items : []
+        setManagerOptions(managerItems.map((manager) => ({ name: manager.name, userId: manager.uid })))
         setCctvs(cctvResponse.data || [])
       } catch (error) {
         console.warn('체크리스트 등록 옵션을 불러오지 못했습니다.', error)
@@ -143,8 +194,17 @@ function ChecklistManagementPage() {
     const field = assignmentMode === 'inspection' ? 'inspectionAssignee' : 'actionAssignee'
     const targetRecords = records.filter((item) => selected.includes(item.id))
     try {
-      await Promise.all(targetRecords.filter((item) => item.databaseId).map((item) => axios.patch(`${API_BASE_URL}/api/checklists/${item.databaseId}/assign`, { user_id: member.userId })))
-      setRecords((current) => { const next = current.map((item) => selected.includes(item.id) ? { ...item, [field]: member.name } : item); saveChecklistManagementRecords(next); return next })
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined
+      if (assignmentMode === 'inspection') {
+        await Promise.all(targetRecords
+          .filter((item) => item.sourceKind === 'inspection' && item.rawId)
+          .map((item) => axios.patch(`${API_BASE_URL}/api/inspection/histories/${item.rawId}`, { uid: member.userId }, { headers })))
+      } else {
+        const actionIds = targetRecords.filter((item) => item.sourceKind === 'action' && item.rawId).map((item) => item.rawId)
+        if (actionIds.length) await axios.patch(`${API_BASE_URL}/api/action-histories/assignments`, { action_history_ids: actionIds, handler_uid: member.userId }, { headers })
+      }
+      setRecords((current) => current.map((item) => selected.includes(item.id) ? { ...item, [field]: member.name } : item))
       setSelected([]); setMemberQuery(''); setAssignmentMode(null)
     } catch (error) {
       console.error('체크리스트 담당자 DB 배정 실패:', error)
@@ -162,8 +222,10 @@ function ChecklistManagementPage() {
 }
 function Filter({ value, options, onChange }) { const [isOpen, setIsOpen] = useState(false); return <div className={`management-filter-select${isOpen ? ' is-open' : ''}`}><button type="button" onClick={() => setIsOpen((open) => !open)}><span>{value}</span><ExpandMoreRoundedIcon /></button>{isOpen && <div className="management-select-menu">{options.map((option) => <button type="button" className={option === value ? 'is-selected' : ''} key={option} onClick={() => { onChange(option); setIsOpen(false) }}>{option}{option === value && <span>✓</span>}</button>)}</div>}</div> }
 function Assignee({ value }) { if (!value) return <span className="no-photo">미배정</span>; if (value === '게시판') return <span className="assignee-cell is-board-source"><i>게시판</i></span>; return <span className="assignee-cell"><i>{value[0]}</i>{value}</span> }
-function Status({ value }) { return <span className={`checklist-status ${value.endsWith('완료') ? 'is-complete' : value === '조치 대기' ? 'is-pending' : 'is-progress'}`}>{value}</span> }
+function Status({ value = '' }) { return <span className={`checklist-status ${value.endsWith('완료') ? 'is-complete' : value === '조치 대기' ? 'is-pending' : 'is-progress'}`}>{value || '-'}</span> }
 function ChecklistDetailModal({ item, onCycleChange, onClose }) {
+  const inspectionCycle = item.cycle || '수시'
+  const inspectionContent = item.content || '-'
   const locations = item.location.split(',').map((location) => location.trim()).filter(Boolean)
   const isInspection = isInspectionRecord(item)
   const inspectionHistory = (item.inspectionHistory || []).map((entry) => ({
