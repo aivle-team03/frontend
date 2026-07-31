@@ -138,7 +138,7 @@ function ChecklistManagementPage() {
           rawId: item.action_history_id,
           sourceKind: 'action',
           name: item.action_name || '조치 이력',
-          category: item.category_name || item.category || '기타',
+          category: item.category || item.category_name || '기타',
           location: item.location || '구역 미지정',
           cycle: '수시',
           inspectionAssignee: item.approver_name || '',
