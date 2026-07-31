@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AiSummaryCard from '../components/dashboard/AiSummaryCard.jsx'
 import DailyReportCard from '../components/dashboard/DailyReportCard.jsx'
@@ -19,12 +19,74 @@ import {
 } from '../mocks/mockData.js'
 import {
   periodChartData,
-  recentEvents,
   riskTypeData,
   summaryCards,
 } from '../data/dashboardMock.js'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
+
+function isCompleteStatus(status) {
+  return status === '조치 완료' || status === '점검 완료'
+}
+
+function isPendingStatus(status) {
+  return status === '조치 대기'
+}
+
+function countSummaryEvents(events, summaryId) {
+  if (summaryId === 'realtime') {
+    return events.filter((event) => event.status === '점검 대기').length
+  }
+  if (summaryId === 'pending') {
+    return events.filter((event) => isPendingStatus(event.status)).length
+  }
+  if (summaryId === 'complete') {
+    return events.filter((event) => isCompleteStatus(event.status)).length
+  }
+  if (summaryId === 'violation') {
+    return events.filter((event) => event.status === '점검 완료').length
+  }
+  return events.length
+}
+
+function formatTime(value) {
+  if (!value) return '-'
+  return String(value).replace('T', ' ')
+}
+
+function getTimeByStatus(item, status) {
+  if (status === '조치 대기' || status === '점검 대기') {
+    return formatTime(item.created_at)
+  }
+  if (status === '조치 완료' || status === '점검 완료') {
+    return formatTime(item.completed_at)
+  }
+  return formatTime(item.created_at ?? item.completed_at)
+}
+
+function makeInspectionEvent(item) {
+  const status = item.status ?? '-'
+
+  return {
+    time: formatTime(item.date),
+    location: item.location ?? '-',
+    type: item.name ?? '-',
+    manager: item.user_name ?? '-',
+    status,
+  }
+}
+
+function makeActionEvent(item) {
+  const status = item.action_status ?? item.status ?? '-'
+
+  return {
+    time: getTimeByStatus(item, status),
+    location: item.location ?? '-',
+    type: item.action_name ?? '-',
+    manager: item.handler_name ?? '-',
+    status,
+  }
+}
 
 function HomePage() {
   const navigate = useNavigate()
@@ -115,10 +177,22 @@ function HomePage() {
       })
   }, [])
 
+  const mergedEvents = useMemo(() => [
+    ...inspectionHistoryData.map(makeInspectionEvent),
+    ...actionHistoryData.map(makeActionEvent),
+  ], [inspectionHistoryData, actionHistoryData])
+
+  const dashboardSummaryCards = useMemo(() => {
+    return summaryCards.map((card) => ({
+      ...card,
+      value: countSummaryEvents(mergedEvents, card.id),
+    }))
+  }, [mergedEvents])
+
   return (
     <div className="home-dashboard">
       <section className="summary-grid" aria-label="홈 요약 지표">
-        {summaryCards.map((item) => (
+        {dashboardSummaryCards.map((item) => (
           <SummaryCard
             item={item}
             isSelected={item.id === selectedSummaryId}
@@ -132,8 +206,7 @@ function HomePage() {
 
       <section className="dashboard-main-grid">
         <RecentEventsTable
-          inspection={inspectionHistoryData}
-          action={actionHistoryData}
+          events={mergedEvents}
           selectedSummaryID={selectedSummaryId}
           selectedEvent={selectedEvent}
           onSelectEvent={setSelectedEvent}

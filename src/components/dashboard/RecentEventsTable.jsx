@@ -37,6 +37,9 @@ function isPendingStatus(status) {
 }
 
 function filterEventsBySummary(events, selectedSummaryID) {
+  if (selectedSummaryID === 'realtime') {
+    return events.filter((event) => event.status === '점검 대기')
+  }
   if (selectedSummaryID === 'pending') {
     return events.filter((event) => isPendingStatus(event.status))
   }
@@ -44,56 +47,13 @@ function filterEventsBySummary(events, selectedSummaryID) {
     return events.filter((event) => isCompleteStatus(event.status))
   }
   if (selectedSummaryID === 'violation') {
-    return events.filter((event) => event.status === '점검 대기' || event.status === '점검 완료')
+    return events.filter((event) => event.status ===  '점검 완료')
   }
   return events
 }
 
-function formatTime(value) {
-  if (!value) return '-'
-  return String(value).replace('T', ' ')
-}
-
-function getTimeByStatus(item, status) {
-  if (status === '조치 대기' || status === '점검 대기') {
-    return formatTime(item.created_at)
-  }
-  if (status === '조치 완료' || status === '점검 완료') {
-    return formatTime(item.completed_at)
-  }
-  return formatTime(item.created_at ?? item.completed_at)
-}
-
-function makeInspectionEvent(item) {
-  const status = item.status ?? '-'
-
-  return {
-    time: formatTime(item.date),
-    location: item.location ?? '-',
-    type: item.name ?? '-',
-    manager:item.user_name ?? '-',
-    status,
-  }
-}
-
-function makeActionEvent(item) {
-  const status = item.action_status ?? item.status ?? '-'
-
-  return {
-    time: getTimeByStatus(item, status),
-    location: item.location ?? '-',
-    type: item.action_name ?? '-',
-    manager: item.handler_name ?? '-',
-    status,
-  }
-}
-
-function RecentEventsTable({  inspection = [], action = [], selectedSummaryID, selectedEvent, onSelectEvent, onClose }) {
-  const mergedEvents = [
-    ...inspection.map(makeInspectionEvent),
-    ...action.map(makeActionEvent),
-  ]
-  const filteredEvents = filterEventsBySummary(mergedEvents, selectedSummaryID)
+function RecentEventsTable({ events = [], selectedSummaryID, selectedEvent, onSelectEvent, onClose }) {
+  const filteredEvents = filterEventsBySummary(events, selectedSummaryID)
 
   return (
     <>

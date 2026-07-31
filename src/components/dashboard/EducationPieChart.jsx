@@ -201,7 +201,7 @@ function EducationPieChart({ eduData, userData }) {
         </ResponsiveContainer>
       </Box>
 
-      <EducationTable lists={countData} />
+      {/* <EducationTable lists={countData} /> */}
 
       <div className="Page-move-wrapper">
         <button className="Page-move-button" type="button" onClick={() => navigate('/education')}>
