@@ -76,31 +76,254 @@
 
 .company-code-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: end;
   gap: 16px;
   padding: 22px;
 }
+
+.company-code-form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+}
+
+.company-code-add-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 2px;
+}
+
+.company-code-add-row .safety-add-button,
+.company-code-create-button {
+  width: 104px;
+  min-width: 104px;
+  min-height: 42px;
+}
+
+.company-code-row-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 104px;
+  gap: 6px;
+}
+
+.company-code-row-actions .safety-add-button {
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 4px;
+}
+
+.company-code-row-actions .company-code-delete-button {
+  color: #b45359;
+}
+
+.company-code-row-actions .company-code-delete-button:hover:not(:disabled) {
+  color: #b4232a;
+  background: #fff5f5;
+}
+
+.company-code-tabs {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid #d7e0eb;
+  border-radius: 8px;
+  background: #f5f8fc;
+}
+
+.company-code-tabs button {
+  min-height: 32px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 6px;
+  color: #64748b;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.company-code-tabs button.active {
+  color: #2f64b7;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, .12);
+}
+
+.company-code-form-note {
+  align-self: end;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.company-code-message {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #24713d;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.company-code-message.error {
+  color: #c43b3b;
+}
+
+.invite-code-history {
+  display: grid;
+  padding: 22px;
+}
+
+.invite-code-head,
+.invite-code-row {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr 1fr .9fr 1.35fr;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 1px solid #e7edf5;
+  border-top: 0;
+  color: #334155;
+  font-size: 13px;
+}
+
+.invite-code-head {
+  min-height: 44px;
+  border-top: 1px solid #dce6f2;
+  border-radius: 8px 8px 0 0;
+  color: #53647b;
+  background: #f5f8fc;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.invite-code-row:last-of-type {
+  border-radius: 0 0 8px 8px;
+}
+
+.invite-code-row .used,
+.invite-code-row .unused {
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.invite-code-row .used { color: #64748b; background: #eef2f7; }
+.invite-code-row .unused { color: #24713d; background: #e9f9ef; }
+.invite-code-empty { margin: 0; padding: 28px; border: 1px solid #e7edf5; color: #718096; text-align: center; font-size: 13px; font-weight: 800; }
+.safety-access-message { padding: 56px; color: #64748b; text-align: center; font-weight: 800; }
 
 .company-code-grid label {
   display: grid;
   gap: 8px;
 }
 
-.company-code-grid input,
-.company-code-grid select {
+.company-code-grid input {
   min-height: 42px;
   padding: 0 12px;
+}
+
+.company-code-card {
+  position: relative;
+  z-index: 3;
+  overflow: visible;
+}
+
+.company-code-select {
+  position: relative;
+  min-height: 44px;
+}
+
+.company-code-select > button {
+  display: flex;
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 18px 0 12px;
+  border: 1px solid #d7e0eb;
+  border-radius: 8px;
+  color: #243247;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.company-code-select > button svg {
+  flex: 0 0 auto;
+  color: #526f90;
+  transition: transform .16s ease;
+}
+
+.company-code-select > button:hover,
+.company-code-select.is-open > button {
+  border-color: #9bbce2;
+  color: #316eae;
+  box-shadow: 0 3px 10px rgba(57, 116, 198, .1);
+}
+
+.company-code-select.is-open > button svg { transform: rotate(180deg); }
+
+.company-code-select.is-disabled > button {
+  color: #94a3b8;
+  background: #f8fafc;
+  cursor: not-allowed;
+}
+
+.company-code-select-menu {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  padding: 5px;
+  border: 1px solid #d5e1ed;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 25px rgba(37, 66, 97, .16);
+}
+
+.company-code-select-menu button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 8px;
+  border: 0;
+  border-radius: 6px;
+  color: #58708a;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  text-align: left;
+}
+
+.company-code-select-menu button:hover,
+.company-code-select-menu button.is-selected {
+  color: #2f70b2;
+  background: #edf5ff;
+}
+
+.company-code-select-menu button span {
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .company-code-output {
   color: #64748b;
   background: #f1f5f9;
-}
-
-.company-code-create-button {
-  min-width: 86px;
-  min-height: 42px;
 }
 
 .safety-role-row input {
@@ -347,6 +570,22 @@
 
   .safety-role-row input {
     border: 1px solid #d7e0eb;
+    border-radius: 8px;
+  }
+
+  .company-code-form-row,
+  .invite-code-head,
+  .invite-code-row {
+    grid-template-columns: 1fr;
+  }
+
+  .invite-code-head {
+    display: none;
+  }
+
+  .invite-code-row {
+    margin-top: 10px;
+    border-top: 1px solid #e7edf5;
     border-radius: 8px;
   }
 }
