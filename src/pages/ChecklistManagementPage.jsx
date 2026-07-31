@@ -15,6 +15,12 @@ import {
 } from '../utils/checklistStatusStorage' 
 
 const CATEGORY = [ '소방안전' , '시설안전' , '산업안전' ,'기타']
+const CATEGORY_ID_BY_NAME = {
+  소방안전: 1,
+  시설안전: 2,
+  산업안전: 3,
+  기타: 4,
+}
 const MANAGERS = ['이안전', '김안전', '박점검', '최점검']
 const API_BASE_URL = 'http://127.0.0.1:8000'
 const rows = [
@@ -103,6 +109,7 @@ function ChecklistManagementPage() {
   const [assignmentMode, setAssignmentMode] = useState(null)
   const [memberQuery, setMemberQuery] = useState('')
   const [managerOptions, setManagerOptions] = useState([])
+  const [cctvs, setCctvs] = useState([])
   const [isRecordsLoading, setIsRecordsLoading] = useState(true)
   useEffect(() => {
     const loadRecords = async () => {
@@ -129,6 +136,7 @@ function ChecklistManagementPage() {
             inspectionAssignee: item.user_name || '',
             actionAssignee: '',
             dateTime: String(item.date || '').replace('T', ' ').slice(0, 16),
+            content: item.content || '',
             progress: item.status || '점검 대기',
             type: 'inspection',
           }))
@@ -137,12 +145,13 @@ function ChecklistManagementPage() {
           rawId: item.action_history_id,
           sourceKind: 'action',
           name: item.action_name || '조치 이력',
-          category: item.category_name || item.category || '기타',
+          category: item.category || item.category_name || '기타',
           location: item.location || '구역 미지정',
           cycle: '수시',
           inspectionAssignee: item.approver_name || '',
           actionAssignee: item.handler_name || '',
           dateTime: String(item.created_at || '').replace('T', ' ').slice(0, 16),
+          content: item.content || '',
           progress: item.action_status || '조치 대기',
           type: 'action',
         }))
@@ -241,6 +250,23 @@ function ChecklistManagementPage() {
     })
     setDetailItem((current) => current?.id === id ? (complete ? null : { ...current, cycle }) : current)
   }
+  const openDetail = async (item) => {
+    setDetailItem(item)
+    if (item.sourceKind !== 'action' || !item.rawId) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined
+      const response = await axios.get(`${API_BASE_URL}/api/action-histories/${item.rawId}`, { headers })
+      setDetailItem((current) => (
+        current?.id === item.id
+          ? { ...current, content: response.data.content || '' }
+          : current
+      ))
+    } catch (error) {
+      console.warn('조치 이력 상세 내용을 불러오지 못했습니다.', error)
+    }
+  }
   const assignMember = async (member) => {
     const field = assignmentMode === 'inspection' ? 'inspectionAssignee' : 'actionAssignee'
     const targetRecords = records.filter((item) => selected.includes(item.id))
@@ -267,7 +293,7 @@ function ChecklistManagementPage() {
     <article className="management-table-card"><div className="management-table-header"><div><span className="section-kicker">CHECKLIST OVERVIEW</span><h3>담당자 배정</h3><p>일시를 확인하고 점검·조치 담당자를 배정합니다.</p></div><div className="management-header-actions"><button className="checklist-create-button" type="button" onClick={() => setIsCreateOpen(true)}><AddRoundedIcon /> 항목 추가</button><div className="assignment-type-toggle" role="tablist" aria-label="항목 유형"><button className={recordTypeFilter === 'inspection' ? 'is-active' : ''} type="button" role="tab" aria-selected={recordTypeFilter === 'inspection'} onClick={() => changeRecordType('inspection')}>점검</button><button className={recordTypeFilter === 'action' ? 'is-active' : ''} type="button" role="tab" aria-selected={recordTypeFilter === 'action'} onClick={() => changeRecordType('action')}>조치</button></div></div></div>
     <div className="management-filters"><Filter value={filters.category} onChange={(value) => changeFilter('category',value)} options={CATEGORY} /><label className="management-search"><SearchRoundedIcon /><input value={filters.query} onChange={(event) => changeFilter('query', event.target.value)} placeholder="점검 이름, 구역, 담당자 검색" /></label><Filter value={filters.status} onChange={(value) => changeFilter('status',value)} options={STATUS_FILTER_OPTIONS[recordTypeFilter]} />{recordTypeFilter === 'inspection' && <div className="assignment-date-toggle" aria-label="점검 예정일">{DATE_FILTER_OPTIONS.map((option) => <button className={dateOffsetFilter === option.value ? 'is-active' : ''} type="button" key={option.key} onClick={() => { setDateOffsetFilter(option.value); setPage(0) }}>{option.label}</button>)}</div>}<button className="filter-reset" type="button" onClick={reset}><RestartAltRoundedIcon /> 초기화</button></div>
     <div className="bulk-assign-toolbar"><span>선택 <strong>{selected.length}</strong>건</span><div>{recordTypeFilter === 'inspection' ? <button type="button" disabled={!chosen.length} onClick={() => setAssignmentMode('inspection')}><AssignmentIndOutlinedIcon /> 점검 담당자 배정</button> : <button type="button" disabled={!actionEnabled} onClick={() => setAssignmentMode('action')}><AssignmentIndOutlinedIcon /> 조치 담당자 배정</button>}</div></div>
-    <div className="checklist-table-wrap"><table className="checklist-management-table master-checklist-table"><thead><tr><th className="checklist-select-col"><input type="checkbox" checked={visible.length > 0 && visible.every((item) => selected.includes(item.id))} onChange={(event) => setSelected((current) => event.target.checked ? [...new Set([...current,...visible.map((item) => item.id)])] : current.filter((id) => !visible.some((item) => item.id === id)))} /></th><th>점검 이름</th><th>적용 구역</th><th>점검 담당자</th>{recordTypeFilter === 'action' && <th>조치 담당자</th>}{recordTypeFilter === 'inspection' && <th>일시</th>}<th>진행 상태</th></tr></thead><tbody>{isRecordsLoading ? <ChecklistTableSkeletonRows /> : visible.map((item) => <tr className="checklist-detail-row" key={item.id} onClick={() => setDetailItem(item)}><td className="checklist-select-col"><input type="checkbox" checked={selected.includes(item.id)} onClick={(event) => event.stopPropagation()} onChange={() => toggle(item.id)} /></td><td><strong>{item.name}</strong><span className="table-category">{item.category}</span></td><td><span className="location-cell">{item.location}</span></td><td><Assignee value={item.inspectionAssignee} /></td>{recordTypeFilter === 'action' && <td><Assignee value={item.actionAssignee} /></td>}{recordTypeFilter === 'inspection' && <td>{item.dateTime}</td>}<td><Status value={item.progress} /></td></tr>)}</tbody></table></div>
+    <div className="checklist-table-wrap"><table className="checklist-management-table master-checklist-table"><thead><tr><th className="checklist-select-col"><input type="checkbox" checked={visible.length > 0 && visible.every((item) => selected.includes(item.id))} onChange={(event) => setSelected((current) => event.target.checked ? [...new Set([...current,...visible.map((item) => item.id)])] : current.filter((id) => !visible.some((item) => item.id === id)))} /></th><th>점검 이름</th><th>적용 구역</th><th>점검 담당자</th>{recordTypeFilter === 'action' && <th>조치 담당자</th>}{recordTypeFilter === 'inspection' && <th>일시</th>}<th>진행 상태</th></tr></thead><tbody>{isRecordsLoading ? <ChecklistTableSkeletonRows /> : visible.map((item) => <tr className="checklist-detail-row" key={item.id} onClick={() => openDetail(item)}><td className="checklist-select-col"><input type="checkbox" checked={selected.includes(item.id)} onClick={(event) => event.stopPropagation()} onChange={() => toggle(item.id)} /></td><td><strong>{item.name}</strong><span className="table-category">{item.category}</span></td><td><span className="location-cell">{item.location}</span></td><td><Assignee value={item.inspectionAssignee} /></td>{recordTypeFilter === 'action' && <td><Assignee value={item.actionAssignee} /></td>}{recordTypeFilter === 'inspection' && <td>{item.dateTime}</td>}<td><Status value={item.progress} /></td></tr>)}</tbody></table></div>
     <footer className="checklist-pagination"><span>총 <strong>{filtered.length}</strong>건</span><div><button type="button" disabled={active === 0} onClick={() => setPage((current) => current - 1)}><ChevronLeftRoundedIcon /></button><b>{active + 1} / {pageCount}</b><button type="button" disabled={active === pageCount - 1} onClick={() => setPage((current) => current + 1)}><ChevronRightRoundedIcon /></button></div></footer></article>{detailItem && <ChecklistDetailModal item={detailItem} onCycleChange={updateCycle} onClose={() => setDetailItem(null)} />}{isCreateOpen && <CreateModal initialType={recordTypeFilter} onClose={() => setIsCreateOpen(false)} onCreate={addItem} />}{assignmentMode && <AssignmentModal mode={assignmentMode} count={selected.length} members={members} query={memberQuery} onQueryChange={setMemberQuery} onAssign={assignMember} onClose={() => { setMemberQuery(''); setAssignmentMode(null) }} />}</section>
 }
 function ChecklistTableSkeletonRows() { return Array.from({ length: 8 }, (_, rowIndex) => <tr className="table-skeleton-row" key={rowIndex}>{Array.from({ length: 6 }, (_, columnIndex) => <td key={columnIndex}><span className={`table-skeleton-block column-${columnIndex}`} /></td>)}</tr>) }
@@ -297,10 +323,87 @@ function AssignmentModal({ mode, count, members, query, onQueryChange, onAssign,
 function CreateModal({ initialType, onClose, onCreate }) {
   const isInspection = initialType === 'inspection'
   const [form, setForm] = useState({ name:'', location:'', category:CATEGORY[0], cycle:'매일', dateTime:`${getDateKey()}T09:00` })
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }))
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault()
+    if (isSubmitting) return
     if (!form.name.trim() || !form.location.trim()) return
+    setIsSubmitting(true)
+    if (isInspection) {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+      try {
+        const beforeListResponse = await axios.get(`${API_BASE_URL}/api/inspection`, { headers })
+        const beforeInspectionList = Array.isArray(beforeListResponse.data)
+          ? beforeListResponse.data
+          : (beforeListResponse.data?.items ?? beforeListResponse.data?.inspections ?? [])
+        const hasSameName = (item) => item.name === form.name.trim()
+        const isCreatedInspection = (item) => (
+          hasSameName(item)
+          && item.location === form.location.trim()
+          && item.cycle === form.cycle
+          && Number(item.category_id) === Number(CATEGORY_ID_BY_NAME[form.category] ?? 4)
+        )
+        if (beforeInspectionList.some(hasSameName)) {
+          alert('같은 이름의 점검 항목이 이미 등록되어 있습니다.')
+          setIsSubmitting(false)
+          return
+        }
+
+        const beforeInspectionIds = new Set(
+          beforeInspectionList.map((item) => String(item.inspection_id ?? item.id)),
+        )
+        let inspectionId
+        try {
+          const inspectionResponse = await axios.post(`${API_BASE_URL}/api/inspection`, {
+            name: form.name.trim(),
+            location: form.location.trim(),
+            cycle: form.cycle,
+            content: null,
+            category_id: CATEGORY_ID_BY_NAME[form.category] ?? 4,
+          }, { headers })
+          const inspectionBody = inspectionResponse.data?.data ?? inspectionResponse.data?.item ?? inspectionResponse.data
+          inspectionId = inspectionBody?.inspection_id ?? inspectionBody?.id
+        } catch (error) {
+          // 백엔드가 저장 후 응답 직렬화에서 실패하는 경우를 대비해 생성된 항목을 다시 찾습니다.
+          const listResponse = await axios.get(`${API_BASE_URL}/api/inspection`, { headers })
+          const inspectionList = Array.isArray(listResponse.data)
+            ? listResponse.data
+            : (listResponse.data?.items ?? listResponse.data?.inspections ?? [])
+          const createdInspection = inspectionList
+            .filter((item) => (
+              isCreatedInspection(item)
+              && !beforeInspectionIds.has(String(item.inspection_id ?? item.id))
+            ))
+            .sort((left, right) => Number(right.inspection_id ?? right.id ?? 0) - Number(left.inspection_id ?? left.id ?? 0))[0]
+          inspectionId = createdInspection?.inspection_id ?? createdInspection?.id
+          if (!inspectionId) throw error
+        }
+
+        if (!Number.isInteger(Number(inspectionId))) {
+          throw new Error('점검 항목 생성 응답에 inspection_id가 없습니다.')
+        }
+
+        await axios.post(`${API_BASE_URL}/api/inspection/histories/create`, {
+          name: form.name.trim(),
+          date: form.dateTime,
+          location: form.location.trim(),
+          uid: null,
+          user_name: null,
+          status: '점검 대기',
+          is_action_required: false,
+          content: null,
+          inspection_id: Number(inspectionId),
+        }, { headers })
+      } catch (error) {
+        console.error('점검 항목/이력 생성 실패:', error.response?.data ?? error)
+        alert('점검 이력 생성에 실패했습니다.')
+        setIsSubmitting(false)
+        return
+      }
+    }
     onCreate({
       ...form,
       type: initialType,
@@ -311,8 +414,9 @@ function CreateModal({ initialType, onClose, onCreate }) {
       actionAssignee:'',
       progress: isInspection ? '점검 대기' : '조치 대기',
     })
+    setIsSubmitting(false)
   }
-  return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ITEM CREATE</span><h3>{isInspection ? '점검 항목 추가' : '조치 항목 추가'}</h3><p>전체 체크리스트에 새 항목을 등록합니다.</p></div><button type="button" onClick={onClose}>×</button></header><form className="checklist-create-form" onSubmit={submit}><label className="is-wide"><span>{isInspection ? '점검 이름' : '조치 이름'}</span><input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={isInspection ? '예: 비상구 피난 통로 점검' : '예: 소화기 압력 게이지 교체'} /></label><label><span>분류</span><select value={form.category} onChange={(event) => update('category', event.target.value)}>{CATEGORY.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>{isInspection && <label><span>점검 주기</span><select value={form.cycle} onChange={(event) => update('cycle', event.target.value)}><option>매일</option><option>매주</option><option>매월</option></select></label>}<label className="is-wide"><span>적용 구역</span><input value={form.location} onChange={(event) => update('location', event.target.value)} placeholder="여러 구역은 쉼표(,)로 구분하세요" /></label><label><span>일시</span><input type="datetime-local" value={form.dateTime} onChange={(event) => update('dateTime', event.target.value)} /></label><footer><span>{isInspection ? '점검 대기 상태로 등록됩니다.' : '조치 대기 상태로 등록됩니다.'}</span><div><button type="button" onClick={onClose}>취소</button><button type="submit">등록</button></div></footer></form></section></div>
+  return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ITEM CREATE</span><h3>{isInspection ? '점검 항목 추가' : '조치 항목 추가'}</h3><p>전체 체크리스트에 새 항목을 등록합니다.</p></div><button type="button" onClick={onClose} disabled={isSubmitting}>×</button></header><form className="checklist-create-form" onSubmit={submit}><label className="is-wide"><span>{isInspection ? '점검 이름' : '조치 이름'}</span><input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={isInspection ? '예: 비상구 피난 통로 점검' : '예: 소화기 압력 게이지 교체'} disabled={isSubmitting} /></label><label><span>분류</span><select value={form.category} onChange={(event) => update('category', event.target.value)} disabled={isSubmitting}>{CATEGORY.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>{isInspection && <label><span>점검 주기</span><select value={form.cycle} onChange={(event) => update('cycle', event.target.value)} disabled={isSubmitting}><option>매일</option><option>매주</option><option>매월</option></select></label>}<label className="is-wide"><span>적용 구역</span><input value={form.location} onChange={(event) => update('location', event.target.value)} placeholder="여러 구역은 쉼표(,)로 구분하세요" disabled={isSubmitting} /></label><label><span>일시</span><input type="datetime-local" value={form.dateTime} onChange={(event) => update('dateTime', event.target.value)} disabled={isSubmitting} /></label><footer><span>{isSubmitting ? '등록 중입니다.' : (isInspection ? '점검 대기 상태로 등록됩니다.' : '조치 대기 상태로 등록됩니다.')}</span><div><button type="button" onClick={onClose} disabled={isSubmitting}>취소</button><button type="submit" disabled={isSubmitting}>{isSubmitting ? '등록 중...' : '등록'}</button></div></footer></form></section></div>
 }
 export default ChecklistManagementPage
 

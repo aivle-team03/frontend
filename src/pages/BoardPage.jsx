@@ -16,7 +16,15 @@ const API_BASE_URL = 'http://127.0.0.1:8000'
 
 const CATEGORY=['소방안전','시설안전','산업안전','기타']
 
-const FALLBACK_BOARD_CATEGORY_OPTIONS = CATEGORY.slice(0).map((name) => ({ id: null, name }))
+// The board API only returns event_category_id, so the UI needs this ID-to-label map.
+const EVENT_CATEGORY_OPTIONS = [
+  { id: 1, name: CATEGORY[0] },
+  { id: 2, name: CATEGORY[1] },
+  { id: 3, name: CATEGORY[2] },
+  { id: 4, name: CATEGORY[3] },
+]
+
+const FALLBACK_BOARD_CATEGORY_OPTIONS = EVENT_CATEGORY_OPTIONS
 
 const RISK_OPTIONS = [
   { level: 'high', label: '높음' },
@@ -162,6 +170,12 @@ function getRiskLabel(level) {
   return RISK_OPTIONS.find((risk) => risk.level === level)?.label ?? '보통'
 }
 
+function getBoardCategoryName(item) {
+  const categoryId = item.event_category_id ?? item.category_id
+
+  return EVENT_CATEGORY_OPTIONS.find((category) => Number(category.id) === Number(categoryId))?.name
+}
+
 function formatBoardItem(item) {
   let photoUrl = item.image_url || item.photoUrl || ''
   if (photoUrl && photoUrl.startsWith('/static')) {
@@ -209,7 +223,7 @@ function getSortableReportId(reportId) {
 }
 
 function getBoardCategoryOptions(items) {
-  const options = new Map()
+  const options = new Map(EVENT_CATEGORY_OPTIONS.map((category) => [String(category.id), category]))
 
   items.forEach((item) => {
     const name = item.category_name || item.category
@@ -254,7 +268,7 @@ function saveBoardReportToChecklistManagement(report) {
 function BoardPage() {
   const [reports, setReports] = useState([])
   const [selectedReportIds, setSelectedReportIds] = useState([])
-  const [boardCategoryOptions, setBoardCategoryOptions] = useState(CATEGORY)
+  const [boardCategoryOptions, setBoardCategoryOptions] = useState(EVENT_CATEGORY_OPTIONS)
   const [currentUserName, setCurrentUserName] = useState('익명')
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('전체')
@@ -265,6 +279,7 @@ function BoardPage() {
   const [summaryFilter, setSummaryFilter] = useState('all')
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
   const [selectedReportId, setSelectedReportId] = useState(null)
+  const [isReceivingReports, setIsReceivingReports] = useState(false)
 
   const fetchBoards = useCallback(async () => {
     try {
@@ -277,7 +292,10 @@ function BoardPage() {
       })
       const rawItems = response.data.items || response.data || []
       setBoardCategoryOptions(getBoardCategoryOptions(rawItems))
-      setReports(rawItems.map(formatBoardItem))
+      setReports(rawItems.map((item) => formatBoardItem({
+        ...item,
+        category: item.category || getBoardCategoryName(item),
+      })))
     } catch (error) {
       console.error('게시글 목록 로드 실패:', error)
       setBoardCategoryOptions([])
@@ -394,7 +412,8 @@ function BoardPage() {
       applyLocalUpdate(response.data.status)
     } catch (error) {
       console.error(`게시글 #${reportId} 상태 변경 실패:`, error)
-      applyLocalUpdate()
+      alert(error.response?.data?.detail || '게시글 상태 변경에 실패했습니다. 다시 시도해 주세요.')
+      return false
     }
 
     if (statusKey === 'received' && reportToUpdate) {
@@ -425,11 +444,20 @@ function BoardPage() {
   }
 
   const receiveSelectedReports = async () => {
+    if (isReceivingReports) return
+
     const selectedReports = reports.filter((report) => selectedReportIds.includes(report.id) && report.statusKey === 'registered')
     if (!selectedReports.length) return
 
-    await Promise.all(selectedReports.map((report) => updateReportStatus(report.id, 'received')))
-    setSelectedReportIds((current) => current.filter((id) => !selectedReports.some((report) => report.id === id)))
+    setIsReceivingReports(true)
+    try {
+      const updatedReportIds = (await Promise.all(selectedReports.map(async (report) => (
+        (await updateReportStatus(report.id, 'received')) ? report.id : null
+      )))).filter(Boolean)
+      setSelectedReportIds((current) => current.filter((id) => !updatedReportIds.includes(id)))
+    } finally {
+      setIsReceivingReports(false)
+    }
   }
 
   const createReport = async (reportForm) => {
@@ -535,8 +563,8 @@ function BoardPage() {
 
       <div className="board-bulk-toolbar">
         <span>선택 <strong>{selectedReceivableCount}</strong>건</span>
-        <button type="button" disabled={!selectedReceivableCount} onClick={receiveSelectedReports}>
-          접수
+        <button type="button" disabled={isReceivingReports || !selectedReceivableCount} onClick={receiveSelectedReports}>
+          {isReceivingReports ? '접수 중...' : '접수'}
         </button>
       </div>
 

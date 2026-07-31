@@ -14,9 +14,13 @@ import {
 function filterEvents(lists) {
   return lists.filter(
     (list) =>
-      list.status === '조치 완료' ||
-      list.status === '조치 중'
+      list.approval_status === '승인 대기'
   )
+}
+
+function formatTime(value) {
+  if (!value) return '-'
+  return String(value).replace('T', ' ')
 }
 
 function ActionHistoryTable({ lists }) {
@@ -40,12 +44,12 @@ const ActionHistorydata= filterEvents(lists)
         </TableHead>
         <TableBody>
           {ActionHistorydata.map((data) => (
-            <TableRow hover key={data.time} className="event-row">
-                <TableCell>{data.time}</TableCell>
+            <TableRow hover key={data.action_history_id ?? data.completed_at} className="event-row">
+                <TableCell>{formatTime(data.created_at)}</TableCell>
                 <TableCell>{data.location}</TableCell>
-                <TableCell>{data.type}</TableCell>
-                <TableCell>{data.manager}</TableCell>
-                <TableCell>{data.status}</TableCell>
+                <TableCell>{data.action_name}</TableCell>
+                <TableCell>{data.handler_name}</TableCell>
+                <TableCell>{data.approval_status}</TableCell>
             </TableRow>
           ))}
         </TableBody>
