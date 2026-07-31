@@ -49,7 +49,7 @@ const DATE_FILTER_OPTIONS = [
 ]
 const STATUS_FILTER_OPTIONS = {
   inspection: ['진행 상태', '점검 대기', '점검 완료'],
-  action: ['진행 상태', '조치 대기', '조치 완료'],
+  action: ['진행 상태', '조치 대기'],
 }
 const getNextDueDate = (cycle, fromDate = new Date()) => { const next = new Date(fromDate); if (cycle === '매일') next.setDate(next.getDate() + 1); else if (cycle === '매주') next.setDate(next.getDate() + 7); else next.setMonth(next.getMonth() + 1); return getDateKey(next) }
 const toPendingStatus = (type) => type === 'action' ? '조치 대기' : '점검 대기'
@@ -177,6 +177,7 @@ function ChecklistManagementPage() {
   const changeFilter = (key, value) => { setFilters((current) => ({ ...current, [key]:value })); setPage(0) }
   const typeRecords = useMemo(() => records
     .filter((item) => getRecordType(item) === recordTypeFilter)
+    .filter((item) => recordTypeFilter !== 'action' || item.progress !== '조치 완료')
     .map((item) => {
       if (recordTypeFilter !== 'inspection') return item
       const dueDateTime = getInspectionDueDate(item)
