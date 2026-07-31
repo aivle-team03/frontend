@@ -152,6 +152,13 @@ function getInspectionMemo(item) {
     || ''
 }
 
+function getActionContent(item) {
+  return item.action_content
+    || item.actionContent
+    || item.content
+    || ''
+}
+
 function buildInspectionCatalog(items) {
   const byId = new Map()
   const byName = new Map()
@@ -308,13 +315,17 @@ function ChecklistPage() {
             movedToAction: Boolean(item.is_action_required), description: getInspectionDescription(item) || catalogInspection?.content || '', inspectorMemo: getInspectionMemo(item), completed: item.status === '점검 완료',
           }
         }))
-        setActionTasks(actions.map((item) => ({
+        const mappedActions = actions.map((item) => ({
           id: item.action_history_id, taskKey: createKey('action', item.action_history_id),
           inspectionRef: item.action_name, text: item.action_name || '조치 항목', location: item.location || '현장 구역',
           date: String(item.created_at || '').slice(0, 10), category: item.category_name || '기타',
-          status: item.action_status || '조치 대기', assignee: item.handler_name || '', content: item.content || '',
+          status: item.action_status || '조치 대기', assignee: item.handler_name || '', content: getActionContent(item),
           completed: item.action_status === '조치 완료', photos: item.image_url ? [{ name: '조치 사진', url: resolveMediaUrl(item.image_url) }] : [],
-        })))
+        }))
+        setActionTasks((current) => mappedActions.map((action) => {
+          const previous = current.find((task) => String(task.id) === String(action.id) || task.taskKey === action.taskKey)
+          return { ...action, content: action.content || previous?.content || '', photos: action.photos.length ? action.photos : previous?.photos || [] }
+        }))
         isApiActionTasksLoaded.current = true
       } catch (error) {
         console.warn('내 점검·조치 이력을 불러오지 못했습니다.', error)
@@ -332,7 +343,7 @@ function ChecklistPage() {
     : selectableTasks[0]?.taskKey
   const currentTask = selectableTasks.find((task) => task.taskKey === effectiveSelectedTaskId)
   const currentTaskKey = currentTask?.taskKey
-  const currentTaskContent = currentTask?.content || ''
+  const currentTaskContent = currentTask?.content || currentTask?.actionContent || ''
   const currentTaskPhotos = useMemo(() => currentTask?.photos || [], [currentTask?.photos])
 
   const progress = useMemo(() => {
@@ -466,7 +477,9 @@ function ChecklistPage() {
   const completeAction = async () => {
     if (!currentTask) return
 
-    if (!actionDetailContent.trim()) {
+    const completedContent = actionDetailContent.trim()
+
+    if (!completedContent) {
       alert('조치내용을 입력해 주세요.')
       return
     }
@@ -486,14 +499,17 @@ function ChecklistPage() {
     try {
       const token = localStorage.getItem('token')
       const formData = new FormData()
-      formData.append('content', actionDetailContent.trim())
+      formData.append('content', completedContent)
       formData.append('image', photoToUpload.file)
       const response = await axios.patch(`${API_BASE_URL}/api/action-histories/${currentTask.id}/complete`, formData, {
         headers: { 'Content-Type': 'multipart/form-data', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       })
+      const responseContent = response.data?.content || response.data?.action_content || ''
+      const nextContent = responseContent || completedContent
       setActionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
-        ? { ...task, status: '조치 완료', completed: true, content: response.data.content || actionDetailContent.trim() }
+        ? { ...task, status: '조치 완료', completed: true, content: nextContent }
         : task))
+      setActionDetailContent(nextContent)
       const managementRecords = getStoredChecklistManagementRecords()
       const completedAt = new Date()
       const completedDateTime = `${completedAt.toISOString().slice(0, 10)} ${String(completedAt.getHours()).padStart(2, '0')}:${String(completedAt.getMinutes()).padStart(2, '0')}`
@@ -508,7 +524,7 @@ function ChecklistPage() {
           ...record,
           progress: '조치 완료',
           dateTime: completedDateTime,
-          actionContent: actionDetailContent.trim(),
+          actionContent: nextContent,
           note: record.inspectionContent || record.note,
           photo: true,
           photoNames: attachedPhotos.map((photo) => photo.name),
@@ -540,7 +556,7 @@ function ChecklistPage() {
 
     const completedTask = {
       ...currentTask,
-      content: actionDetailContent.trim(),
+      content: completedContent,
       photoNames: attachedPhotos.map((photo) => photo.name),
       photos: attachedPhotos.map(({ name, url }) => ({ name, url })),
       status: '조치 완료',
@@ -560,7 +576,7 @@ function ChecklistPage() {
           ...record,
           progress: '조치 완료',
           dateTime: completedDateTime,
-          actionContent: actionDetailContent.trim(),
+          actionContent: completedContent,
           note: record.inspectionContent || record.note,
           photo: true,
           photoNames: attachedPhotos.map((photo) => photo.name),
