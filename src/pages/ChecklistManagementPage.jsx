@@ -136,6 +136,7 @@ function ChecklistManagementPage() {
             inspectionAssignee: item.user_name || '',
             actionAssignee: '',
             dateTime: String(item.date || '').replace('T', ' ').slice(0, 16),
+            content: item.content || '',
             progress: item.status || '점검 대기',
             type: 'inspection',
           }))
@@ -144,12 +145,13 @@ function ChecklistManagementPage() {
           rawId: item.action_history_id,
           sourceKind: 'action',
           name: item.action_name || '조치 이력',
-          category: item.category_name || item.category || '기타',
+          category: item.category || item.category_name || '기타',
           location: item.location || '구역 미지정',
           cycle: '수시',
           inspectionAssignee: item.approver_name || '',
           actionAssignee: item.handler_name || '',
           dateTime: String(item.created_at || '').replace('T', ' ').slice(0, 16),
+          content: item.content || '',
           progress: item.action_status || '조치 대기',
           type: 'action',
         }))
@@ -247,6 +249,23 @@ function ChecklistManagementPage() {
       return next
     })
     setDetailItem((current) => current?.id === id ? (complete ? null : { ...current, cycle }) : current)
+  }
+  const openDetail = async (item) => {
+    setDetailItem(item)
+    if (item.sourceKind !== 'action' || !item.rawId) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : undefined
+      const response = await axios.get(`${API_BASE_URL}/api/action-histories/${item.rawId}`, { headers })
+      setDetailItem((current) => (
+        current?.id === item.id
+          ? { ...current, content: response.data.content || '' }
+          : current
+      ))
+    } catch (error) {
+      console.warn('조치 이력 상세 내용을 불러오지 못했습니다.', error)
+    }
   }
   const assignMember = async (member) => {
     const field = assignmentMode === 'inspection' ? 'inspectionAssignee' : 'actionAssignee'

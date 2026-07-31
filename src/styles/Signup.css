@@ -103,3 +103,11 @@
     color: #666;
     cursor: pointer;
 }
+
+.signup-code-summary {
+    margin: 0;
+    color: #36516f;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}

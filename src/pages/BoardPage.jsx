@@ -279,6 +279,7 @@ function BoardPage() {
   const [summaryFilter, setSummaryFilter] = useState('all')
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
   const [selectedReportId, setSelectedReportId] = useState(null)
+  const [isReceivingReports, setIsReceivingReports] = useState(false)
 
   const fetchBoards = useCallback(async () => {
     try {
@@ -411,7 +412,8 @@ function BoardPage() {
       applyLocalUpdate(response.data.status)
     } catch (error) {
       console.error(`게시글 #${reportId} 상태 변경 실패:`, error)
-      applyLocalUpdate()
+      alert(error.response?.data?.detail || '게시글 상태 변경에 실패했습니다. 다시 시도해 주세요.')
+      return false
     }
 
     if (statusKey === 'received' && reportToUpdate) {
@@ -442,11 +444,20 @@ function BoardPage() {
   }
 
   const receiveSelectedReports = async () => {
+    if (isReceivingReports) return
+
     const selectedReports = reports.filter((report) => selectedReportIds.includes(report.id) && report.statusKey === 'registered')
     if (!selectedReports.length) return
 
-    await Promise.all(selectedReports.map((report) => updateReportStatus(report.id, 'received')))
-    setSelectedReportIds((current) => current.filter((id) => !selectedReports.some((report) => report.id === id)))
+    setIsReceivingReports(true)
+    try {
+      const updatedReportIds = (await Promise.all(selectedReports.map(async (report) => (
+        (await updateReportStatus(report.id, 'received')) ? report.id : null
+      )))).filter(Boolean)
+      setSelectedReportIds((current) => current.filter((id) => !updatedReportIds.includes(id)))
+    } finally {
+      setIsReceivingReports(false)
+    }
   }
 
   const createReport = async (reportForm) => {
@@ -552,8 +563,8 @@ function BoardPage() {
 
       <div className="board-bulk-toolbar">
         <span>선택 <strong>{selectedReceivableCount}</strong>건</span>
-        <button type="button" disabled={!selectedReceivableCount} onClick={receiveSelectedReports}>
-          접수
+        <button type="button" disabled={isReceivingReports || !selectedReceivableCount} onClick={receiveSelectedReports}>
+          {isReceivingReports ? '접수 중...' : '접수'}
         </button>
       </div>
 

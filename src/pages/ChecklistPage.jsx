@@ -494,41 +494,6 @@ function ChecklistPage() {
       setActionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
         ? { ...task, status: '조치 완료', completed: true, content: response.data.content || actionDetailContent.trim() }
         : task))
-      const managementRecords = getStoredChecklistManagementRecords()
-      const completedAt = new Date()
-      const completedDateTime = `${completedAt.toISOString().slice(0, 10)} ${String(completedAt.getHours()).padStart(2, '0')}:${String(completedAt.getMinutes()).padStart(2, '0')}`
-      saveChecklistManagementRecords(managementRecords.map((record) => {
-        const isSameAction = String(record.id) === String(currentTask.id)
-          || String(record.rawId) === String(currentTask.id)
-          || String(record.id) === `action-${currentTask.id}`
-
-        if (!isSameAction) return record
-
-        return {
-          ...record,
-          progress: '조치 완료',
-          dateTime: completedDateTime,
-          actionContent: actionDetailContent.trim(),
-          note: record.inspectionContent || record.note,
-          photo: true,
-          photoNames: attachedPhotos.map((photo) => photo.name),
-          photos: attachedPhotos.map(({ name, url }) => ({ name, url })),
-          actionHistory: [
-            {
-              id: `action-history-${Date.now()}`,
-              actionName: record.name,
-              location: record.location,
-              dateTime: completedDateTime,
-              manager: record.actionAssignee || currentTask.assignee || '미배정',
-              progress: '조치 완료',
-              approvalStatus: '승인대기',
-              completedPhoto: attachedPhotos[0]?.url || '',
-              sourceReportId: record.sourceReportId,
-            },
-            ...(record.actionHistory || []),
-          ],
-        }
-      }))
       return
     } catch (error) {
       console.error('Action completion failed:', error)
