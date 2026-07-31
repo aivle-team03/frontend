@@ -130,7 +130,56 @@ function toInspectionTask(record) {
     category: record.category || '미분류',
     inspectionStatus: record.progress || '점검 대기',
     movedToAction: false,
+    description: record.inspectionContent || record.description || record.note || '',
+    inspectorMemo: record.historyContent || '',
   }
+}
+
+function getInspectionDescription(item) {
+  return item.inspection?.content
+    || item.inspection_content
+    || item.checklist?.content
+    || item.checklist_content
+    || item.description
+    || ''
+}
+
+function getInspectionMemo(item) {
+  return item.history_content
+    || item.inspection_history_content
+    || item.memo
+    || item.content
+    || ''
+}
+
+function buildInspectionCatalog(items) {
+  const byId = new Map()
+  const byName = new Map()
+  const byCategoryId = new Map()
+
+  items.forEach((item) => {
+    const record = {
+      id: item.inspection_id ?? item.id,
+      name: item.name,
+      categoryId: item.category_id,
+      content: item.content || '',
+    }
+
+    if (record.id != null) byId.set(String(record.id), record)
+    if (record.name) byName.set(record.name, record)
+    if (record.categoryId != null && !byCategoryId.has(String(record.categoryId))) byCategoryId.set(String(record.categoryId), record)
+  })
+
+  return { byId, byName, byCategoryId }
+}
+
+function getCatalogInspection(item, catalog) {
+  const id = item.inspection_id ?? item.inspection?.inspection_id ?? item.checklist_id
+  const categoryId = item.category_id ?? item.inspection?.category_id
+  return (id != null ? catalog.byId.get(String(id)) : null)
+    || catalog.byName.get(item.name)
+    || (categoryId != null ? catalog.byCategoryId.get(String(categoryId)) : null)
+    || null
 }
 
 function toManagementActionQueueRecord(action) {
@@ -197,7 +246,7 @@ function ChecklistPage() {
           const task = {
             id,
             taskKey: createKey(isAction ? 'action' : 'inspection', id),
-            text: item.content || item.name || '점검 항목',
+            text: item.name || item.inspection_name || item.content || '점검 항목',
             location: item.location || (item.camera_id ? `CCTV #${item.camera_id} 구역` : '현장 구역'),
             date: item.date ? String(item.date).slice(0, 10) : today,
             inspectedAt: item.inspected_at ? String(item.inspected_at).slice(0, 10) : (item.date ? String(item.date).slice(0, 10) : today),
@@ -206,7 +255,7 @@ function ChecklistPage() {
           if (isAction) {
             actions.push({ ...task, inspectionRef: item.inspection_name || item.name || '점검 항목', inspectionLocation: item.location || '현장 구역', category: item.risk_category || '시설 안전', risk: item.risk_level || '-', status: normalizeActionStatus(item.status), assignee: item.assignee || item.manager_name || item.manager || '미지정', inspectionContent: item.inspection_content || item.content || '', content: item.action_content || '', photos: item.image_url ? [{ name: '첨부 사진', url: resolveMediaUrl(item.image_url) }] : [], completed: ['조치 완료', '승인 대기', '승인 완료'].includes(item.status) })
           } else {
-            inspections.push({ ...task, category: item.risk_category || item.category || '미분류', inspectionStatus: item.status || '점검 대기', movedToAction: Boolean(item.moved_to_action), content: item.content || '' })
+            inspections.push({ ...task, category: item.risk_category || item.category || '미분류', inspectionStatus: item.status || '점검 대기', movedToAction: Boolean(item.moved_to_action), description: getInspectionDescription(item) || item.content || '', inspectorMemo: item.history_content || '' })
           }
         })
         if (inspections.length) setInspectionTasks(inspections)
@@ -239,20 +288,26 @@ function ChecklistPage() {
       const token = localStorage.getItem('token')
       const headers = token ? { Authorization: `Bearer ${token}` } : undefined
       try {
-        const [inspectionResponse, actionResponse] = await Promise.all([
+        const [inspectionResponse, actionResponse, catalogResponse] = await Promise.all([
           axios.get(`${API_BASE_URL}/api/inspection/histories/me`, { headers }),
           axios.get(`${API_BASE_URL}/api/action-histories/me`, { headers }),
+          axios.get(`${API_BASE_URL}/api/inspection`, { headers }),
         ])
         const inspections = Array.isArray(inspectionResponse.data) ? inspectionResponse.data : []
         const actions = Array.isArray(actionResponse.data?.items) ? actionResponse.data.items : []
-        setInspectionTasks(inspections.map((item) => ({
-          id: item.inspection_history_id, taskKey: createKey('inspection', item.inspection_history_id),
-          text: item.name || '점검 항목', location: item.location || '현장 구역',
-          date: String(item.date || '').slice(0, 10), inspectedAt: String(item.date || '').slice(0, 10),
-          inspector: item.user_name || '담당자', category: item.category_name || '정기 점검',
-          categoryId: item.category_id || 1, inspectionStatus: item.status || '점검 대기',
-          movedToAction: Boolean(item.is_action_required), content: item.content || '', completed: item.status === '점검 완료',
-        })))
+        const catalog = buildInspectionCatalog(Array.isArray(catalogResponse.data) ? catalogResponse.data : [])
+        setInspectionTasks(inspections.map((item) => {
+          const catalogInspection = getCatalogInspection(item, catalog)
+
+          return {
+            id: item.inspection_history_id, taskKey: createKey('inspection', item.inspection_history_id),
+            text: item.name || catalogInspection?.name || '점검 항목', location: item.location || '현장 구역',
+            date: String(item.date || '').slice(0, 10), inspectedAt: String(item.date || '').slice(0, 10),
+            inspector: item.user_name || '담당자', category: item.category_name || '정기 점검',
+            categoryId: item.category_id || 1, inspectionStatus: item.status || '점검 대기',
+            movedToAction: Boolean(item.is_action_required), description: getInspectionDescription(item) || catalogInspection?.content || '', inspectorMemo: getInspectionMemo(item), completed: item.status === '점검 완료',
+          }
+        }))
         setActionTasks(actions.map((item) => ({
           id: item.action_history_id, taskKey: createKey('action', item.action_history_id),
           inspectionRef: item.action_name, text: item.action_name || '조치 항목', location: item.location || '현장 구역',
@@ -309,12 +364,12 @@ function ChecklistPage() {
       await axios.patch(`${API_BASE_URL}/api/inspection/histories/${currentTask.id}`, {
         status: '점검 완료',
         is_action_required: false,
-        content: actionContent.trim() || currentTask.content || undefined,
+        content: actionContent.trim() || currentTask.inspectorMemo || undefined,
       }, { headers })
     const nextSelectedTask = inspectionTasks.find((task) => task.taskKey !== currentTask.taskKey && task.inspectionStatus !== '점검 완료' && !task.movedToAction)
 
     setInspectionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
-      ? { ...task, inspectionStatus: '점검 완료', completed: true }
+      ? { ...task, inspectionStatus: '점검 완료', completed: true, inspectorMemo: actionContent.trim() || task.inspectorMemo }
       : task))
     setSelectedTaskId(nextSelectedTask?.taskKey ?? null)
     } catch (error) {
@@ -327,7 +382,7 @@ function ChecklistPage() {
     if (!currentTask) return
     const token = localStorage.getItem('token')
     const headers = token ? { Authorization: `Bearer ${token}` } : undefined
-    const content = actionContent.trim() || currentTask.content || 'Action is required for this inspection.'
+    const content = actionContent.trim() || currentTask.inspectorMemo || 'Action is required for this inspection.'
     try {
       await axios.patch(`${API_BASE_URL}/api/inspection/histories/${currentTask.id}`, {
         status: '점검 완료', is_action_required: true, content,
@@ -337,7 +392,7 @@ function ChecklistPage() {
         category_id: currentTask.categoryId || 1, location: currentTask.location, content,
       }, { headers })
       setInspectionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
-        ? { ...task, movedToAction: true, inspectionStatus: '점검 완료', completed: true }
+        ? { ...task, movedToAction: true, inspectionStatus: '점검 완료', completed: true, inspectorMemo: content }
         : task))
       setActionContent('')
       navigate('/checklists/management')
@@ -362,7 +417,7 @@ function ChecklistPage() {
       date: today,
       status: '조치 대기',
       assignee: '미배정',
-      inspectionContent: actionContent.trim(),
+      inspectionContent: currentTask.description || currentTask.inspectorMemo || actionContent.trim(),
       content: '',
       completed: false,
     }
@@ -532,17 +587,14 @@ function ChecklistPage() {
             {visibleTasks.map((task) => {
               const selected = task.taskKey === effectiveSelectedTaskId
               const status = activeTaskView === 'inspection' ? task.inspectionStatus : task.status
-              const isLocked = activeTaskView === 'inspection' && (status === '점검 완료' || task.movedToAction)
+              const isCompletedInspection = activeTaskView === 'inspection' && (status === '점검 완료' || task.movedToAction)
               const isCompletedAction = activeTaskView === 'action' && status === '조치 완료'
               return (
                 <button
-                  className={`task-item ${selected ? 'is-selected' : ''} ${isLocked || isCompletedAction ? 'is-completed' : ''}`}
+                  className={`task-item ${selected ? 'is-selected' : ''} ${isCompletedInspection || isCompletedAction ? 'is-completed' : ''}`}
                   key={task.taskKey}
                   type="button"
-                  disabled={isLocked}
-                  onClick={() => {
-                    if (!isLocked) setSelectedTaskId(task.taskKey)
-                  }}
+                  onClick={() => setSelectedTaskId(task.taskKey)}
                 >
                   <div className="task-item-content">
                     <span className="task-check">{task.movedToAction || task.completed ? '✓' : '·'}</span>
@@ -566,14 +618,17 @@ function ChecklistPage() {
               <section className="inspection-reference-card">
                 <div><span>이름</span><strong>{currentTask.text}</strong></div><div><span>현장 구역</span><strong>{currentTask.location}</strong></div>
                 <div><span>위험도 카테고리</span><strong>{currentTask.category || '미분류'}</strong></div><div><span>진행 상황</span><strong>{currentTask.inspectionStatus}</strong></div>
-                <div className="is-wide"><span>내용</span><strong>{currentTask.content || ''}</strong></div>
+                <div className="is-wide"><span>내용</span><strong>{currentTask.description || '등록된 내용이 없습니다.'}</strong></div>
+                <div className="is-wide"><span>점검자 메모</span><strong>{currentTask.inspectorMemo || '입력된 메모가 없습니다.'}</strong></div>
               </section>
 
               {currentTask.movedToAction ? (
                 <div className="action-already-registered">이 점검 건은 이미 조치 목록에 등록되어 있습니다.</div>
+              ) : currentTask.completed || currentTask.inspectionStatus === '점검 완료' ? (
+                <div className="action-already-registered">완료된 점검 항목입니다.</div>
               ) : (
                 <div className="action-registration-form">
-                  <label className="is-wide"><span>내용</span><textarea value={actionContent} onChange={(event) => setActionContent(event.target.value)} placeholder="점검 결과 또는 필요한 조치 내용을 입력하세요." rows="4" /></label>
+                  <label className="is-wide"><span>점검자 메모</span><textarea value={actionContent} onChange={(event) => setActionContent(event.target.value)} placeholder="점검 결과 또는 필요한 조치 내용을 입력하세요." rows="4" /></label>
                   <div className="inspection-result-actions">
                     <button className="inspection-complete-button" type="button" onClick={completeInspection}>점검 완료</button>
                     <button className="action-required-button" type="button" onClick={registerAction}>조치 필요</button>

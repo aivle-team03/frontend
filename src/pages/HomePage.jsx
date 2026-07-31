@@ -16,28 +16,76 @@ import ActionHistoryTable from '../components/dashboard/ActionHistoryTable.jsx'
 import {
   EVENT_CATEGORY_MOCKUP_DATA,
   EDUCATION_INFO_MOCKUP_DATA,
-  ACTION_HISTORY_MOCK_DATA
 } from '../mocks/mockData.js'
 import {
   periodChartData,
-  recentEvents,
   riskTypeData,
   summaryCards,
 } from '../data/dashboardMock.js'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
-function filterEvents(events, selectedSummaryId) {
-  if (selectedSummaryId === 'pending') {
-    return events.filter((event) => event.status === '조치 대기')
+function isCompleteStatus(status) {
+  return status === '조치 완료' || status === '점검 완료'
+}
+
+function isPendingStatus(status) {
+  return status === '조치 대기'
+}
+
+function countSummaryEvents(events, summaryId) {
+  if (summaryId === 'realtime') {
+    return events.filter((event) => event.status === '점검 대기').length
   }
-  if (selectedSummaryId === 'complete') {
-    return events.filter((event) => event.status === '조치 완료')
+  if (summaryId === 'pending') {
+    return events.filter((event) => isPendingStatus(event.status)).length
   }
-  if (selectedSummaryId === 'violation') {
-    return events.filter((event) => event.type !== '연기')
+  if (summaryId === 'complete') {
+    return events.filter((event) => isCompleteStatus(event.status)).length
   }
-  return events
+  if (summaryId === 'violation') {
+    return events.filter((event) => event.status === '점검 완료').length
+  }
+  return events.length
+}
+
+function formatTime(value) {
+  if (!value) return '-'
+  return String(value).replace('T', ' ')
+}
+
+function getTimeByStatus(item, status) {
+  if (status === '조치 대기' || status === '점검 대기') {
+    return formatTime(item.created_at)
+  }
+  if (status === '조치 완료' || status === '점검 완료') {
+    return formatTime(item.completed_at)
+  }
+  return formatTime(item.created_at ?? item.completed_at)
+}
+
+function makeInspectionEvent(item) {
+  const status = item.status ?? '-'
+
+  return {
+    time: formatTime(item.date),
+    location: item.location ?? '-',
+    type: item.name ?? '-',
+    manager: item.user_name ?? '-',
+    status,
+  }
+}
+
+function makeActionEvent(item) {
+  const status = item.action_status ?? item.status ?? '-'
+
+  return {
+    time: getTimeByStatus(item, status),
+    location: item.location ?? '-',
+    type: item.action_name ?? '-',
+    manager: item.handler_name ?? '-',
+    status,
+  }
 }
 
 function HomePage() {
@@ -46,6 +94,11 @@ function HomePage() {
   const [selectedSummaryId, setSelectedSummaryId] = useState('realtime')
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [riskFactors, setRiskFactors] = useState(EVENT_CATEGORY_MOCKUP_DATA)
+  const [educationChartData, setEducationChartData] = useState([])
+  const [userData, setUserData] = useState([])
+  const [inspectionHistoryData, setInspectionHistoryData] = useState([])
+  const [actionHistoryData, setActionHistoryData] = useState([])
+  const [homeDebugData, setHomeDebugData] = useState({ education: null, users: null })
 
   useEffect(() => {
     axios.get(`${API_BASE_URL}/api/risk/list`)
@@ -64,15 +117,82 @@ function HomePage() {
       })
   }, [])
 
-  const filteredEvents = useMemo(
-    () => filterEvents(recentEvents, selectedSummaryId),
-    [selectedSummaryId],
-  )
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+    axios.get(`${API_BASE_URL}/api/admin/education/dashboard`, { headers })
+      .then((response) => {
+        console.log('교육 dashboard response:', response.data)
+        const courses = Array.isArray(response.data?.courses) ? response.data.courses : []
+        setHomeDebugData((current) => ({ ...current, education: response.data }))
+        setEducationChartData(courses)
+      })
+      .catch((error) => {
+        console.error('홈 교육 이수 데이터 조회 실패:', error)
+      })
+  }, [])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+    axios.get(`${API_BASE_URL}/api/admin/users`, { headers })
+      .then((response) => {
+        console.log('users response:', response.data)
+        const users = Array.isArray(response.data) ? response.data : (response.data?.items ?? response.data?.value ?? response.data?.users ?? [])
+        setHomeDebugData((current) => ({ ...current, users: response.data }))
+        setUserData(users)
+      })
+      .catch((error) => {
+        console.error('홈 사용자 데이터 조회 실패:', error)
+      })
+  }, [])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+    axios.get(`${API_BASE_URL}/api/inspection/histories/all`, { headers })
+      .then((response) => {
+        const histories = Array.isArray(response.data) ? response.data : (response.data?.items ?? response.data?.histories ?? [])
+        setInspectionHistoryData(histories)
+      })
+      .catch((error) => {
+        console.error('홈 점검 이력 데이터 조회 실패:', error)
+      })
+  }, [])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+    axios.get(`${API_BASE_URL}/api/action-histories`, { headers })
+      .then((response) => {
+        const histories = Array.isArray(response.data) ? response.data : (response.data?.items ?? response.data?.histories ?? [])
+        setActionHistoryData(histories)
+      })
+      .catch((error) => {
+        console.error('홈 조치 이력 데이터 조회 실패:', error)
+      })
+  }, [])
+
+  const mergedEvents = useMemo(() => [
+    ...inspectionHistoryData.map(makeInspectionEvent),
+    ...actionHistoryData.map(makeActionEvent),
+  ], [inspectionHistoryData, actionHistoryData])
+
+  const dashboardSummaryCards = useMemo(() => {
+    return summaryCards.map((card) => ({
+      ...card,
+      value: countSummaryEvents(mergedEvents, card.id),
+    }))
+  }, [mergedEvents])
 
   return (
     <div className="home-dashboard">
       <section className="summary-grid" aria-label="홈 요약 지표">
-        {summaryCards.map((item) => (
+        {dashboardSummaryCards.map((item) => (
           <SummaryCard
             item={item}
             isSelected={item.id === selectedSummaryId}
@@ -86,13 +206,15 @@ function HomePage() {
 
       <section className="dashboard-main-grid">
         <RecentEventsTable
-          events={filteredEvents}
+          events={mergedEvents}
+          selectedSummaryID={selectedSummaryId}
           selectedEvent={selectedEvent}
           onSelectEvent={setSelectedEvent}
           onClose={() => setSelectedEvent(null)}
         />
 
-        <EducationPieChart data={EDUCATION_INFO_MOCKUP_DATA}></EducationPieChart>
+        <EducationPieChart eduData={educationChartData} userData={userData}></EducationPieChart>
+     
       </section>
       
 
@@ -114,7 +236,7 @@ function HomePage() {
 
       <section className="risk-card compact-card">
         <ActionHistoryTable
-          lists={ACTION_HISTORY_MOCK_DATA}
+          lists={actionHistoryData}
         />
 
         <div className="Page-move-wrapper">

@@ -1,17 +1,17 @@
 export const summaryCards = [
   {
     id: 'realtime',
-    title: '실시간 감지',
+    title: '점검 대기',
     value: 3,
     change: 1,
-    description: '실시간 감지 건수',
+    description: '점검 대기 건수',
   },
   {
     id: 'violation',
-    title: '안전 수칙 위반',
+    title: '점검 완료',
     value: 13,
     change: 3,
-    description: '감지된 위반 항목',
+    description: '점검 완료 건수',
   },
   {
     id: 'pending',
