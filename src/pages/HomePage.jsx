@@ -46,6 +46,9 @@ function HomePage() {
   const [selectedSummaryId, setSelectedSummaryId] = useState('realtime')
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [riskFactors, setRiskFactors] = useState(EVENT_CATEGORY_MOCKUP_DATA)
+  const [educationChartData, setEducationChartData] = useState([])
+  const [userData, setUserData] = useState([])
+  const [homeDebugData, setHomeDebugData] = useState({ education: null, users: null })
 
   useEffect(() => {
     axios.get(`${API_BASE_URL}/api/risk/list`)
@@ -61,6 +64,38 @@ function HomePage() {
       })
       .catch((error) => {
         console.error('홈 위험도 데이터 조회 실패:', error)
+      })
+  }, [])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+    axios.get(`${API_BASE_URL}/api/admin/education/dashboard`, { headers })
+      .then((response) => {
+        console.log('교육 dashboard response:', response.data)
+        const courses = Array.isArray(response.data?.courses) ? response.data.courses : []
+        setHomeDebugData((current) => ({ ...current, education: response.data }))
+        setEducationChartData(courses)
+      })
+      .catch((error) => {
+        console.error('홈 교육 이수 데이터 조회 실패:', error)
+      })
+  }, [])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+    axios.get(`${API_BASE_URL}/api/admin/users`, { headers })
+      .then((response) => {
+        console.log('users response:', response.data)
+        const users = Array.isArray(response.data) ? response.data : (response.data?.items ?? response.data?.value ?? response.data?.users ?? [])
+        setHomeDebugData((current) => ({ ...current, users: response.data }))
+        setUserData(users)
+      })
+      .catch((error) => {
+        console.error('홈 사용자 데이터 조회 실패:', error)
       })
   }, [])
 
@@ -92,7 +127,8 @@ function HomePage() {
           onClose={() => setSelectedEvent(null)}
         />
 
-        <EducationPieChart data={EDUCATION_INFO_MOCKUP_DATA}></EducationPieChart>
+        <EducationPieChart eduData={educationChartData} userData={userData}></EducationPieChart>
+     
       </section>
       
 
