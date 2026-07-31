@@ -509,6 +509,7 @@ function ChecklistPage() {
       setActionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
         ? { ...task, status: '조치 완료', completed: true, content: nextContent }
         : task))
+      setActionDetailContent(nextContent)
       return
     } catch (error) {
       console.error('Action completion failed:', error)
