@@ -15,6 +15,12 @@ import {
 } from '../utils/checklistStatusStorage' 
 
 const CATEGORY = [ '소방안전' , '시설안전' , '산업안전' ,'기타']
+const CATEGORY_ID_BY_NAME = {
+  소방안전: 1,
+  시설안전: 2,
+  산업안전: 3,
+  기타: 4,
+}
 const MANAGERS = ['이안전', '김안전', '박점검', '최점검']
 const API_BASE_URL = 'http://127.0.0.1:8000'
 const rows = [
@@ -297,15 +303,69 @@ function AssignmentModal({ mode, count, members, query, onQueryChange, onAssign,
 function CreateModal({ initialType, onClose, onCreate }) {
   const isInspection = initialType === 'inspection'
   const [form, setForm] = useState({ name:'', location:'', category:CATEGORY[0], cycle:'매일', dateTime:`${getDateKey()}T09:00` })
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }))
   const submit = async (event) => {
     event.preventDefault()
+    if (isSubmitting) return
     if (!form.name.trim() || !form.location.trim()) return
+    setIsSubmitting(true)
     if (isInspection) {
       const token = localStorage.getItem('token')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
 
       try {
+        const beforeListResponse = await axios.get(`${API_BASE_URL}/api/inspection`, { headers })
+        const beforeInspectionList = Array.isArray(beforeListResponse.data)
+          ? beforeListResponse.data
+          : (beforeListResponse.data?.items ?? beforeListResponse.data?.inspections ?? [])
+        const hasSameName = (item) => item.name === form.name.trim()
+        const isCreatedInspection = (item) => (
+          hasSameName(item)
+          && item.location === form.location.trim()
+          && item.cycle === form.cycle
+          && Number(item.category_id) === Number(CATEGORY_ID_BY_NAME[form.category] ?? 4)
+        )
+        if (beforeInspectionList.some(hasSameName)) {
+          alert('같은 이름의 점검 항목이 이미 등록되어 있습니다.')
+          setIsSubmitting(false)
+          return
+        }
+
+        const beforeInspectionIds = new Set(
+          beforeInspectionList.map((item) => String(item.inspection_id ?? item.id)),
+        )
+        let inspectionId
+        try {
+          const inspectionResponse = await axios.post(`${API_BASE_URL}/api/inspection`, {
+            name: form.name.trim(),
+            location: form.location.trim(),
+            cycle: form.cycle,
+            content: null,
+            category_id: CATEGORY_ID_BY_NAME[form.category] ?? 4,
+          }, { headers })
+          const inspectionBody = inspectionResponse.data?.data ?? inspectionResponse.data?.item ?? inspectionResponse.data
+          inspectionId = inspectionBody?.inspection_id ?? inspectionBody?.id
+        } catch (error) {
+          // 백엔드가 저장 후 응답 직렬화에서 실패하는 경우를 대비해 생성된 항목을 다시 찾습니다.
+          const listResponse = await axios.get(`${API_BASE_URL}/api/inspection`, { headers })
+          const inspectionList = Array.isArray(listResponse.data)
+            ? listResponse.data
+            : (listResponse.data?.items ?? listResponse.data?.inspections ?? [])
+          const createdInspection = inspectionList
+            .filter((item) => (
+              isCreatedInspection(item)
+              && !beforeInspectionIds.has(String(item.inspection_id ?? item.id))
+            ))
+            .sort((left, right) => Number(right.inspection_id ?? right.id ?? 0) - Number(left.inspection_id ?? left.id ?? 0))[0]
+          inspectionId = createdInspection?.inspection_id ?? createdInspection?.id
+          if (!inspectionId) throw error
+        }
+
+        if (!Number.isInteger(Number(inspectionId))) {
+          throw new Error('점검 항목 생성 응답에 inspection_id가 없습니다.')
+        }
+
         await axios.post(`${API_BASE_URL}/api/inspection/histories/create`, {
           name: form.name.trim(),
           date: form.dateTime,
@@ -315,11 +375,12 @@ function CreateModal({ initialType, onClose, onCreate }) {
           status: '점검 대기',
           is_action_required: false,
           content: null,
-          inspection_id: 1,
+          inspection_id: Number(inspectionId),
         }, { headers })
       } catch (error) {
-        console.error('점검 이력 생성 실패:', error)
+        console.error('점검 항목/이력 생성 실패:', error.response?.data ?? error)
         alert('점검 이력 생성에 실패했습니다.')
+        setIsSubmitting(false)
         return
       }
     }
@@ -333,8 +394,9 @@ function CreateModal({ initialType, onClose, onCreate }) {
       actionAssignee:'',
       progress: isInspection ? '점검 대기' : '조치 대기',
     })
+    setIsSubmitting(false)
   }
-  return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ITEM CREATE</span><h3>{isInspection ? '점검 항목 추가' : '조치 항목 추가'}</h3><p>전체 체크리스트에 새 항목을 등록합니다.</p></div><button type="button" onClick={onClose}>×</button></header><form className="checklist-create-form" onSubmit={submit}><label className="is-wide"><span>{isInspection ? '점검 이름' : '조치 이름'}</span><input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={isInspection ? '예: 비상구 피난 통로 점검' : '예: 소화기 압력 게이지 교체'} /></label><label><span>분류</span><select value={form.category} onChange={(event) => update('category', event.target.value)}>{CATEGORY.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>{isInspection && <label><span>점검 주기</span><select value={form.cycle} onChange={(event) => update('cycle', event.target.value)}><option>매일</option><option>매주</option><option>매월</option></select></label>}<label className="is-wide"><span>적용 구역</span><input value={form.location} onChange={(event) => update('location', event.target.value)} placeholder="여러 구역은 쉼표(,)로 구분하세요" /></label><label><span>일시</span><input type="datetime-local" value={form.dateTime} onChange={(event) => update('dateTime', event.target.value)} /></label><footer><span>{isInspection ? '점검 대기 상태로 등록됩니다.' : '조치 대기 상태로 등록됩니다.'}</span><div><button type="button" onClick={onClose}>취소</button><button type="submit">등록</button></div></footer></form></section></div>
+  return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ITEM CREATE</span><h3>{isInspection ? '점검 항목 추가' : '조치 항목 추가'}</h3><p>전체 체크리스트에 새 항목을 등록합니다.</p></div><button type="button" onClick={onClose} disabled={isSubmitting}>×</button></header><form className="checklist-create-form" onSubmit={submit}><label className="is-wide"><span>{isInspection ? '점검 이름' : '조치 이름'}</span><input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={isInspection ? '예: 비상구 피난 통로 점검' : '예: 소화기 압력 게이지 교체'} disabled={isSubmitting} /></label><label><span>분류</span><select value={form.category} onChange={(event) => update('category', event.target.value)} disabled={isSubmitting}>{CATEGORY.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>{isInspection && <label><span>점검 주기</span><select value={form.cycle} onChange={(event) => update('cycle', event.target.value)} disabled={isSubmitting}><option>매일</option><option>매주</option><option>매월</option></select></label>}<label className="is-wide"><span>적용 구역</span><input value={form.location} onChange={(event) => update('location', event.target.value)} placeholder="여러 구역은 쉼표(,)로 구분하세요" disabled={isSubmitting} /></label><label><span>일시</span><input type="datetime-local" value={form.dateTime} onChange={(event) => update('dateTime', event.target.value)} disabled={isSubmitting} /></label><footer><span>{isSubmitting ? '등록 중입니다.' : (isInspection ? '점검 대기 상태로 등록됩니다.' : '조치 대기 상태로 등록됩니다.')}</span><div><button type="button" onClick={onClose} disabled={isSubmitting}>취소</button><button type="submit" disabled={isSubmitting}>{isSubmitting ? '등록 중...' : '등록'}</button></div></footer></form></section></div>
 }
 export default ChecklistManagementPage
 
