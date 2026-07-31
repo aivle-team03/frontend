@@ -23,6 +23,7 @@ function ActionHistoryPage() {
   const [records, setRecords] = useState([])
   const [inspectionhistory, setinspectionHistory] = useState([])
   const [selectedRecord, setSelectedRecord] = useState()
+  const [selectedInspectionRecord, setSelectedInspectionRecord] = useState(null)
   const [photoPreviewRecord, setPhotoPreviewRecord] = useState(null)
 
   // 반려 사유 상태 관리
@@ -104,6 +105,7 @@ function ActionHistoryPage() {
             location: item.location ? item.location : "지정 안 됨",
             type: item.name || "현장 점검 항목",
             assignee: item.user_name || "담당자 미지정",
+            memo: item.content || "입력된 점검 메모가 없습니다.",
             imageUrl: item.image_url || "",
             statusRaw: item.status, 
             
@@ -318,7 +320,7 @@ function ActionHistoryPage() {
                   </thead>
                   <tbody>
                     {isInitialLoading ? <HistoryTableSkeletonRows columns={6} /> : inspectionhistory.map((record) => (
-                      <tr key={record.id}>
+                      <tr key={record.id} className="inspection-history-row" onClick={() => setSelectedInspectionRecord(record)}>
                         <td>{record.completedAt}</td>
                         <td>{record.location}</td>
                         <td><span className="approval-type"><TaskAltRoundedIcon />{record.type}</span></td>
@@ -328,7 +330,7 @@ function ActionHistoryPage() {
                             className="approval-photo-button"
                             type="button"
                             disabled={!record.imageUrl}
-                            onClick={() => setPhotoPreviewRecord(record)}
+                            onClick={(event) => { event.stopPropagation(); setPhotoPreviewRecord(record) }}
                             aria-label={`${record.location} 점검 사진 크게 보기`}
                           >
                             {record.imageUrl ? <img className="approval-photo-thumbnail" src={record.imageUrl} alt="" /> : <span className="no-photo">사진 없음</span>}
@@ -449,6 +451,25 @@ function ActionHistoryPage() {
       </div>
 
       {/* 관리자 승인/반려 검토 모달 */}
+      {selectedInspectionRecord && (
+        <div className="approval-modal-backdrop" role="presentation" onMouseDown={() => setSelectedInspectionRecord(null)}>
+          <section className="inspection-history-detail-modal" role="dialog" aria-modal="true" aria-labelledby="inspection-history-detail-title" onMouseDown={(event) => event.stopPropagation()}>
+            <header>
+              <div><span>INSPECTION HISTORY</span><h2 id="inspection-history-detail-title">{selectedInspectionRecord.type}</h2><p>완료된 점검의 담당자 메모를 확인합니다.</p></div>
+              <button type="button" aria-label="닫기" onClick={() => setSelectedInspectionRecord(null)}><CloseRoundedIcon /></button>
+            </header>
+            <div className="inspection-history-detail-grid">
+              <div><span>완료 일시</span><strong>{selectedInspectionRecord.completedAt}</strong></div>
+              <div><span>위치</span><strong>{selectedInspectionRecord.location}</strong></div>
+              <div><span>점검 담당자</span><strong>{selectedInspectionRecord.assignee}</strong></div>
+              <div><span>진행 상태</span><strong className="inspection-complete-badge">{selectedInspectionRecord.statusRaw}</strong></div>
+            </div>
+            <section className="inspection-history-memo"><span>점검자 메모</span><p>{selectedInspectionRecord.memo}</p></section>
+            <footer><button type="button" onClick={() => setSelectedInspectionRecord(null)}>닫기</button></footer>
+          </section>
+        </div>
+      )}
+
       {selectedRecord && (
         <div className="approval-modal-backdrop" role="presentation" onMouseDown={() => setSelectedRecord(null)}>
           <section

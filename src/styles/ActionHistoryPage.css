@@ -8,6 +8,131 @@
   margin: 0 auto;
 }
 
+.inspection-history-row {
+  cursor: pointer;
+}
+
+.inspection-history-row:hover td {
+  background: #f5f9ff;
+}
+
+.inspection-history-detail-modal {
+  width: min(620px, calc(100vw - 40px));
+  overflow: hidden;
+  border: 1px solid #dce7f4;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .22);
+}
+
+.inspection-history-detail-modal > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 28px;
+  border-bottom: 1px solid #e7eef7;
+  background: #f7fbff;
+}
+
+.inspection-history-detail-modal header span,
+.inspection-history-memo > span {
+  display: block;
+  color: #3675bf;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.inspection-history-detail-modal h2 {
+  margin: 7px 0 4px;
+  color: #182b45;
+  font-size: 24px;
+}
+
+.inspection-history-detail-modal header p {
+  margin: 0;
+  color: #71839a;
+  font-size: 14px;
+}
+
+.inspection-history-detail-modal header button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid #d8e4f1;
+  border-radius: 10px;
+  color: #5c728e;
+  background: #fff;
+  cursor: pointer;
+}
+
+.inspection-history-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 24px 28px;
+  overflow: hidden;
+  border: 1px solid #e0e9f3;
+  border-radius: 12px;
+}
+
+.inspection-history-detail-grid > div {
+  display: grid;
+  gap: 7px;
+  min-height: 84px;
+  padding: 17px;
+  border-right: 1px solid #e0e9f3;
+  border-bottom: 1px solid #e0e9f3;
+}
+
+.inspection-history-detail-grid > div:nth-child(2n) { border-right: 0; }
+.inspection-history-detail-grid > div:nth-last-child(-n + 2) { border-bottom: 0; }
+.inspection-history-detail-grid span { color: #7a8ca4; font-size: 12px; font-weight: 800; }
+.inspection-history-detail-grid strong { color: #284766; font-size: 15px; }
+
+.inspection-complete-badge {
+  width: fit-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: #168a56 !important;
+  background: #eaf9f0;
+}
+
+.inspection-history-memo {
+  min-height: 130px;
+  margin: 0 28px 24px;
+  padding: 18px;
+  border: 1px solid #e0e9f3;
+  border-radius: 12px;
+  background: #fbfdff;
+}
+
+.inspection-history-memo p {
+  margin: 12px 0 0;
+  color: #334e6d;
+  white-space: pre-wrap;
+  line-height: 1.65;
+}
+
+.inspection-history-detail-modal footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 28px;
+  border-top: 1px solid #e7eef7;
+}
+
+.inspection-history-detail-modal footer button {
+  min-width: 78px;
+  height: 38px;
+  border: 1px solid #cbdced;
+  border-radius: 8px;
+  color: #386da8;
+  background: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .approval-summary-row {
   width: 100%;
 }
