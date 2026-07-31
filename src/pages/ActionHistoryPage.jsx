@@ -60,10 +60,14 @@ function ActionHistoryPage() {
               : 'pending'
           return {
             id: item.action_history_id,
+            eventId: item.event_id ?? null,
+            inspectionHistoryId: item.inspection_history_id ?? null,
             completedAt: item.completed_at ? String(item.completed_at).replace('T', ' ').slice(0, 16) : '-',
             location: item.location || "지정 안 됨",
-            type: item.action_name || "현장 조치 항목",
+            type: item.type ?? null,
+            actionName: item.action_name ?? null,
             assignee: item.handler_name || "담당자 미지정",
+            content: item.content ?? null,
             imageUrl: item.image_url || "",
             statusRaw: item.approval_status,
             approvalStatus,
@@ -101,11 +105,14 @@ function ActionHistoryPage() {
 
           return {
             id: item.inspection_history_id ?? item.inspection_id,
+            inspectionId: item.inspection_id ?? '-',
+            name: item.name || "현장 점검 항목",
             completedAt: item.date ? String(item.date).replace('T', ' ').slice(0, 16) : '-',
             location: item.location ? item.location : "지정 안 됨",
             type: item.name || "현장 점검 항목",
             assignee: item.user_name || "담당자 미지정",
             memo: item.content || "입력된 점검 메모가 없습니다.",
+            content: item.content || "",
             imageUrl: item.image_url || "",
             statusRaw: item.status, 
             
@@ -206,6 +213,26 @@ function ActionHistoryPage() {
     return true
   }), [customPeriod, records, selectedPeriod])
 
+  const filteredInspectionRecords = useMemo(() => inspectionhistory.filter((record) => {
+    if (!record.completedAt || record.completedAt === '-') return true
+    const recordDate = new Date(record.completedAt.replace(' ', 'T'))
+    const today = new Date()
+
+    if (selectedPeriod === '이번 달') {
+      return recordDate.getMonth() === today.getMonth() && recordDate.getFullYear() === today.getFullYear()
+    }
+    if (selectedPeriod === '지난달') {
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+      return recordDate.getMonth() === lastMonth.getMonth() && recordDate.getFullYear() === lastMonth.getFullYear()
+    }
+    if (selectedPeriod === '직접 설정' && customPeriod) {
+      const startDate = new Date(`${customPeriod.startDate}T00:00:00`)
+      const endDate = new Date(`${customPeriod.endDate}T23:59:59.999`)
+      return recordDate >= startDate && recordDate <= endDate
+    }
+    return true
+  }), [customPeriod, inspectionhistory, selectedPeriod])
+
   const pendingCount = useMemo(
     () => records.filter((record) => record.approvalStatus === 'pending').length,
     [records],
@@ -219,7 +246,8 @@ function ActionHistoryPage() {
 
   const createReport = () => {
     setReportSnapshot({
-      records: filteredRecords,
+      type: historyType,
+      records: historyType === '점검' ? filteredInspectionRecords : filteredRecords,
       period: selectedPeriod === '직접 설정' && customPeriod
         ? `${customPeriod.startDate} ~ ${customPeriod.endDate}`
         : selectedPeriod,
@@ -229,30 +257,31 @@ function ActionHistoryPage() {
 
   const downloadReport = () => {
     if (!reportSnapshot) return
+    const reportValue = (value) => value === undefined || value === null || value === '' ? '-' : value
 
     const rows = [
-      ['조치 완료 승인 리포트'],
+      [reportSnapshot.type === '점검' ? '점검 완료 리포트' : '조치 완료 승인 리포트'],
       ['조회 기간', reportSnapshot.period],
       ['생성 일시', reportSnapshot.generatedAt.toLocaleString('ko-KR')],
       [],
-      ['완료 일시', '위치', '유형', '조치 담당자', '사진 첨부', '승인 상태', '승인자', '승인 일시'],
-      ...reportSnapshot.records.map((record) => [
-        record.completedAt,
-        record.location,
-        record.type,
-        record.assignee,
-        '첨부 완료',
-        record.approvalStatus === 'approved' ? '승인 완료' : record.approvalStatus === 'rejected' ? '반려됨' : '승인 대기',
-        record.approver ?? '-',
-        record.approvedAt ?? '-',
-      ]),
+      ...(reportSnapshot.type === '점검'
+        ? [
+            ['inspection_id', 'name', 'content', '완료 일시', '위치', '유형', '점검 담당자', '점검 사진', '점검 상태'],
+            ...reportSnapshot.records.map((record) => [reportValue(record.inspectionId), reportValue(record.name), reportValue(record.content), reportValue(record.completedAt), reportValue(record.location), reportValue(record.type), reportValue(record.assignee), record.imageUrl ? '첨부 완료' : '사진 없음', reportValue(record.statusRaw)]),
+          ]
+        : [
+            ['event_id', 'inspection_history_id', 'action_name', 'type', 'content', 'image_url', '완료 일시', '위치', '조치 담당자', '승인 상태', '승인자', '승인 일시'],
+            ...reportSnapshot.records.map((record) => [record.eventId, record.inspectionHistoryId, record.actionName, record.type, record.content, record.imageUrl, record.completedAt, record.location, record.assignee, record.approvalStatus === 'approved' ? '승인 완료' : record.approvalStatus === 'rejected' ? '반려됨' : '승인 대기', record.approver, record.approvedAt]),
+          ]),
     ]
     const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n')
     const file = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })
     const downloadUrl = URL.createObjectURL(file)
     const link = document.createElement('a')
     link.href = downloadUrl
-    link.download = '조치완료_승인리포트.csv'
+    link.download = reportSnapshot.type === '점검'
+      ? '점검완료_리포트.csv'
+      : '조치완료_승인리포트.csv'
     document.body.appendChild(link)
     link.click()
     link.remove()
