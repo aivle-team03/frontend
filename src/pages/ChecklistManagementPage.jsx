@@ -335,10 +335,9 @@ function CreateModal({ initialType, onClose, onCreate }) {
     if (isSubmitting) return
     if (!form.name.trim() || !form.location.trim() || (isInspection && !form.content.trim())) return
     setIsSubmitting(true)
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
     if (isInspection) {
-      const token = localStorage.getItem('token')
-      const headers = token ? { Authorization: `Bearer ${token}` } : {}
-
       try {
         const beforeListResponse = await axios.get(`${API_BASE_URL}/api/inspection`, { headers })
         const beforeInspectionList = Array.isArray(beforeListResponse.data)
@@ -408,6 +407,22 @@ function CreateModal({ initialType, onClose, onCreate }) {
         setIsSubmitting(false)
         return
       }
+    } else {
+      try {
+        await axios.post(`${API_BASE_URL}/api/action-histories`, {
+          source_type: '직접추가',
+          source_id: null,
+          action_name: form.name.trim(),
+          category_id: CATEGORY_ID_BY_NAME[form.category] ?? 4,
+          location: form.location.trim(),
+          content: form.content?.trim() || null,
+          }, { headers })
+      } catch (error) {
+        console.error('조치 항목 생성 실패:', error.response?.data ?? error)
+        alert('조치 항목 생성에 실패했습니다.')
+        setIsSubmitting(false)
+        return
+      }
     }
     onCreate({
       ...form,
@@ -421,7 +436,7 @@ function CreateModal({ initialType, onClose, onCreate }) {
     })
     setIsSubmitting(false)
   }
-  return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ITEM CREATE</span><h3>{isInspection ? '점검 항목 추가' : '조치 항목 추가'}</h3><p>전체 체크리스트에 새 항목을 등록합니다.</p></div><button type="button" onClick={onClose} disabled={isSubmitting}>×</button></header><form className="checklist-create-form" onSubmit={submit}><label className="is-wide"><span>{isInspection ? '점검 이름' : '조치 이름'}</span><input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={isInspection ? '예: 비상구 피난 통로 점검' : '예: 소화기 압력 게이지 교체'} disabled={isSubmitting} /></label>{isInspection && <label className="is-wide"><span>점검 내용</span><textarea value={form.content} onChange={(event) => update('content', event.target.value)} placeholder="점검 시 확인할 기준이나 내용을 입력하세요" rows="4" disabled={isSubmitting} /></label>}<label><span>분류</span><select value={form.category} onChange={(event) => update('category', event.target.value)} disabled={isSubmitting}>{CATEGORY.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>{isInspection && <label><span>점검 주기</span><select value={form.cycle} onChange={(event) => update('cycle', event.target.value)} disabled={isSubmitting}><option>매일</option><option>매주</option><option>매월</option></select></label>}<label className="is-wide"><span>적용 구역</span><input value={form.location} onChange={(event) => update('location', event.target.value)} placeholder="여러 구역은 쉼표(,)로 구분하세요" disabled={isSubmitting} /></label><label><span>일시</span><input type="datetime-local" value={form.dateTime} onChange={(event) => update('dateTime', event.target.value)} disabled={isSubmitting} /></label><footer><span>{isSubmitting ? '등록 중입니다.' : (isInspection ? '점검 대기 상태로 등록됩니다.' : '조치 대기 상태로 등록됩니다.')}</span><div><button type="button" onClick={onClose} disabled={isSubmitting}>취소</button><button type="submit" disabled={isSubmitting}>{isSubmitting ? '등록 중...' : '등록'}</button></div></footer></form></section></div>
+  return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ITEM CREATE</span><h3>{isInspection ? '점검 항목 추가' : '조치 항목 추가'}</h3><p>전체 체크리스트에 새 항목을 등록합니다.</p></div><button type="button" onClick={onClose} disabled={isSubmitting}>×</button></header><form className="checklist-create-form" onSubmit={submit}><label className="is-wide"><span>{isInspection ? '점검 이름' : '조치 이름'}</span><input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={isInspection ? '예: 비상구 피난 통로 점검' : '예: 소화기 압력 게이지 교체'} disabled={isSubmitting} /></label><label className="is-wide"><span>{isInspection ? '점검 내용' : '조치 내용'}</span><textarea value={form.content} onChange={(event) => update('content', event.target.value)} placeholder={isInspection ? '점검 시 확인할 기준이나 내용을 입력하세요' : '조치 시 확인할 기준이나 내용을 입력하세요'} rows="4" disabled={isSubmitting} /></label><label><span>분류</span><select value={form.category} onChange={(event) => update('category', event.target.value)} disabled={isSubmitting}>{CATEGORY.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>{isInspection && <label><span>점검 주기</span><select value={form.cycle} onChange={(event) => update('cycle', event.target.value)} disabled={isSubmitting}><option>매일</option><option>매주</option><option>매월</option></select></label>}<label className="is-wide"><span>적용 구역</span><input value={form.location} onChange={(event) => update('location', event.target.value)} placeholder="여러 구역은 쉼표(,)로 구분하세요" disabled={isSubmitting} /></label><label><span>일시</span><input type="datetime-local" value={form.dateTime} onChange={(event) => update('dateTime', event.target.value)} disabled={isSubmitting} /></label><footer><span>{isSubmitting ? '등록 중입니다.' : (isInspection ? '점검 대기 상태로 등록됩니다.' : '조치 대기 상태로 등록됩니다.')}</span><div><button type="button" onClick={onClose} disabled={isSubmitting}>취소</button><button type="submit" disabled={isSubmitting}>{isSubmitting ? '등록 중...' : '등록'}</button></div></footer></form></section></div>
 }
 export default ChecklistManagementPage
 
