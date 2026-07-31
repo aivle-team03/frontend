@@ -14,6 +14,7 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 
 function ActionHistoryPage() {
   const [loading, setLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [selectedPeriod, setSelectedPeriod] = useState('전체')
   const [customPeriod, setCustomPeriod] = useState(null)
   const [historyType, setHistoryType] = useState('점검')
@@ -28,8 +29,8 @@ function ActionHistoryPage() {
   const [rejectReason, setRejectReason] = useState('')
 
   useEffect(() => {
-    fetchActionHistory()
-    fetchInspectionHistory()
+    Promise.all([fetchActionHistory(), fetchInspectionHistory()])
+      .finally(() => setIsInitialLoading(false))
   }, []);
 
   // 1. 조치 이력 전용 API 호출 (/api/checklists/history)
@@ -254,8 +255,6 @@ function ActionHistoryPage() {
     URL.revokeObjectURL(downloadUrl)
   }
 
-  if (loading) return <div className="loading-container">조치 이력을 가져오는 중...</div>;
-
   return (
     <section className="approval-history-page" aria-label="조치 이력">
       <div className="approval-summary-row">
@@ -316,7 +315,7 @@ function ActionHistoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {inspectionhistory.map((record) => (
+                    {isInitialLoading ? <HistoryTableSkeletonRows columns={6} /> : inspectionhistory.map((record) => (
                       <tr key={record.id}>
                         <td>{record.completedAt}</td>
                         <td>{record.location}</td>
@@ -362,7 +361,7 @@ function ActionHistoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredRecords.map((record) => (
+                    {isInitialLoading ? <HistoryTableSkeletonRows columns={7} /> : filteredRecords.map((record) => (
                       <tr key={record.id}>
                         <td>{record.completedAt}</td>
                         <td>{record.location}</td>
@@ -587,5 +586,7 @@ function ActionHistoryPage() {
     </section>
   )
 }
+
+function HistoryTableSkeletonRows({ columns }) { return Array.from({ length: 7 }, (_, rowIndex) => <tr className="history-table-skeleton-row" key={rowIndex}>{Array.from({ length: columns }, (_, columnIndex) => <td key={columnIndex}><span className={`history-table-skeleton-block column-${columnIndex}`} /></td>)}</tr>) }
 
 export default ActionHistoryPage
