@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AiSummaryCard from '../components/dashboard/AiSummaryCard.jsx'
 import DailyReportCard from '../components/dashboard/DailyReportCard.jsx'
@@ -16,7 +16,6 @@ import ActionHistoryTable from '../components/dashboard/ActionHistoryTable.jsx'
 import {
   EVENT_CATEGORY_MOCKUP_DATA,
   EDUCATION_INFO_MOCKUP_DATA,
-  ACTION_HISTORY_MOCK_DATA
 } from '../mocks/mockData.js'
 import {
   periodChartData,
@@ -27,19 +26,6 @@ import {
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
 
-function filterEvents(events, selectedSummaryId) {
-  if (selectedSummaryId === 'pending') {
-    return events.filter((event) => event.status === '조치 대기')
-  }
-  if (selectedSummaryId === 'complete') {
-    return events.filter((event) => event.status === '조치 완료')
-  }
-  if (selectedSummaryId === 'violation') {
-    return events.filter((event) => event.type !== '연기')
-  }
-  return events
-}
-
 function HomePage() {
   const navigate = useNavigate()
   const [selectedPeriod, setSelectedPeriod] = useState('오늘')
@@ -48,6 +34,8 @@ function HomePage() {
   const [riskFactors, setRiskFactors] = useState(EVENT_CATEGORY_MOCKUP_DATA)
   const [educationChartData, setEducationChartData] = useState([])
   const [userData, setUserData] = useState([])
+  const [inspectionHistoryData, setInspectionHistoryData] = useState([])
+  const [actionHistoryData, setActionHistoryData] = useState([])
   const [homeDebugData, setHomeDebugData] = useState({ education: null, users: null })
 
   useEffect(() => {
@@ -99,10 +87,33 @@ function HomePage() {
       })
   }, [])
 
-  const filteredEvents = useMemo(
-    () => filterEvents(recentEvents, selectedSummaryId),
-    [selectedSummaryId],
-  )
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+    axios.get(`${API_BASE_URL}/api/inspection/histories/all`, { headers })
+      .then((response) => {
+        const histories = Array.isArray(response.data) ? response.data : (response.data?.items ?? response.data?.histories ?? [])
+        setInspectionHistoryData(histories)
+      })
+      .catch((error) => {
+        console.error('홈 점검 이력 데이터 조회 실패:', error)
+      })
+  }, [])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+    axios.get(`${API_BASE_URL}/api/action-histories`, { headers })
+      .then((response) => {
+        const histories = Array.isArray(response.data) ? response.data : (response.data?.items ?? response.data?.histories ?? [])
+        setActionHistoryData(histories)
+      })
+      .catch((error) => {
+        console.error('홈 조치 이력 데이터 조회 실패:', error)
+      })
+  }, [])
 
   return (
     <div className="home-dashboard">
@@ -121,7 +132,9 @@ function HomePage() {
 
       <section className="dashboard-main-grid">
         <RecentEventsTable
-          events={filteredEvents}
+          inspection={inspectionHistoryData}
+          action={actionHistoryData}
+          selectedSummaryID={selectedSummaryId}
           selectedEvent={selectedEvent}
           onSelectEvent={setSelectedEvent}
           onClose={() => setSelectedEvent(null)}
@@ -150,7 +163,7 @@ function HomePage() {
 
       <section className="risk-card compact-card">
         <ActionHistoryTable
-          lists={ACTION_HISTORY_MOCK_DATA}
+          lists={actionHistoryData}
         />
 
         <div className="Page-move-wrapper">

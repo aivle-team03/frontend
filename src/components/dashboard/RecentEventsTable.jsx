@@ -28,7 +28,73 @@ function EventTypeIcon({ type }) {
   return <CloudOutlinedIcon fontSize="small" />
 }
 
-function RecentEventsTable({ events, selectedEvent, onSelectEvent, onClose }) {
+function isCompleteStatus(status) {
+  return status === '조치 완료' || status === '점검 완료'
+}
+
+function isPendingStatus(status) {
+  return status === '조치 대기'
+}
+
+function filterEventsBySummary(events, selectedSummaryID) {
+  if (selectedSummaryID === 'pending') {
+    return events.filter((event) => isPendingStatus(event.status))
+  }
+  if (selectedSummaryID === 'complete') {
+    return events.filter((event) => isCompleteStatus(event.status))
+  }
+  if (selectedSummaryID === 'violation') {
+    return events.filter((event) => event.status === '점검 대기' || event.status === '점검 완료')
+  }
+  return events
+}
+
+function formatTime(value) {
+  if (!value) return '-'
+  return String(value).replace('T', ' ')
+}
+
+function getTimeByStatus(item, status) {
+  if (status === '조치 대기' || status === '점검 대기') {
+    return formatTime(item.created_at)
+  }
+  if (status === '조치 완료' || status === '점검 완료') {
+    return formatTime(item.completed_at)
+  }
+  return formatTime(item.created_at ?? item.completed_at)
+}
+
+function makeInspectionEvent(item) {
+  const status = item.status ?? '-'
+
+  return {
+    time: formatTime(item.date),
+    location: item.location ?? '-',
+    type: item.name ?? '-',
+    manager:item.user_name ?? '-',
+    status,
+  }
+}
+
+function makeActionEvent(item) {
+  const status = item.action_status ?? item.status ?? '-'
+
+  return {
+    time: getTimeByStatus(item, status),
+    location: item.location ?? '-',
+    type: item.action_name ?? '-',
+    manager: item.handler_name ?? '-',
+    status,
+  }
+}
+
+function RecentEventsTable({  inspection = [], action = [], selectedSummaryID, selectedEvent, onSelectEvent, onClose }) {
+  const mergedEvents = [
+    ...inspection.map(makeInspectionEvent),
+    ...action.map(makeActionEvent),
+  ]
+  const filteredEvents = filterEventsBySummary(mergedEvents, selectedSummaryID)
+
   return (
     <>
       <Box className="dashboard-card compact-card">
@@ -45,11 +111,11 @@ function RecentEventsTable({ events, selectedEvent, onSelectEvent, onClose }) {
               </TableRow>
             </TableHead>
             <TableBody>
-              {events.map((event) => (
+              {filteredEvents.map((event, index) => (
                 <TableRow
                   hover
                   selected={selectedEvent?.id === event.id}
-                  key={event.id}
+                  key={`${event.status}-${event.time}-${event.location}-${event.type}-${index}`}
                   onClick={() => onSelectEvent(event)}
                   className="event-row"
                   tabIndex={0}
@@ -75,7 +141,7 @@ function RecentEventsTable({ events, selectedEvent, onSelectEvent, onClose }) {
                     <Chip
                       label={event.status}
                       size="small"
-                      color={event.status === '조치 완료' ? 'success' : 'warning'}
+                      color={isCompleteStatus(event.status) ? 'success' : 'warning'}
                       variant="outlined"
                       className="status-chip"
                     />
@@ -100,12 +166,12 @@ function RecentEventsTable({ events, selectedEvent, onSelectEvent, onClose }) {
           </div>
           {selectedEvent && (
             <>
-              <div className={`event-drawer-summary${selectedEvent.status === '조치 완료' ? ' is-complete' : ''}`}>
+              <div className={`event-drawer-summary${isCompleteStatus(selectedEvent.status) ? ' is-complete' : ''}`}>
                 <span className="event-drawer-type-icon">
-                  {selectedEvent.status === '조치 완료' ? <CheckCircleRoundedIcon /> : <WarningAmberRoundedIcon />}
+                  {isCompleteStatus(selectedEvent.status) ? <CheckCircleRoundedIcon /> : <WarningAmberRoundedIcon />}
                 </span>
                 <div>
-                  <span>{selectedEvent.status === '조치 완료' ? '처리가 완료된 이벤트' : '확인이 필요한 이벤트'}</span>
+                  <span>{isCompleteStatus(selectedEvent.status) ? '처리가 완료된 이벤트' : '확인이 필요한 이벤트'}</span>
                   <strong>{selectedEvent.type}</strong>
                 </div>
                 <Chip
@@ -124,8 +190,8 @@ function RecentEventsTable({ events, selectedEvent, onSelectEvent, onClose }) {
               </div>
 
               <div className="event-drawer-guidance">
-                <strong>{selectedEvent.status === '조치 완료' ? '조치가 완료되었습니다.' : '현장 상태를 확인해 주세요.'}</strong>
-                <p>{selectedEvent.status === '조치 완료' ? '조치 이력에서 처리 내용을 확인할 수 있습니다.' : '담당자 배정 후 안전 조치를 진행할 수 있습니다.'}</p>
+                <strong>{isCompleteStatus(selectedEvent.status) ? '처리가 완료되었습니다.' : '현장 상태를 확인해 주세요.'}</strong>
+                <p>{isCompleteStatus(selectedEvent.status) ? '상세 이력에서 처리 내용을 확인할 수 있습니다.' : '담당자 배정 후 안전 조치를 진행할 수 있습니다.'}</p>
               </div>
             </>
           )}
