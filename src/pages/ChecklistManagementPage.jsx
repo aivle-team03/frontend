@@ -298,9 +298,31 @@ function CreateModal({ initialType, onClose, onCreate }) {
   const isInspection = initialType === 'inspection'
   const [form, setForm] = useState({ name:'', location:'', category:CATEGORY[0], cycle:'매일', dateTime:`${getDateKey()}T09:00` })
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }))
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault()
     if (!form.name.trim() || !form.location.trim()) return
+    if (isInspection) {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+      try {
+        await axios.post(`${API_BASE_URL}/api/inspection/histories/create`, {
+          name: form.name.trim(),
+          date: form.dateTime,
+          location: form.location.trim(),
+          uid: null,
+          user_name: null,
+          status: '점검 대기',
+          is_action_required: false,
+          content: null,
+          inspection_id: 1,
+        }, { headers })
+      } catch (error) {
+        console.error('점검 이력 생성 실패:', error)
+        alert('점검 이력 생성에 실패했습니다.')
+        return
+      }
+    }
     onCreate({
       ...form,
       type: initialType,
