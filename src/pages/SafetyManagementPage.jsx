@@ -17,6 +17,7 @@ function SafetyManagementPage() {
   const [userPage, setUserPage] = useState(1)
   const companyRoleOptions = ['안전관리자', '관제사', '현장관리자', '일반유저']
   const [companyCodeForm, setCompanyCodeForm] = useState({
+    companyName: '',
     role: '',
     category: '',
   })

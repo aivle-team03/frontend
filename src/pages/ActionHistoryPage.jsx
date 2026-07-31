@@ -44,16 +44,19 @@ function ActionHistoryPage() {
           Authorization: `Bearer ${token}`,
         },
         params: {
-          approval_status: '승인 완료',
+          action_status: '조치 완료',
           size: 100,
         },
       });
 
       const actionItems = Array.isArray(response.data) ? response.data : (response.data?.items ?? [])
       if (actionItems.length) {
-        const fetchedRecords = actionItems.filter((item) => item.approval_status === '승인 완료').map((item) => {
-          // 백엔드 status 값에 맞춘 승인 상태 매핑
-
+        const fetchedRecords = actionItems.filter((item) => item.action_status === '조치 완료').map((item) => {
+          const approvalStatus = item.approval_status === '승인 완료'
+            ? 'approved'
+            : item.approval_status === '반려'
+              ? 'rejected'
+              : 'pending'
           return {
             id: item.action_history_id,
             completedAt: item.completed_at ? String(item.completed_at).replace('T', ' ').slice(0, 16) : '-',
@@ -62,9 +65,9 @@ function ActionHistoryPage() {
             assignee: item.handler_name || "담당자 미지정",
             imageUrl: item.image_url || "",
             statusRaw: item.approval_status,
-            approvalStatus: 'approved',
-            approver: item.approver_name ?? '안전 관리자',
-            approvedAt: item.approval_date ? String(item.approval_date).replace('T', ' ').slice(0, 16) : '-',
+            approvalStatus,
+            approver: item.approver_name ?? null,
+            approvedAt: item.approval_date ? String(item.approval_date).replace('T', ' ').slice(0, 16) : null,
           }
         });
         setRecords(fetchedRecords);
@@ -130,8 +133,8 @@ function ActionHistoryPage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       await axios.patch(
-        `http://127.0.0.1:8000/api/checklists/${selectedRecord.id}/status`,
-        { status: "승인 완료" },
+        `http://127.0.0.1:8000/api/action-histories/${selectedRecord.id}/approve`,
+        {},
         { headers }
       );
 
@@ -161,10 +164,9 @@ function ActionHistoryPage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       await axios.patch(
-        `http://127.0.0.1:8000/api/checklists/${selectedRecord.id}/status`,
+        `http://127.0.0.1:8000/api/action-histories/${selectedRecord.id}/reject`,
         {
-          status: "조치 필요",
-          reason: rejectReason.trim(),
+          rejection_reason: rejectReason.trim(),
         },
         { headers }
       );
