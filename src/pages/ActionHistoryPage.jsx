@@ -210,6 +210,13 @@ function ActionHistoryPage() {
       return recordDate >= startDate && recordDate <= endDate
     }
 
+    if (selectedPeriod === '직접 설정' && customPeriod) {
+      const startDate = new Date(`${customPeriod.startDate}T00:00:00`)
+      const endDate = new Date(`${customPeriod.endDate}T23:59:59.999`)
+
+      return itemDate >= startDate && itemDate <= endDate
+    }
+
     return true
   }), [customPeriod, records, selectedPeriod])
 

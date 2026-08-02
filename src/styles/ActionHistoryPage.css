@@ -1044,3 +1044,40 @@
   background: #0f172a;
   object-fit: contain;
 }
+
+.date-field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.date-field-label {
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.date-input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #0f172a;
+  background: #fff;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.date-input:focus {
+  border-color: #2563eb;
+  outline: 2px solid rgba(37, 99, 235, 0.16);
+  outline-offset: 0;
+}
+
+.date-field-error {
+  color: #dc2626;
+  font-size: 12px;
+}
