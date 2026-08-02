@@ -349,13 +349,6 @@ function ChecklistPage() {
           if (task.inspectionStatus === '점검 완료') return scheduledDate === getTodayDateKey()
           return scheduledDate <= getTodayDateKey()
         }))
-        const createdNextHistories = await Promise.all(mappedInspections
-          .filter((task) => task.inspectionStatus === '점검 완료')
-          .map((task) => ensureNextInspectionHistory(task, headers).catch((error) => {
-            console.warn('다음 정기 점검 생성에 실패했습니다.', error)
-            return false
-          })))
-        if (createdNextHistories.some(Boolean)) setTaskRefreshKey((current) => current + 1)
         const mappedActions = actions.map((item) => ({
           id: item.action_history_id, taskKey: createKey('action', item.action_history_id),
           inspectionRef: item.action_name, text: item.action_name || '조치 항목', location: item.location || '현장 구역',
