@@ -159,6 +159,29 @@ function getActionContent(item) {
     || ''
 }
 
+function getNextInspectionDate(dateTime, cycle) {
+  const next = new Date(String(dateTime || '').replace(' ', 'T'))
+  if (Number.isNaN(next.getTime())) return null
+
+  if (cycle === '매일') next.setDate(next.getDate() + 1)
+  else if (cycle === '매주') next.setDate(next.getDate() + 7)
+  else if (cycle === '매월') next.setMonth(next.getMonth() + 1)
+  else return null
+
+  const pad = (value) => String(value).padStart(2, '0')
+  return `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}T${pad(next.getHours())}:${pad(next.getMinutes())}:00`
+}
+
+function isSameScheduledMinute(left, right) {
+  return String(left || '').replace(' ', 'T').slice(0, 16) === String(right || '').replace(' ', 'T').slice(0, 16)
+}
+
+function getTodayDateKey() {
+  const now = new Date()
+  const pad = (value) => String(value).padStart(2, '0')
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+}
+
 function buildInspectionCatalog(items) {
   const byId = new Map()
   const byName = new Map()
@@ -169,6 +192,7 @@ function buildInspectionCatalog(items) {
       id: item.inspection_id ?? item.id,
       name: item.name,
       categoryId: item.category_id,
+      cycle: item.cycle,
       content: item.content || '',
     }
 
@@ -235,6 +259,7 @@ function ChecklistPage() {
   const [previewPhoto, setPreviewPhoto] = useState(null)
   const actionPhotoInputRef = useRef(null)
   const isApiActionTasksLoaded = useRef(false)
+  const completingInspectionIds = useRef(new Set())
 
   useEffect(() => {
     const fetchChecklists = async () => {
@@ -303,7 +328,7 @@ function ChecklistPage() {
         const inspections = Array.isArray(inspectionResponse.data) ? inspectionResponse.data : []
         const actions = Array.isArray(actionResponse.data?.items) ? actionResponse.data.items : []
         const catalog = buildInspectionCatalog(Array.isArray(catalogResponse.data) ? catalogResponse.data : [])
-        setInspectionTasks(inspections.map((item) => {
+        const mappedInspections = inspections.map((item) => {
           const catalogInspection = getCatalogInspection(item, catalog)
 
           return {
@@ -312,9 +337,25 @@ function ChecklistPage() {
             date: String(item.date || '').slice(0, 10), inspectedAt: String(item.date || '').slice(0, 10),
             inspector: item.user_name || '담당자', category: item.category_name || '정기 점검',
             categoryId: item.category_id || 1, inspectionStatus: item.status || '점검 대기',
+            inspectionId: item.inspection_id ?? catalogInspection?.id,
+            uid: item.uid ?? null,
+            cycle: catalogInspection?.cycle || item.inspection?.cycle || null,
+            scheduledAt: item.date,
             movedToAction: Boolean(item.is_action_required), description: getInspectionDescription(item) || catalogInspection?.content || '', inspectorMemo: getInspectionMemo(item), completed: item.status === '점검 완료',
           }
+        })
+        setInspectionTasks(mappedInspections.filter((task) => {
+          const scheduledDate = String(task.scheduledAt || '').slice(0, 10)
+          if (task.inspectionStatus === '점검 완료') return scheduledDate === getTodayDateKey()
+          return scheduledDate <= getTodayDateKey()
         }))
+        const createdNextHistories = await Promise.all(mappedInspections
+          .filter((task) => task.inspectionStatus === '점검 완료')
+          .map((task) => ensureNextInspectionHistory(task, headers).catch((error) => {
+            console.warn('다음 정기 점검 생성에 실패했습니다.', error)
+            return false
+          })))
+        if (createdNextHistories.some(Boolean)) setTaskRefreshKey((current) => current + 1)
         const mappedActions = actions.map((item) => ({
           id: item.action_history_id, taskKey: createKey('action', item.action_history_id),
           inspectionRef: item.action_name, text: item.action_name || '조치 항목', location: item.location || '현장 구역',
@@ -367,8 +408,48 @@ function ChecklistPage() {
     setActionPhotoFiles(actionPhotoFilesByTask[currentTaskKey] ?? currentTaskPhotos)
   }, [actionPhotoFilesByTask, activeTaskView, currentTaskKey, currentTaskPhotos])
 
+  const ensureNextInspectionHistory = async (task, headers) => {
+    const nextDate = getNextInspectionDate(task.scheduledAt, task.cycle)
+    if (!nextDate || !task.inspectionId || !task.uid) return false
+    if (nextDate.slice(0, 10) > getTodayDateKey()) return false
+
+    const hasNextHistory = (histories) => histories.some((history) => (
+      isSameScheduledMinute(history.date, nextDate)
+      && Number(history.uid) === Number(task.uid)
+    ))
+    const readHistories = async () => {
+      const response = await axios.get(`${API_BASE_URL}/api/inspection/${task.inspectionId}/histories`, { headers })
+      return Array.isArray(response.data) ? response.data : []
+    }
+
+    if (hasNextHistory(await readHistories())) return false
+
+    const payload = {
+      name: task.text,
+      date: nextDate,
+      location: task.location,
+      uid: task.uid,
+      user_name: task.inspector,
+      status: '점검 대기',
+      is_action_required: false,
+      content: null,
+      inspection_id: Number(task.inspectionId),
+    }
+
+    try {
+      await axios.post(`${API_BASE_URL}/api/inspection/histories/create`, payload, { headers })
+      return true
+    } catch (error) {
+      // 요청 응답만 유실된 경우를 대비해 한 번 더 조회하고, 이미 생성됐다면 중복으로 만들지 않습니다.
+      if (hasNextHistory(await readHistories())) return false
+      throw error
+    }
+  }
+
   const completeInspection = async () => {
-    if (!currentTask) return
+    if (!currentTask || completingInspectionIds.current.has(currentTask.id)) return
+
+    completingInspectionIds.current.add(currentTask.id)
     const token = localStorage.getItem('token')
     const headers = token ? { Authorization: `Bearer ${token}` } : undefined
     try {
@@ -377,15 +458,19 @@ function ChecklistPage() {
         is_action_required: false,
         content: actionContent.trim() || currentTask.inspectorMemo || undefined,
       }, { headers })
-    const nextSelectedTask = inspectionTasks.find((task) => task.taskKey !== currentTask.taskKey && task.inspectionStatus !== '점검 완료' && !task.movedToAction)
+      await ensureNextInspectionHistory(currentTask, headers)
 
-    setInspectionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
-      ? { ...task, inspectionStatus: '점검 완료', completed: true, inspectorMemo: actionContent.trim() || task.inspectorMemo }
-      : task))
-    setSelectedTaskId(nextSelectedTask?.taskKey ?? null)
+      const nextSelectedTask = inspectionTasks.find((task) => task.taskKey !== currentTask.taskKey && task.inspectionStatus !== '점검 완료' && !task.movedToAction)
+      setInspectionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
+        ? { ...task, inspectionStatus: '점검 완료', completed: true, inspectorMemo: actionContent.trim() || task.inspectorMemo }
+        : task))
+      setSelectedTaskId(nextSelectedTask?.taskKey ?? null)
+      setTaskRefreshKey((current) => current + 1)
     } catch (error) {
-      console.error('점검 완료 처리 실패:', error)
-      alert('점검 완료 처리에 실패했습니다.')
+      console.error('점검 완료 처리 또는 다음 점검 생성 실패:', error)
+      alert(error.response?.data?.detail || '점검 완료 또는 다음 정기 점검 생성에 실패했습니다.')
+    } finally {
+      completingInspectionIds.current.delete(currentTask.id)
     }
   }
 
