@@ -15,6 +15,19 @@ export const CHECKLIST_MOCK_DATA = {
   ],
 }
 
+export const TODAY_INSPECTION_MOCK_DATA = [
+  {
+    id: 2,
+    text: '소화기 및 소방설비 점검',
+    type: '점검',
+    status: '점검 대기',
+    location: 'A동 1층 복도',
+    date: '2026-07-25',
+    imageUrl: '',
+    completed: false,
+  },
+]
+
 export const CHATBOT_MOCK_DATA = {
   recommendedQuestions: [
     '소방시설 설치 및 관리에 관한 법률 제12조',
@@ -106,8 +119,30 @@ export const MY_PAGE_MOCK_DATA = {
   notifications: [
     {
       id: 1,
+      title: '점검 일정 등록',
       message: '담당 구역 점검 일정이 등록되었습니다.',
       time: '10분 전',
+      category: 'schedule',
+      path: '/checklists',
+      read: false,
+    },
+    {
+      id: 2,
+      title: '위험 요소 감지',
+      message: '2구역에서 적재물 과다 적재가 감지되었습니다.',
+      time: '24분 전',
+      category: 'danger',
+      path: '/monitoring',
+      read: false,
+    },
+    {
+      id: 3,
+      title: '조치 완료',
+      message: '1구역 방화문 개방 항목의 조치가 완료되었습니다.',
+      time: '1시간 전',
+      category: 'complete',
+      path: '/actions',
+      read: true,
     },
   ],
 }
@@ -154,3 +189,314 @@ export const ACTION_HISTORY_MOCK_DATA = [
     manager: '-',
   },
 ]
+
+export const EVENT_CATEGORY_MOCKUP_DATA=[
+
+{
+  id:1,
+  location:'1구역',
+  type:"소방",
+  item : "화재",
+  risk :"상",
+  severity: 8,
+  frequency :1
+},
+{
+  id:2,
+  location:'2구역',
+  type:"시설",
+  item : "미끄러짐",
+  risk :"하",
+  severity: 1,
+  frequency :1
+},
+{
+  id:3,
+  location:'3구역',
+  type:"안전",
+  item : "충돌",
+  risk :"하",
+  severity: 2,
+  frequency :1
+},
+{
+  id:4,
+  location:'4구역',
+  type:"안전",
+  item : "안전모",
+  risk :"중",
+  severity: 3,
+  frequency :1
+},
+
+{
+  id:5,
+  location:'1구역',
+  type:"시설",
+  item : "적재물",
+  risk :"하",
+  severity: 1,
+  frequency :5
+},
+
+{
+  id:6,
+  location:'2구역',
+  type:"시설",
+  item : "스프링쿨러",
+  risk :"중",
+  severity: 2,
+  frequency :5
+},
+
+{
+  id:7,
+  location:'3구역',
+  type:"시설",
+  item : "소화기",
+  risk :"중",
+  severity: 2,
+  frequency :1
+},
+
+{
+  id:8,
+  location:'4구역',
+  type:"시설",
+  item : "대피로",
+  risk :"상",
+  severity: 3,
+  frequency :2
+},
+
+{
+  id:9,
+  location:'1구역',
+  type:"시설",
+  item : "충돌",
+  risk :"상",
+  severity: 3,
+  frequency :2
+},
+
+{
+  id:10,
+  location:'4구역',
+  type:"안전",
+  item : "검사",
+  risk :"하",
+  severity: 3,
+  frequency :2
+},
+]
+
+export const EDUCATION_INFO_MOCKUP_DATA=[
+{
+  type : '신규 근로자',
+  total:120,
+  trained : 100,
+},
+{
+  type: '기존 근로자',
+  total:200,
+  trained : 120,
+},
+{
+  type: '특수 근로자',
+  total:90,
+  trained : 90,
+},
+]
+export const APPROVAL_HISTORY_MOCK_DATA = [
+  { id: 1, completedAt: '2026-07-15 09:45', location: 'A동 2층 201-2121 복도', type: '적치물 감지', assignee: '박지훈', approvalStatus: 'pending' },
+  { id: 2, completedAt: '2026-07-15 09:18', location: 'B동 1층 출입구', type: '소화기 미탐지', assignee: '소현민', approvalStatus: 'pending' },
+  { id: 3, completedAt: '2026-07-14 16:32', location: 'C동 3층 창고', type: '방화문 개방', assignee: '이정훈', approvalStatus: 'pending' },
+  { id: 4, completedAt: '2026-07-14 13:05', location: 'A동 1층 하역장', type: '피난로 장애물', assignee: '장민석', approvalStatus: 'pending' },
+  { id: 5, completedAt: '2026-07-13 15:07', location: 'B동 4층 물류 창고', type: '적치물 감지', assignee: '김도현', approvalStatus: 'approved', approver: '김에이블러', approvedAt: '2026-07-13 15:21' },
+  { id: 6, completedAt: '2026-07-13 11:29', location: 'C동 1층 사무실 복도', type: '소화기 미탐지', assignee: '권혁준', approvalStatus: 'approved', approver: '김에이블러', approvedAt: '2026-07-13 11:35' },
+  { id: 7, completedAt: '2026-07-12 17:55', location: 'A동 3층 회의실 앞', type: '방화문 개방', assignee: '최서윤', approvalStatus: 'approved', approver: '김에이블러', approvedAt: '2026-07-12 18:02' },
+  { id: 8, completedAt: '2026-07-12 09:44', location: 'B동 지하 1층 주차장', type: '피난로 장애물', assignee: '윤태성', approvalStatus: 'approved', approver: '김에이블러', approvedAt: '2026-07-12 09:52' },
+]
+
+export const BOARD_MOCK_DATA = {
+  summary: [
+    { key: 'all', label: '전체신고', value: 24 },
+    { key: 'rejected', label: '반려', value: 7 },
+    { key: 'received', label: '접수', value: 7 },
+    { key: 'progress', label: '조치 중', value: 5 },
+    { key: 'done', label: '조치 완료', value: 10 },
+  ],
+  categories: ['전체', '소방시설', '피난동선', '전기설비', '위험물', '기타'],
+  riskOptions: [
+    { level: 'high', label: '높음' },
+    { level: 'medium', label: '보통' },
+    { level: 'low', label: '낮음' },
+  ],
+  statusOptions: [
+    { key: 'registered', label: '등록' },
+    { key: 'received', label: '접수' },
+    { key: 'progress', label: '조치 중' },
+    { key: 'done', label: '조치 완료' },
+    { key: 'rejected', label: '반려' },
+  ],
+  reports: [
+    {
+      id: 24,
+      category: '피난동선',
+      title: '비상구 앞 적치물 확인 요청',
+      description: '비상구 진입로에 박스가 쌓여 있어 대피 동선 확보가 필요합니다.',
+      riskLevel: 'high',
+      riskLabel: '높음',
+      location: 'A동 2층 복도',
+      reporter: '김민수',
+      reportedAt: '2026-07-20',
+      status: '접수',
+      statusKey: 'received',
+    },
+    {
+      id: 23,
+      category: '소방시설',
+      title: '소화기 위치 표시 훼손',
+      description: '소화기 표지판 일부가 떨어져 위치 확인이 어렵습니다.',
+      riskLevel: 'medium',
+      riskLabel: '보통',
+      location: 'B동 1층 출입구',
+      reporter: '이서연',
+      reportedAt: '2026-07-20',
+      status: '조치 중',
+      statusKey: 'progress',
+    },
+    {
+      id: 22,
+      category: '전기설비',
+      title: '분전반 주변 케이블 정리 필요',
+      description: '분전반 앞 케이블이 노출되어 있어 걸림 사고 위험이 있습니다.',
+      riskLevel: 'medium',
+      riskLabel: '보통',
+      location: 'C동 3층 전기실',
+      reporter: '박지훈',
+      reportedAt: '2026-07-20',
+      status: '등록',
+      statusKey: 'registered',
+    },
+    {
+      id: 21,
+      category: '위험물',
+      title: '인화성 물질 보관함 잠금 확인',
+      description: '보관함 잠금 장치가 느슨해져 점검이 필요합니다.',
+      riskLevel: 'high',
+      riskLabel: '높음',
+      location: 'A동 1층 창고',
+      reporter: '최유진',
+      reportedAt: '2026-07-20',
+      status: '조치 완료',
+      statusKey: 'done',
+    },
+    {
+      id: 20,
+      category: '기타',
+      title: '계단 난간 흔들림 신고',
+      description: '계단 난간 고정 상태가 불안정합니다.',
+      riskLevel: 'low',
+      riskLabel: '낮음',
+      location: 'B동 2층 계단',
+      reporter: '정하늘',
+      reportedAt: '2026-07-19',
+      status: '반려',
+      statusKey: 'rejected',
+    },
+  ],
+}
+
+export const REPORT_PAGE_MOCK_DATA = {
+  reportTypes: [
+    { key: 'risk-assessment', label: '위험성평가보고서' },
+    { key: 'safety-inspection', label: '안전점검 보고서' },
+    { key: 'incident-investigation', label: '산업재해조사보고서' },
+    { key: 'safety-education', label: '안전보건교육보고서' },
+    { key: 'etc', label: '기타' },
+  ],
+  siteOptions: ['A동 전체', 'A동 2층 복도', 'B동 1층 출입구', 'C동 3층 전기실', '지하 주차장'],
+  authorOptions: ['김태니지 (안전책임자)', '김에이블러 (관리자)', '이안전 (점검담당자)'],
+  submitTargets: ['안전보건관리팀장', '시설관리팀장', '현장소장', '소방안전관리자'],
+  reports: [
+    {
+      id: 6,
+      title: '2026년 7월 3주차 조치이력보고서',
+      type: '주간',
+      createdAt: '2026-07-21',
+      period: '2026-07-15 ~ 2026-07-21',
+      owner: '김에이블러',
+      attachments: 3,
+      retentionUntil: '2026-10-21',
+      retentionStatus: 'normal',
+      dataPolicy: 'A동 전체',
+      submitTarget: '안전보건관리팀장',
+    },
+    {
+      id: 5,
+      title: '위험신고 접수 현황 요약',
+      type: '요약',
+      createdAt: '2026-07-20',
+      period: '2026-07-20',
+      owner: '김에이블러',
+      attachments: 2,
+      retentionUntil: '2026-08-05',
+      retentionStatus: 'expiring',
+      dataPolicy: 'B동 1층 출입구',
+      submitTarget: '시설관리팀장',
+    },
+    {
+      id: 4,
+      title: '소방시설 점검 결과 리포트',
+      type: '점검',
+      createdAt: '2026-07-18',
+      period: '2026-07-18',
+      owner: '이안전',
+      attachments: 4,
+      retentionUntil: '2026-10-18',
+      retentionStatus: 'normal',
+      dataPolicy: 'C동 3층 전기실',
+      submitTarget: '소방안전관리자',
+    },
+    {
+      id: 3,
+      title: '비상구 및 피난동선 개선 보고서',
+      type: '개선',
+      createdAt: '2026-07-12',
+      period: '2026-07-08 ~ 2026-07-12',
+      owner: '박지훈',
+      attachments: 1,
+      retentionUntil: '2026-07-31',
+      retentionStatus: 'expiring',
+      dataPolicy: 'A동 2층 복도',
+      submitTarget: '현장소장',
+    },
+    {
+      id: 2,
+      title: '상반기 안전교육 이수 리포트',
+      type: '교육',
+      createdAt: '2026-06-30',
+      period: '2026-01-01 ~ 2026-06-30',
+      owner: '김에이블러',
+      attachments: 2,
+      retentionUntil: '2026-09-30',
+      retentionStatus: 'normal',
+      dataPolicy: 'A동 전체',
+      submitTarget: '안전보건관리팀장',
+    },
+    {
+      id: 1,
+      title: '2026년 6월 월간 안전관리 보고서',
+      type: '월간',
+      createdAt: '2026-06-28',
+      period: '2026-06-01 ~ 2026-06-28',
+      owner: '김에이블러',
+      attachments: 5,
+      retentionUntil: '2026-09-28',
+      retentionStatus: 'normal',
+      dataPolicy: '전체 사업장',
+      submitTarget: '안전보건관리팀장',
+    },
+  ],
+}

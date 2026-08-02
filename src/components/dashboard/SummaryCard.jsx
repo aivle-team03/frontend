@@ -35,7 +35,7 @@ function SummaryCard({ item, isSelected, onSelect }) {
 
   return (
     <Card className={`summary-card summary-${item.id}${isSelected ? ' is-selected' : ''}`}>
-      <CardActionArea onClick={() => onSelect(item.id)} className="summary-action">
+      <CardActionArea aria-pressed={isSelected} onClick={() => onSelect(item.id)} className="summary-action">
         <div className="summary-heading">
           <Box className="summary-icon">
             <Icon fontSize="small" />
@@ -46,6 +46,7 @@ function SummaryCard({ item, isSelected, onSelect }) {
         </div>
         <div className="summary-value-wrap">
           <Typography className="summary-value">{displayValue}</Typography>
+          <span className="summary-unit">건</span>
         </div>
         <div className="summary-footer">
           <span className="summary-change">

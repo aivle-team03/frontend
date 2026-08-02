@@ -19,7 +19,7 @@ function EventTypeIcon({ type }) {
   return <CloudOutlinedIcon fontSize="small" />
 }
 
-function RecentEventsTableMonitoring({ events }) {
+function RecentEventsTableMonitoring({ events, selectedEvent, onSelectEvent }) {
   return (
     <TableContainer className="events-table-wrap">
       <Table size="small" aria-label="최근 이상 발생 리스트">
@@ -33,7 +33,20 @@ function RecentEventsTableMonitoring({ events }) {
         </TableHead>
         <TableBody>
           {events.map((event) => (
-            <TableRow hover key={event.id} className="event-row">
+            <TableRow
+              hover
+              selected={selectedEvent?.id === event.id}
+              key={event.id}
+              className="event-row monitoring-event-row"
+              tabIndex={0}
+              onClick={() => onSelectEvent(event)}
+              onKeyDown={(keyboardEvent) => {
+                if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+                  keyboardEvent.preventDefault()
+                  onSelectEvent(event)
+                }
+              }}
+            >
                   <TableCell>{event.time}</TableCell>
                   <TableCell>{event.location}</TableCell>
                   <TableCell>

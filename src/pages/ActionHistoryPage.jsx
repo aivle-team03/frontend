@@ -1,32 +1,213 @@
-import { useState } from 'react'
-import PeriodSelector from '../components/dashboard/PeriodSelector.jsx'
-import RecentEventsTable from '../components/dashboard/RecentEventsTable.jsx'
-import { ACTION_HISTORY_MOCK_DATA } from '../mocks/mockData.js'
-import '../styles/ActionHistoryPage.css'
+import "../styles/ActionHistoryPage.css";
+import { useState, useEffect, useMemo } from "react";
+import PeriodSelector from "../components/dashboard/PeriodSelector";
+import axios from "axios";
+import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
+import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded'
+import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded'
+import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
+import PieChartRoundedIcon from '@mui/icons-material/PieChartRounded'
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 
 function ActionHistoryPage() {
-  const [selectedEvent, setSelectedEvent] = useState(null)
+  const [loading, setLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [selectedPeriod, setSelectedPeriod] = useState('전체')
   const [customPeriod, setCustomPeriod] = useState(null)
-  const filteredData = ACTION_HISTORY_MOCK_DATA.filter((item) => {
-    const itemDate = new Date(item.time.replace(' ', 'T'))
+  const [historyType, setHistoryType] = useState('점검')
+
+  const [reportSnapshot, setReportSnapshot] = useState(null)
+  const [records, setRecords] = useState([])
+  const [inspectionhistory, setinspectionHistory] = useState([])
+  const [selectedRecord, setSelectedRecord] = useState()
+  const [selectedInspectionRecord, setSelectedInspectionRecord] = useState(null)
+  const [photoPreviewRecord, setPhotoPreviewRecord] = useState(null)
+
+  // 반려 사유 상태 관리
+  const [rejectReason, setRejectReason] = useState('')
+
+  useEffect(() => {
+    Promise.all([fetchActionHistory(), fetchInspectionHistory()])
+      .finally(() => setIsInitialLoading(false))
+  }, []);
+
+  // 1. 조치 이력 전용 API 호출 (/api/checklists/history)
+  const fetchActionHistory = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      const response = await axios.get("http://127.0.0.1:8000/api/action-histories", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          action_status: '조치 완료',
+          size: 100,
+        },
+      });
+
+      const actionItems = Array.isArray(response.data) ? response.data : (response.data?.items ?? [])
+      if (actionItems.length) {
+        const fetchedRecords = actionItems.filter((item) => item.action_status === '조치 완료').map((item) => {
+          const approvalStatus = item.approval_status === '승인 완료'
+            ? 'approved'
+            : item.approval_status === '반려'
+              ? 'rejected'
+              : 'pending'
+          return {
+            id: item.action_history_id,
+            eventId: item.event_id ?? null,
+            inspectionHistoryId: item.inspection_history_id ?? null,
+            completedAt: item.completed_at ? String(item.completed_at).replace('T', ' ').slice(0, 16) : '-',
+            location: item.location || "지정 안 됨",
+            type: item.type ?? null,
+            actionName: item.action_name ?? null,
+            assignee: item.handler_name || "담당자 미지정",
+            content: item.content ?? null,
+            imageUrl: item.image_url || "",
+            statusRaw: item.approval_status,
+            approvalStatus,
+            approver: item.approver_name ?? null,
+            approvedAt: item.approval_date ? String(item.approval_date).replace('T', ' ').slice(0, 16) : null,
+          }
+        });
+        setRecords(fetchedRecords);
+      } else {
+        setRecords([]);
+      }
+    } catch (error) {
+      console.error("조치 이력 로드 실패:", error);
+      alert("조치 이력 데이터를 불러오지 못했습니다. 로그인 상태를 확인하세요.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+   const fetchInspectionHistory = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      const response = await axios.get("http://127.0.0.1:8000/api/inspection/histories/all", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data && Array.isArray(response.data)) {
+        const fetchedRecords = response.data.filter((item) => item.status === '점검 완료').map((item) => {
+          // 백엔드 status 값에 맞춘 승인 상태 매핑
+       
+
+          return {
+            id: item.inspection_history_id ?? item.inspection_id,
+            inspectionId: item.inspection_id ?? '-',
+            name: item.name || "현장 점검 항목",
+            completedAt: item.date ? String(item.date).replace('T', ' ').slice(0, 16) : '-',
+            location: item.location ? item.location : "지정 안 됨",
+            type: item.name || "현장 점검 항목",
+            assignee: item.user_name || "담당자 미지정",
+            memo: item.content || "입력된 점검 메모가 없습니다.",
+            content: item.content || "",
+            imageUrl: item.image_url || "",
+            statusRaw: item.status, 
+            
+           
+          }
+        });
+        const uniqueRecords = Array.from(new Map(fetchedRecords.map((record) => [
+          `${record.id}-${record.completedAt}-${record.location}-${record.type}-${record.assignee}`,
+          record,
+        ])).values())
+        setinspectionHistory(uniqueRecords);
+      }
+    } catch (error) {
+      console.error("점검 이력 로드 실패:", error);
+      alert("점검 이력 데이터를 불러오지 못했습니다. 로그인 상태를 확인하세요.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2. 관리자 승인 처리 API 연동
+  const handleApprove = async () => {
+    if (!selectedRecord) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}` };
+
+      await axios.patch(
+        `http://127.0.0.1:8000/api/action-histories/${selectedRecord.id}/approve`,
+        {},
+        { headers }
+      );
+
+      alert('승인 처리가 완료되었습니다.');
+      if (selectedRecord.sourceReportId) {
+        saveBoardReportStatus(selectedRecord.sourceReportId, { status: '완료', statusKey: 'done' })
+      }
+      setSelectedRecord(null);
+      fetchActionHistory(); // 목록 최신화
+    } catch (error) {
+      console.error('승인 처리 실패:', error);
+      alert('승인 처리 실패: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  // 3. 관리자 반려 처리 API 연동
+  const handleReject = async () => {
+    if (!selectedRecord) return;
+
+    if (!rejectReason.trim()) {
+      alert('반려 사유를 입력해주세요.');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const headers = { Authorization: `Bearer ${token}` };
+
+      await axios.patch(
+        `http://127.0.0.1:8000/api/action-histories/${selectedRecord.id}/reject`,
+        {
+          rejection_reason: rejectReason.trim(),
+        },
+        { headers }
+      );
+
+      alert('반려 처리가 완료되었습니다. 해당 항목이 현장 작업자 조치 리스트로 되돌아갑니다.');
+      setSelectedRecord(null);
+      setRejectReason('');
+      fetchActionHistory(); // 목록 최신화
+    } catch (error) {
+      console.error('반려 처리 실패:', error);
+      alert('반려 처리 실패: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const filteredRecords = useMemo(() => records.filter((record) => {
+    if (!record.completedAt || record.completedAt === '-') return true;
+    const recordDate = new Date(record.completedAt.replace(' ', 'T'))
     const today = new Date()
 
     if (selectedPeriod === '이번 달') {
-      return (
-        itemDate.getMonth() === today.getMonth() &&
-        itemDate.getFullYear() === today.getFullYear()
-      )
+      return recordDate.getMonth() === today.getMonth() && recordDate.getFullYear() === today.getFullYear()
     }
 
-    if (selectedPeriod === '지난 달') {
-      const lastMonth = new Date()
-      lastMonth.setMonth(today.getMonth() - 1)
+    if (selectedPeriod === '지난달') {
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+      return recordDate.getMonth() === lastMonth.getMonth() && recordDate.getFullYear() === lastMonth.getFullYear()
+    }
 
-      return (
-        itemDate.getMonth() === lastMonth.getMonth() &&
-        itemDate.getFullYear() === lastMonth.getFullYear()
-      )
+    if (selectedPeriod === '직접 설정' && customPeriod) {
+      const startDate = new Date(`${customPeriod.startDate}T00:00:00`)
+      const endDate = new Date(`${customPeriod.endDate}T23:59:59.999`)
+      return recordDate >= startDate && recordDate <= endDate
     }
 
     if (selectedPeriod === '직접 설정' && customPeriod) {
@@ -37,46 +218,434 @@ function ActionHistoryPage() {
     }
 
     return true
-  })
-  const events = filteredData.map((item) => ({
-    id: item.id,
-    time: item.time,
-    location: item.location,
-    type: item.type,
-    status: item.status,
-    manager: item.manager,
-  }))
+  }), [customPeriod, records, selectedPeriod])
+
+  const filteredInspectionRecords = useMemo(() => inspectionhistory.filter((record) => {
+    if (!record.completedAt || record.completedAt === '-') return true
+    const recordDate = new Date(record.completedAt.replace(' ', 'T'))
+    const today = new Date()
+
+    if (selectedPeriod === '이번 달') {
+      return recordDate.getMonth() === today.getMonth() && recordDate.getFullYear() === today.getFullYear()
+    }
+    if (selectedPeriod === '지난달') {
+      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+      return recordDate.getMonth() === lastMonth.getMonth() && recordDate.getFullYear() === lastMonth.getFullYear()
+    }
+    if (selectedPeriod === '직접 설정' && customPeriod) {
+      const startDate = new Date(`${customPeriod.startDate}T00:00:00`)
+      const endDate = new Date(`${customPeriod.endDate}T23:59:59.999`)
+      return recordDate >= startDate && recordDate <= endDate
+    }
+    return true
+  }), [customPeriod, inspectionhistory, selectedPeriod])
+
+  const pendingCount = useMemo(
+    () => records.filter((record) => record.approvalStatus === 'pending').length,
+    [records],
+  )
+  const approvedCount = records.filter((record) => record.approvalStatus === 'approved').length
+
+  const approvalRate = useMemo(() => {
+    if (records.length === 0) return 0
+    return Math.round((approvedCount / records.length) * 100)
+  }, [approvedCount, records.length])
+
+  const createReport = () => {
+    setReportSnapshot({
+      type: historyType,
+      records: historyType === '점검' ? filteredInspectionRecords : filteredRecords,
+      period: selectedPeriod === '직접 설정' && customPeriod
+        ? `${customPeriod.startDate} ~ ${customPeriod.endDate}`
+        : selectedPeriod,
+      generatedAt: new Date(),
+    })
+  }
+
+  const downloadReport = () => {
+    if (!reportSnapshot) return
+    const reportValue = (value) => value === undefined || value === null || value === '' ? '-' : value
+
+    const rows = [
+      [reportSnapshot.type === '점검' ? '점검 완료 리포트' : '조치 완료 승인 리포트'],
+      ['조회 기간', reportSnapshot.period],
+      ['생성 일시', reportSnapshot.generatedAt.toLocaleString('ko-KR')],
+      [],
+      ...(reportSnapshot.type === '점검'
+        ? [
+            ['inspection_id', 'name', 'content', '완료 일시', '위치', '유형', '점검 담당자', '점검 사진', '점검 상태'],
+            ...reportSnapshot.records.map((record) => [reportValue(record.inspectionId), reportValue(record.name), reportValue(record.content), reportValue(record.completedAt), reportValue(record.location), reportValue(record.type), reportValue(record.assignee), record.imageUrl ? '첨부 완료' : '사진 없음', reportValue(record.statusRaw)]),
+          ]
+        : [
+            ['event_id', 'inspection_history_id', 'action_name', 'type', 'content', 'image_url', '완료 일시', '위치', '조치 담당자', '승인 상태', '승인자', '승인 일시'],
+            ...reportSnapshot.records.map((record) => [record.eventId, record.inspectionHistoryId, record.actionName, record.type, record.content, record.imageUrl, record.completedAt, record.location, record.assignee, record.approvalStatus === 'approved' ? '승인 완료' : record.approvalStatus === 'rejected' ? '반려됨' : '승인 대기', record.approver, record.approvedAt]),
+          ]),
+    ]
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n')
+    const file = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })
+    const downloadUrl = URL.createObjectURL(file)
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = reportSnapshot.type === '점검'
+      ? '점검완료_리포트.csv'
+      : '조치완료_승인리포트.csv'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(downloadUrl)
+  }
 
   return (
-    <div className="action-history-layout">
-      <div className="history-content">
-        <RecentEventsTable
-          events={events}
-          selectedEvent={selectedEvent}
-          onSelectEvent={setSelectedEvent}
-          onClose={() => setSelectedEvent(null)}
-        />
+    <section className="approval-history-page" aria-label="조치 이력">
+      <div className="approval-summary-row">
+        <div className="approval-summary-grid">
+           <article className="approval-summary-card pending-summary">
+           <span className="approval-summary-icon"><CheckCircleOutlineRoundedIcon /></span>
+            <div>
+              <span>전체 점검</span>
+              <strong>{inspectionhistory.length}건</strong>
+              <small>점검 완료 건수</small>
+            </div>
+          </article>
+
+          <article className="approval-summary-card total-summary">
+            <span className="approval-summary-icon"><AssignmentTurnedInRoundedIcon /></span>
+            <div className="summary-text-wrap">
+              <span className="summary-label">전체 조치</span>
+              <strong className="summary-count">{records.length}건</strong>
+              <small>조치 완료 건수</small>
+            </div>
+          </article>
+        </div>
       </div>
 
-    <aside className="report-panel">
-      <PeriodSelector
-        selectedPeriod={selectedPeriod}
-        onSelectPeriod={setSelectedPeriod}
-        onApplyCustomPeriod={setCustomPeriod}
-        options={['전체', '이번 달', '지난 달', '직접 설정']}
-      />
-      <div className="report-summary">
-        <span>조회 결과</span>
-        <strong>{events.length}건</strong>
-        <p>
-          선택기간: {selectedPeriod}
-        </p>
+      <div className="approval-content-layout">
+        <article className="approval-history-card">
+          <div className="approval-history-heading">
+            <div>
+              <h2>{historyType === '점검' ? '점검 완료 내역' : '조치 완료 내역'}</h2>
+              <p>{historyType === '점검' ? '현장 담당자가 점검을 완료한 것만 확인합니다.' : '현장 담당자가 조치 사진을 첨부해 완료한 건만 확인하고 승인합니다.'}</p>
+            </div>
+            <div className="approval-history-toggle" role="group" aria-label="조치 점검 선택">
+              {['점검', '조치'].map((type) => (
+                <button
+                  key={type}
+                  className={historyType === type ? 'is-active' : ''}
+                  type="button"
+                  onClick={() => setHistoryType(type)}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {historyType === '점검' ? (
+            <>
+              <div className="approval-table-wrap">
+                <table className="approval-history-table">
+                  <thead>
+                    <tr>
+                      <th>완료 일시</th>
+                      <th>위치</th>
+                      <th>유형</th>
+                      <th>점검 담당자</th>
+                      <th>점검 사진</th>
+                      <th>점검 상태</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isInitialLoading ? <HistoryTableSkeletonRows columns={6} /> : inspectionhistory.map((record) => (
+                      <tr key={record.id} className="inspection-history-row" onClick={() => setSelectedInspectionRecord(record)}>
+                        <td>{record.completedAt}</td>
+                        <td>{record.location}</td>
+                        <td><span className="approval-type"><TaskAltRoundedIcon />{record.type}</span></td>
+                        <td>{record.assignee}</td>
+                        <td>
+                          <button
+                            className="approval-photo-button"
+                            type="button"
+                            disabled={!record.imageUrl}
+                            onClick={(event) => { event.stopPropagation(); setPhotoPreviewRecord(record) }}
+                            aria-label={`${record.location} 점검 사진 크게 보기`}
+                          >
+                            {record.imageUrl ? <img className="approval-photo-thumbnail" src={record.imageUrl} alt="" /> : <span className="no-photo">사진 없음</span>}
+                          </button>
+                        </td>
+                        <td>
+      
+                          <span className="approval-status approved">
+                            {record.statusRaw}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="approval-history-footer">전체 {inspectionhistory.length}건</div>
+            </>
+          ) : (
+            <>
+              <div className="approval-table-wrap">
+                <table className="approval-history-table">
+                  <thead>
+                    <tr>
+                      <th>완료 일시</th>
+                      <th>위치</th>
+                      <th>유형</th>
+                      <th>조치 담당자</th>
+                      <th>조치 사진</th>
+                      <th>승인 상태</th>
+                      <th>승인자 / 승인 일시</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isInitialLoading ? <HistoryTableSkeletonRows columns={7} /> : filteredRecords.map((record) => (
+                      <tr key={record.id}>
+                        <td>{record.completedAt}</td>
+                        <td>{record.location}</td>
+                        <td><span className="approval-type"><TaskAltRoundedIcon />{record.type}</span></td>
+                        <td>{record.assignee}</td>
+                        <td>
+                          <button
+                            className="approval-photo-button"
+                            type="button"
+                            disabled={!record.imageUrl}
+                            onClick={() => setPhotoPreviewRecord(record)}
+                            aria-label={`${record.location} 조치 사진 크게 보기`}
+                          >
+                            {record.imageUrl ? <img className="approval-photo-thumbnail" src={record.imageUrl} alt="" /> : <span className="no-photo">사진 없음</span>}
+                          </button>
+                        </td>
+                        <td>
+                          <span className={`approval-status ${record.approvalStatus}`}>
+                            {record.approvalStatus === 'approved'
+                              ? '승인 완료'
+                              : record.approvalStatus === 'rejected'
+                                ? '조치 필요 (반려)'
+                                : '승인 대기'}
+                          </span>
+                        </td>
+                        <td>
+                          {record.approvalStatus === 'approved'
+                            ? <span className="approval-meta">{record.approver}<small>{record.approvedAt}</small></span>
+                            : (
+                              <button
+                                className="approval-review-button"
+                                type="button"
+                                onClick={() => {
+                                  setSelectedRecord(record);
+                                  setRejectReason('');
+                                }}
+                              >
+                                승인 검토
+                              </button>
+                            )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="approval-history-footer">전체 {filteredRecords.length}건</div>
+            </>
+          )}
+        </article>
+        <aside className="approval-control-panel">
+          <div>
+            <span className="approval-control-eyebrow">조회 기간</span>
+            <h2>기간 설정</h2>
+            <PeriodSelector
+              selectedPeriod={selectedPeriod}
+              onSelectPeriod={setSelectedPeriod}
+              onApplyCustomPeriod={setCustomPeriod}
+              options={['전체', '이번 달', '지난달', '직접 설정']}
+            />
+          </div>
+          <div className="approval-control-divider" />
+          <div>
+            <span className="approval-control-eyebrow">승인 리포트</span>
+            <h2>리포트 관리</h2>
+            <p>현재 조회 결과를 기준으로 리포트를 생성합니다.</p>
+            <div className="approval-report-actions">
+              <button className="approval-report-generate" type="button" onClick={createReport}>
+                <DescriptionOutlinedIcon /> 리포트 생성
+              </button>
+              <button
+                className="approval-report-download"
+                type="button"
+                onClick={downloadReport}
+                disabled={!reportSnapshot}
+                title={reportSnapshot ? '생성된 리포트 다운로드' : '먼저 리포트를 생성해 주세요'}
+              >
+                <DownloadRoundedIcon /> 다운로드
+              </button>
+            </div>
+          </div>
+        </aside>
       </div>
-      <button className="generate-btn">리포트 생성</button>
-      <button className="download-btn">다운로드</button>
-    </aside>
-    </div>
+
+      {/* 관리자 승인/반려 검토 모달 */}
+      {selectedInspectionRecord && (
+        <div className="approval-modal-backdrop" role="presentation" onMouseDown={() => setSelectedInspectionRecord(null)}>
+          <section className="inspection-history-detail-modal" role="dialog" aria-modal="true" aria-labelledby="inspection-history-detail-title" onMouseDown={(event) => event.stopPropagation()}>
+            <header>
+              <div><span>INSPECTION HISTORY</span><h2 id="inspection-history-detail-title">{selectedInspectionRecord.type}</h2><p>완료된 점검의 담당자 메모를 확인합니다.</p></div>
+              <button type="button" aria-label="닫기" onClick={() => setSelectedInspectionRecord(null)}><CloseRoundedIcon /></button>
+            </header>
+            <div className="inspection-history-detail-grid">
+              <div><span>완료 일시</span><strong>{selectedInspectionRecord.completedAt}</strong></div>
+              <div><span>위치</span><strong>{selectedInspectionRecord.location}</strong></div>
+              <div><span>점검 담당자</span><strong>{selectedInspectionRecord.assignee}</strong></div>
+              <div><span>진행 상태</span><strong className="inspection-complete-badge">{selectedInspectionRecord.statusRaw}</strong></div>
+            </div>
+            <section className="inspection-history-memo"><span>점검자 메모</span><p>{selectedInspectionRecord.memo}</p></section>
+            <footer><button type="button" onClick={() => setSelectedInspectionRecord(null)}>닫기</button></footer>
+          </section>
+        </div>
+      )}
+
+      {selectedRecord && (
+        <div className="approval-modal-backdrop" role="presentation" onMouseDown={() => setSelectedRecord(null)}>
+          <section
+            className="approval-review-modal-v2"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="approval-review-title"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="modal-v2-header">
+              <h2 id="approval-review-title">조치 내역 관리자 승인</h2>
+              <button type="button" className="modal-v2-close" onClick={() => setSelectedRecord(null)}>
+                <CloseRoundedIcon />
+              </button>
+            </div>
+
+            <div className="modal-v2-body">
+              <div className="modal-v2-summary-bar">
+                <div className="summary-item">
+                  <span>위험 유형</span>
+                  <strong>{selectedRecord.type}</strong>
+                </div>
+                <div className="summary-item">
+                  <span>위치</span>
+                  <strong>{selectedRecord.location}</strong>
+                </div>
+                <div className="summary-item">
+                  <span>위험도</span>
+                  <strong className="badge-danger">높음</strong>
+                </div>
+                <div className="summary-item">
+                  <span>담당자</span>
+                  <strong>{selectedRecord.assignee}</strong>
+                </div>
+                <div className="summary-item">
+                  <span>상태</span>
+                  <strong className="badge-pending">
+                    {selectedRecord.approvalStatus === 'approved' ? '승인 완료' : '승인 대기'}
+                  </strong>
+                </div>
+                <div className="summary-item">
+                  <span>조치완료 시간</span>
+                  <small>{selectedRecord.completedAt}</small>
+                </div>
+              </div>
+
+              <div className="modal-v2-content-grid">
+                <div className="modal-v2-card">
+                  <h3>조치 등록 사진</h3>
+                  <div className="img-box">
+                    <img src={selectedRecord.imageUrl} alt="조치 사진" />
+                  </div>
+                  <p className="card-desc">등록된 현장 사진 확인</p>
+                </div>
+
+                <div className="modal-v2-card ai-result-card">
+                  <h3>AI 재확인 결과</h3>
+                  <div className="ai-success-box">
+                    <CheckCircleRoundedIcon className="ai-check-icon-mui" />
+                    <div className="ai-result-text">
+                      <span className="ai-result-label">결과</span>
+                      <strong className="ai-result-value">위험요소 해소</strong>
+                    </div>
+                  </div>
+                  <div className="ai-info-list">
+                    <div><span>신뢰도</span><strong>98.4%</strong></div>
+                    <div><span>분석 내용</span><strong>정상 상태 복구 감지됨</strong></div>
+                  </div>
+                </div>
+
+                <div className="modal-v2-card worker-detail-card">
+                  <h3>작업자 조치 내용</h3>
+                  <div className="worker-detail-group">
+                    <div className="detail-item">
+                      <span className="detail-label">조치 담당자</span>
+                      <strong className="detail-value">{selectedRecord.assignee}</strong>
+                    </div>
+                    <div className="detail-item">
+                      <span className="detail-label">내용</span>
+                      <p className="detail-value text-desc">
+                        {selectedRecord.type}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="modal-v2-card reject-reason-card">
+                  <h3>반려 사유</h3>
+                  <textarea
+                    placeholder="반려 시 사유를 입력해주세요. (승인 시 입력 불필요)"
+                    rows={4}
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-v2-footer">
+              <button type="button" className="btn-v2-list" onClick={() => setSelectedRecord(null)}>
+                목록
+              </button>
+              <div className="footer-right-actions">
+                <button type="button" className="btn-v2-reject" onClick={handleReject}>
+                  반려
+                </button>
+                <button type="button" className="btn-v2-approve" onClick={handleApprove}>
+                  승인
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {/* 조치 사진 대형 미리보기 모달 */}
+      {photoPreviewRecord && (
+        <div className="photo-preview-backdrop" role="presentation" onMouseDown={() => setPhotoPreviewRecord(null)}>
+          <section
+            className="photo-preview-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="photo-preview-title"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <div className="photo-preview-header">
+              <div>
+                <span>조치 사진</span>
+                <h2 id="photo-preview-title">{photoPreviewRecord.location}</h2>
+              </div>
+              <button type="button" aria-label="닫기" onClick={() => setPhotoPreviewRecord(null)}><CloseRoundedIcon /></button>
+            </div>
+            <img className="photo-preview-image" src={photoPreviewRecord.imageUrl} alt={`${photoPreviewRecord.location} 조치 사진`} />
+          </section>
+        </div>
+      )}
+    </section>
   )
 }
+
+function HistoryTableSkeletonRows({ columns }) { return Array.from({ length: 7 }, (_, rowIndex) => <tr className="history-table-skeleton-row" key={rowIndex}>{Array.from({ length: columns }, (_, columnIndex) => <td key={columnIndex}><span className={`history-table-skeleton-block column-${columnIndex}`} /></td>)}</tr>) }
 
 export default ActionHistoryPage
