@@ -583,6 +583,7 @@
 .date-filter-menu input { height: 32px; padding: 0 7px; border: 1px solid #dbe5ef; border-radius: 7px; color: #506a86; font: inherit; font-size: 12px; }
 .master-detail-body { display: grid; gap: 22px; padding: 22px 27px 26px; }
 .master-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: hidden; border: 1px solid #dfe9f2; border-radius: 12px; background: #fbfdff; }
+.master-detail-modal.is-action-detail .master-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .master-summary-grid > div { display: grid; gap: 6px; padding: 14px; border-right: 1px solid #e6edf4; }
 .master-summary-grid > div:last-child { border-right: 0; }
 .master-summary-grid span { color: #8192a5; font-size: 11px; font-weight: 800; }
@@ -716,6 +717,12 @@
   color: #60758d;
   font-size: 12px;
   font-weight: 850;
+}
+
+.checklist-create-form .required-mark {
+  margin-left: 3px;
+  color: #e23b3b;
+  font-style: normal;
 }
 
 .checklist-create-form input,

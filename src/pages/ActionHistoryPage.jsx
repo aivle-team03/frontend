@@ -24,6 +24,7 @@ function ActionHistoryPage() {
   const [inspectionhistory, setinspectionHistory] = useState([])
   const [selectedRecord, setSelectedRecord] = useState()
   const [selectedInspectionRecord, setSelectedInspectionRecord] = useState(null)
+  const [selectedActionRecord, setSelectedActionRecord] = useState(null)
   const [photoPreviewRecord, setPhotoPreviewRecord] = useState(null)
 
   // 반려 사유 상태 관리
@@ -67,7 +68,7 @@ function ActionHistoryPage() {
             type: item.type ?? null,
             actionName: item.action_name ?? null,
             assignee: item.handler_name || "담당자 미지정",
-            content: item.content ?? null,
+            content: item.content ?? '',
             imageUrl: item.image_url || "",
             statusRaw: item.approval_status,
             approvalStatus,
@@ -189,6 +190,43 @@ function ActionHistoryPage() {
       alert('반려 처리 실패: ' + (error.response?.data?.detail || error.message));
     }
   };
+
+  const openActionDetail = async (record) => {
+    setSelectedActionRecord(record)
+
+    try {
+      const token = localStorage.getItem("token")
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const response = await axios.get(`http://127.0.0.1:8000/api/action-histories/${record.id}`, { headers })
+
+      setSelectedActionRecord((current) => (
+        current?.id === record.id
+          ? { ...current, content: response.data?.content ?? '' }
+          : current
+      ))
+    } catch (error) {
+      console.error('조치 상세 내용 조회 실패:', error)
+    }
+  }
+
+  const openApprovalReview = async (record) => {
+    setSelectedRecord(record)
+    setRejectReason('')
+
+    try {
+      const token = localStorage.getItem("token")
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const response = await axios.get(`http://127.0.0.1:8000/api/action-histories/${record.id}`, { headers })
+
+      setSelectedRecord((current) => (
+        current?.id === record.id
+          ? { ...current, content: response.data?.content ?? '' }
+          : current
+      ))
+    } catch (error) {
+      console.error('조치 승인 검토 상세 내용 조회 실패:', error)
+    }
+  }
 
   const filteredRecords = useMemo(() => records.filter((record) => {
     if (!record.completedAt || record.completedAt === '-') return true;
@@ -402,17 +440,28 @@ function ActionHistoryPage() {
                   </thead>
                   <tbody>
                     {isInitialLoading ? <HistoryTableSkeletonRows columns={7} /> : filteredRecords.map((record) => (
-                      <tr key={record.id}>
+                      <tr
+                        key={record.id}
+                        className="inspection-history-row"
+                        tabIndex={0}
+                        onClick={() => openActionDetail(record)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault()
+                            openActionDetail(record)
+                          }
+                        }}
+                      >
                         <td>{record.completedAt}</td>
                         <td>{record.location}</td>
-                        <td><span className="approval-type"><TaskAltRoundedIcon />{record.type}</span></td>
+                        <td><span className="approval-type"><TaskAltRoundedIcon />{record.actionName}</span></td>
                         <td>{record.assignee}</td>
                         <td>
                           <button
                             className="approval-photo-button"
                             type="button"
                             disabled={!record.imageUrl}
-                            onClick={() => setPhotoPreviewRecord(record)}
+                            onClick={(event) => { event.stopPropagation(); setPhotoPreviewRecord(record) }}
                             aria-label={`${record.location} 조치 사진 크게 보기`}
                           >
                             {record.imageUrl ? <img className="approval-photo-thumbnail" src={record.imageUrl} alt="" /> : <span className="no-photo">사진 없음</span>}
@@ -434,9 +483,9 @@ function ActionHistoryPage() {
                               <button
                                 className="approval-review-button"
                                 type="button"
-                                onClick={() => {
-                                  setSelectedRecord(record);
-                                  setRejectReason('');
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  openApprovalReview(record);
                                 }}
                               >
                                 승인 검토
@@ -502,6 +551,31 @@ function ActionHistoryPage() {
             </div>
             <section className="inspection-history-memo"><span>점검자 메모</span><p>{selectedInspectionRecord.memo}</p></section>
             <footer><button type="button" onClick={() => setSelectedInspectionRecord(null)}>닫기</button></footer>
+          </section>
+        </div>
+      )}
+
+      {selectedActionRecord && (
+        <div className="approval-modal-backdrop" role="presentation" onMouseDown={() => setSelectedActionRecord(null)}>
+          <section className="inspection-history-detail-modal" role="dialog" aria-modal="true" aria-labelledby="action-history-detail-title" onMouseDown={(event) => event.stopPropagation()}>
+            <header>
+              <div><span>ACTION HISTORY</span><h2 id="action-history-detail-title">{selectedActionRecord.actionName}</h2><p>완료된 조치 항목의 상세 정보를 확인합니다.</p></div>
+              <button type="button" aria-label="닫기" onClick={() => setSelectedActionRecord(null)}><CloseRoundedIcon /></button>
+            </header>
+            <div className="inspection-history-detail-grid">
+              <div><span>완료 일시</span><strong>{selectedActionRecord.completedAt}</strong></div>
+              <div><span>위치</span><strong>{selectedActionRecord.location}</strong></div>
+              <div><span>조치 담당자</span><strong>{selectedActionRecord.assignee}</strong></div>
+              <div><span>승인 상태</span><strong className="inspection-complete-badge">{selectedActionRecord.statusRaw}</strong></div>
+            </div>
+            <section className="inspection-history-memo"><span>조치 내용</span><p>{selectedActionRecord.content ?? ''}</p></section>
+            <section className="action-history-detail-photo">
+              <span>조치 사진</span>
+              {selectedActionRecord.imageUrl
+                ? <button type="button" onClick={() => setPhotoPreviewRecord(selectedActionRecord)}><img src={selectedActionRecord.imageUrl} alt={`${selectedActionRecord.location} 조치 사진`} /></button>
+                : <p>등록된 조치 사진이 없습니다.</p>}
+            </section>
+            <footer><button type="button" onClick={() => setSelectedActionRecord(null)}>닫기</button></footer>
           </section>
         </div>
       )}
@@ -586,7 +660,7 @@ function ActionHistoryPage() {
                     <div className="detail-item">
                       <span className="detail-label">내용</span>
                       <p className="detail-value text-desc">
-                        {selectedRecord.type}
+                        {selectedRecord.content ?? ''}
                       </p>
                     </div>
                   </div>

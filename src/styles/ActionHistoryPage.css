@@ -115,6 +115,47 @@
   line-height: 1.65;
 }
 
+.action-history-detail-photo {
+  margin: 0 28px 24px;
+  padding: 18px;
+  border: 1px solid #e0e9f3;
+  border-radius: 12px;
+  background: #fbfdff;
+}
+
+.action-history-detail-photo > span {
+  display: block;
+  color: #3675bf;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.action-history-detail-photo button {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid #d8e4f1;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.action-history-detail-photo img {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+}
+
+.action-history-detail-photo p {
+  margin: 12px 0 0;
+  color: #7a8ca4;
+  font-weight: 700;
+}
+
 .inspection-history-detail-modal footer {
   display: flex;
   justify-content: flex-end;

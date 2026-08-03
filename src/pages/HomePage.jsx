@@ -41,7 +41,7 @@ function countSummaryEvents(events, summaryId) {
     return events.filter((event) => isPendingStatus(event.status)).length
   }
   if (summaryId === 'complete') {
-    return events.filter((event) => isCompleteStatus(event.status)).length
+    return events.filter((event) => event.status === '조치 완료').length
   }
   if (summaryId === 'violation') {
     return events.filter((event) => event.status === '점검 완료').length
