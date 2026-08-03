@@ -1,4 +1,7 @@
 
+import { useEffect, useMemo, useState } from 'react'
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import {
   Box,
   Table,
@@ -24,12 +27,20 @@ function formatTime(value) {
 }
 
 function ActionHistoryTable({ lists }) {
+  const [page, setPage] = useState(0)
+  const pageSize = 8
+  const ActionHistorydata = useMemo(() => filterEvents(lists), [lists])
+  const pageCount = Math.max(1, Math.ceil(ActionHistorydata.length / pageSize))
+  const activePage = Math.min(page, pageCount - 1)
+  const visibleActionHistoryData = ActionHistorydata.slice(activePage * pageSize, activePage * pageSize + pageSize)
 
-const ActionHistorydata= filterEvents(lists)
+  useEffect(() => {
+    setPage(0)
+  }, [lists])
 
   return (
 
-      <Box>
+      <Box className="action-history-table-card">
         <Typography variant="h6">조치 승인 요청</Typography>
     <TableContainer className="events-table-wrap">
       <Table size="small" aria-label="조치 승인 요청">
@@ -43,7 +54,7 @@ const ActionHistorydata= filterEvents(lists)
           </TableRow>
         </TableHead>
         <TableBody>
-          {ActionHistorydata.map((data) => (
+          {visibleActionHistoryData.map((data) => (
             <TableRow hover key={data.action_history_id ?? data.completed_at} className="event-row">
                 <TableCell>{formatTime(data.created_at)}</TableCell>
                 <TableCell>{data.location}</TableCell>
@@ -55,6 +66,18 @@ const ActionHistorydata= filterEvents(lists)
         </TableBody>
       </Table>
     </TableContainer>
+    <footer className="recent-events-pagination">
+      <span>총 <strong>{ActionHistorydata.length}</strong>건</span>
+      <div>
+        <button type="button" aria-label="이전 조치 승인 요청" disabled={activePage === 0} onClick={() => setPage((current) => Math.max(0, current - 1))}>
+          <ChevronLeftRoundedIcon />
+        </button>
+        <b>{activePage + 1} / {pageCount}</b>
+        <button type="button" aria-label="다음 조치 승인 요청" disabled={activePage === pageCount - 1} onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}>
+          <ChevronRightRoundedIcon />
+        </button>
+      </div>
+    </footer>
     </Box>
   )
 }

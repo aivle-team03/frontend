@@ -349,6 +349,10 @@
   text-align: center;
 }
 
+.action-history-table-card .recent-events-pagination {
+  padding: 18px 18px 0;
+}
+
 .event-type-icon {
   width: 26px;
   height: 26px;
