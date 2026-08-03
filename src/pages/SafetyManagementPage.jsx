@@ -28,6 +28,9 @@ function SafetyManagementPage() {
   const [users, setUsers] = useState([])
   const [categories, setCategories] = useState([])
   const [inviteCodes, setInviteCodes] = useState([])
+  const [codeRoleFilter, setCodeRoleFilter] = useState('전체 역할')
+  const [codeStatusFilter, setCodeStatusFilter] = useState('전체 상태')
+  const [codePage, setCodePage] = useState(1)
   const [userPage, setUserPage] = useState(1)
   const [activeCodeTab, setActiveCodeTab] = useState('create')
   const [accessState, setAccessState] = useState('loading')
@@ -44,6 +47,15 @@ function SafetyManagementPage() {
   const userPageCount = Math.max(1, Math.ceil(users.length / userPageSize))
   const currentUserPage = Math.min(userPage, userPageCount)
   const pagedUsers = users.slice((currentUserPage - 1) * userPageSize, currentUserPage * userPageSize)
+  const codePageSize = 10
+  const filteredInviteCodes = inviteCodes.filter((inviteCode) => {
+    const matchesRole = codeRoleFilter === '전체 역할' || inviteCode.role === codeRoleFilter
+    const status = inviteCode.is_used ? '사용 완료' : '미사용'
+    return matchesRole && (codeStatusFilter === '전체 상태' || status === codeStatusFilter)
+  })
+  const codePageCount = Math.max(1, Math.ceil(filteredInviteCodes.length / codePageSize))
+  const currentCodePage = Math.min(codePage, codePageCount)
+  const pagedInviteCodes = filteredInviteCodes.slice((currentCodePage - 1) * codePageSize, currentCodePage * codePageSize)
   const loadInviteCodes = async () => {
     const response = await axios.get(`${API_BASE_URL}/admin/invite-codes`, authConfig)
     setInviteCodes(Array.isArray(response.data) ? response.data : [])
@@ -171,9 +183,14 @@ function SafetyManagementPage() {
           </div>
         ) : (
           <div className="invite-code-history">
+            <div className="invite-code-filters">
+              <CompanyCodeSelect value={codeRoleFilter} options={['전체 역할', ...COMPANY_ROLE_OPTIONS]} placeholder="역할 필터" onChange={(value) => { setCodeRoleFilter(value); setCodePage(1) }} />
+              <CompanyCodeSelect value={codeStatusFilter} options={['전체 상태', '사용 완료', '미사용']} placeholder="상태 필터" onChange={(value) => { setCodeStatusFilter(value); setCodePage(1) }} />
+            </div>
             <div className="invite-code-head"><span>회사 코드</span><span>역할</span><span>카테고리</span><span>상태</span><span>생성일</span></div>
-            {inviteCodes.map((inviteCode) => <div className="invite-code-row" key={inviteCode.id}><strong>{inviteCode.code}</strong><span>{inviteCode.role}</span><span>{inviteCode.category || '-'}</span><span className={inviteCode.is_used ? 'used' : 'unused'}>{inviteCode.is_used ? '사용 완료' : '미사용'}</span><span>{new Date(inviteCode.created_at).toLocaleString('ko-KR')}</span></div>)}
-            {!inviteCodes.length && <p className="invite-code-empty">생성한 회사 코드가 없습니다.</p>}
+            {pagedInviteCodes.map((inviteCode) => <div className="invite-code-row" key={inviteCode.id}><strong>{inviteCode.code}</strong><span>{inviteCode.role}</span><span>{inviteCode.category || '-'}</span><span className={inviteCode.is_used ? 'used' : 'unused'}>{inviteCode.is_used ? '사용 완료' : '미사용'}</span><span>{new Date(inviteCode.created_at).toLocaleString('ko-KR')}</span></div>)}
+            {!pagedInviteCodes.length && <p className="invite-code-empty">조건에 맞는 회사 코드가 없습니다.</p>}
+            <div className="invite-code-pagination"><span>총 {inviteCodes.length}건</span><div><button type="button" disabled={currentCodePage === 1} onClick={() => setCodePage((page) => Math.max(1, page - 1))}>이전</button><strong>{currentCodePage} / {codePageCount}</strong><button type="button" disabled={currentCodePage === codePageCount} onClick={() => setCodePage((page) => Math.min(codePageCount, page + 1))}>다음</button></div></div>
           </div>
         )}
       </section>

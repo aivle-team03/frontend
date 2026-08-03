@@ -1,145 +1,131 @@
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded'
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded'
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
-import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined'
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
+import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined'
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { clearAuthSession } from '../api/authInterceptor.js'
 import '../styles/MyPage.css'
 
-const NOTIFICATION_SETTINGS_STORAGE_KEY = 'boss-notification-settings'
-const defaultNotificationSettings = {
-  risk: true,
-  schedule: true,
-  completion: false,
-}
-
-function getStoredNotificationSettings() {
-  try {
-    const storedValue = window.localStorage.getItem(NOTIFICATION_SETTINGS_STORAGE_KEY)
-    const parsedValue = storedValue ? JSON.parse(storedValue) : {}
-    return { ...defaultNotificationSettings, ...parsedValue }
-  } catch {
-    return defaultNotificationSettings
-  }
-}
+const API_BASE_URL = 'http://127.0.0.1:8000'
 
 function MyPage() {
-  const [user, setUser] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [draftProfile, setDraftProfile] = useState(() => ({ name: user.name, email: user.email }))
-  const [isEditingProfile, setIsEditingProfile] = useState(false)
-  const [profileError, setProfileError] = useState({})
-  const [profileSaved, setProfileSaved] = useState(false)
-  const [notificationSettings, setNotificationSettings] = useState(getStoredNotificationSettings)
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('password')
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState('')
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [withdrawalPassword, setWithdrawalPassword] = useState('')
+  const [isWithdrawalAcknowledged, setIsWithdrawalAcknowledged] = useState(false)
+  const [withdrawalError, setWithdrawalError] = useState('')
+  const [isWithdrawing, setIsWithdrawing] = useState(false)
+  const [withdrawalComplete, setWithdrawalComplete] = useState(false)
 
   useEffect(() => {
-    fetchMyProfile();
-  }, []);
-
-  const fetchMyProfile = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-
-      const response = await axios.get('http://127.0.0.1:8000/api/users/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      const userData = response.data;
-
-      const formattedUser = {
-        name: userData.name || userData.user_id || '관리자',
-        email: userData.email || '이메일 미등록',
-        role: userData.role || '소방안전 관리자',
-        department: userData.department || '시설관리팀',
-        area: userData.area || 'A동 전체 구역',
-        unreadNotifications: userData.unread_notifications || 0
-      };
-
-      setUser(formattedUser);
-      setDraftProfile({ name: formattedUser.name, email: formattedUser.email });
-    } catch (error) {
-      console.error('내 정보 조회 실패:', error);
-      alert('사용자 정보를 불러오지 못했습니다. 로그인 상태를 확인해주세요.');
-    } finally {
-      setLoading(false);
+    const fetchMyProfile = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/users/me`)
+        const userData = response.data
+        setUser({
+          name: userData.name || userData.user_id || '관리자',
+          email: userData.email || '이메일 미등록',
+          role: userData.role || '안전관리자',
+          department: userData.department || '시설관리팀',
+          area: userData.area || '담당 구역 미지정',
+          unreadNotifications: userData.unread_notifications || 0,
+        })
+      } catch (error) {
+        console.error('사용자 정보 조회 실패:', error)
+        setUser(null)
+      } finally {
+        setLoading(false)
+      }
     }
-  };
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        NOTIFICATION_SETTINGS_STORAGE_KEY,
-        JSON.stringify(notificationSettings),
-      )
-    } catch {
-      // 저장소를 사용할 수 없는 환경에서도 현재 화면에서는 설정이 유지됩니다.
-    }
-  }, [notificationSettings])
+    fetchMyProfile()
+  }, [])
 
-  const toggleNotificationSetting = (setting) => {
-    setNotificationSettings((currentSettings) => ({
-      ...currentSettings,
-      [setting]: !currentSettings[setting],
-    }))
+  const selectTab = (tab) => {
+    setActiveTab(tab)
+    setPasswordError('')
+    setPasswordSuccess('')
+    setWithdrawalError('')
   }
 
-  const startProfileEdit = () => {
-    setDraftProfile({ name: user.name, email: user.email })
-    setProfileError({})
-    setProfileSaved(false)
-    setIsEditingProfile(true)
-  }
-
-  const cancelProfileEdit = () => {
-    setDraftProfile({ name: user.name, email: user.email })
-    setProfileError({})
-    setIsEditingProfile(false)
-  }
-
-  const handleProfileChange = (event) => {
-    const { name, value } = event.target
-    setDraftProfile((currentProfile) => ({ ...currentProfile, [name]: value }))
-    setProfileError((currentError) => ({ ...currentError, [name]: '' }))
-  }
-
-  const saveProfile = (event) => {
+  const handlePasswordChange = async (event) => {
     event.preventDefault()
-    const nextError = {}
-    const trimmedName = draftProfile.name.trim()
-    const trimmedEmail = draftProfile.email.trim()
+    const { currentPassword, newPassword, confirmPassword } = passwordForm
 
-    if (!trimmedName) nextError.name = '이름을 입력해 주세요.'
-    // if (!trimmedEmail) nextError.email = '이메일을 입력해 주세요.'
-    // else if (!/^\S+@\S+\.\S+$/.test(trimmedEmail)) nextError.email = '이메일 형식을 확인해 주세요.'
-
-    if (Object.keys(nextError).length) {
-      setProfileError(nextError)
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('현재 비밀번호와 새 비밀번호를 모두 입력해 주세요.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('새 비밀번호 확인이 일치하지 않습니다.')
+      return
+    }
+    if (currentPassword === newPassword) {
+      setPasswordError('새 비밀번호는 현재 비밀번호와 다르게 설정해 주세요.')
       return
     }
 
-    const nextUser = { ...user, name: trimmedName, email: trimmedEmail }
-    // TODO: 백엔드 연동 시 서버 저장 성공 후 화면 상태를 갱신합니다.
-    setUser(nextUser)
-    setDraftProfile({ name: trimmedName, email: trimmedEmail })
-    setIsEditingProfile(false)
-    setProfileSaved(true)
+    setIsChangingPassword(true)
+    setPasswordError('')
+    setPasswordSuccess('')
+    try {
+      await axios.patch(`${API_BASE_URL}/api/users/me/password`, {
+        old_password: currentPassword,
+        new_password: newPassword,
+      })
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      setPasswordSuccess('비밀번호가 변경되었습니다.')
+    } catch (error) {
+      setPasswordError(error.response?.data?.detail || '비밀번호를 변경하지 못했습니다. 다시 시도해 주세요.')
+    } finally {
+      setIsChangingPassword(false)
+    }
   }
 
-  if (loading) {
-    return <div className="loading-container" style={{ padding: '40px', textAlign: 'center' }}>내 정보를 불러오는 중...</div>;
+  const handleWithdrawal = async (event) => {
+    event.preventDefault()
+    if (!withdrawalPassword) {
+      setWithdrawalError('본인 확인을 위해 현재 비밀번호를 입력해 주세요.')
+      return
+    }
+    if (!isWithdrawalAcknowledged) {
+      setWithdrawalError('탈퇴 안내를 확인했다는 동의가 필요합니다.')
+      return
+    }
+
+    setIsWithdrawing(true)
+    setWithdrawalError('')
+    try {
+      await axios.delete(`${API_BASE_URL}/api/users/me`, { data: { password: withdrawalPassword } })
+      clearAuthSession()
+      setWithdrawalComplete(true)
+      window.setTimeout(() => window.location.replace('/login'), 900)
+    } catch (error) {
+      const status = error.response?.status
+      setWithdrawalError(
+        status === 400
+          ? '현재 비밀번호가 일치하지 않습니다. 다시 확인해 주세요.'
+          : status === 401
+            ? '로그인 정보가 만료되었습니다. 다시 로그인한 뒤 시도해 주세요.'
+            : '회원 탈퇴를 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+      )
+    } finally {
+      setIsWithdrawing(false)
+    }
   }
 
-  if (!user) {
-    return <div className="loading-container" style={{ padding: '40px', textAlign: 'center' }}>사용자 정보를 찾을 수 없습니다.</div>;
-  }
+  if (loading) return <div className="loading-container">내 정보를 불러오는 중…</div>
+  if (!user) return <div className="loading-container">사용자 정보를 불러오지 못했습니다. 로그인 상태를 확인해 주세요.</div>
 
   return (
     <section className="my-page-container" aria-label="마이페이지">
@@ -167,107 +153,148 @@ function MyPage() {
         </div>
       </article>
 
-      <article className="my-page-card profile-settings-card">
-        <div className="my-card-heading profile-settings-heading">
-          <div className="profile-settings-title">
-            <span className="my-card-icon"><AccountCircleRoundedIcon /></span>
-            <div>
-              <h3>내 정보</h3>
-              <p>이름과 이메일 등 계정 기본 정보를 관리합니다.</p>
-            </div>
-          </div>
-          {!isEditingProfile && (
-            <button className="profile-edit-button" type="button" onClick={startProfileEdit}>
-              <EditOutlinedIcon /> 정보 수정
-            </button>
-          )}
+      <article className="account-settings-card">
+        <div className="account-settings-heading">
+          <h3>계정 설정</h3>
+          <p>계정 정보와 보안 설정을 관리할 수 있습니다.</p>
         </div>
 
-        <form className="profile-settings-form" onSubmit={saveProfile}>
-          <div className="profile-form-field">
-            <label htmlFor="profile-name">이름</label>
-            {isEditingProfile ? (
-              <>
-                <input
-                  id="profile-name"
-                  name="name"
-                  type="text"
-                  value={draftProfile.name}
-                  onChange={handleProfileChange}
-                  aria-invalid={Boolean(profileError.name)}
-                  aria-describedby={profileError.name ? 'profile-name-error' : undefined}
-                  autoComplete="name"
-                />
-                {profileError.name && <small id="profile-name-error" className="profile-field-error">{profileError.name}</small>}
-              </>
-            ) : <strong>{user.name}</strong>}
-          </div>
-          <div className="profile-form-field">
-            <label htmlFor="profile-email">이메일</label>
-            {isEditingProfile ? (
-              <>
-                <input
-                  id="profile-email"
-                  name="email"
-                  type="email"
-                  value={draftProfile.email}
-                  onChange={handleProfileChange}
-                  aria-invalid={Boolean(profileError.email)}
-                  aria-describedby={profileError.email ? 'profile-email-error' : undefined}
-                  autoComplete="email"
-                />
-                {profileError.email && <small id="profile-email-error" className="profile-field-error">{profileError.email}</small>}
-              </>
-            ) : <strong>{user.email}</strong>}
-          </div>
-          <div className="profile-form-field profile-readonly-field">
-            <span>소속 / 권한</span>
-            <strong>{user.department} · {user.role}</strong>
-          </div>
-          {isEditingProfile && (
-            <div className="profile-form-actions">
-              <button className="profile-cancel-button" type="button" onClick={cancelProfileEdit}>
-                <CloseRoundedIcon /> 취소
+        <div className="account-settings-tabs" role="tablist" aria-label="계정 설정 메뉴">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'password'}
+            className={activeTab === 'password' ? 'is-active' : ''}
+            onClick={() => selectTab('password')}
+          >
+            비밀번호 변경
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'withdrawal'}
+            className={activeTab === 'withdrawal' ? 'is-active is-danger' : 'is-danger'}
+            onClick={() => selectTab('withdrawal')}
+          >
+            회원탈퇴
+          </button>
+        </div>
+
+        {activeTab === 'password' ? (
+          <section className="account-settings-panel" role="tabpanel" aria-label="비밀번호 변경">
+            <p className="account-settings-guide">안전을 위해 현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다.</p>
+            <form className="account-settings-form" onSubmit={handlePasswordChange}>
+              <label>
+                <span>현재 비밀번호</span>
+                <span className="password-input-wrap">
+                  <LockOutlinedIcon aria-hidden="true" />
+                  <input
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(event) => setPasswordForm((current) => ({ ...current, currentPassword: event.target.value }))}
+                    autoComplete="current-password"
+                    placeholder="현재 비밀번호를 입력하세요"
+                    disabled={isChangingPassword}
+                  />
+                </span>
+              </label>
+              <label>
+                <span>새 비밀번호</span>
+                <span className="password-input-wrap">
+                  <LockOutlinedIcon aria-hidden="true" />
+                  <input
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(event) => setPasswordForm((current) => ({ ...current, newPassword: event.target.value }))}
+                    autoComplete="new-password"
+                    placeholder="새 비밀번호를 입력하세요"
+                    disabled={isChangingPassword}
+                  />
+                </span>
+              </label>
+              <label>
+                <span>새 비밀번호 확인</span>
+                <span className="password-input-wrap">
+                  <LockOutlinedIcon aria-hidden="true" />
+                  <input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(event) => setPasswordForm((current) => ({ ...current, confirmPassword: event.target.value }))}
+                    autoComplete="new-password"
+                    placeholder="새 비밀번호를 한 번 더 입력하세요"
+                    disabled={isChangingPassword}
+                  />
+                </span>
+              </label>
+              {passwordError && <p className="account-settings-message is-error" role="alert">{passwordError}</p>}
+              {passwordSuccess && <p className="account-settings-message is-success" role="status">{passwordSuccess}</p>}
+              <button className="account-settings-submit" type="submit" disabled={isChangingPassword}>
+                {isChangingPassword ? '변경 중…' : '비밀번호 변경'}
               </button>
-              <button className="profile-save-button" type="submit">
-                <SaveOutlinedIcon /> 변경 사항 저장
-              </button>
-            </div>
-          )}
-          {profileSaved && <p className="profile-save-message" role="status">내 정보가 저장되었습니다.</p>}
-        </form>
-      </article>
-
-      <div className="my-page-content-grid">
-        <article className="my-page-card notification-settings-card">
-
-
-          <div className="notification-setting-list">
-          
-          </div>
-        </article>
-
-        <article className="my-page-card recent-work-logs">
-          <div className="my-card-heading">
-            <span className="my-card-icon"><HistoryRoundedIcon /></span>
-            <div>
-              <h3>최근 작업 로그</h3>
-              <p>최근 계정 활동과 안전 조치 내역입니다.</p>
-            </div>
-          </div>
-
-          <div className="work-log-list">
-            <div className="work-log-item">
-              <span className="work-log-marker" />
-              <div>
-                <strong>로그인 성공</strong>
-                <p>마이페이지 접속 완료</p>
-                <small>방금 전</small>
+            </form>
+          </section>
+        ) : (
+          <section className="account-settings-panel withdrawal-panel" role="tabpanel" aria-label="회원탈퇴">
+            {withdrawalComplete ? (
+              <div className="withdrawal-complete">
+                <DeleteForeverOutlinedIcon aria-hidden="true" />
+                <h2>회원 탈퇴가 완료되었습니다.</h2>
+                <p>안전하게 로그아웃 처리한 뒤 로그인 화면으로 이동합니다.</p>
               </div>
-            </div>
-          </div>
-        </article>
-      </div>
+            ) : (
+              <>
+                <div className="withdrawal-tab-notice">
+                  <WarningAmberRoundedIcon aria-hidden="true" />
+                  <div>
+                    <strong>탈퇴 전 확인해 주세요</strong>
+                    <p>회원 탈퇴가 완료되면 계정은 즉시 삭제되며, 같은 계정으로 다시 로그인하거나 복구할 수 없습니다.</p>
+                    <ul>
+                      <li>계정에 저장된 로그인 정보와 개인 설정이 삭제됩니다.</li>
+                      <li>작성한 게시글·보고서·점검 이력 등 업무 기록은 작성자 정보 없이 유지될 수 있습니다.</li>
+                      <li>계속 이용할 계획이라면 탈퇴 대신 비밀번호 변경을 이용해 주세요.</li>
+                    </ul>
+                  </div>
+                </div>
+                <form className="account-settings-form" onSubmit={handleWithdrawal}>
+                  <label>
+                    <span>현재 비밀번호</span>
+                    <span className="password-input-wrap">
+                      <LockOutlinedIcon aria-hidden="true" />
+                      <input
+                        type="password"
+                        value={withdrawalPassword}
+                        onChange={(event) => {
+                          setWithdrawalPassword(event.target.value)
+                          setWithdrawalError('')
+                        }}
+                        autoComplete="current-password"
+                        placeholder="현재 비밀번호를 입력하세요"
+                        disabled={isWithdrawing}
+                      />
+                    </span>
+                  </label>
+                  <label className="withdrawal-acknowledgement">
+                    <input
+                      type="checkbox"
+                      checked={isWithdrawalAcknowledged}
+                      onChange={(event) => {
+                        setIsWithdrawalAcknowledged(event.target.checked)
+                        setWithdrawalError('')
+                      }}
+                      disabled={isWithdrawing}
+                    />
+                    <span>탈퇴 시 계정을 복구할 수 없음을 확인했습니다.</span>
+                  </label>
+                  {withdrawalError && <p className="account-settings-message is-error" role="alert">{withdrawalError}</p>}
+                  <button className="account-settings-submit withdrawal-submit" type="submit" disabled={isWithdrawing}>
+                    {isWithdrawing ? '탈퇴 처리 중…' : '회원 탈퇴'}
+                  </button>
+                </form>
+              </>
+            )}
+          </section>
+        )}
+      </article>
     </section>
   )
 }
