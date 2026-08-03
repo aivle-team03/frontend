@@ -1,6 +1,5 @@
 import axios from 'axios'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import '../styles/checklist.css'
 import {
   getStoredChecklistManagementRecords,
@@ -246,7 +245,6 @@ function getInitialInspectionTasks() {
 }
 
 function ChecklistPage() {
-  const navigate = useNavigate()
   const [inspectionTasks, setInspectionTasks] = useState([])
   const [actionTasks, setActionTasks] = useState([])
   const [taskRefreshKey, setTaskRefreshKey] = useState(0)
@@ -351,9 +349,12 @@ function ChecklistPage() {
         }))
         const mappedActions = actions.map((item) => ({
           id: item.action_history_id, taskKey: createKey('action', item.action_history_id),
-          inspectionRef: item.action_name, text: item.action_name || '조치 항목', location: item.location || '현장 구역',
+          inspectionRef: item.action_name, inspectionLocation: item.location || '현장 구역',
+          text: item.action_name || '조치 항목', location: item.location || '현장 구역',
           date: String(item.created_at || '').slice(0, 10), category: item.category_name || '기타',
+          risk: item.risk_level || '-',
           status: item.action_status || '조치 대기', assignee: item.handler_name || '', content: getActionContent(item),
+          inspectionContent: item.inspection_content || item.inspection_history_content || item.source_content || '',
           completed: item.action_status === '조치 완료', photos: item.image_url ? [{ name: '조치 사진', url: resolveMediaUrl(item.image_url) }] : [],
         }))
         setActionTasks((current) => mappedActions.map((action) => {
@@ -484,7 +485,6 @@ function ChecklistPage() {
         ? { ...task, movedToAction: true, inspectionStatus: '점검 완료', completed: true, inspectorMemo: content }
         : task))
       setActionContent('')
-      navigate('/checklists/management')
       return
     } catch (error) {
       console.error('Action registration failed:', error)
@@ -522,7 +522,6 @@ function ChecklistPage() {
     const managementRecords = getStoredChecklistManagementRecords()
     const remainingRecords = managementRecords.filter((item) => item.id !== managementAction.id)
     saveChecklistManagementRecords([managementAction, ...remainingRecords])
-    navigate('/checklists/management')
     alert('체크리스트 관리에 조치 대기 항목으로 등록되었습니다. 담당자 배정 후 조치 목록에 표시됩니다.')
   }
 
@@ -706,14 +705,13 @@ function ChecklistPage() {
             <div className="action-registration-panel">
               <div className="strength-request-header">
                 <span>ACTION REGISTRATION</span>
-                <h2>조치 등록</h2>
+                <h2>완료/조치 등록</h2>
                 <p>점검 이력에서 조치가 필요한 항목을 선택해 조치 업무로 등록합니다.</p>
               </div>
               <section className="inspection-reference-card">
                 <div><span>이름</span><strong>{currentTask.text}</strong></div><div><span>현장 구역</span><strong>{currentTask.location}</strong></div>
                 <div><span>위험도 카테고리</span><strong>{currentTask.category || '미분류'}</strong></div><div><span>진행 상황</span><strong>{currentTask.inspectionStatus}</strong></div>
                 <div className="is-wide"><span>내용</span><strong>{currentTask.description || '등록된 내용이 없습니다.'}</strong></div>
-                <div className="is-wide"><span>점검자 메모</span><strong>{currentTask.inspectorMemo || '입력된 메모가 없습니다.'}</strong></div>
               </section>
 
               {currentTask.movedToAction ? (
@@ -734,7 +732,7 @@ function ChecklistPage() {
             <div className="action-detail-panel">
               <div className="strength-request-header"><span>ACTION DETAIL</span><h2>조치내용</h2><p>점검 이력이 연결된 조치 업무입니다.</p></div>
               <section className="inspection-reference-card">
-                <div><span>이름</span><strong>{currentTask.inspectionRef}</strong></div><div><span>현장 구역</span><strong>{currentTask.inspectionLocation}</strong></div>
+                <div><span>이름</span><strong>{currentTask.inspectionRef}</strong></div><div><span>위치</span><strong>{currentTask.inspectionLocation || currentTask.location}</strong></div>
                 <div><span>위험도 카테고리</span><strong>{currentTask.category}</strong></div><div><span>위험도</span><strong>{currentTask.risk}</strong></div>
                 <div><span>진행 상황</span><strong>{currentTask.status}</strong></div>
                 <div><span>점검 담당자</span><strong>{currentTask.assignee}</strong></div>
