@@ -389,8 +389,9 @@
 
 /* Balanced registration/generation card and larger course table */
 .education-management-page .video-register-card,
-.education-management-page .ai-video-card {
-  min-height: 620px;
+.education-management-page .ai-video-card,
+.education-management-page .management-course-table-card {
+  min-height: 720px;
 }
 .education-management-page .video-register-card:not(.is-action-hidden),
 .education-management-page .ai-video-card:not(.is-action-hidden) {
@@ -420,6 +421,27 @@
 .education-management-page .ai-video-card .education-select input {
   min-height: 50px;
   font-size: 13px;
+}
+.education-management-page .ai-video-card .generation-request {
+  align-items: start;
+}
+.education-management-page .ai-video-card .generation-request textarea {
+  width: 100%;
+  min-height: 82px;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 12px 14px;
+  border: 1px solid #c8d7e4;
+  border-radius: 9px;
+  color: #2f455d;
+  background: rgba(255,255,255,.78);
+  font: inherit;
+  line-height: 1.45;
+}
+.education-management-page .ai-video-card .generation-request textarea:focus {
+  border-color: #4b8de0;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(75,141,224,.12);
 }
 .education-management-page .upload-dropzone {
   min-height: 88px;

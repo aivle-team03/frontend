@@ -177,6 +177,66 @@
   padding: 22px;
 }
 
+.invite-code-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 0 14px;
+}
+
+.invite-code-filters .company-code-select {
+  width: 172px;
+}
+
+.invite-code-filters .company-code-select > button {
+  min-height: 38px;
+  border-color: #cbd9e8;
+  border-radius: 9px;
+  color: #45627f;
+  background: #f9fcff;
+  font-size: 12px;
+}
+
+.invite-code-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+  color: #6b7f95;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.invite-code-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.invite-code-pagination button {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid #d4e0eb;
+  border-radius: 8px;
+  color: #4f6a86;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.invite-code-pagination button:hover:not(:disabled) {
+  border-color: #a9c6e6;
+  background: #f5f9ff;
+}
+
+.invite-code-pagination button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
 .invite-code-head,
 .invite-code-row {
   display: grid;
@@ -246,7 +306,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 18px 0 12px;
+  padding: 0 8px 0 12px;
   border: 1px solid #d7e0eb;
   border-radius: 8px;
   color: #243247;
