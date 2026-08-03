@@ -209,6 +209,25 @@ function ActionHistoryPage() {
     }
   }
 
+  const openApprovalReview = async (record) => {
+    setSelectedRecord(record)
+    setRejectReason('')
+
+    try {
+      const token = localStorage.getItem("token")
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const response = await axios.get(`http://127.0.0.1:8000/api/action-histories/${record.id}`, { headers })
+
+      setSelectedRecord((current) => (
+        current?.id === record.id
+          ? { ...current, content: response.data?.content ?? '' }
+          : current
+      ))
+    } catch (error) {
+      console.error('조치 승인 검토 상세 내용 조회 실패:', error)
+    }
+  }
+
   const filteredRecords = useMemo(() => records.filter((record) => {
     if (!record.completedAt || record.completedAt === '-') return true;
     const recordDate = new Date(record.completedAt.replace(' ', 'T'))
@@ -466,8 +485,7 @@ function ActionHistoryPage() {
                                 type="button"
                                 onClick={(event) => {
                                   event.stopPropagation();
-                                  setSelectedRecord(record);
-                                  setRejectReason('');
+                                  openApprovalReview(record);
                                 }}
                               >
                                 승인 검토
@@ -642,7 +660,7 @@ function ActionHistoryPage() {
                     <div className="detail-item">
                       <span className="detail-label">내용</span>
                       <p className="detail-value text-desc">
-                        {selectedRecord.type}
+                        {selectedRecord.content ?? ''}
                       </p>
                     </div>
                   </div>
