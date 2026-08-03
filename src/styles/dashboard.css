@@ -245,6 +245,10 @@
   gap: 18px;
 }
 
+.edu-card.compact-card {
+  gap: 8px;
+}
+
 .approval-card
 .risk-card h6,
 .compact-card h6,
@@ -291,6 +295,56 @@
 .event-row:focus-visible {
   outline: 2px solid rgba(47, 100, 183, 0.28);
   outline-offset: -2px;
+}
+
+.recent-events-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 2px 0;
+  color: #8091a4;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.recent-events-pagination > span strong {
+  color: #3974c6;
+  font-size: 13px;
+}
+
+.recent-events-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recent-events-pagination button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid #d8e4ef;
+  border-radius: 8px;
+  color: #4d759f;
+  background: #fff;
+  cursor: pointer;
+}
+
+.recent-events-pagination button:disabled {
+  color: #bdc9d6;
+  background: #f7f9fb;
+  cursor: not-allowed;
+}
+
+.recent-events-pagination button svg {
+  font-size: 20px;
+}
+
+.recent-events-pagination b {
+  min-width: 34px;
+  color: #607995;
+  font-size: 12px;
+  text-align: center;
 }
 
 .event-type-icon {
@@ -505,6 +559,12 @@
   font-size: 10px;
   font-weight: 700;
   line-height: 1.5;
+}
+
+.event-drawer-action {
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 0;
 }
 
 .risk-chart {
@@ -980,6 +1040,7 @@
 .education-completion-chart {
   flex: 0 0 270px;
   margin-top: 4px;
+  margin-bottom: 0;
 }
 
 .education-completion-chart .recharts-legend-wrapper {
@@ -1368,6 +1429,11 @@
   align-items: center;
   margin-top: auto;
   padding-top: 14px;
+}
+
+.edu-card .Page-move-wrapper {
+  margin-top: 0;
+  padding-top: 6px;
 }
 .Page-move-button {
   display: inline-flex;
