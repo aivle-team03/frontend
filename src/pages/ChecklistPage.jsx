@@ -485,6 +485,7 @@ function ChecklistPage() {
         ? { ...task, movedToAction: true, inspectionStatus: '점검 완료', completed: true, inspectorMemo: content }
         : task))
       setActionContent('')
+      alert('담당자 배정으로 이동되었습니다. 담당자 배정 후 조치목록에 표시됩니다.')
       return
     } catch (error) {
       console.error('Action registration failed:', error)
@@ -522,7 +523,7 @@ function ChecklistPage() {
     const managementRecords = getStoredChecklistManagementRecords()
     const remainingRecords = managementRecords.filter((item) => item.id !== managementAction.id)
     saveChecklistManagementRecords([managementAction, ...remainingRecords])
-    alert('체크리스트 관리에 조치 대기 항목으로 등록되었습니다. 담당자 배정 후 조치 목록에 표시됩니다.')
+    alert('담당자 배정으로 이동되었습니다. 담당자 배정 후 조치목록에 표시됩니다.')
   }
 
   const handleActionPhotoChange = (event) => {
