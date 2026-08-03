@@ -56,7 +56,7 @@ function filterEventsBySummary(events, selectedSummaryID) {
     return events.filter((event) => isPendingStatus(event.status))
   }
   if (selectedSummaryID === 'complete') {
-    return events.filter((event) => isCompleteStatus(event.status))
+    return events.filter((event) => event.status === '조치 완료')
   }
   if (selectedSummaryID === 'violation') {
     return events.filter((event) => event.status ===  '점검 완료')

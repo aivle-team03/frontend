@@ -156,7 +156,7 @@ function EducationPieChart({ eduData, userData }) {
       </div>
 
       <Box className="chart-body donut-chart-body education-completion-chart">
-        <ResponsiveContainer width="100%" height={270}>
+        <ResponsiveContainer width="100%" height={320}>
           <BarChart
             data={chartData}
             margin={{
