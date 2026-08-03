@@ -714,3 +714,520 @@
 .mypage-password-modal .btn-v2-approve:hover {
   background: #1d4ed8;
 }
+
+/* Account setting tabs */
+.account-settings-card {
+  overflow: hidden;
+  border: 1px solid #dfe7f2;
+  border-radius: 17px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.account-settings-heading {
+  padding: 24px 28px 18px;
+}
+
+.account-settings-heading h3 {
+  margin: 0;
+  color: #172033;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.account-settings-heading p {
+  margin: 5px 0 0;
+  color: #8a96a8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.account-settings-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 0 28px;
+  border-bottom: 1px solid #dfe5ec;
+}
+
+.account-settings-tabs button {
+  position: relative;
+  min-height: 58px;
+  border: 0;
+  color: #93a0b1;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.account-settings-tabs button::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  background: transparent;
+  content: '';
+}
+
+.account-settings-tabs button.is-active {
+  color: #172033;
+}
+
+.account-settings-tabs button.is-active::after {
+  background: #172033;
+}
+
+.account-settings-tabs button.is-active.is-danger {
+  color: #b4232b;
+}
+
+.account-settings-tabs button.is-active.is-danger::after {
+  background: #c43f49;
+}
+
+.account-settings-panel {
+  width: min(100%, 680px);
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 28px 24px 32px;
+}
+
+.account-settings-guide {
+  margin: 0 0 20px;
+  color: #718096;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.account-settings-form {
+  display: grid;
+  gap: 16px;
+}
+
+.account-settings-form > label:not(.withdrawal-acknowledgement) {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+  color: #435268;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.password-input-wrap {
+  display: flex;
+  min-height: 50px;
+  align-items: center;
+  padding: 0 15px;
+  border: 1px solid #cfd9e6;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.password-input-wrap:focus-within {
+  border-color: #2f64b7;
+  outline: 3px solid rgba(47, 100, 183, 0.14);
+}
+
+.password-input-wrap svg {
+  flex: 0 0 auto;
+  width: 21px;
+  height: 21px;
+  margin-right: 11px;
+  color: #718096;
+}
+
+.account-settings-form .password-input-wrap input[type='password'] {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: #172033;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.account-settings-form .password-input-wrap input[type='password']:focus {
+  outline: 0;
+}
+
+.account-settings-form .password-input-wrap input[type='password']::placeholder {
+  color: #b5c0cf;
+}
+
+.account-settings-message {
+  grid-column: 1 / -1;
+  margin: -3px 0 0;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.account-settings-message.is-error {
+  color: #c43f49;
+}
+
+.account-settings-message.is-success {
+  color: #18794e;
+}
+
+.account-settings-submit {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 12px;
+  padding: 0 17px;
+  border: 1px solid #2f64b7;
+  border-radius: 9px;
+  color: #ffffff;
+  background: #2f64b7;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.account-settings-submit:hover:not(:disabled) {
+  background: #24559e;
+}
+
+.account-settings-submit:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.withdrawal-panel {
+  width: min(100%, 680px);
+}
+
+.withdrawal-tab-notice {
+  display: flex;
+  gap: 11px;
+  margin-bottom: 27px;
+  padding: 18px 19px;
+  border: 1px solid #f4d1d4;
+  border-radius: 10px;
+  color: #89535a;
+  background: #fff8f8;
+}
+
+.withdrawal-tab-notice svg {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: #c43f49;
+}
+
+.withdrawal-tab-notice p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.withdrawal-tab-notice strong {
+  color: #7a3f47;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.withdrawal-tab-notice ul {
+  display: grid;
+  gap: 5px;
+  margin: 12px 0 0;
+  padding-left: 17px;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.withdrawal-acknowledgement {
+  grid-column: 1 / -1;
+  margin-top: 2px;
+}
+
+.withdrawal-submit {
+  border-color: #c43f49;
+  background: #c43f49;
+}
+
+.withdrawal-submit:hover:not(:disabled) {
+  background: #aa303a;
+}
+
+@media (max-width: 640px) {
+  .account-settings-heading,
+  .account-settings-panel {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .account-settings-tabs {
+    padding: 0 12px;
+  }
+
+  .account-settings-tabs button {
+    font-size: 14px;
+  }
+
+  .account-settings-form > label:not(.withdrawal-acknowledgement) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .password-input-wrap {
+    min-height: 52px;
+  }
+
+  .account-settings-form .password-input-wrap input[type='password'] {
+    min-height: 48px;
+    font-size: 14px;
+  }
+}
+
+.account-withdrawal-card {
+  min-height: 0;
+  padding: 22px 26px;
+  border-color: #f4d1d4;
+  background: linear-gradient(135deg, #ffffff, #fff8f8);
+}
+
+.account-withdrawal-heading {
+  justify-content: space-between;
+}
+
+.account-withdrawal-button,
+.withdrawal-cancel-button,
+.withdrawal-confirm-button {
+  min-height: 38px;
+  border-radius: 9px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.account-withdrawal-button {
+  padding: 0 13px;
+  border: 1px solid #e5aab0;
+  color: #b4232b;
+  background: #ffffff;
+}
+
+.account-withdrawal-button:hover {
+  background: #fff0f1;
+}
+
+.account-withdrawal-description {
+  margin: 15px 0 0;
+  color: #6e5560;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.6;
+}
+
+.withdrawal-modal-backdrop {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(3px);
+}
+
+.withdrawal-modal {
+  width: min(480px, 100%);
+  overflow: hidden;
+  border: 1px solid #e6eaf0;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+}
+
+.withdrawal-modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.withdrawal-warning-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  color: #c43f49;
+  background: #fff0f1;
+}
+
+.withdrawal-warning-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.withdrawal-modal h2 {
+  margin: 1px 0 0;
+  color: #202b3d;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.withdrawal-modal-header p {
+  margin: 4px 0 0;
+  color: #788497;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.withdrawal-close-button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin-left: auto;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  color: #6b788c;
+  background: transparent;
+  cursor: pointer;
+}
+
+.withdrawal-close-button:hover {
+  background: #f1f4f8;
+}
+
+.withdrawal-close-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.withdrawal-modal-content {
+  display: grid;
+  gap: 17px;
+  padding: 20px 24px;
+}
+
+.withdrawal-notice-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 13px 16px 13px 31px;
+  border-radius: 10px;
+  color: #5c687a;
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.withdrawal-password-label {
+  display: grid;
+  gap: 7px;
+  color: #38465a;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.withdrawal-password-label input {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #cfd9e6;
+  border-radius: 9px;
+  color: #172033;
+  font: inherit;
+}
+
+.withdrawal-password-label input:focus {
+  border-color: #c43f49;
+  outline: 3px solid rgba(196, 63, 73, 0.13);
+}
+
+.withdrawal-acknowledgement {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #435268;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.withdrawal-acknowledgement input {
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: #c43f49;
+}
+
+.withdrawal-error {
+  margin: -3px 0 0;
+  color: #c43f49;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.withdrawal-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 24px;
+  border-top: 1px solid #edf0f4;
+  background: #fafbfc;
+}
+
+.withdrawal-cancel-button {
+  padding: 0 15px;
+  border: 1px solid #d8e0ea;
+  color: #526176;
+  background: #ffffff;
+}
+
+.withdrawal-confirm-button {
+  padding: 0 15px;
+  border: 1px solid #c43f49;
+  color: #ffffff;
+  background: #c43f49;
+}
+
+.withdrawal-confirm-button:hover:not(:disabled) {
+  background: #aa303a;
+}
+
+.withdrawal-cancel-button:disabled,
+.withdrawal-confirm-button:disabled,
+.withdrawal-close-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.withdrawal-complete {
+  display: grid;
+  justify-items: center;
+  padding: 48px 28px;
+  text-align: center;
+}
+
+.withdrawal-complete svg {
+  width: 42px;
+  height: 42px;
+  margin-bottom: 13px;
+  color: #c43f49;
+}
+
+.withdrawal-complete p {
+  margin: 8px 0 0;
+  color: #718096;
+  font-size: 13px;
+  font-weight: 650;
+}

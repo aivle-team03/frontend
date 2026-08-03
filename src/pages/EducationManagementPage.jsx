@@ -41,7 +41,12 @@ const courseMetrics = [
 ]
 
 const workTypes = ['지게차 작업', '고소 작업', '설비 점검', '화재 예방', '화학물질 취급', '기타']
-const targetGroups = ['전체 임직원', '신규 입사자', '일반 작업자', '특수 작업자', '안전 관리자']
+const targetGroups = ['전체 임직원', '안전관리자', '관제사', '현장관리자', '일반유저']
+const getTodayDate = () => {
+  const now = new Date()
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
+  return localDate.toISOString().slice(0, 10)
+}
 const completionColors = ['#4f75d1', '#2f9b73', '#c48a22', '#df7a32', '#df626c']
 const ALL_EMPLOYEE_CATEGORIES = new Set(['전체', '공통'])
 const targetCompletionColors = {
@@ -121,16 +126,18 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   const [courseForm, setCourseForm] = useState({
     title: '',
     target: targetGroups[0],
-    deadline: '',
+    deadline: getTodayDate(),
     videoUrl: '',
   })
   const [aiForm, setAiForm] = useState({
     workType: workTypes[0],
     equipment: '',
     riskFactor: '',
+    request: '',
   })
   const [materialFile, setMaterialFile] = useState(null)
   const [aiStatus, setAiStatus] = useState('idle')
+  const [aiTaskId, setAiTaskId] = useState(null)
   const [attendanceDetail, setAttendanceDetail] = useState(null)
   const [attendanceList, setAttendanceList] = useState([])
   const [attendanceLoading, setAttendanceLoading] = useState(false)
@@ -138,6 +145,34 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   const [attendeeSearch, setAttendeeSearch] = useState('')
   const videoInputRef = useRef(null)
   const materialInputRef = useRef(null)
+
+  useEffect(() => {
+    if (!aiTaskId) return undefined
+
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+    const pollTaskStatus = async () => {
+      try {
+        const { data } = await axios.get(`${API_BASE_URL}/api/education/veo-generate/${aiTaskId}/status`, { headers })
+        if (data.status === 'COMPLETED') {
+          setAiStatus('complete')
+          setAiTaskId(null)
+          setNotice('AI 교육 영상 생성이 완료되어 교육 목록을 새로고침했습니다.')
+          await fetchAdminEducationData()
+        } else if (data.status === 'FAILED') {
+          setAiStatus('error')
+          setAiTaskId(null)
+          setNotice(`AI 교육 영상 생성에 실패했습니다. ${data.error_message ?? ''}`)
+        }
+      } catch (error) {
+        console.error('AI 교육 영상 작업 상태 조회 실패:', error)
+      }
+    }
+
+    pollTaskStatus()
+    const intervalId = window.setInterval(pollTaskStatus, 5000)
+    return () => window.clearInterval(intervalId)
+  }, [aiTaskId])
 
   const orderedCompletion = [
     ...displayedCompletion.filter((item) => item.label === '전체'),
@@ -262,7 +297,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       sourceName: videoSourceType === 'file' ? videoFile.name : '외부 영상 URL',
       isCustom: true,
     })
-    setCourseForm({ title: '', target: targetGroups[0], deadline: '', videoUrl: '' })
+    setCourseForm({ title: '', target: targetGroups[0], deadline: getTodayDate(), videoUrl: '' })
     setVideoFile(null)
     if (videoInputRef.current) videoInputRef.current.value = ''
     setNotice('교육 영상이 대상자 교육 리스트와 내 교육 리스트에 추가되었습니다.')
@@ -279,29 +314,15 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       setAiStatus('queued')
       const token = localStorage.getItem('token')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await axios.post(`${API_BASE_URL}/api/admin/education/ai-generate`, {
-        work_type: aiForm.workType,
-        equipment: aiForm.equipment.trim(),
-        risk_factor: aiForm.riskFactor.trim(),
-      }, { headers })
+      const formData = new FormData()
+      if (materialFile) formData.append('file', materialFile)
+      else formData.append('text_content', `작업 유형: ${aiForm.workType}\n사용 장비: ${aiForm.equipment.trim()}\n위험 요인: ${aiForm.riskFactor.trim()}`)
+      formData.append('title', `${aiForm.workType} 안전 교육`)
+      formData.append('request', aiForm.request.trim())
+      const response = await axios.post(`${API_BASE_URL}/api/education/veo-generate`, formData, { headers })
+      setAiTaskId(response.data.task_id)
+      setNotice('AI 교육 영상 생성을 시작했습니다. 완료되면 교육 목록에 자동으로 반영됩니다.')
 
-      const generatedCourse = response.data
-      onAddCourse({
-        id: `ai-${generatedCourse.education_id ?? Date.now()}`,
-        contentId: `ai-content-${generatedCourse.education_id ?? Date.now()}`,
-        title: generatedCourse.title,
-        target: '전체 임직원',
-        deadline: '-',
-        status: '대기',
-        progress: 0,
-        duration: 'AI 생성 영상',
-        category: 'AI 생성 교육',
-        videoUrl: generatedCourse.generated_video_url ?? '',
-        isCustom: true,
-      })
-      await fetchAdminEducationData()
-      setNotice(`AI 교육 자료가 생성되었습니다. ${generatedCourse.summary ?? ''}`)
-      setAiStatus('complete')
     } catch (error) {
       console.error('AI 교육 자료 생성 실패:', error)
       setAiStatus('error')
@@ -366,6 +387,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
             <EducationSelect label="작업 유형" value={aiForm.workType} options={workTypes} onChange={(value) => updateAiForm('workType', value)} />
             <label className="education-select"><span>사용 장비</span><input value={aiForm.equipment} onChange={(event) => updateAiForm('equipment', event.target.value)} placeholder="예: 지게차, 안전모, 절단기" /></label>
             <label className="education-select"><span>위험 요인</span><input value={aiForm.riskFactor} onChange={(event) => updateAiForm('riskFactor', event.target.value)} placeholder="예: 충돌, 낙하, 끼임" /></label>
+            <label className="education-select generation-request"><span>추가 생성 요청</span><textarea value={aiForm.request} onChange={(event) => updateAiForm('request', event.target.value)} placeholder="예: 지게차 운전자의 시점으로, 보호구 착용을 강조해 주세요." rows="3" /></label>
             <button className={`upload-dropzone ai-upload${materialFile ? ' has-file' : ''}`} type="button" onClick={() => materialInputRef.current?.click()}>
               <input ref={materialInputRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.hwp,.txt" onChange={(event) => setMaterialFile(event.target.files?.[0] ?? null)} />
               <CloudUploadOutlinedIcon />
