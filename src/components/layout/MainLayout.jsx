@@ -22,7 +22,7 @@ const navigationItems = [
       { path: '/risk-management', label: '위험도 관리', icon: 'risk' },
     ],
   },
-  { path: '/law-qa', label: '법규 Q&A', icon: 'help' },
+  { path: '/law-qa', label: 'AI 비서', icon: 'help' },
   {
     label: '안전 교육', icon: 'education',
     // TODO(auth): Replace this role flag with the authenticated user's permission set from the backend.

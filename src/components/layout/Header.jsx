@@ -7,7 +7,6 @@ import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined'
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined'
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded'
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded'
-import GavelOutlinedIcon from '@mui/icons-material/GavelOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded'
@@ -16,6 +15,7 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined'
 import QueryStatsRoundedIcon from '@mui/icons-material/QueryStatsRounded'
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
+import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
@@ -43,7 +43,7 @@ const pageHeaderMeta = {
   '/checklists/management': { icon: AdminPanelSettingsOutlinedIcon, description: '현장별 체크리스트를 확인하고 담당자를 배정하세요.' },
   '/checklists/inspections': { icon: ChecklistOutlinedIcon, description: '주기적으로 확인해야 할 주요 점검 항목을 한눈에 살펴보세요.' },
   '/actions': { icon: HistoryOutlinedIcon, description: '안전 조치 이력과 처리 상태를 확인하세요.' },
-  '/law-qa': { icon: GavelOutlinedIcon, description: '산업안전 관련 법규와 관리 기준을 확인하세요.' },
+  '/law-qa': { icon: SmartToyOutlinedIcon, description: '점검·조치 및 교육 현황을 자연어로 확인하세요.' },
   '/education': { icon: SchoolOutlinedIcon, description: '현장에 필요한 안전 교육 콘텐츠와 이수 현황을 확인하세요.' },
   '/education-management': { icon: AdminPanelSettingsOutlinedIcon, description: '대상자별 교육 이수 현황을 관리하고 현장 교육 자료를 생성하세요.' },
   '/risk-management': { icon: QueryStatsRoundedIcon, description: '조치 이력을 바탕으로 현장 위험도를 확인하고 관리하세요.' },
