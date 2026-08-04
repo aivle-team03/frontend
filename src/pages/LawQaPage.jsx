@@ -1,7 +1,17 @@
+import AddCommentOutlinedIcon from '@mui/icons-material/AddCommentOutlined'
 import SendIcon from '@mui/icons-material/Send'
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined'
+import axios from 'axios'
 import { useEffect, useRef, useState } from 'react'
+import { AI_API_URL } from '../config/api.js'
 import '../styles/law-qa.css'
+
+const RECOMMENDED_QUESTIONS = [
+  '현재 조치 대기와 조치 완료 건수를 알려줘',
+  '이번 달 점검 이력을 상태별로 알려줘',
+  '우리 회사 전체 교육 현황과 이수율을 알려줘',
+  '미이수 교육 현황을 과정별로 알려줘',
+]
 
 function getCurrentTime() {
   const now = new Date()
@@ -16,33 +26,22 @@ function getCurrentTime() {
 function createInitialMessage() {
   return {
     type: 'bot',
-    text: '안녕하세요. AI 소방안전관리 비서입니다. 시설물 안전 및 관련 법규에 대해 궁금한 점을 질문해 주세요.',
+    text: '안녕하세요. BOSS AI 비서입니다. 무엇을 확인해 드릴까요?',
     time: getCurrentTime(),
   }
 }
 
+function createConversationId() {
+  return crypto.randomUUID()
+}
+
 function LawQaPage() {
   const [messages, setMessages] = useState(() => [createInitialMessage()])
+  const [conversationId, setConversationId] = useState(createConversationId)
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)
 
-  const [recommendedQuestions, setRecommendedQuestions] = useState([])
   const chatEndRef = useRef(null)
-
-  useEffect(() => {
-    const fetchRecommendations = async () => {
-      try {
-        const response = await fetch('http://127.0.0.1:8000/api/chatbot/recommendations');
-        if (response.ok) {
-          const data = await response.json();
-          setRecommendedQuestions(data.questions);
-        }
-      } catch (error) {
-        console.error('추천 질문 로딩 실패:', error);
-      }
-    };
-    fetchRecommendations();
-  }, [])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -50,7 +49,7 @@ function LawQaPage() {
 
   const sendMessage = async (textToSend) => {
     const trimmedText = textToSend.trim()
-    if (!trimmedText) return
+    if (!trimmedText || isTyping) return
 
     setMessages((currentMessages) => [
       ...currentMessages,
@@ -59,40 +58,34 @@ function LawQaPage() {
     setInputValue('')
     setIsTyping(true)
 
-    const historyPayload = messages
-      .filter((_, index) => index > 0) // 첫 인사말 제외
-      .map((msg) => `${msg.type === 'user' ? '사용자' : '챗봇'}: ${msg.text}`)
-
     try {
-      // API 호출
-      const response = await fetch('http://127.0.0.1:8000/api/chatbot/query', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          question_text: trimmedText,
-          history: historyPayload
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-
-        setMessages((currentMessages) => [
-          ...currentMessages,
-          { type: 'bot', text: data.answer, time: getCurrentTime() },
-        ]);
-      } else {
-        throw new Error('API 응답 에러');
+      const response = await axios.post(`${AI_API_URL}/api/agent/query`, {
+        conversation_id: conversationId,
+        user_message: trimmedText,
+      })
+      const answer = response.data?.final_answer?.trim()
+      if (!answer) throw new Error('AI response does not include final_answer')
+      if (response.data?.conversation_id) {
+        setConversationId(response.data.conversation_id)
       }
-    } catch (error) {
-      console.error('챗봇 질의 실패:', error);
 
       setMessages((currentMessages) => [
         ...currentMessages,
-        { type: 'bot', text: '서버와 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.', time: getCurrentTime() },
-      ]);
+        { type: 'bot', text: answer, time: getCurrentTime() },
+      ])
+    } catch (error) {
+      console.error('AI 비서 질의 실패:', error)
+      const status = error.response?.status
+      const errorMessage = status === 403
+        ? '안전관리자 권한이 필요한 기능입니다.'
+        : status === 401
+          ? '로그인 세션이 만료되었습니다. 다시 로그인해 주세요.'
+          : 'AI 서버와 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.'
+
+      setMessages((currentMessages) => [
+        ...currentMessages,
+        { type: 'bot', text: errorMessage, time: getCurrentTime() },
+      ])
     } finally {
       setIsTyping(false)
     }
@@ -104,13 +97,20 @@ function LawQaPage() {
     }
   }
 
+  const startNewConversation = () => {
+    if (isTyping) return
+    setConversationId(createConversationId())
+    setMessages([createInitialMessage()])
+    setInputValue('')
+  }
+
   return (
     <section className="law-qa-page">
       <aside className="law-qa-sidebar">
         <h2>추천 질문</h2>
-        <p>자주 확인하는 법규와 안전관리 기준입니다.</p>
+        <p>자주 확인하는 안전관리 현황입니다.</p>
         <div className="recommend-question-list">
-          {recommendedQuestions.map((question) => (
+          {RECOMMENDED_QUESTIONS.map((question) => (
             <button key={question} type="button" onClick={() => sendMessage(question)}>
               {question}
             </button>
@@ -123,10 +123,20 @@ function LawQaPage() {
           <div className="chat-title-icon">
             <SmartToyOutlinedIcon fontSize="small" />
           </div>
-          <div>
-            <h2>소방안전 법규 Q&A 비서</h2>
-            <p>법규 검색 API 연동이 완료된 화면입니다.</p>
+          <div className="chat-panel-copy">
+            <h2>BOSS AI 비서</h2>
+            <p>점검·조치 및 교육 현황을 확인하세요.</p>
           </div>
+          <button
+            type="button"
+            className="new-conversation-button"
+            aria-label="새 대화"
+            title="새 대화"
+            disabled={isTyping}
+            onClick={startNewConversation}
+          >
+            <AddCommentOutlinedIcon fontSize="small" />
+          </button>
         </div>
 
         <div className="chat-message-list">
@@ -162,12 +172,13 @@ function LawQaPage() {
         <div className="chat-input-area">
           <input
             type="text"
-            placeholder="소방 법규 및 안전 수칙 관련 질문을 입력하세요."
+            placeholder="확인할 안전관리 현황을 입력하세요."
             value={inputValue}
             onChange={(event) => setInputValue(event.target.value)}
             onKeyDown={handleKeyDown}
+            disabled={isTyping}
           />
-          <button type="button" aria-label="질문 전송" onClick={() => sendMessage(inputValue)}>
+          <button type="button" aria-label="질문 전송" disabled={isTyping || !inputValue.trim()} onClick={() => sendMessage(inputValue)}>
             <SendIcon fontSize="small" />
           </button>
         </div>
