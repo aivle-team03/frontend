@@ -1,7 +1,7 @@
 import axios from 'axios'
+import { AI_API_URL, BACKEND_API_URL } from '../config/api.js'
 
-const API_BASE_URL = 'http://127.0.0.1:8000'
-const REFRESH_ENDPOINT = `${API_BASE_URL}/api/auth/refresh`
+const REFRESH_ENDPOINT = `${BACKEND_API_URL}/api/auth/refresh`
 
 let refreshPromise = null
 let interceptorsInstalled = false
@@ -14,8 +14,8 @@ export function clearAuthSession() {
   localStorage.removeItem('user')
 }
 
-function isBackendRequest(url = '') {
-  return url.startsWith(API_BASE_URL) || url.startsWith('/api/')
+function isAuthenticatedRequest(url = '') {
+  return url.startsWith(BACKEND_API_URL) || url.startsWith(AI_API_URL) || url.startsWith('/api/')
 }
 
 function isRefreshRequest(url = '') {
@@ -47,7 +47,7 @@ export function installAuthInterceptors() {
     const url = config.url ?? ''
     const token = localStorage.getItem('token')
 
-    if (token && isBackendRequest(url) && !isRefreshRequest(url)) {
+    if (token && isAuthenticatedRequest(url) && !isRefreshRequest(url)) {
       config.headers ??= {}
       if (!config.headers.Authorization) config.headers.Authorization = `Bearer ${token}`
     }
@@ -62,7 +62,7 @@ export function installAuthInterceptors() {
       const status = error.response?.status
       const url = originalRequest?.url ?? ''
 
-      if (status !== 401 || !originalRequest || originalRequest._retry || originalRequest.skipAuthRefresh || !isBackendRequest(url) || isRefreshRequest(url)) {
+      if (status !== 401 || !originalRequest || originalRequest._retry || originalRequest.skipAuthRefresh || !isAuthenticatedRequest(url) || isRefreshRequest(url)) {
         return Promise.reject(error)
       }
 
