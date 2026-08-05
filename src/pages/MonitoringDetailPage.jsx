@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
@@ -9,14 +9,25 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import '../styles/monitoringdetail.css'
 import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
+import { attachDemoScenario, DEMO_CAMERAS } from '../mocks/demoCctv.js'
+import DetectionAlertDialog from '../components/monitoring/DetectionAlertDialog.jsx'
 
-function StreamViewer({ streamUrl, cameraId }) {
+function StreamViewer({ streamUrl, cameraId, initialTime = 0, onTimeUpdate }) {
   const [hasError, setHasError] = useState(false);
+  const videoRef = useRef(null)
   const youTubeEmbedUrl = getYouTubeEmbedUrl(streamUrl, { autoplay: true })
 
   useEffect(() => {
     setHasError(false);
   }, [streamUrl]);
+
+  useEffect(() => () => {
+    const video = videoRef.current
+    if (!video) return
+    video.pause()
+    video.removeAttribute('src')
+    video.load()
+  }, [])
 
   if (!streamUrl || hasError) {
     return (
@@ -33,12 +44,17 @@ function StreamViewer({ streamUrl, cameraId }) {
 
   return (
     <video
+      ref={videoRef}
       key={streamUrl}
       src={resolveMediaUrl(streamUrl)}
       autoPlay
       loop
       muted
       playsInline
+      onLoadedMetadata={(event) => {
+        if (initialTime > 0) event.currentTarget.currentTime = initialTime
+      }}
+      onTimeUpdate={onTimeUpdate}
       style={{
         width: '100%',
         height: '100%',
@@ -64,14 +80,31 @@ function MonitoringDetailPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const [cameraList, setCameraList] = useState([]);
+  const [cameraList, setCameraList] = useState(DEMO_CAMERAS);
   const [loading, setLoading] = useState(true);
+  const emittedDetectionKeys = useRef(new Set())
+  const [riskCategories, setRiskCategories] = useState([])
+  const [alertQueue, setAlertQueue] = useState([])
+  const [activeAlert, setActiveAlert] = useState(null)
 
   const currentCameraIdFromUrl = searchParams.get('camera');
 
   useEffect(() => {
     fetchCameraList();
   }, []);
+
+  useEffect(() => {
+    axios.get('http://127.0.0.1:8000/api/risk/list', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+      .then((response) => setRiskCategories(Array.isArray(response.data) ? response.data : []))
+      .catch((error) => console.info('위험도 카테고리를 불러오지 못했습니다.', error))
+  }, [])
+
+  useEffect(() => {
+    if (!activeAlert && alertQueue.length) {
+      setActiveAlert(alertQueue[0])
+      setAlertQueue((queue) => queue.slice(1))
+    }
+  }, [activeAlert, alertQueue])
 
   const fetchCameraList = async () => {
     try {
@@ -82,7 +115,7 @@ function MonitoringDetailPage() {
       });
 
       if (response.data && response.data.length > 0) {
-        const formattedList = response.data.map((item, index) => ({
+        const formattedList = response.data.map((item, index) => attachDemoScenario({
           id: item.cctv_id ?? item.camera_id ?? item.id,
           cctv_name: item.cctv_name || item.camera_name || `${index + 1}번 카메라`,
           area: item.area || `${index + 1}구역`,
@@ -90,7 +123,7 @@ function MonitoringDetailPage() {
           status: item.status || '정상',
           streamUrl: item.stream_url || '',
         }));
-        setCameraList(formattedList);
+        setCameraList(formattedList.length ? formattedList : DEMO_CAMERAS);
       }
     } catch (error) {
       console.error('CCTV 상세 목록 조회 실패:', error);
@@ -102,6 +135,29 @@ function MonitoringDetailPage() {
   const activeCamera = cameraList.find(
     (cam) => String(cam.id) === String(currentCameraIdFromUrl)
   ) || cameraList[0] || { id: 1, area: '1구역', location: '위치 미지정', cctv_name: '카메라', streamUrl: '' };
+
+  const handleDemoVideoTimeUpdate = (event) => {
+    if (!activeCamera?.isDemo) return
+    const currentTime = event.currentTarget.currentTime
+    activeCamera.detections.forEach((detection) => {
+      const key = `${activeCamera.id}-${detection.id}`
+      if (currentTime < detection.at || emittedDetectionKeys.current.has(key)) return
+      emittedDetectionKeys.current.add(key)
+      const category = riskCategories.find((item) => item.category_name === detection.categoryName)
+      const now = new Date()
+      const alert = {
+        id: key,
+        time: now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        location: activeCamera.location,
+        streamUrl: activeCamera.streamUrl,
+        videoTime: currentTime,
+        categoryName: category?.category_name ?? detection.categoryName,
+        riskLevel: category?.risk_level ?? '확인 필요',
+        level: category?.level ?? null,
+      }
+      setAlertQueue((queue) => [...queue, alert])
+    })
+  }
 
   if (loading) {
     return <MonitoringDetailLoadingSkeleton />
@@ -133,7 +189,7 @@ function MonitoringDetailPage() {
                 <i />CAM #{activeCamera.id}
               </span>
 
-              <StreamViewer streamUrl={activeCamera.streamUrl} cameraId={activeCamera.id} />
+              <StreamViewer streamUrl={activeCamera.streamUrl} cameraId={activeCamera.id} initialTime={Number(searchParams.get('t') || 0)} onTimeUpdate={handleDemoVideoTimeUpdate} />
 
               <span className="primary-video-time" style={{ zIndex: 2 }}>
                 <AccessTimeRoundedIcon />실시간 스트리밍 중
@@ -202,6 +258,7 @@ function MonitoringDetailPage() {
           </section>
         </aside>
       </div>
+      <DetectionAlertDialog alert={activeAlert} queueCount={alertQueue.length} onClose={() => setActiveAlert(null)} onAssign={() => navigate('/checklists/management')} />
     </section>
   )
 }

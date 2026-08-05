@@ -31,5 +31,7 @@ export function getYouTubeEmbedUrl(mediaUrl, { autoplay = false } = {}) {
 
 export function resolveMediaUrl(mediaUrl) {
   if (!mediaUrl || !mediaUrl.startsWith('/')) return mediaUrl
+  // Vite public 폴더의 데모 영상은 백엔드가 아닌 프론트 서버에서 제공한다.
+  if (mediaUrl.startsWith('/demo-cctv/')) return mediaUrl
   return `${API_BASE_URL}${mediaUrl}`
 }
