@@ -1245,8 +1245,132 @@
   background: #24559e;
 }
 
+.board-modal-submit:disabled {
+  border-color: #c8d4e3;
+  color: #8ea0b5;
+  background: #eef3f8;
+  cursor: not-allowed;
+}
+
 .board-action-modal {
   width: min(560px, 100%);
+}
+
+.board-receive-confirm-modal {
+  width: min(640px, 100%);
+  min-height: 180px;
+}
+
+.board-receive-confirm-modal .board-modal-header {
+  justify-content: flex-start;
+}
+
+.board-receive-confirm-body {
+  flex: 1 1 auto;
+  min-height: 220px;
+  padding: 20px 22px;
+}
+
+.board-risk-category-list {
+  overflow: hidden;
+  border: 1px solid #e1e8f1;
+  border-radius: 10px;
+}
+
+.board-risk-category-head,
+.board-risk-category-row {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr 0.8fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.board-risk-category-head {
+  padding: 11px 14px;
+  color: #64748b;
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.board-risk-category-row {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 0;
+  border-top: 1px solid #e8eef5;
+  color: #475569;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+}
+
+.board-risk-category-row:hover {
+  background: #f5f9ff;
+}
+
+.board-risk-category-row.is-selected {
+  background: #edf4ff;
+  box-shadow: inset 3px 0 0 #2f64b7;
+}
+
+.board-risk-category-row strong {
+  color: #1f3d63;
+}
+
+.board-risk-category-row em {
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  color: #2f64b7;
+  background: #eaf2ff;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.board-risk-category-empty {
+  margin: 0;
+  padding: 48px 0;
+  color: #8a98aa;
+  text-align: center;
+  font-weight: 800;
+}
+
+.board-risk-category-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.board-risk-category-pagination button {
+  min-width: 54px;
+  min-height: 30px;
+  border: 1px solid #d8e4ef;
+  border-radius: 8px;
+  color: #4d759f;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.board-risk-category-pagination button:disabled {
+  color: #b7c4d2;
+  background: #f7f9fb;
+  cursor: not-allowed;
+}
+
+.board-receive-confirm-actions {
+  padding: 16px 22px 20px;
+  border-top: 1px solid #e7edf5;
 }
 
 .board-action-form {
