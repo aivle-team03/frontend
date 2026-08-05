@@ -799,6 +799,119 @@
   background: #3974c6;
 }
 
+.checklist-create-form > label:nth-of-type(3) {
+  display: none;
+}
+
+.action-risk-picker {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.action-risk-picker > span {
+  color: #60758d;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.action-risk-picker > div {
+  display: grid;
+  grid-column: 1 / -1;
+  border: 1px solid #dce6f2;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.action-risk-picker button {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid #edf2f6;
+  color: #526176;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+}
+
+.action-risk-picker button:last-of-type {
+  border-bottom: 0;
+}
+
+.action-risk-picker button:hover,
+.action-risk-picker button.is-selected {
+  background: #edf4ff;
+}
+
+.action-risk-picker button strong {
+  color: #284766;
+}
+
+.action-risk-picker button em {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #2f64b7;
+  background: #eaf2ff;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.action-risk-picker p {
+  margin: 0;
+  padding: 28px;
+  color: #8a98aa;
+  text-align: center;
+  font-weight: 800;
+}
+
+.action-risk-pagination {
+  display: flex;
+  grid-column: 2;
+  grid-row: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.action-risk-pagination button {
+  min-height: 32px;
+  padding: 0 13px;
+  border: 1px solid #d8e4ef;
+  border-radius: 8px;
+  color: #4d759f;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.action-risk-pagination button:hover:not(:disabled) {
+  color: #fff;
+  border-color: #3974c6;
+  background: #3974c6;
+}
+
+.action-risk-pagination button:disabled {
+  color: #bdc9d6;
+  background: #f7f9fb;
+  cursor: not-allowed;
+}
+
+.action-risk-pagination strong {
+  min-width: 42px;
+  color: #607995;
+  font-size: 12px;
+  text-align: center;
+}
+
 .checklist-management-page .management-search { flex: 0 1 355px; }.checklist-management-page .filter-reset { display: inline-flex; align-items: center; gap: 4px; }.checklist-management-page .filter-reset svg { font-size: 16px; }.checklist-pagination { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-top: 1px solid #e8eef4; color: #8091a4; background: #fff; font-size: 12px; font-weight: 750; }.checklist-pagination > span strong { color: #3974c6; font-size: 14px; }.checklist-pagination > div { display: flex; align-items: center; gap: 10px; }.checklist-pagination button { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid #d8e4ef; border-radius: 10px; color: #4d759f; background: #fff; cursor: pointer; }.checklist-pagination button:hover:not(:disabled) { color: #fff; border-color: #3974c6; background: #3974c6; }.checklist-pagination button:disabled { color: #bdc9d6; background: #f7f9fb; cursor: not-allowed; }.checklist-pagination button svg { font-size: 22px; }.checklist-pagination b { min-width: 34px; color: #607995; font-size: 12px; text-align: center; }
 
 /* Compact title-to-filter spacing and a conventional select affordance. */

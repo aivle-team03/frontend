@@ -330,12 +330,41 @@ function AssignmentModal({ mode, count, members, query, onQueryChange, onAssign,
 function CreateModal({ initialType, onClose, onCreate }) {
   const isInspection = initialType === 'inspection'
   const [form, setForm] = useState({ name:'', location:'', content:'', category:CATEGORY[0], cycle:'매일', dateTime:`${getDateKey()}T09:00` })
+  const [riskCategories, setRiskCategories] = useState([])
+  const [selectedEventCategoryId, setSelectedEventCategoryId] = useState('')
+  const [riskPage, setRiskPage] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const riskPageSize = 4
+  const selectedRiskCategory = useMemo(
+    () => riskCategories.find((item) => Number(item.category_id) === Number(selectedEventCategoryId)),
+    [riskCategories, selectedEventCategoryId],
+  )
+  const riskTotalPages = Math.max(1, Math.ceil(riskCategories.length / riskPageSize))
+  const visibleRiskCategories = riskCategories.slice((riskPage - 1) * riskPageSize, riskPage * riskPageSize)
+  useEffect(() => {
+    let ignore = false
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+    axios.get(`${API_BASE_URL}/api/risk/list`, { headers })
+      .then((response) => {
+        if (ignore) return
+        const items = Array.isArray(response.data)
+          ? response.data
+          : (response.data?.items ?? response.data?.data ?? response.data?.risks ?? [])
+        setRiskCategories(items)
+        setRiskPage(1)
+        setSelectedEventCategoryId((current) => current || items[0]?.category_id || '')
+      })
+      .catch((error) => {
+        console.error('위험요인 목록 조회 실패:', error.response?.data ?? error)
+      })
+    return () => { ignore = true }
+  }, [])
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }))
   const submit = async (event) => {
     event.preventDefault()
     if (isSubmitting) return
-    if (!form.name.trim() || !form.content.trim() || !form.location.trim()) {
+    if (!form.name.trim() || !form.content.trim() || !form.location.trim() || !selectedEventCategoryId) {
       alert('필수 입력 항목을 입력해 주세요.')
       return
     }
@@ -353,7 +382,7 @@ function CreateModal({ initialType, onClose, onCreate }) {
           hasSameName(item)
           && item.location === form.location.trim()
           && item.cycle === form.cycle
-          && Number(item.category_id) === Number(CATEGORY_ID_BY_NAME[form.category] ?? 4)
+          && Number(item.category_id) === Number(selectedEventCategoryId)
         )
         if (beforeInspectionList.some(hasSameName)) {
           alert('같은 이름의 점검 항목이 이미 등록되어 있습니다.')
@@ -371,7 +400,7 @@ function CreateModal({ initialType, onClose, onCreate }) {
             location: form.location.trim(),
             cycle: form.cycle,
             content: form.content.trim(),
-            category_id: CATEGORY_ID_BY_NAME[form.category] ?? 4,
+            category_id: Number(selectedEventCategoryId),
           }, { headers })
           const inspectionBody = inspectionResponse.data?.data ?? inspectionResponse.data?.item ?? inspectionResponse.data
           inspectionId = inspectionBody?.inspection_id ?? inspectionBody?.id
@@ -418,7 +447,8 @@ function CreateModal({ initialType, onClose, onCreate }) {
           source_type: '직접추가',
           source_id: null,
           action_name: form.name.trim(),
-          category_id: CATEGORY_ID_BY_NAME[form.category] ?? 4,
+          category: Number(selectedEventCategoryId),
+          category_id: Number(selectedEventCategoryId),
           location: form.location.trim(),
           content: form.content?.trim() || null,
           }, { headers })
@@ -434,14 +464,16 @@ function CreateModal({ initialType, onClose, onCreate }) {
       type: initialType,
       cycle: isInspection ? form.cycle : null,
       name: form.name.trim(),
+      category: selectedRiskCategory?.category || null,
       location: form.location.trim(),
       inspectionAssignee:'',
       actionAssignee:'',
+      actionType: isInspection ? undefined : selectedRiskCategory?.category || '',
       progress: isInspection ? '점검 대기' : '조치 대기',
     })
     setIsSubmitting(false)
   }
-  return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ITEM CREATE</span><h3>{isInspection ? '점검 항목 추가' : '조치 항목 추가'}</h3><p>전체 체크리스트에 새 항목을 등록합니다.</p></div><button type="button" onClick={onClose} disabled={isSubmitting}>×</button></header><form className="checklist-create-form" onSubmit={submit}><label className="is-wide"><span>{isInspection ? '점검 이름' : '조치 이름'}<b className="required-mark">*</b></span><input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={isInspection ? '예: 비상구 피난 통로 점검' : '예: 소화기 압력 게이지 교체'} disabled={isSubmitting} /></label><label className="is-wide"><span>{isInspection ? '점검 내용' : '조치 내용'}<b className="required-mark">*</b></span><textarea value={form.content} onChange={(event) => update('content', event.target.value)} placeholder={isInspection ? '점검 시 확인할 기준이나 내용을 입력하세요' : '조치 시 확인할 기준이나 내용을 입력하세요'} rows="4" disabled={isSubmitting} /></label><label><span>분류</span><select value={form.category} onChange={(event) => update('category', event.target.value)} disabled={isSubmitting}>{CATEGORY.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>{isInspection && <label><span>점검 주기</span><select value={form.cycle} onChange={(event) => update('cycle', event.target.value)} disabled={isSubmitting}><option>매일</option><option>매주</option><option>매월</option></select></label>}<label className="is-wide"><span>적용 구역<b className="required-mark">*</b></span><input value={form.location} onChange={(event) => update('location', event.target.value)} placeholder="여러 구역은 쉼표(,)로 구분하세요" disabled={isSubmitting} /></label>{isInspection && <label><span>일시</span><input type="datetime-local" value={form.dateTime} onChange={(event) => update('dateTime', event.target.value)} disabled={isSubmitting} /></label>}<footer><span>{isSubmitting ? '등록 중입니다.' : (isInspection ? '점검 대기 상태로 등록됩니다.' : '조치 대기 상태로 등록됩니다.')}</span><div><button type="button" onClick={onClose} disabled={isSubmitting}>취소</button><button type="submit" disabled={isSubmitting}>{isSubmitting ? '등록 중...' : '등록'}</button></div></footer></form></section></div>
+  return <div className="assignment-modal-backdrop" onMouseDown={onClose}><section className="assignment-modal checklist-create-modal" onMouseDown={(event) => event.stopPropagation()}><header><div><span>ITEM CREATE</span><h3>{isInspection ? '점검 항목 추가' : '조치 항목 추가'}</h3><p>전체 체크리스트에 새 항목을 등록합니다.</p></div><button type="button" onClick={onClose} disabled={isSubmitting}>×</button></header><form className={`checklist-create-form${isInspection ? '' : ' is-action-create'}`} onSubmit={submit}><section className="action-risk-picker is-wide"><span>위험요인<b className="required-mark">*</b></span><div>{visibleRiskCategories.map((item) => <button className={Number(selectedEventCategoryId) === Number(item.category_id) ? 'is-selected' : ''} type="button" key={item.category_id} onClick={() => setSelectedEventCategoryId(item.category_id)} disabled={isSubmitting}><span>{item.category}</span><strong>{item.category_name}</strong><em>{item.risk_level}</em></button>)}{!riskCategories.length && <p>위험요인 목록이 없습니다.</p>}</div>{riskCategories.length > riskPageSize && <nav className="action-risk-pagination" aria-label="위험요인 페이지"><button type="button" onClick={() => setRiskPage((page) => Math.max(1, page - 1))} disabled={isSubmitting || riskPage === 1}>이전</button><strong>{riskPage} / {riskTotalPages}</strong><button type="button" onClick={() => setRiskPage((page) => Math.min(riskTotalPages, page + 1))} disabled={isSubmitting || riskPage === riskTotalPages}>다음</button></nav>}</section><label className="is-wide"><span>{isInspection ? '점검 이름' : '조치 이름'}<b className="required-mark">*</b></span><input value={form.name} onChange={(event) => update('name', event.target.value)} placeholder={isInspection ? '예: 비상구 피난 통로 점검' : '예: 소화기 압력 게이지 교체'} disabled={isSubmitting} /></label><label className="is-wide"><span>{isInspection ? '점검 내용' : '조치 내용'}<b className="required-mark">*</b></span><textarea value={form.content} onChange={(event) => update('content', event.target.value)} placeholder={isInspection ? '점검 시 확인할 기준이나 내용을 입력하세요' : '조치 시 확인할 기준이나 내용을 입력하세요'} rows="4" disabled={isSubmitting} /></label><label><span>분류</span><select value={form.category} onChange={(event) => update('category', event.target.value)} disabled={isSubmitting}>{CATEGORY.map((category) => <option key={category} value={category}>{category}</option>)}</select></label>{isInspection && <label><span>점검 주기</span><select value={form.cycle} onChange={(event) => update('cycle', event.target.value)} disabled={isSubmitting}><option>매일</option><option>매주</option><option>매월</option></select></label>}<label className="is-wide"><span>적용 구역<b className="required-mark">*</b></span><input value={form.location} onChange={(event) => update('location', event.target.value)} placeholder="여러 구역은 쉼표(,)로 구분하세요" disabled={isSubmitting} /></label>{isInspection && <label><span>일시</span><input type="datetime-local" value={form.dateTime} onChange={(event) => update('dateTime', event.target.value)} disabled={isSubmitting} /></label>}<footer><span>{isSubmitting ? '등록 중입니다.' : (isInspection ? '점검 대기 상태로 등록됩니다.' : '조치 대기 상태로 등록됩니다.')}</span><div><button type="button" onClick={onClose} disabled={isSubmitting}>취소</button><button type="submit" disabled={isSubmitting}>{isSubmitting ? '등록 중...' : '등록'}</button></div></footer></form></section></div>
 }
 export default ChecklistManagementPage
 
