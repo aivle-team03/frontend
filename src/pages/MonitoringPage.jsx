@@ -15,7 +15,7 @@ import { attachDemoScenario, DEMO_CAMERAS } from '../mocks/demoCctv.js'
 import styles from '../styles/CCTVMonitoring.module.css'
 import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
 
-function StreamViewer({ streamUrl, cameraId, onTimeUpdate, demoRun }) {
+function StreamViewer({ streamUrl, aiStreamUrl, cameraId, onTimeUpdate, demoRun, waitingForAiStart = false }) {
   const [hasError, setHasError] = useState(false)
   const videoRef = useRef(null)
   const youTubeEmbedUrl = getYouTubeEmbedUrl(streamUrl, { autoplay: true })
@@ -29,11 +29,17 @@ function StreamViewer({ streamUrl, cameraId, onTimeUpdate, demoRun }) {
     video.load()
   }, [])
 
+  if (waitingForAiStart) {
+    return <span className={styles.cameraPlaceholder}><VideocamOutlinedIcon /><small>AI 분석 시작 중...</small></span>
+  }
   if (!streamUrl || hasError) {
     return <span className={styles.cameraPlaceholder}><VideocamOutlinedIcon /><small>{hasError ? '영상 로드 실패' : '연결 중...'}</small></span>
   }
   if (youTubeEmbedUrl) {
     return <iframe key={youTubeEmbedUrl} src={youTubeEmbedUrl} title={`CAM #${cameraId} YouTube 영상`} allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ width: '100%', height: '100%', border: 0, display: 'block' }} />
+  }
+  if (aiStreamUrl) {
+    return <img src={aiStreamUrl} alt={`CAM #${cameraId} AI 분석 스트림`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={() => setHasError(true)} />
   }
   return <video ref={videoRef} key={`${streamUrl}-${demoRun}`} src={resolveMediaUrl(streamUrl)} autoPlay loop muted playsInline onTimeUpdate={onTimeUpdate} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={() => setHasError(true)} />
 }
@@ -49,7 +55,10 @@ function MonitoringPage() {
   const [activeAlert, setActiveAlert] = useState(null)
   const [demoRun, setDemoRun] = useState(0)
   const [riskCategories, setRiskCategories] = useState([])
+  const [aiSessionReady, setAiSessionReady] = useState(false)
+  const [aiSessionId, setAiSessionId] = useState(0)
   const playbackTimes = useRef({})
+  const lastAiEventId = useRef(0)
 
   // DB에 CCTV가 등록되어 있으면 DB 목록을 사용하고, 서버가 꺼진 데모 상황에서만 기본 3대를 표시한다.
   const cameras = useMemo(() => serverCameras.length ? serverCameras : DEMO_CAMERAS, [serverCameras])
@@ -87,6 +96,69 @@ function MonitoringPage() {
     }
     loadMonitoringData()
   }, [])
+
+  useEffect(() => {
+    // AI worker is independent from the browser. Start every monitoring visit from frame 0.
+    const startFreshAiSession = async () => {
+      setAiSessionReady(false)
+      try {
+        const response = await axios.post('http://127.0.0.1:8001/reset')
+        lastAiEventId.current = 0
+        if (response.data?.ready !== false) {
+          setAiSessionId(Date.now())
+          setAiSessionReady(true)
+        }
+      } catch {
+        // The page still supports the local fallback when the AI server is stopped.
+      }
+    }
+    startFreshAiSession()
+  }, [])
+
+  useEffect(() => {
+    if (!aiSessionReady) return undefined
+    const pollAiEvents = async () => {
+      try {
+        const response = await axios.get(`http://127.0.0.1:8001/events?after=${lastAiEventId.current}`)
+        for (const aiEvent of response.data?.events || []) {
+          lastAiEventId.current = Math.max(lastAiEventId.current, aiEvent.id)
+          const camera = cameras.find((item) => item.aiCameraId === aiEvent.cameraId)
+          if (!camera) continue
+          const category = riskCategories.find((item) => item.category_name === aiEvent.categoryName)
+          const key = `ai-${aiEvent.id}`
+          if (emittedDetectionKeys.current.has(key)) continue
+          emittedDetectionKeys.current.add(key)
+          const event = {
+            id: key,
+            time: aiEvent.detectedAt?.replace('T', ' ') || new Date().toLocaleTimeString('ko-KR'),
+            location: camera.location,
+            type: aiEvent.categoryName,
+            status: '조치 대기',
+            manager: '미배정',
+            cameraId: camera.id,
+            streamUrl: camera.streamUrl,
+            aiStreamUrl: camera.aiStreamUrl,
+            // The AI process restarts its numeric event IDs.  Add the detection
+            // time so a browser never reuses an old snapshot with the same ID.
+            snapshotUrl: aiEvent.snapshotDataUrl || (aiEvent.snapshotUrl ? `http://127.0.0.1:8001${aiEvent.snapshotUrl}?detectedAt=${encodeURIComponent(aiEvent.detectedAt || Date.now())}` : ''),
+            videoTime: aiEvent.sourceTime,
+            categoryName: category?.category_name ?? aiEvent.categoryName,
+            riskLevel: category?.risk_level ?? '확인 필요',
+            level: category?.level ?? null,
+            isDemo: false,
+          }
+          setDemoEvents((current) => [event, ...current])
+          setSelectedEvent(event)
+          setAlertQueue((queue) => [...queue, event])
+        }
+      } catch {
+        // AI server is optional until the local inference process is started.
+      }
+    }
+    pollAiEvents()
+    const intervalId = window.setInterval(pollAiEvents, 1000)
+    return () => window.clearInterval(intervalId)
+  }, [aiSessionReady, cameras, riskCategories])
 
   useEffect(() => {
     const loadRiskCategories = async () => {
@@ -138,7 +210,7 @@ function MonitoringPage() {
   }
 
   const handleVideoTimeUpdate = (camera, event) => {
-    if (!camera.isDemo) return
+    if (!camera.isDemo || camera.aiStreamUrl) return
     const currentTime = event.currentTarget.currentTime
     playbackTimes.current[camera.id] = currentTime
     camera.detections.forEach((detection) => {
@@ -146,19 +218,30 @@ function MonitoringPage() {
     })
   }
 
-  const restartDemo = () => {
+  const restartDemo = async () => {
     emittedDetectionKeys.current.clear()
+    lastAiEventId.current = 0
     setDemoEvents([])
     setSelectedEvent(null)
     setAlertQueue([])
     setActiveAlert(null)
     setDemoRun((run) => run + 1)
+    setAiSessionReady(false)
+    try {
+      const response = await axios.post('http://127.0.0.1:8001/reset')
+      if (response.data?.ready !== false) {
+        setAiSessionId(Date.now())
+        setAiSessionReady(true)
+      }
+    } catch {
+      // The fallback video demo can still be restarted when the AI server is off.
+    }
   }
 
   return (
     <section className={styles.dashboardFrame} aria-label="BOSS CCTV 모니터링 작업 공간">
       <div className={styles.monitoringOverview}>
-        <div><span className={styles.overviewIcon}><SensorsRoundedIcon /></span><div><strong>데모 CCTV AI 감지 모니터링</strong><p>테스트 영상 3개가 반복 재생되며, 감지 알림은 데모 실행당 한 번만 발생합니다.</p></div></div>
+        <div><span className={styles.overviewIcon}><SensorsRoundedIcon /></span><div><strong>CCTV AI 감지 모니터링</strong><p>현장 CCTV와 실시간 감지 상태를 확인하세요.</p></div></div>
         <div className={styles.overviewStats}><span><i />온라인 <strong>{cameras.filter((camera) => camera.status === '정상' || camera.status === 'running').length}</strong></span><span>감지 이벤트 <strong>{demoEvents.length}</strong></span></div>
       </div>
 
@@ -166,7 +249,7 @@ function MonitoringPage() {
         <div className={styles.cctvSection}>
           <section className={styles.cctvmonitoringSection}>
             <header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><span className={styles.sectionIcon}><GridViewRoundedIcon /></span><div><h2 className={styles.title}>실시간 CCTV</h2><p>화재 테스트 2대와 지게차·보행자 거리 테스트 1대입니다.</p></div></div><div className={styles.headerActions}><button className={styles.panelAction} type="button" onClick={restartDemo}><ReplayRoundedIcon />데모 재시작</button></div></header>
-            <div className={styles.videodashBoard}>{cameras.map((camera) => <button className={styles.video} onClick={() => navigate(`/monitoringdetail?camera=${camera.id}${camera.isDemo ? `&t=${Math.floor(playbackTimes.current[camera.id] || 0)}` : ''}`)} key={camera.id} type="button" aria-label={`${camera.area} 영상 상세 보기`}><span className={styles.cameraTopbar}><span className={styles.cameraLive}><i />LIVE</span><span>{camera.isDemo ? 'DEMO' : `CAM ${camera.id}`}</span></span><StreamViewer streamUrl={camera.streamUrl} cameraId={camera.id} demoRun={camera.isDemo ? demoRun : 0} onTimeUpdate={(event) => handleVideoTimeUpdate(camera, event)} /><span className={styles.cameraFooter}><span><strong>{camera.name || camera.area}</strong>{camera.location}</span>{camera.isDemo && <em>AI TEST</em>}</span></button>)}</div>
+            <div className={styles.videodashBoard}>{cameras.map((camera) => <button className={styles.video} onClick={() => navigate(`/monitoringdetail?camera=${camera.id}${camera.isDemo ? `&t=${Math.floor(playbackTimes.current[camera.id] || 0)}` : ''}`)} key={camera.id} type="button" aria-label={`${camera.area} 영상 상세 보기`}><span className={styles.cameraTopbar}><span className={styles.cameraLive}><i />LIVE</span>{!camera.isDemo && <span>CAM {camera.id}</span>}</span><StreamViewer streamUrl={camera.streamUrl} aiStreamUrl={camera.aiStreamUrl ? `${camera.aiStreamUrl}?session=${aiSessionId}` : ''} cameraId={camera.id} demoRun={camera.isDemo ? demoRun : 0} waitingForAiStart={Boolean(camera.aiStreamUrl) && !aiSessionReady} onTimeUpdate={(event) => handleVideoTimeUpdate(camera, event)} /><span className={styles.cameraFooter}><span><strong>{camera.name || camera.area}</strong>{camera.location}</span></span></button>)}</div>
           </section>
         </div>
 

@@ -17,7 +17,11 @@ function DetectionAlertDialog({ alert, queueCount, onClose, onAssign }) {
       <DialogContent dividers>
         <div className={styles.detectionDialogBody}>
           <section className={styles.detectionDialogVideo}>
-            {alert?.streamUrl && <video src={resolveMediaUrl(alert.streamUrl)} autoPlay loop muted playsInline controls onLoadedMetadata={(event) => { if (alert.videoTime > 0) event.currentTarget.currentTime = alert.videoTime }} />}
+            {alert?.snapshotUrl
+              ? <img src={alert.snapshotUrl} alt="AI 감지 스냅샷" />
+              : alert?.aiStreamUrl
+              ? <img src={alert.aiStreamUrl} alt="AI 분석 스트림" />
+              : alert?.streamUrl && <video src={resolveMediaUrl(alert.streamUrl)} autoPlay loop muted playsInline controls onLoadedMetadata={(event) => { if (alert.videoTime > 0) event.currentTarget.currentTime = alert.videoTime }} />}
             <span className={styles.modalLiveBadge}><i />LIVE</span>
           </section>
           <section className={styles.detectionDialogInfo}>

@@ -12,7 +12,7 @@ import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
 import { attachDemoScenario, DEMO_CAMERAS } from '../mocks/demoCctv.js'
 import DetectionAlertDialog from '../components/monitoring/DetectionAlertDialog.jsx'
 
-function StreamViewer({ streamUrl, cameraId, initialTime = 0, onTimeUpdate }) {
+function StreamViewer({ streamUrl, aiStreamUrl, cameraId, initialTime = 0, onTimeUpdate }) {
   const [hasError, setHasError] = useState(false);
   const videoRef = useRef(null)
   const youTubeEmbedUrl = getYouTubeEmbedUrl(streamUrl, { autoplay: true })
@@ -40,6 +40,10 @@ function StreamViewer({ streamUrl, cameraId, initialTime = 0, onTimeUpdate }) {
 
   if (youTubeEmbedUrl) {
     return <iframe key={youTubeEmbedUrl} src={youTubeEmbedUrl} title={`CAM #${cameraId} YouTube 영상`} allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ width: '100%', height: '100%', border: 0, display: 'block' }} />
+  }
+
+  if (aiStreamUrl) {
+    return <img src={aiStreamUrl} alt={`CAM #${cameraId} AI 분석 스트림`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
   }
 
   return (
@@ -86,6 +90,7 @@ function MonitoringDetailPage() {
   const [riskCategories, setRiskCategories] = useState([])
   const [alertQueue, setAlertQueue] = useState([])
   const [activeAlert, setActiveAlert] = useState(null)
+  const lastAiEventId = useRef(0)
 
   const currentCameraIdFromUrl = searchParams.get('camera');
 
@@ -135,6 +140,36 @@ function MonitoringDetailPage() {
   const activeCamera = cameraList.find(
     (cam) => String(cam.id) === String(currentCameraIdFromUrl)
   ) || cameraList[0] || { id: 1, area: '1구역', location: '위치 미지정', cctv_name: '카메라', streamUrl: '' };
+
+  useEffect(() => {
+    if (!activeCamera?.aiCameraId) return undefined
+    const pollAiEvents = async () => {
+      try {
+        const response = await axios.get(`http://127.0.0.1:8001/events?after=${lastAiEventId.current}`)
+        for (const aiEvent of response.data?.events || []) {
+          lastAiEventId.current = Math.max(lastAiEventId.current, aiEvent.id)
+          if (aiEvent.cameraId !== activeCamera.aiCameraId) continue
+          const category = riskCategories.find((item) => item.category_name === aiEvent.categoryName)
+          setAlertQueue((queue) => [...queue, {
+            id: `ai-${aiEvent.id}`,
+            time: aiEvent.detectedAt?.replace('T', ' ') || '-',
+            location: activeCamera.location,
+            streamUrl: activeCamera.streamUrl,
+            aiStreamUrl: activeCamera.aiStreamUrl,
+            snapshotUrl: aiEvent.snapshotDataUrl || (aiEvent.snapshotUrl ? `http://127.0.0.1:8001${aiEvent.snapshotUrl}?detectedAt=${encodeURIComponent(aiEvent.detectedAt || Date.now())}` : ''),
+            categoryName: category?.category_name ?? aiEvent.categoryName,
+            riskLevel: category?.risk_level ?? '확인 필요',
+            level: category?.level ?? null,
+          }])
+        }
+      } catch {
+        // The local AI server may not be running yet.
+      }
+    }
+    pollAiEvents()
+    const intervalId = window.setInterval(pollAiEvents, 1000)
+    return () => window.clearInterval(intervalId)
+  }, [activeCamera, riskCategories])
 
   const handleDemoVideoTimeUpdate = (event) => {
     if (!activeCamera?.isDemo) return
@@ -189,7 +224,7 @@ function MonitoringDetailPage() {
                 <i />CAM #{activeCamera.id}
               </span>
 
-              <StreamViewer streamUrl={activeCamera.streamUrl} cameraId={activeCamera.id} initialTime={Number(searchParams.get('t') || 0)} onTimeUpdate={handleDemoVideoTimeUpdate} />
+              <StreamViewer streamUrl={activeCamera.streamUrl} aiStreamUrl={activeCamera.aiStreamUrl} cameraId={activeCamera.id} initialTime={Number(searchParams.get('t') || 0)} onTimeUpdate={handleDemoVideoTimeUpdate} />
 
               <span className="primary-video-time" style={{ zIndex: 2 }}>
                 <AccessTimeRoundedIcon />실시간 스트리밍 중
@@ -214,7 +249,7 @@ function MonitoringDetailPage() {
                     onClick={() => setSearchParams({ camera: camera.id })}
                   >
                     <div className="detail-thumb-video-box">
-                      <StreamViewer streamUrl={camera.streamUrl} cameraId={camera.id} />
+                      <StreamViewer streamUrl={camera.streamUrl} aiStreamUrl={camera.aiStreamUrl} cameraId={camera.id} />
                     </div>
 
                     <div className="detail-thumb-info">

@@ -255,7 +255,8 @@
   aspect-ratio: 16 / 9;
 }
 
-.detectionDialogVideo video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.detectionDialogVideo video,
+.detectionDialogVideo img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
 .modalLiveBadge {
   position: absolute;
@@ -408,6 +409,8 @@
   font-size: 9px;
   font-weight: 800;
 }
+
+
 
 .cameraFooter {
   bottom: 0;
