@@ -269,6 +269,7 @@ function BoardPage() {
   const [reports, setReports] = useState([])
   const [selectedReportIds, setSelectedReportIds] = useState([])
   const [boardCategoryOptions, setBoardCategoryOptions] = useState(EVENT_CATEGORY_OPTIONS)
+  const [riskCategoryItems, setRiskCategoryItems] = useState([])
   const [currentUserName, setCurrentUserName] = useState('익명')
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('전체')
@@ -278,6 +279,9 @@ function BoardPage() {
   const [keyword, setKeyword] = useState('')
   const [summaryFilter, setSummaryFilter] = useState('all')
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
+  const [isReceiveConfirmOpen, setIsReceiveConfirmOpen] = useState(false)
+  const [riskCategoryPage, setRiskCategoryPage] = useState(0)
+  const [selectedRiskCategoryId, setSelectedRiskCategoryId] = useState(null)
   const [selectedReportId, setSelectedReportId] = useState(null)
   const [isReceivingReports, setIsReceivingReports] = useState(false)
 
@@ -309,6 +313,28 @@ function BoardPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchBoards()
   }, [fetchBoards])
+
+  useEffect(() => {
+    const fetchEventCategories = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const response = await axios.get(`${API_BASE_URL}/api/risk/list`, { headers })
+        const rawItems = Array.isArray(response.data) ? response.data : (response.data?.items ?? [])
+        setRiskCategoryItems(rawItems)
+        const categories = rawItems.map((item) => ({
+          id: item.category_id,
+          name: item.category_name || item.category,
+        })).filter((category) => category.id && category.name)
+
+        setBoardCategoryOptions(categories.length ? categories : EVENT_CATEGORY_OPTIONS)
+      } catch (error) {
+        console.error('event_category 조회 실패:', error)
+      }
+    }
+
+    fetchEventCategories()
+  }, [])
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -380,6 +406,40 @@ function BoardPage() {
     [reports, selectedReportId],
   )
   const selectedReceivableCount = reports.filter((report) => selectedReportIds.includes(report.id) && report.statusKey === 'registered').length
+  const riskCategoryPageSize = 6
+  const riskCategoryPageCount = Math.max(1, Math.ceil(riskCategoryItems.length / riskCategoryPageSize))
+  const activeRiskCategoryPage = Math.min(riskCategoryPage, riskCategoryPageCount - 1)
+  const visibleRiskCategoryItems = riskCategoryItems.slice(activeRiskCategoryPage * riskCategoryPageSize, activeRiskCategoryPage * riskCategoryPageSize + riskCategoryPageSize)
+
+  const updateReportEventCategory = async (reportId, eventCategoryId) => {
+    try {
+      const token = localStorage.getItem('token')
+      const formData = new FormData()
+      formData.append('event_category_id', String(eventCategoryId))
+
+      await axios.patch(`${API_BASE_URL}/api/boards/${reportId}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const selectedRiskCategory = riskCategoryItems.find((item) => Number(item.category_id) === Number(eventCategoryId))
+      setReports((currentReports) => currentReports.map((report) => (
+        report.id === reportId
+          ? {
+              ...report,
+              category: selectedRiskCategory?.category_name || selectedRiskCategory?.category || report.category,
+            }
+          : report
+      )))
+
+      return true
+    } catch (error) {
+      console.error(`게시글 #${reportId} 위험요인 변경 실패:`, error)
+      alert(error.response?.data?.detail || '위험요인 변경에 실패했습니다. 다시 시도해 주세요.')
+      return false
+    }
+  }
 
   const updateReportStatus = async (reportId, statusKey) => {
     const nextStatus = STATUS_OPTIONS.find((status) => status.key === statusKey)
@@ -445,16 +505,19 @@ function BoardPage() {
 
   const receiveSelectedReports = async () => {
     if (isReceivingReports) return
+    if (!selectedRiskCategoryId) return
 
     const selectedReports = reports.filter((report) => selectedReportIds.includes(report.id) && report.statusKey === 'registered')
     if (!selectedReports.length) return
 
+    setIsReceiveConfirmOpen(false)
     setIsReceivingReports(true)
     try {
       const updatedReportIds = (await Promise.all(selectedReports.map(async (report) => (
-        (await updateReportStatus(report.id, 'received')) ? report.id : null
+        (await updateReportEventCategory(report.id, selectedRiskCategoryId)) && (await updateReportStatus(report.id, 'received')) ? report.id : null
       )))).filter(Boolean)
       setSelectedReportIds((current) => current.filter((id) => !updatedReportIds.includes(id)))
+      setSelectedRiskCategoryId(null)
     } finally {
       setIsReceivingReports(false)
     }
@@ -563,7 +626,7 @@ function BoardPage() {
 
       <div className="board-bulk-toolbar">
         <span>선택 <strong>{selectedReceivableCount}</strong>건</span>
-        <button type="button" disabled={isReceivingReports || !selectedReceivableCount} onClick={receiveSelectedReports}>
+        <button type="button" disabled={isReceivingReports || !selectedReceivableCount} onClick={() => { setRiskCategoryPage(0); setSelectedRiskCategoryId(null); setIsReceiveConfirmOpen(true) }}>
           {isReceivingReports ? '접수 중...' : '접수'}
         </button>
       </div>
@@ -588,6 +651,61 @@ function BoardPage() {
 
       {selectedReport && (
         <ReportDetail report={selectedReport} onClose={closeReportDetail} />
+      )}
+
+      {isReceiveConfirmOpen && (
+        <div className="board-modal-backdrop" role="presentation" onMouseDown={() => setIsReceiveConfirmOpen(false)}>
+          <section className="board-report-modal board-receive-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="board-receive-confirm-title" onMouseDown={(event) => event.stopPropagation()}>
+            <div className="board-modal-header">
+              <div>
+                <span>위험 신고</span>
+                <h2 id="board-receive-confirm-title">위험요인 선택</h2>
+              </div>
+            </div>
+            <div className="board-receive-confirm-body">
+              {riskCategoryItems.length ? (
+                <div className="board-risk-category-list">
+                  <div className="board-risk-category-head">
+                    <span>카테고리</span>
+                    <span>위험요인</span>
+                    <span>위험도</span>
+                  </div>
+                  {visibleRiskCategoryItems.map((item) => (
+                    <button
+                      className={`board-risk-category-row${selectedRiskCategoryId === item.category_id ? ' is-selected' : ''}`}
+                      type="button"
+                      key={item.category_id ?? `${item.category}-${item.category_name}`}
+                      onClick={() => setSelectedRiskCategoryId(item.category_id)}
+                    >
+                      <span>{item.category || '-'}</span>
+                      <strong>{item.category_name || '-'}</strong>
+                      <em>{item.risk_level || '-'}</em>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="board-risk-category-empty">위험요인 목록이 없습니다.</p>
+              )}
+              <div className="board-risk-category-pagination">
+                <button type="button" disabled={activeRiskCategoryPage === 0} onClick={() => setRiskCategoryPage((page) => Math.max(0, page - 1))}>
+                  이전
+                </button>
+                <span>{activeRiskCategoryPage + 1} / {riskCategoryPageCount}</span>
+                <button type="button" disabled={activeRiskCategoryPage === riskCategoryPageCount - 1} onClick={() => setRiskCategoryPage((page) => Math.min(riskCategoryPageCount - 1, page + 1))}>
+                  다음
+                </button>
+              </div>
+            </div>
+            <div className="board-modal-actions board-receive-confirm-actions">
+              <button className="board-modal-cancel" type="button" onClick={() => setIsReceiveConfirmOpen(false)}>
+                취소
+              </button>
+              <button className="board-modal-submit" type="button" disabled={!selectedRiskCategoryId || isReceivingReports} onClick={receiveSelectedReports}>
+                확인
+              </button>
+            </div>
+          </section>
+        </div>
       )}
     </section>
   )
