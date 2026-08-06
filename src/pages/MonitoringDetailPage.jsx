@@ -12,8 +12,16 @@ import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
 import { DEMO_CAMERAS } from '../mocks/demoCctv.js'
 import DetectionAlertDialog from '../components/monitoring/DetectionAlertDialog.jsx'
 
+function getAiPreviewUrl(aiStreamUrl, nonce) {
+  const url = new URL(aiStreamUrl)
+  url.pathname = url.pathname.replace('/streams/', '/frames/')
+  url.searchParams.set('preview', String(nonce))
+  return url.toString()
+}
+
 function StreamViewer({ streamUrl, aiStreamUrl, cameraId, initialTime = 0, onTimeUpdate }) {
   const [hasError, setHasError] = useState(false);
+  const [previewNonce, setPreviewNonce] = useState(0)
   const videoRef = useRef(null)
   const youTubeEmbedUrl = getYouTubeEmbedUrl(streamUrl, { autoplay: true })
 
@@ -43,6 +51,11 @@ function StreamViewer({ streamUrl, aiStreamUrl, cameraId, initialTime = 0, onTim
   }
 
   if (aiStreamUrl) {
+    const previewUrl = getAiPreviewUrl(aiStreamUrl, previewNonce)
+    return <span style={{ position: 'relative', display: 'block', width: '100%', height: '100%', overflow: 'hidden' }}>
+      <img src={previewUrl} alt="" aria-hidden="true" onError={() => window.setTimeout(() => setPreviewNonce(Date.now()), 200)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+      <img src={aiStreamUrl} alt={`CAM #${cameraId} AI stream`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={() => setHasError(true)} />
+    </span>
     return <img src={aiStreamUrl} alt={`CAM #${cameraId} AI 분석 스트림`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
   }
 
@@ -90,7 +103,9 @@ function MonitoringDetailPage() {
   const [riskCategories, setRiskCategories] = useState([])
   const [alertQueue, setAlertQueue] = useState([])
   const [activeAlert, setActiveAlert] = useState(null)
-  const lastAiEventId = useRef(0)
+  // 목록과 상세가 같은 AI 이벤트 커서를 공유해야 화면을 왕복해도
+  // 이미 띄운 감지 모달이 다시 나타나지 않는다.
+  const lastAiEventId = useRef(Number(sessionStorage.getItem('boss-cctv-ai-last-event-id')) || 0)
 
   const currentCameraIdFromUrl = searchParams.get('camera');
 
@@ -128,6 +143,7 @@ function MonitoringDetailPage() {
         const response = await axios.get(`http://127.0.0.1:8001/events?after=${lastAiEventId.current}`)
         for (const aiEvent of response.data?.events || []) {
           lastAiEventId.current = Math.max(lastAiEventId.current, aiEvent.id)
+          sessionStorage.setItem('boss-cctv-ai-last-event-id', String(lastAiEventId.current))
           if (aiEvent.cameraId !== activeCamera.aiCameraId) continue
           const category = riskCategories.find((item) => item.category_name === aiEvent.categoryName)
           setAlertQueue((queue) => [...queue, {
