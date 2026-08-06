@@ -425,7 +425,7 @@ function CreateModal({ initialType, onClose, onCreate }) {
         }
 
         await axios.post(`${API_BASE_URL}/api/inspection/histories/create`, {
-          name: form.name.trim(),
+          name: form.name.trim(), 
           date: form.dateTime,
           location: form.location.trim(),
           uid: null,
