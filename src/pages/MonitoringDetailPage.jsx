@@ -9,8 +9,9 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import '../styles/monitoringdetail.css'
 import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
-import { DEMO_CAMERAS } from '../mocks/demoCctv.js'
 import DetectionAlertDialog from '../components/monitoring/DetectionAlertDialog.jsx'
+import { readAiEventSession, saveAiEventSession } from '../utils/aiEventSession.js'
+import { toMonitoringCamera } from '../utils/cctvCamera.js'
 
 function getAiPreviewUrl(aiStreamUrl, nonce) {
   const url = new URL(aiStreamUrl)
@@ -97,7 +98,7 @@ function MonitoringDetailPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const [cameraList, setCameraList] = useState(DEMO_CAMERAS);
+  const [cameraList, setCameraList] = useState([]);
   const [loading, setLoading] = useState(true);
   const emittedDetectionKeys = useRef(new Set())
   const [riskCategories, setRiskCategories] = useState([])
@@ -105,7 +106,9 @@ function MonitoringDetailPage() {
   const [activeAlert, setActiveAlert] = useState(null)
   // 목록과 상세가 같은 AI 이벤트 커서를 공유해야 화면을 왕복해도
   // 이미 띄운 감지 모달이 다시 나타나지 않는다.
-  const lastAiEventId = useRef(Number(sessionStorage.getItem('boss-cctv-ai-last-event-id')) || 0)
+  const savedAiEventSession = useRef(readAiEventSession())
+  const lastAiEventId = useRef(savedAiEventSession.current.cursor)
+  const aiServerInstanceId = useRef(savedAiEventSession.current.serverInstanceId)
 
   const currentCameraIdFromUrl = searchParams.get('camera');
 
@@ -128,8 +131,17 @@ function MonitoringDetailPage() {
 
   const fetchCameraList = async () => {
     // 모니터링 화면과 동일하게 1차 시연에서는 AI 서비스의 두 카메라만 쓴다.
-    setCameraList(DEMO_CAMERAS)
-    setLoading(false)
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/api/cctvs', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      })
+      setCameraList((response.data || []).map(toMonitoringCamera))
+    } catch (error) {
+      console.info('CCTV 목록을 불러오지 못했습니다.', error)
+      setCameraList([])
+    } finally {
+      setLoading(false)
+    }
   };
 
   const activeCamera = cameraList.find(
@@ -141,9 +153,15 @@ function MonitoringDetailPage() {
     const pollAiEvents = async () => {
       try {
         const response = await axios.get(`http://127.0.0.1:8001/events?after=${lastAiEventId.current}`)
+        const serverInstanceId = response.data?.serverInstanceId || ''
+        if (serverInstanceId && aiServerInstanceId.current !== serverInstanceId) {
+          if (aiServerInstanceId.current) lastAiEventId.current = 0
+          aiServerInstanceId.current = serverInstanceId
+          saveAiEventSession(serverInstanceId, lastAiEventId.current)
+        }
         for (const aiEvent of response.data?.events || []) {
           lastAiEventId.current = Math.max(lastAiEventId.current, aiEvent.id)
-          sessionStorage.setItem('boss-cctv-ai-last-event-id', String(lastAiEventId.current))
+          saveAiEventSession(aiServerInstanceId.current, lastAiEventId.current)
           if (aiEvent.cameraId !== activeCamera.aiCameraId) continue
           const category = riskCategories.find((item) => item.category_name === aiEvent.categoryName)
           setAlertQueue((queue) => [...queue, {

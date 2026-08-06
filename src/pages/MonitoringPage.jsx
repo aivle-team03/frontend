@@ -11,20 +11,14 @@ import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import RecentEventsTable from '../components/monitoring/RecentEventsTableMonitoring.jsx'
 import DetectionAlertDialog from '../components/monitoring/DetectionAlertDialog.jsx'
-import { DEMO_CAMERAS } from '../mocks/demoCctv.js'
 import styles from '../styles/CCTVMonitoring.module.css'
 import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
+import { clearAiEventSession, readAiEventSession, saveAiEventSession } from '../utils/aiEventSession.js'
+import { toMonitoringCamera } from '../utils/cctvCamera.js'
 
 // 상세 화면으로 이동하면 MonitoringPage 컴포넌트는 새로 만들어진다. 하지만
 // 같은 AI 서버 세션에서 이미 사용자에게 보여 준 이벤트까지 다시 알림으로
 // 처리하면 안 되므로, 마지막 확인 ID는 탭이 닫힐 때까지 보관한다.
-const AI_EVENT_CURSOR_KEY = 'boss-cctv-ai-last-event-id'
-
-function getStoredAiEventCursor() {
-  const value = Number(sessionStorage.getItem(AI_EVENT_CURSOR_KEY))
-  return Number.isSafeInteger(value) && value >= 0 ? value : 0
-}
-
 function getAiPreviewUrl(aiStreamUrl, nonce) {
   const url = new URL(aiStreamUrl)
   url.pathname = url.pathname.replace('/streams/', '/frames/')
@@ -78,14 +72,24 @@ function MonitoringPage() {
   const [demoRun, setDemoRun] = useState(0)
   const [riskCategories, setRiskCategories] = useState([])
   const [aiSessionReady, setAiSessionReady] = useState(false)
-  const [aiSessionId, setAiSessionId] = useState(0)
+  const [cameras, setCameras] = useState([])
   const playbackTimes = useRef({})
-  const lastAiEventId = useRef(getStoredAiEventCursor())
+  const savedAiEventSession = useRef(readAiEventSession())
+  const lastAiEventId = useRef(savedAiEventSession.current.cursor)
+  const aiServerInstanceId = useRef(savedAiEventSession.current.serverInstanceId)
 
   // 1차 시연은 AI 서비스가 제공하는 테스트 카메라만 보여 준다.
   // DB CCTV는 운영용 AI 스트림 URL을 설정한 뒤에 추가한다.
-  const cameras = useMemo(() => DEMO_CAMERAS, [])
-  const events = useMemo(() => [...demoEvents, ...serverEvents], [demoEvents, serverEvents])
+  // AI 서버에서 즉시 받은 이벤트와 DB에 저장된 같은 이벤트가 잠시 함께 있어도 한 건만 보인다.
+  const events = useMemo(() => {
+    const keys = new Set()
+    return [...demoEvents, ...serverEvents].filter((event) => {
+      const key = `${event.time}|${event.location}|${event.type}`
+      if (keys.has(key)) return false
+      keys.add(key)
+      return true
+    }).sort((left, right) => String(right.time).localeCompare(String(left.time)))
+  }, [demoEvents, serverEvents])
 
   useEffect(() => {
     const loadMonitoringData = async () => {
@@ -97,20 +101,37 @@ function MonitoringPage() {
           time: event.date ? String(event.date).replace('T', ' ').substring(0, 16) : '-',
           location: event.cctv?.location || event.location || '위치 미지정',
           type: event.category?.category_name || event.event_type || '위험 요소 감지',
-          status: ['completed', 'resolved', 'approved', '조치 완료'].includes(String(event.current_status ?? event.status).toLowerCase()) ? '조치 완료' : '조치 필요',
+          // monitoring API가 event와 연결된 최신 action_history의 상태를
+          // current_status로 내려 준다. '조치 필요'는 과거 목업 표기라서
+          // 실제 DB의 '조치 대기'/'조치 완료'를 덮어쓰면 안 된다.
+          status: event.current_status ?? event.action_status ?? event.status ?? '조치 대기',
           manager: event.manager_name || '미배정',
         })))
       } catch (error) {
         console.info('백엔드 이벤트를 불러오지 못해 데모 이벤트만 표시합니다.', error)
       }
     }
+    const loadCameras = async () => {
+      const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/api/cctvs', { headers })
+        setCameras((response.data || []).map(toMonitoringCamera))
+      } catch (error) {
+        console.info('CCTV 목록을 불러오지 못했습니다.', error)
+        setCameras([])
+      }
+    }
     loadMonitoringData()
+    loadCameras()
+    // AI 저장은 별도 스레드에서 끝난다. 화면 이동/재진입 여부와 관계없이
+    // DB 저장이 끝난 이벤트를 곧바로 목록의 기준 데이터로 다시 반영한다.
+    const refreshIntervalId = window.setInterval(loadMonitoringData, 2000)
+    return () => window.clearInterval(refreshIntervalId)
   }, [])
 
   useEffect(() => {
     // 페이지 이동은 기존 AI worker를 계속 사용한다. 상세 화면에서 돌아올 때
     // 영상을 처음부터 다시 분석하지 않고 현재 진행 중인 프레임을 바로 받는다.
-    setAiSessionId(Date.now())
     setAiSessionReady(true)
   }, [])
 
@@ -119,18 +140,43 @@ function MonitoringPage() {
     const pollAiEvents = async () => {
       try {
         const response = await axios.get(`http://127.0.0.1:8001/events?after=${lastAiEventId.current}`)
+        const serverInstanceId = response.data?.serverInstanceId || ''
+        if (serverInstanceId && aiServerInstanceId.current !== serverInstanceId) {
+          // Same browser refresh keeps the cursor, but an AI server restart gets
+          // a fresh event sequence and must be allowed to notify once again.
+          if (aiServerInstanceId.current) lastAiEventId.current = 0
+          aiServerInstanceId.current = serverInstanceId
+          saveAiEventSession(serverInstanceId, lastAiEventId.current)
+        }
         for (const aiEvent of response.data?.events || []) {
           lastAiEventId.current = Math.max(lastAiEventId.current, aiEvent.id)
-          sessionStorage.setItem(AI_EVENT_CURSOR_KEY, String(lastAiEventId.current))
+          saveAiEventSession(aiServerInstanceId.current, lastAiEventId.current)
           const camera = cameras.find((item) => item.aiCameraId === aiEvent.cameraId)
           if (!camera) continue
           const category = riskCategories.find((item) => item.category_name === aiEvent.categoryName)
           const key = `ai-${aiEvent.id}`
           if (emittedDetectionKeys.current.has(key)) continue
           emittedDetectionKeys.current.add(key)
+          const snapshotUrl = aiEvent.snapshotDataUrl || (aiEvent.snapshotUrl ? (aiEvent.snapshotUrl.startsWith('http') ? aiEvent.snapshotUrl : `http://127.0.0.1:8001${aiEvent.snapshotUrl}`) : '')
+          // AI 서버가 백엔드 기동 직후 전송에 실패해도, 브라우저가 AI 감지를
+          // 수신한 순간 동일한 저장 API를 한 번 더 호출한다. 백엔드는 snapshotUrl을
+          // 멱등 키로 처리하므로 AI 전송과 동시에 성공해도 DB event는 중복되지 않는다.
+          const fallbackCategoryId = aiEvent.cameraId === 'fire-01' ? 1 : 1000006
+          if (camera.id && snapshotUrl) {
+            axios.post('http://127.0.0.1:8000/api/ai/events', {
+              cctv_id: camera.id,
+              category_id: category?.category_id ?? fallbackCategoryId,
+              image_url: snapshotUrl,
+            }).catch((error) => {
+              console.info('AI 감지 이벤트 DB 보완 저장에 실패했습니다.', error)
+            })
+          }
           const event = {
             id: key,
-            time: aiEvent.detectedAt?.replace('T', ' ') || new Date().toLocaleTimeString('ko-KR'),
+            // 목록 폭을 고정하기 위해 날짜·시간은 분 단위까지만 표시한다.
+            time: aiEvent.detectedAt
+              ? aiEvent.detectedAt.replace('T', ' ').substring(0, 16)
+              : new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
             location: camera.location,
             type: aiEvent.categoryName,
             status: '조치 대기',
@@ -140,7 +186,7 @@ function MonitoringPage() {
             aiStreamUrl: camera.aiStreamUrl,
             // The AI process restarts its numeric event IDs.  Add the detection
             // time so a browser never reuses an old snapshot with the same ID.
-            snapshotUrl: aiEvent.snapshotDataUrl || (aiEvent.snapshotUrl ? (aiEvent.snapshotUrl.startsWith('http') ? aiEvent.snapshotUrl : `http://127.0.0.1:8001${aiEvent.snapshotUrl}`) : ''),
+            snapshotUrl,
             videoTime: aiEvent.sourceTime,
             categoryName: category?.category_name ?? aiEvent.categoryName,
             riskLevel: category?.risk_level ?? '확인 필요',
@@ -189,7 +235,7 @@ function MonitoringPage() {
     const category = riskCategories.find((item) => item.category_name === detection.categoryName)
     const event = {
       id: `demo-${key}`,
-      time: now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      time: now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
       location: camera.location,
       type: detection.type,
       status: '조치 필요',
@@ -221,14 +267,14 @@ function MonitoringPage() {
   const restartDemo = () => {
     emittedDetectionKeys.current.clear()
     lastAiEventId.current = 0
-    sessionStorage.removeItem(AI_EVENT_CURSOR_KEY)
+    aiServerInstanceId.current = ''
+    clearAiEventSession()
     setDemoEvents([])
     setSelectedEvent(null)
     setAlertQueue([])
     setActiveAlert(null)
     setDemoRun((run) => run + 1)
     setAiSessionReady(false)
-    setAiSessionId(Date.now())
     setAiSessionReady(true)
     axios.post('http://127.0.0.1:8001/reset').catch(() => {
       console.info('AI 서버를 찾을 수 없습니다.')
@@ -251,7 +297,7 @@ function MonitoringPage() {
         </div>
 
         <div className={styles.EventSection}>
-          <section className={styles.liveEvent}><header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><span className={`${styles.sectionIcon} ${styles.alertIcon}`}><WarningAmberRoundedIcon /></span><div><h2 className={styles.title}>실시간 알림</h2><p>동시에 감지되어도 경보 창은 한 건씩 순서대로 표시합니다.</p></div></div><span className={styles.alertCount}>{events.length}건</span></header><RecentEventsTable events={events} selectedEvent={selectedEvent} onSelectEvent={setSelectedEvent} /></section>
+          <section className={styles.liveEvent}><header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><span className={`${styles.sectionIcon} ${styles.alertIcon}`}><WarningAmberRoundedIcon /></span><div><h2 className={styles.title}>최근 감지 이벤트</h2><p>CCTV 감지 이벤트와 연결된 조치 내역을 최근순으로 표시합니다.</p></div></div><span className={styles.alertCount}>{events.length}건</span></header><RecentEventsTable events={events} selectedEvent={selectedEvent} onSelectEvent={setSelectedEvent} /></section>
           <section className={styles.emptyBox}><header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><div><h2 className={styles.title}>이벤트 상세</h2><p>선택한 감지 결과를 확인합니다.</p></div></div></header>{selectedEvent ? <div className={styles.eventDetail}><div className={styles.eventDetailHeadline}><span className={styles.eventWarningIcon}><WarningAmberRoundedIcon /></span><div><span>{selectedEvent.isDemo ? 'AI 데모 감지' : selectedEvent.status}</span><strong>{selectedEvent.type}</strong></div></div><dl><div><dt><LocationOnOutlinedIcon />감지 위치</dt><dd>{selectedEvent.location}</dd></div><div><dt><AccessTimeRoundedIcon />감지 시간</dt><dd>{selectedEvent.time}</dd></div><div><dt>신뢰도</dt><dd>{selectedEvent.confidence ? `${Math.round(selectedEvent.confidence * 100)}%` : '-'}</dd></div></dl><button type="button" onClick={() => navigate('/checklists/management')}>체크리스트 확인 <ArrowForwardRoundedIcon /></button></div> : <div className={styles.emptyEvent}>아직 감지된 데모 이벤트가 없습니다.</div>}</section>
         </div>
       </div>
