@@ -531,7 +531,7 @@ function ChecklistPage() {
     if (!files.length || !currentTask) return
 
     setActionPhotoFiles((current) => {
-      const nextPhotos = [...current, ...files.map((file) => ({ file, name:file.name, url:URL.createObjectURL(file) }))]
+      const nextPhotos = [...current, ...files.map((file) => ({ file, name: file.name, url: URL.createObjectURL(file) }))]
       setActionPhotoFilesByTask((currentMap) => ({ ...currentMap, [currentTask.taskKey]: nextPhotos }))
       return nextPhotos
     })
@@ -574,77 +574,79 @@ function ChecklistPage() {
       alert('새로 첨부한 조치 완료 사진이 필요합니다.')
       return
     }
+
     try {
       const token = localStorage.getItem('token')
+      const authHeaders = token ? { Authorization: `Bearer ${token}` } : {}
+
+      // -------------------------------------------------------------
+      // 1단계: 백엔드 DB에 조치 완료 먼저 즉시 저장
+      // -------------------------------------------------------------
       const formData = new FormData()
       formData.append('content', completedContent)
       formData.append('image', photoToUpload.file)
-      const response = await axios.patch(`${API_BASE_URL}/api/action-histories/${currentTask.id}/complete`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      })
-      const responseContent = response.data?.content || response.data?.action_content || ''
+
+      const completeResponse = await axios.patch(
+        `${API_BASE_URL}/api/action-histories/${currentTask.id}/complete`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            ...authHeaders,
+          },
+        }
+      )
+
+      const responseContent = completeResponse.data?.content || completeResponse.data?.action_content || ''
       const nextContent = responseContent || completedContent
-      setActionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
-        ? { ...task, status: '조치 완료', completed: true, content: nextContent }
-        : task))
+
+      // -------------------------------------------------------------
+      // 2단계: 화면 상태 즉시 업데이트 & 사용자 안내 (기다림 없음)
+      // -------------------------------------------------------------
+      setActionTasks((current) =>
+        current.map((task) =>
+          task.taskKey === currentTask.taskKey
+            ? { ...task, status: '조치 완료', completed: true, content: nextContent }
+            : task
+        )
+      )
       setActionDetailContent(nextContent)
-      return
+
+      // 즉시 완료 알림
+      alert('조치가 정상적으로 완료되었습니다.')
+
+      // -------------------------------------------------------------
+      // 3단계: AI 비동기 백그라운드 검증 (await 없이 실행)
+      // -------------------------------------------------------------
+      const verifyFormData = new FormData()
+      verifyFormData.append('after_img', photoToUpload.file)
+      verifyFormData.append('category_name', currentTask.category || '안전 위험 요인')
+
+      const numericId = parseInt(currentTask.id, 10)
+      if (!isNaN(numericId)) {
+        verifyFormData.append('action_history_id', numericId)
+      }
+
+      // await를 붙이지 않고 비동기 실행 (백그라운드에서 백엔드 DB 업데이트 수행)
+      axios.post(
+        `${API_BASE_URL}/api/ai/verify-action`,
+        verifyFormData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            ...authHeaders,
+          },
+        }
+      ).then((res) => {
+        console.log('[AI 백그라운드 검증 완료]:', res.data)
+      }).catch((aiErr) => {
+        console.warn('[AI 백그라운드 검증 예외]:', aiErr)
+      })
+
     } catch (error) {
       console.error('Action completion failed:', error)
-      alert(error.response?.data?.detail || '조치 완료 처리에 실패했습니다.')
-      return
+      alert(error.response?.data?.detail || '조치 완료 처리(DB 저장)에 실패했습니다.')
     }
-
-    const nextSelectedTask = actionTasks.find((task) => task.taskKey !== currentTask.taskKey && task.status !== '조치 완료')
-
-    const completedTask = {
-      ...currentTask,
-      content: completedContent,
-      photoNames: attachedPhotos.map((photo) => photo.name),
-      photos: attachedPhotos.map(({ name, url }) => ({ name, url })),
-      status: '조치 완료',
-      completed: true,
-    }
-
-    setActionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
-      ? completedTask
-      : task))
-
-    const managementRecords = getStoredChecklistManagementRecords()
-    const completedAt = new Date()
-    const completedDateTime = `${completedAt.toISOString().slice(0, 10)} ${String(completedAt.getHours()).padStart(2, '0')}:${String(completedAt.getMinutes()).padStart(2, '0')}`
-    saveChecklistManagementRecords(managementRecords.map((record) => (
-      String(record.id) === String(currentTask.id)
-        ? {
-          ...record,
-          progress: '조치 완료',
-          dateTime: completedDateTime,
-          actionContent: completedContent,
-          note: record.inspectionContent || record.note,
-          photo: true,
-          photoNames: attachedPhotos.map((photo) => photo.name),
-          photos: attachedPhotos.map(({ name, url }) => ({ name, url })),
-          actionHistory: [
-            {
-              id: `action-history-${Date.now()}`,
-              actionName: record.name,
-              location: record.location,
-              dateTime: completedDateTime,
-              manager: record.actionAssignee || currentTask.assignee || '미배정',
-              progress: '조치 완료',
-              approvalStatus: '승인대기',
-              completedPhoto: attachedPhotos[0]?.url || '',
-              sourceReportId: record.sourceReportId,
-            },
-            ...(record.actionHistory || []),
-          ],
-        }
-        : record
-    )))
-
-    setSelectedTaskId(nextSelectedTask?.taskKey ?? null)
-
-    alert('조치가 완료되었습니다.')
   }
 
   return (
