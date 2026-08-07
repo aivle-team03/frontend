@@ -15,6 +15,12 @@ import styles from '../styles/CCTVMonitoring.module.css'
 import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
 import { clearAiEventSession, readAiEventSession, saveAiEventSession } from '../utils/aiEventSession.js'
 import { toMonitoringCamera } from '../utils/cctvCamera.js'
+import { AI_API_URL } from '../config/api.js'
+
+const EQUIPMENT_CARDS = [
+  { cameraId: 'extinguisher-01', displayName: '소화기 확인', categoryName: '소화기 미감지', detector: 'extinguisher', status: 'warming_up' },
+  { cameraId: 'hydrant-01', displayName: '소화전 확인', categoryName: '소화전 미감지', detector: 'hydrant', status: 'warming_up' },
+]
 
 // 상세 화면으로 이동하면 MonitoringPage 컴포넌트는 새로 만들어진다. 하지만
 // 같은 AI 서버 세션에서 이미 사용자에게 보여 준 이벤트까지 다시 알림으로
@@ -61,6 +67,14 @@ function StreamViewer({ streamUrl, aiStreamUrl, cameraId, onTimeUpdate, demoRun,
   return <video ref={videoRef} key={`${streamUrl}-${demoRun}`} src={resolveMediaUrl(streamUrl)} autoPlay loop muted playsInline onTimeUpdate={onTimeUpdate} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={() => setHasError(true)} />
 }
 
+function formatInspectionTime(timestamp) {
+  if (!timestamp) return '점검 준비 중'
+  return new Intl.DateTimeFormat('ko-KR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(timestamp * 1000))
+}
+
 function MonitoringPage() {
   const navigate = useNavigate()
   const emittedDetectionKeys = useRef(new Set())
@@ -73,6 +87,7 @@ function MonitoringPage() {
   const [riskCategories, setRiskCategories] = useState([])
   const [aiSessionReady, setAiSessionReady] = useState(false)
   const [cameras, setCameras] = useState([])
+  const [equipmentInspections, setEquipmentInspections] = useState(EQUIPMENT_CARDS)
   const playbackTimes = useRef({})
   const savedAiEventSession = useRef(readAiEventSession())
   const lastAiEventId = useRef(savedAiEventSession.current.cursor)
@@ -127,6 +142,42 @@ function MonitoringPage() {
     // DB 저장이 끝난 이벤트를 곧바로 목록의 기준 데이터로 다시 반영한다.
     const refreshIntervalId = window.setInterval(loadMonitoringData, 2000)
     return () => window.clearInterval(refreshIntervalId)
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+    let refreshTimeoutId
+    const loadEquipmentInspections = async () => {
+      try {
+        const response = await axios.get(`${AI_API_URL}/equipment/status`)
+        const equipment = response.data?.equipment || []
+        if (isMounted) {
+          setEquipmentInspections(EQUIPMENT_CARDS.map((card) => ({
+            ...card,
+            ...(equipment.find((item) => item.cameraId === card.cameraId) || {}),
+          })))
+        }
+
+        // 소화설비는 서버가 주기 점검한 결과만 바뀐다. 첫 점검이 끝날 때까지만
+        // 짧게 재시도하고, 결과가 있으면 AI 서버의 점검 주기와 동일하게 조회한다.
+        const isWarmingUp = !equipment.length || equipment.some((item) => item.status === 'warming_up')
+        const inspectionIntervalSeconds = Number(response.data?.inspectionIntervalSeconds) || 600
+        refreshTimeoutId = window.setTimeout(
+          loadEquipmentInspections,
+          (isWarmingUp ? 5 : inspectionIntervalSeconds) * 1000,
+        )
+      } catch (error) {
+        // AI 서버를 실행하지 않은 환경에서는 자동 점검 카드만 비워 둔다.
+        if (isMounted) setEquipmentInspections((current) => current.map((item) => ({ ...item, status: 'offline' })))
+        refreshTimeoutId = window.setTimeout(loadEquipmentInspections, 5000)
+      }
+    }
+
+    loadEquipmentInspections()
+    return () => {
+      isMounted = false
+      window.clearTimeout(refreshTimeoutId)
+    }
   }, [])
 
   useEffect(() => {
@@ -293,6 +344,34 @@ function MonitoringPage() {
           <section className={styles.cctvmonitoringSection}>
             <header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><span className={styles.sectionIcon}><GridViewRoundedIcon /></span><div><h2 className={styles.title}>실시간 CCTV</h2><p>화재 테스트와 지게차·보행자 거리 테스트를 분석합니다.</p></div></div><div className={styles.headerActions}><button className={styles.panelAction} type="button" onClick={restartDemo}><ReplayRoundedIcon />데모 재시작</button></div></header>
             <div className={styles.videodashBoard}>{cameras.map((camera) => <button className={styles.video} onClick={() => navigate(`/monitoringdetail?camera=${camera.id}${camera.isDemo ? `&t=${Math.floor(playbackTimes.current[camera.id] || 0)}` : ''}`)} key={camera.id} type="button" aria-label={`${camera.area} 영상 상세 보기`}><span className={styles.cameraTopbar}><span className={styles.cameraLive}><i />LIVE</span>{!camera.isDemo && <span>CAM {camera.id}</span>}</span><StreamViewer streamUrl={camera.streamUrl} aiStreamUrl={camera.aiStreamUrl || ''} cameraId={camera.id} demoRun={camera.isDemo ? demoRun : 0} waitingForAiStart={Boolean(camera.aiStreamUrl) && !aiSessionReady} onTimeUpdate={(event) => handleVideoTimeUpdate(camera, event)} /><span className={styles.cameraFooter}><span><strong>{camera.name || camera.area}</strong>{camera.location}</span></span></button>)}</div>
+          </section>
+          <section className={styles.equipmentSection}>
+            <header className={styles.sectionHeader}>
+              <div className={styles.sectionTitleGroup}>
+                <span className={styles.sectionIcon}><SensorsRoundedIcon /></span>
+                <div><h2 className={styles.title}>소화설비 자동 점검</h2><p>최근 점검 프레임의 AI 탐지 결과를 확인합니다.</p></div>
+              </div>
+              <span className={styles.inspectionInterval}>10분 주기</span>
+            </header>
+            <div className={styles.equipmentGrid}>
+              {equipmentInspections.map((inspection) => {
+                const isWarning = inspection.status === 'warning'
+                const isWaiting = inspection.status === 'warming_up'
+                const isOffline = inspection.status === 'offline'
+                const imageUrl = inspection.inspectedAt ? `${inspection.imageUrl}?updated=${inspection.inspectedAt}` : ''
+                return <article className={`${styles.equipmentCard} ${isWarning ? styles.equipmentWarning : ''}`} key={inspection.cameraId}>
+                  <div className={styles.equipmentImage}>
+                    {imageUrl ? <img src={imageUrl} alt={`${inspection.displayName} 점검 결과`} /> : <span className={styles.equipmentPlaceholder}><VideocamOutlinedIcon />{isOffline ? 'AI 서버 연결 안 됨' : '점검 준비 중'}</span>}
+                    <span className={`${styles.equipmentStatus} ${isWarning || isOffline ? styles.equipmentStatusWarning : ''}`}>{isOffline ? '연결 안 됨' : isWaiting ? '점검 준비 중' : isWarning ? '조치 필요' : '정상'}</span>
+                  </div>
+                  <div className={styles.equipmentContent}>
+                    <strong>{inspection.displayName}</strong>
+                    <p>{isOffline ? (inspection.inspectedAt ? '마지막 점검 결과를 표시하고 있습니다.' : 'AI 서버를 시작하면 점검 프레임이 표시됩니다.') : isWaiting ? 'AI 서버가 첫 점검 결과를 준비하고 있습니다.' : isWarning ? inspection.reason || '설비 미감지' : `${inspection.detectedCount}개 탐지됨 · 신뢰도 ${Math.round((inspection.confidence || 0) * 100)}%`}</p>
+                    <small>최근 점검 {formatInspectionTime(inspection.inspectedAt)}</small>
+                  </div>
+                </article>
+              })}
+            </div>
           </section>
         </div>
 

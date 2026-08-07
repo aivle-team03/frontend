@@ -120,6 +120,115 @@
   padding: 18px;
 }
 
+.equipmentSection {
+  overflow: hidden;
+  padding: 18px;
+  border: 1px solid #dfe7f2;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045);
+}
+
+.inspectionInterval {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: #0f62fe;
+  background: #edf5ff;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.equipmentGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.equipmentCard {
+  overflow: hidden;
+  border: 1px solid #dfe7f2;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.equipmentWarning {
+  border-color: #f3bc66;
+  background: #fffaf0;
+}
+
+.equipmentImage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #111827;
+}
+
+.equipmentImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.equipmentPlaceholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-content: center;
+  justify-items: center;
+  gap: 7px;
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.equipmentPlaceholder svg {
+  width: 28px;
+  height: 28px;
+}
+
+.equipmentStatus {
+  position: absolute;
+  top: 9px;
+  left: 9px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  color: #0f6b3c;
+  background: rgba(222, 251, 230, 0.95);
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.equipmentStatusWarning {
+  color: #8a3800;
+  background: rgba(255, 241, 194, 0.96);
+}
+
+.equipmentContent {
+  display: grid;
+  gap: 4px;
+  padding: 11px;
+}
+
+.equipmentContent strong {
+  color: #172033;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.equipmentContent p,
+.equipmentContent small {
+  margin: 0;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.equipmentContent small {
+  color: #94a3b8;
+}
+
 .sectionHeader {
   display: flex;
   min-height: 44px;
@@ -688,6 +797,10 @@
     grid-template-columns: 1fr;
   }
 
+  .equipmentGrid {
+    grid-template-columns: 1fr;
+  }
+
   .videochangedashBoard {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -702,7 +815,8 @@
   .cctvmonitoringSection,
   .videoChange,
   .liveEvent,
-  .emptyBox {
+  .emptyBox,
+  .equipmentSection {
     padding: 14px;
   }
 
