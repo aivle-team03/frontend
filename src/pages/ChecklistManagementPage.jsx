@@ -117,7 +117,8 @@ function ChecklistManagementPage() {
       try {
         const [inspectionResponse, actionResponse, inspectionCatalogResponse] = await Promise.all([
           axios.get(`${API_BASE_URL}/api/inspection/histories/all`, { headers }),
-          axios.get(`${API_BASE_URL}/api/action-histories`, { headers }),
+          // 기본값은 20건이라 이전 이벤트 조치가 누락된다. 담당자 배정에서는 전체 이력을 받는다.
+          axios.get(`${API_BASE_URL}/api/action-histories?size=100`, { headers }),
           axios.get(`${API_BASE_URL}/api/inspection`, { headers }),
         ])
         const inspectionHistories = Array.isArray(inspectionResponse.data) ? inspectionResponse.data : []
@@ -186,6 +187,7 @@ function ChecklistManagementPage() {
   const changeFilter = (key, value) => { setFilters((current) => ({ ...current, [key]:value })); setPage(0) }
   const typeRecords = useMemo(() => records
     .filter((item) => getRecordType(item) === recordTypeFilter)
+    // 담당자 배정은 아직 처리할 조치만 관리한다. 완료 항목은 조치 이력에서 확인한다.
     .filter((item) => recordTypeFilter !== 'action' || item.progress !== '조치 완료')
     .filter((item) => recordTypeFilter !== 'inspection' || item.progress !== '점검 완료')
     .map((item) => {
@@ -286,9 +288,11 @@ function ChecklistManagementPage() {
           .map((item) => axios.patch(`${API_BASE_URL}/api/inspection/histories/${item.rawId}`, { uid: member.userId }, { headers })))
       } else {
         const actionIds = targetRecords.filter((item) => item.sourceKind === 'action' && item.rawId).map((item) => item.rawId)
+        const checklistIds = targetRecords.filter((item) => item.sourceKind === 'checklist' && item.rawId).map((item) => item.rawId)
         if (actionIds.length) await axios.patch(`${API_BASE_URL}/api/action-histories/assignments`, { action_history_ids: actionIds, handler_uid: member.userId }, { headers })
+        await Promise.all(checklistIds.map((checklistId) => axios.patch(`${API_BASE_URL}/api/checklists/${checklistId}/assign`, { user_id: String(member.userId) }, { headers })))
       }
-      setRecords((current) => current.map((item) => selected.includes(item.id) ? { ...item, [field]: member.name } : item))
+      setRecords((current) => current.map((item) => selected.includes(item.id) ? { ...item, [field]: member.name, progress: assignmentMode === 'action' ? '조치 중' : item.progress } : item))
       setSelected([]); setMemberQuery(''); setAssignmentMode(null)
     } catch (error) {
       console.error('담당자 DB 배정 실패:', error)
