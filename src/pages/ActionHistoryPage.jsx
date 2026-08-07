@@ -12,6 +12,14 @@ import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import PieChartRoundedIcon from '@mui/icons-material/PieChartRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 
+function sortByLatestCompletedAt(records) {
+  return [...records].sort((left, right) => {
+    const rightTime = Date.parse(String(right.completedAtRaw || right.completedAt || '').replace(' ', 'T')) || 0
+    const leftTime = Date.parse(String(left.completedAtRaw || left.completedAt || '').replace(' ', 'T')) || 0
+    return rightTime - leftTime
+  })
+}
+
 function ActionHistoryPage() {
   const [loading, setLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true)
@@ -63,6 +71,7 @@ function ActionHistoryPage() {
             id: item.action_history_id,
             eventId: item.event_id ?? null,
             inspectionHistoryId: item.inspection_history_id ?? null,
+            completedAtRaw: item.completed_at ?? null,
             completedAt: item.completed_at ? String(item.completed_at).replace('T', ' ').slice(0, 16) : '-',
             location: item.location || "지정 안 됨",
             type: item.type ?? null,
@@ -76,7 +85,7 @@ function ActionHistoryPage() {
             approvedAt: item.approval_date ? String(item.approval_date).replace('T', ' ').slice(0, 16) : null,
           }
         });
-        setRecords(fetchedRecords);
+        setRecords(sortByLatestCompletedAt(fetchedRecords));
       } else {
         setRecords([]);
       }
@@ -108,6 +117,7 @@ function ActionHistoryPage() {
             id: item.inspection_history_id ?? item.inspection_id,
             inspectionId: item.inspection_id ?? '-',
             name: item.name || "현장 점검 항목",
+            completedAtRaw: item.date ?? null,
             completedAt: item.date ? String(item.date).replace('T', ' ').slice(0, 16) : '-',
             location: item.location ? item.location : "지정 안 됨",
             type: item.name || "현장 점검 항목",
@@ -124,7 +134,7 @@ function ActionHistoryPage() {
           `${record.id}-${record.completedAt}-${record.location}-${record.type}-${record.assignee}`,
           record,
         ])).values())
-        setinspectionHistory(uniqueRecords);
+        setinspectionHistory(sortByLatestCompletedAt(uniqueRecords));
       }
     } catch (error) {
       console.error("점검 이력 로드 실패:", error);
