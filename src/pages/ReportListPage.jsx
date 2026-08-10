@@ -3,12 +3,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
 import { renderAsync } from 'docx-preview'
 import Filtering from '../components/Report/Filtering.jsx'
+import { BACKEND_API_URL } from '../config/api.js'
 import '../styles/report.css'
 
-const API_BASE_URL = 'http://127.0.0.1:8000'
-const FIRST_REPORT_DOCX_URL = '/management_review_order_form.docx'
-
-function mapReport(report, index) {
+function mapReport(report) {
   const createdAt = String(report.created_at ?? '').slice(0, 10)
   return {
     id: report.report_id,
@@ -16,7 +14,7 @@ function mapReport(report, index) {
     createdAt,
     period: createdAt,
     owner: report.writer || `사용자 #${report.uid}`,
-    docxUrl: index === 0 ? FIRST_REPORT_DOCX_URL : '',
+    docxUrl: '',
   }
 }
 
@@ -38,8 +36,35 @@ const getInitialFilters = () => {
 function DocxPreview({ report }) {
   const containerRef = useRef(null)
   const [renderState, setRenderState] = useState('idle')
-  const docxUrl = report?.docxUrl ?? ''
-  const status = docxUrl ? renderState : 'empty'
+  const [docxUrl, setDocxUrl] = useState('')
+  const status = renderState === 'loading' || renderState === 'error'
+    ? renderState
+    : docxUrl ? renderState : 'empty'
+
+  useEffect(() => {
+    if (!report?.id) {
+      setDocxUrl('')
+      return undefined
+    }
+
+    const controller = new AbortController()
+    setRenderState('loading')
+    setDocxUrl('')
+
+    axios.get(`${BACKEND_API_URL}/api/report/${report.id}/file-url/`, { signal: controller.signal })
+      .then((response) => {
+        const nextDocxUrl = response.data?.file_url ?? ''
+        console.log('보고서 파일 URL:', nextDocxUrl)
+        setDocxUrl(nextDocxUrl)
+      })
+      .catch((error) => {
+        if (axios.isCancel(error) || error.name === 'CanceledError') return
+        console.error('보고서 파일 URL 조회 실패:', error)
+        setRenderState('error')
+      })
+
+    return () => controller.abort()
+  }, [report?.id])
 
   useEffect(() => {
     const container = containerRef.current
@@ -108,7 +133,7 @@ function ReportListPage() {
   const [selectedReportId, setSelectedReportId] = useState(reports[0]?.id ?? null)
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/api/report`, { params: { page: 1, size: 100 } })
+    axios.get(`${BACKEND_API_URL}/api/report`, { params: { page: 1, size: 100 } })
       .then((response) => {
         const items = response.data?.items ?? []
         const mappedReports = items.map(mapReport)
