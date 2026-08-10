@@ -44,21 +44,23 @@ function EducationPage({ addedCourses = [] }) {
       .finally(() => setLoading(false))
   }, [])
 
-  const apiCourseItems = useMemo(() => (apiCourses ?? []).map((course) => ({
-    id: `api-${course.education_id}`,
-    contentId: `api-content-${course.education_id}`,
-    educationId: course.education_id,
-    title: course.title,
-    target: course.role,
-    deadline: course.due_date ?? '-',
-    status: course.status,
-    category: course.category,
-    duration: course.type ?? '교육 영상',
-    videoUrl: course.video_url,
-    progressPercent: course.progress_percent ?? (course.status === '이수' ? 100 : 0),
-    lastPositionSeconds: course.last_position_seconds ?? 0,
-    isApiCourse: true,
-  })), [apiCourses])
+  const apiCourseItems = useMemo(() => (apiCourses ?? [])
+    .map((course) => ({
+      id: `api-${course.education_id}`,
+      contentId: `api-content-${course.education_id}`,
+      educationId: course.education_id,
+      title: course.title,
+      target: course.role,
+      deadline: course.due_date ?? '-',
+      status: course.status,
+      category: course.category,
+      duration: course.type ?? '교육 영상',
+      videoUrl: course.video_url,
+      progressPercent: course.progress_percent ?? (course.status === '이수' ? 100 : 0),
+      lastPositionSeconds: course.last_position_seconds ?? 0,
+      isApiCourse: true,
+    }))
+    .sort((a, b) => b.educationId - a.educationId), [apiCourses])
 
   const customContent = useMemo(() => addedCourses.map((course) => ({
     id: course.contentId ?? `custom-${course.title}`,
@@ -386,7 +388,7 @@ function EducationPage({ addedCourses = [] }) {
                         {course.isCustom && <span className="new-course-dot">NEW</span>}
                       </td>
                       <td>
-                        <span className="course-type">{course.isCustom ? '신규' : index < 3 ? '필수' : '정기'}</span>
+                        <span className={`course-type${course.duration === '필수' ? ' is-required' : course.duration === '정기' ? ' is-regular' : ''}`}>{course.isCustom ? '신규' : course.duration ?? '교육'}</span>
                       </td>
                       <td>{course.deadline}</td>
                       <td>
