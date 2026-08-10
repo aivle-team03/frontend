@@ -621,6 +621,7 @@ function ChecklistPage() {
       const verifyFormData = new FormData()
       verifyFormData.append('after_img', photoToUpload.file)
       verifyFormData.append('category_name', currentTask.category || '안전 위험 요인')
+      verifyFormData.append('action_content', completedContent)
 
       const numericId = parseInt(currentTask.id, 10)
       if (!isNaN(numericId)) {
