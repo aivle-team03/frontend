@@ -1,12 +1,14 @@
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
+import { renderAsync } from 'docx-preview'
 import Filtering from '../components/Report/Filtering.jsx'
 import '../styles/report.css'
 
 const API_BASE_URL = 'http://127.0.0.1:8000'
+const FIRST_REPORT_DOCX_URL = '/management_review_order_form.docx'
 
-function mapReport(report) {
+function mapReport(report, index) {
   const createdAt = String(report.created_at ?? '').slice(0, 10)
   return {
     id: report.report_id,
@@ -14,6 +16,7 @@ function mapReport(report) {
     createdAt,
     period: createdAt,
     owner: report.writer || `사용자 #${report.uid}`,
+    docxUrl: index === 0 ? FIRST_REPORT_DOCX_URL : '',
   }
 }
 
@@ -30,6 +33,73 @@ const getInitialFilters = () => {
     endDate: formatDate(endDate),
     author: '',
   }
+}
+
+function DocxPreview({ report }) {
+  const containerRef = useRef(null)
+  const [renderState, setRenderState] = useState('idle')
+  const docxUrl = report?.docxUrl ?? ''
+  const status = docxUrl ? renderState : 'empty'
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return undefined
+
+    container.innerHTML = ''
+
+    if (!docxUrl) return undefined
+
+    const controller = new AbortController()
+    Promise.resolve().then(() => setRenderState('loading'))
+
+    fetch(docxUrl, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error('문서 파일을 불러오지 못했습니다.')
+        return response.arrayBuffer()
+      })
+      .then((buffer) => renderAsync(buffer, container, null, {
+        className: 'report-docx',
+        inWrapper: true,
+        ignoreWidth: false,
+        ignoreHeight: false,
+        breakPages: true,
+        renderHeaders: true,
+        renderFooters: true,
+        renderFootnotes: true,
+        renderEndnotes: true,
+        experimental: true,
+      }))
+      .then(() => setRenderState('ready'))
+      .catch((error) => {
+        if (error.name === 'AbortError') return
+        console.error('보고서 미리보기 실패:', error)
+        container.innerHTML = ''
+        setRenderState('error')
+      })
+
+    return () => {
+      controller.abort()
+      container.innerHTML = ''
+    }
+  }, [docxUrl])
+
+  return (
+    <section className="report-docx-preview-card" aria-label="보고서 문서 미리보기">
+      <div className="report-card-heading compact">
+        <div>
+          <span>Preview</span>
+          <h2>{report?.title ?? '보고서 미리보기'}</h2>
+        </div>
+      </div>
+
+      <div className="report-docx-preview-body">
+        {status === 'loading' && <p className="report-docx-message">문서를 불러오는 중입니다.</p>}
+        {status === 'empty' && <p className="report-docx-message">이 보고서에는 연결된 Word 파일이 없습니다.</p>}
+        {status === 'error' && <p className="report-docx-message">Word 파일 미리보기를 표시하지 못했습니다.</p>}
+        <div className="report-docx-renderer" ref={containerRef} />
+      </div>
+    </section>
+  )
 }
 
 function ReportListPage() {
@@ -83,71 +153,80 @@ function ReportListPage() {
 
   const downloadReport = (event, report) => {
     event.stopPropagation()
+    if (report.docxUrl) {
+      window.open(report.docxUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+
     console.log(`${report.title} 다운로드`)
   }
 
   return (
     <section className="report-page" aria-label="보고서 목록">
-      <section className="report-archive-card">
-        <div className="report-card-heading">
-          <div>
-            <span>Archive</span>
+      <div className="report-list-workspace">
+        <section className="report-archive-card">
+          <div className="report-card-heading">
+            <div>
+              <span>Archive</span>
+            </div>
+            <strong>{filteredReports.length}건</strong>
           </div>
-          <strong>{filteredReports.length}건</strong>
-        </div>
 
-        <div className="report-table-wrap">
-          <Filtering
-            filters={filters}
-            onChange={updateFilter}
-            onReset={resetFilters}
-          />
+          <div className="report-table-wrap">
+            <Filtering
+              filters={filters}
+              onChange={updateFilter}
+              onReset={resetFilters}
+            />
 
-          <table className="report-table">
-            <thead>
-              <tr>
-                <th>제목</th>
-                <th>기간</th>
-                <th>작성자</th>
-                <th>다운로드</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredReports.map((report) => (
-                <tr
-                  className={selectedReport?.id === report.id ? 'is-selected' : ''}
-                  key={report.id}
-                  onClick={() => setSelectedReportId(report.id)}
-                >
-                  <td>
-                    <div className="report-title-cell">
-                      <strong>{report.title}</strong>
-                      <span>생성 {report.createdAt} · 보관 {report.retentionUntil}</span>
-                    </div>
-                  </td>
-                  <td>{report.period ?? report.createdAt}</td>
-                  <td>{report.owner}</td>
-                  <td>
-                    <button
-                      className="report-download-button"
-                      type="button"
-                      aria-label={`${report.title} 다운로드`}
-                      onClick={(event) => downloadReport(event, report)}
-                    >
-                      <DownloadRoundedIcon />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {!filteredReports.length && (
+            <table className="report-table">
+              <thead>
                 <tr>
-                  <td className="report-empty-cell" colSpan={4}>조건에 맞는 보고서가 없습니다.</td>
+                  <th>제목</th>
+                  <th>기간</th>
+                  <th>작성자</th>
+                  <th>다운로드</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody>
+                {filteredReports.map((report) => (
+                  <tr
+                    className={selectedReport?.id === report.id ? 'is-selected' : ''}
+                    key={report.id}
+                    onClick={() => setSelectedReportId(report.id)}
+                  >
+                    <td>
+                      <div className="report-title-cell">
+                        <strong>{report.title}</strong>
+                        <span>생성 {report.createdAt} · 보관 {report.retentionUntil}</span>
+                      </div>
+                    </td>
+                    <td>{report.period ?? report.createdAt}</td>
+                    <td>{report.owner}</td>
+                    <td>
+                      <button
+                        className="report-download-button"
+                        type="button"
+                        aria-label={`${report.title} 다운로드`}
+                        onClick={(event) => downloadReport(event, report)}
+                      >
+                        <DownloadRoundedIcon />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {!filteredReports.length && (
+                  <tr>
+                    <td className="report-empty-cell" colSpan={4}>조건에 맞는 보고서가 없습니다.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {selectedReport && <DocxPreview report={selectedReport} />}
+      </div>
     </section>
   )
 }

@@ -247,6 +247,79 @@
   overflow: hidden;
 }
 
+.report-list-workspace {
+  display: grid;
+  grid-template-columns: minmax(460px, 0.88fr) minmax(720px, 1.25fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.report-list-workspace .report-archive-card,
+.report-list-workspace .report-docx-preview-card {
+  min-width: 0;
+}
+
+.report-docx-preview-card {
+  overflow: hidden;
+  border: 1px solid #dce6f2;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.report-docx-preview-body {
+  position: relative;
+  display: grid;
+  align-content: start;
+  min-height: 720px;
+  height: calc(100vh - 210px);
+  max-height: 980px;
+  overflow: auto;
+  padding: 24px;
+  background: #eef3f8;
+}
+
+.report-docx-message {
+  margin: 0;
+  padding: 40px 0;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.report-docx-renderer {
+  display: inline-block;
+  min-width: 0;
+  width: max-content;
+  margin: 0 auto;
+}
+
+.report-docx-renderer .docx-wrapper {
+  min-width: max-content;
+  padding: 24px;
+  background: #eef3f8;
+  overflow: visible;
+}
+
+.report-docx-renderer .docx-wrapper > section {
+  margin: 0 auto 24px;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.13);
+}
+
+.report-docx-renderer .docx-wrapper > section:last-child {
+  margin-bottom: 0;
+}
+
+.report-list-workspace .report-table {
+  min-width: 620px;
+}
+
+.report-list-workspace .report-table th:nth-child(1) { width: 46%; }
+.report-list-workspace .report-table th:nth-child(2) { width: 23%; }
+.report-list-workspace .report-table th:nth-child(3) { width: 18%; }
+.report-list-workspace .report-table th:nth-child(4) { width: 12%; }
+
 .report-card-heading {
   display: flex;
   align-items: center;
@@ -665,6 +738,20 @@
 }
 
 @media (max-width: 1100px) {
+  .report-list-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .report-list-workspace .report-table {
+    min-width: 760px;
+  }
+
+  .report-docx-preview-body {
+    height: auto;
+    min-height: 640px;
+    max-height: 820px;
+  }
+
   .report-workspace {
     grid-template-columns: 1fr;
   }
