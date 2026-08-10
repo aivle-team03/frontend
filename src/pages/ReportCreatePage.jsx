@@ -1,9 +1,11 @@
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import ReportPreview from '../components/Report/ReportPreview.jsx'
 import { REPORT_PAGE_MOCK_DATA } from '../mocks/mockData.js'
 import { loadGeneratedReports, saveGeneratedReport } from '../utils/reportArchiveStorage.js'
+import { BACKEND_API_URL } from '../config/api.js'
 import '../styles/report.css'
 
 function ReportCreatePage() {
@@ -39,7 +41,9 @@ function ReportCreatePage() {
     setReportForm((currentForm) => ({ ...currentForm, [field]: value }))
   }
 
-  const createReport = () => {
+  const createReport = async () => {
+    await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/form/generate`)
+
     const isEtcReport = reportForm.type === 'etc'
     const isIncidentReport = reportForm.type === 'incident-investigation'
     const reportTitle = isEtcReport && reportForm.customTitle.trim()
