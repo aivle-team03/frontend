@@ -658,7 +658,14 @@ function ActionHistoryPage() {
                       <div className="ai-info-list">
                         <div>
                           <span>신뢰도</span>
-                          <strong>{selectedRecord.aiConfidence != null ? `${selectedRecord.aiConfidence}%` : '-'}</strong>
+                          <strong>
+                            {selectedRecord.aiConfidence != null
+                              ? `${selectedRecord.aiConfidence <= 1
+                                ? Math.round(selectedRecord.aiConfidence * 100)
+                                : Math.round(selectedRecord.aiConfidence)
+                              }%`
+                              : '-'}
+                          </strong>
                         </div>
                         <div>
                           <span>분석 내용</span>
