@@ -79,6 +79,7 @@ function ActionHistoryPage() {
             assignee: item.handler_name || "담당자 미지정",
             content: item.content ?? '',
             imageUrl: item.image_url || "",
+            beforeImageUrl: item.before_image_url || "",
             statusRaw: item.approval_status,
             approvalStatus,
             approver: item.approver_name ?? null,
@@ -626,19 +627,33 @@ function ActionHistoryPage() {
               </div>
 
               <div className="modal-v2-content-grid">
-                <div className="modal-v2-card">
-                  <h3>조치 등록 사진</h3>
-                  <div className="img-box">
+
+                {selectedRecord.beforeImageUrl && (
+                  <div className="modal-v2-card before-photo-card" style={{ borderLeft: '4px solid #e53935' }}>
+                    <h3 style={{ color: '#e53935' }}>🚨 조치 전 위험 사진</h3>
+                    <div className="img-box" style={{ marginTop: '10px' }}>
+                      <img src={selectedRecord.beforeImageUrl} alt="조치 전 위험 사진" />
+                    </div>
+                    <p className="card-desc" style={{ color: '#d32f2f' }}>감지/등록 당시의 최초 위험 현장 사진</p>
+                  </div>
+                )}
+
+                <div className="modal-v2-card after-photo-card" style={selectedRecord.beforeImageUrl ? { borderLeft: '4px solid #2e7d32' } : {}}>
+                  <h3 style={selectedRecord.beforeImageUrl ? { color: '#2e7d32' } : {}}>
+                    {selectedRecord.beforeImageUrl ? '✅ 조치 후 완료 사진' : '조치 등록 사진'}
+                  </h3>
+                  <div className="img-box" style={{ marginTop: '10px' }}>
                     {selectedRecord.imageUrl ? (
-                      <img src={selectedRecord.imageUrl} alt="조치 사진" />
+                      <img src={selectedRecord.imageUrl} alt="조치 후 완료 사진" />
                     ) : (
                       <p style={{ padding: '40px', textAlign: 'center', color: '#888' }}>등록된 사진이 없습니다.</p>
                     )}
                   </div>
-                  <p className="card-desc">등록된 현장 사진 확인</p>
+                  <p className="card-desc">
+                    {selectedRecord.beforeImageUrl ? '작업자가 현장에서 새로 등록한 완료 사진' : '등록된 현장 사진 확인'}
+                  </p>
                 </div>
 
-                {/* 💡 실시간 DB AI 검증 결과 동적 바인딩 카드 */}
                 <div className="modal-v2-card ai-result-card">
                   <h3>AI 재확인 결과</h3>
                   {selectedRecord.aiVerified === 1 ? (
@@ -653,7 +668,14 @@ function ActionHistoryPage() {
                       <div className="ai-info-list">
                         <div>
                           <span>신뢰도</span>
-                          <strong>{selectedRecord.aiConfidence != null ? `${selectedRecord.aiConfidence}%` : '-'}</strong>
+                          <strong>
+                            {selectedRecord.aiConfidence != null
+                              ? `${selectedRecord.aiConfidence <= 1
+                                ? Math.round(selectedRecord.aiConfidence * 100)
+                                : Math.round(selectedRecord.aiConfidence)
+                              }%`
+                              : '-'}
+                          </strong>
                         </div>
                         <div>
                           <span>분석 내용</span>

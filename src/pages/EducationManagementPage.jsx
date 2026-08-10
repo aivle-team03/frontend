@@ -41,7 +41,10 @@ const courseMetrics = [
 ]
 
 const workTypes = ['지게차 작업', '고소 작업', '설비 점검', '화재 예방', '화학물질 취급', '기타']
-const targetGroups = ['전체 임직원', '안전관리자', '관제사', '현장관리자', '일반유저']
+const educationCategoryOptions = ['공통', '지게차', '화물트럭', '토잉카', '팔레트', '적재', '현장보조', '유지보수', '재고', '위험물']
+const generalUserCategoryOptions = educationCategoryOptions.filter((category) => category !== '공통')
+const educationTypes = ['필수', '정기']
+const targetGroups = ['공통', '안전관리자', '관제사', '현장관리자', '일반유저']
 const getTodayDate = () => {
   const now = new Date()
   const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60_000)
@@ -75,6 +78,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
           id: `api-${course.education_id}`,
           educationId: course.education_id,
           title: course.title,
+          videoUrl: course.video_url,
           target: course.category ?? '전체',
           deadline: course.due_date ?? '-',
           status: completed === course.target_count ? '이수 완료' : '진행 중',
@@ -114,7 +118,10 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
 
   const baseCourses = apiCourses ?? []
   const displayedCompletion = apiCompletion ?? []
-  const allCourses = useMemo(() => [...addedCourses, ...baseCourses], [addedCourses, baseCourses])
+  const allCourses = useMemo(() => [
+    ...addedCourses,
+    ...baseCourses.slice().reverse(),
+  ], [addedCourses, baseCourses])
   const [selectedTarget, setSelectedTarget] = useState('전체')
   const [courseSearch, setCourseSearch] = useState('')
   const [tableTarget, setTableTarget] = useState('전체')
@@ -126,18 +133,34 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   const [courseForm, setCourseForm] = useState({
     title: '',
     target: targetGroups[0],
+    targetCategory: generalUserCategoryOptions[0],
+    workType: workTypes[0],
+    educationType: educationTypes[0],
     deadline: getTodayDate(),
     videoUrl: '',
   })
   const [aiForm, setAiForm] = useState({
+    title: '',
     workType: workTypes[0],
+    target: targetGroups[0],
+    category: '공통',
+    educationType: educationTypes[0],
     equipment: '',
     riskFactor: '',
     request: '',
+    dueDate: getTodayDate(),
   })
   const [materialFile, setMaterialFile] = useState(null)
   const [aiStatus, setAiStatus] = useState('idle')
   const [aiTaskId, setAiTaskId] = useState(null)
+  const [initialGenerationRequest, setInitialGenerationRequest] = useState('')
+  const [regenerationRequests, setRegenerationRequests] = useState([])
+  const [regenerationRequestDraft, setRegenerationRequestDraft] = useState('')
+  const [generatedVideo, setGeneratedVideo] = useState(null)
+  const [publishError, setPublishError] = useState('')
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [isRegenerating, setIsRegenerating] = useState(false)
+  const [isCancellingReview, setIsCancellingReview] = useState(false)
   const [attendanceDetail, setAttendanceDetail] = useState(null)
   const [attendanceList, setAttendanceList] = useState([])
   const [attendanceLoading, setAttendanceLoading] = useState(false)
@@ -145,6 +168,41 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   const [attendeeSearch, setAttendeeSearch] = useState('')
   const videoInputRef = useRef(null)
   const materialInputRef = useRef(null)
+  const registerCardRef = useRef(null)
+  const generatedCardRef = useRef(null)
+  const courseTableCardRef = useRef(null)
+  const [generatedCardHeight, setGeneratedCardHeight] = useState(null)
+  const [generatedMeasureWidth, setGeneratedMeasureWidth] = useState(null)
+
+  useEffect(() => {
+    if (generatedCardHeight || !registerCardRef.current) return undefined
+
+    const frameId = window.requestAnimationFrame(() => {
+      setGeneratedMeasureWidth(Math.ceil(registerCardRef.current?.getBoundingClientRect().width ?? 0))
+    })
+    return () => window.cancelAnimationFrame(frameId)
+  }, [generatedCardHeight])
+
+  useEffect(() => {
+    if (!generatedMeasureWidth || !generatedCardRef.current) return
+    const measuredHeight = Math.max(
+      Math.ceil(generatedCardRef.current.getBoundingClientRect().height),
+      Math.ceil(courseTableCardRef.current?.getBoundingClientRect().height ?? 0),
+    )
+    setGeneratedCardHeight(measuredHeight)
+    setGeneratedMeasureWidth(null)
+  }, [generatedMeasureWidth])
+
+  useEffect(() => {
+    if (videoAction !== 'generate' || !generatedCardRef.current) return undefined
+
+    const card = generatedCardRef.current
+    const syncHeight = () => setGeneratedCardHeight((current) => Math.max(current ?? 0, Math.ceil(card.getBoundingClientRect().height)))
+    const observer = new ResizeObserver(syncHeight)
+    syncHeight()
+    observer.observe(card)
+    return () => observer.disconnect()
+  }, [videoAction])
 
   useEffect(() => {
     if (!aiTaskId) return undefined
@@ -155,13 +213,23 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       try {
         const { data } = await axios.get(`${API_BASE_URL}/api/education/veo-generate/${aiTaskId}/status`, { headers })
         if (data.status === 'COMPLETED') {
-          setAiStatus('complete')
+          const requiresHumanReview = data.quality_report?.hitl_required === true
           setAiTaskId(null)
-          setNotice('AI 교육 영상 생성이 완료되어 교육 목록을 새로고침했습니다.')
-          await fetchAdminEducationData()
+          setIsRegenerating(false)
+          setPublishError('')
+          if (requiresHumanReview) {
+            setAiStatus('review')
+            setRegenerationRequestDraft('')
+            setGeneratedVideo({ taskId: aiTaskId, videoUrl: data.video_url, qualityReport: data.quality_report })
+            setNotice('품질 기준 미달 영상입니다. 검수 후 등록하거나 추가 요청으로 재생성해 주세요.')
+          } else {
+            setAiStatus('publishing')
+            await publishGeneratedVideo(aiTaskId, true)
+          }
         } else if (data.status === 'FAILED') {
           setAiStatus('error')
           setAiTaskId(null)
+          setIsRegenerating(false)
           setNotice(`AI 교육 영상 생성에 실패했습니다. ${data.error_message ?? ''}`)
         }
       } catch (error) {
@@ -188,9 +256,9 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
     const matchesTarget = tableTarget === '전체' || course.target === tableTarget || course.target === '전체'
     return matchesSearch && matchesTarget
   }), [allCourses, courseSearch, tableTarget])
-  const coursePageCount = Math.max(1, Math.ceil(filteredCourses.length / 5))
+  const coursePageCount = Math.max(1, Math.ceil(filteredCourses.length / 8))
   const activeCoursePage = Math.min(coursePage, coursePageCount - 1)
-  const visibleCourses = filteredCourses.slice(activeCoursePage * 5, (activeCoursePage + 1) * 5)
+  const visibleCourses = filteredCourses.slice(activeCoursePage * 8, (activeCoursePage + 1) * 8)
   const visibleAttendees = attendanceList.filter((person) => {
     const matchesStatus = attendanceFilter === '전체' || person.status === attendanceFilter
     const query = attendeeSearch.trim()
@@ -200,6 +268,13 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
 
   const updateCourseForm = (key, value) => setCourseForm((current) => ({ ...current, [key]: value }))
   const updateAiForm = (key, value) => setAiForm((current) => ({ ...current, [key]: value }))
+  const updateAiTarget = (target) => setAiForm((current) => ({
+    ...current,
+    target,
+    category: target === '일반유저'
+      ? (generalUserCategoryOptions.includes(current.category) ? current.category : generalUserCategoryOptions[0])
+      : target,
+  }))
   /* 이전 개별 사용자 조회 방식: 단일 dashboard 응답으로 대체됨
   const openAttendanceModalLegacy = async (detail) => {
     setAttendanceDetail(detail)
@@ -277,7 +352,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
 
   const addVideoCourse = (event) => {
     event.preventDefault()
-    if (!courseForm.title.trim() || !courseForm.deadline || (videoSourceType === 'file' ? !videoFile : !courseForm.videoUrl.trim())) {
+    if (!courseForm.title.trim() || !courseForm.workType || !courseForm.educationType || !courseForm.deadline || (videoSourceType === 'file' ? !videoFile : !courseForm.videoUrl.trim())) {
       setNotice('교육명, 마감일, 교육 영상을 모두 입력해 주세요.')
       return
     }
@@ -291,34 +366,51 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       deadline: courseForm.deadline,
       status: '대기',
       progress: 0,
-      duration: '영상',
-      category: '등록 영상',
+      duration: courseForm.educationType,
+      category: courseForm.workType,
       videoUrl: videoSourceType === 'file' ? fileUrl : courseForm.videoUrl.trim(),
       sourceName: videoSourceType === 'file' ? videoFile.name : '외부 영상 URL',
       isCustom: true,
     })
-    setCourseForm({ title: '', target: targetGroups[0], deadline: getTodayDate(), videoUrl: '' })
+    setCourseForm({ title: '', target: targetGroups[0], targetCategory: generalUserCategoryOptions[0], workType: workTypes[0], educationType: educationTypes[0], deadline: getTodayDate(), videoUrl: '' })
     setVideoFile(null)
     if (videoInputRef.current) videoInputRef.current.value = ''
     setNotice('교육 영상이 대상자 교육 리스트와 내 교육 리스트에 추가되었습니다.')
   }
 
-  const requestAiVideo = async (event) => {
-    event.preventDefault()
-    if (!aiForm.equipment.trim() || !aiForm.riskFactor.trim()) {
+  const requestAiVideo = async (event, isRegeneration = false) => {
+    event?.preventDefault()
+    if (!aiForm.title.trim() || !aiForm.equipment.trim() || !aiForm.riskFactor.trim() || !aiForm.dueDate) {
       setAiStatus('error')
       return
     }
 
     try {
+      const additionalRequest = regenerationRequestDraft.trim()
+      const requestToSend = isRegeneration
+        ? [initialGenerationRequest, ...regenerationRequests, additionalRequest].filter(Boolean).join('\n\n')
+        : aiForm.request.trim()
+
+      if (isRegeneration) {
+        if (additionalRequest) setRegenerationRequests((current) => [...current, additionalRequest])
+      } else {
+        // 새 생성은 이전 영상의 재생성 요청 이력을 이어받지 않는다.
+        setInitialGenerationRequest(requestToSend)
+        setRegenerationRequests([])
+      }
+      setIsRegenerating(isRegeneration)
       setAiStatus('queued')
+      setGeneratedVideo(null)
+      setPublishError('')
       const token = localStorage.getItem('token')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
       const formData = new FormData()
       if (materialFile) formData.append('file', materialFile)
       else formData.append('text_content', `작업 유형: ${aiForm.workType}\n사용 장비: ${aiForm.equipment.trim()}\n위험 요인: ${aiForm.riskFactor.trim()}`)
-      formData.append('title', `${aiForm.workType} 안전 교육`)
-      formData.append('request', aiForm.request.trim())
+      formData.append('title', aiForm.title.trim() || `${aiForm.workType} 안전 교육`)
+      formData.append('category', aiForm.category)
+      formData.append('type', aiForm.educationType)
+      formData.append('request', requestToSend)
       const response = await axios.post(`${API_BASE_URL}/api/education/veo-generate`, formData, { headers })
       setAiTaskId(response.data.task_id)
       setNotice('AI 교육 영상 생성을 시작했습니다. 완료되면 교육 목록에 자동으로 반영됩니다.')
@@ -326,8 +418,60 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
     } catch (error) {
       console.error('AI 교육 자료 생성 실패:', error)
       setAiStatus('error')
+      setIsRegenerating(false)
       setNotice(`AI 교육 자료 생성에 실패했습니다. ${error.response?.data?.detail ?? ''}`)
     }
+  }
+
+  const publishGeneratedVideo = async (taskId = generatedVideo?.taskId, isAutomatic = false) => {
+    if (!taskId || !aiForm.dueDate) {
+      setPublishError('교육 목록에 등록하려면 마감일을 지정해 주세요.')
+      return false
+    }
+
+    try {
+      setIsPublishing(true)
+      setPublishError('')
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const formData = new FormData()
+      formData.append('due_date', aiForm.dueDate)
+      formData.append('title', aiForm.title.trim() || `${aiForm.workType} 안전 교육`)
+      formData.append('category', aiForm.category)
+      formData.append('type', aiForm.educationType)
+      await axios.post(`${API_BASE_URL}/api/education/veo-generate/${taskId}/publish`, formData, { headers })
+      setAiStatus('published')
+      setGeneratedVideo(null)
+      setNotice(isAutomatic ? 'AI 품질 검수를 통과해 교육 목록에 자동 등록되었습니다.' : '검토한 AI 교육 영상이 교육 목록에 등록되었습니다.')
+      // 등록은 이미 완료됐으므로 목록 갱신 실패가 등록 실패로 보이지 않도록 분리한다.
+      try {
+        await fetchAdminEducationData()
+      } catch (refreshError) {
+        console.warn('교육 목록을 새로고침하지 못했습니다. 화면을 새로고침하면 등록된 항목을 확인할 수 있습니다.', refreshError)
+      }
+      return true
+    } catch (error) {
+      console.error('AI 교육 영상 최종 등록 실패:', error)
+      setPublishError(error.response?.data?.detail ?? error.message ?? '교육 목록 등록에 실패했습니다. 다시 시도해 주세요.')
+      return false
+    } finally {
+      setIsPublishing(false)
+    }
+  }
+
+  const cancelReview = () => {
+    if (isCancellingReview) return
+    setIsCancellingReview(true)
+    window.setTimeout(() => {
+      setGeneratedVideo(null)
+      setAiStatus('idle')
+      setPublishError('')
+      setInitialGenerationRequest('')
+      setRegenerationRequests([])
+      setRegenerationRequestDraft('')
+      setIsCancellingReview(false)
+      setNotice('등록 전 검수를 취소했습니다.')
+    }, 180)
   }
 
   if (loading) {
@@ -337,7 +481,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   return (
     <section className="education-page education-management-page">
       <div className="education-creation-grid">
-        <article className={`education-panel video-register-card${videoAction !== 'register' ? ' is-action-hidden' : ''}`}>
+        <article ref={registerCardRef} className={`education-panel video-register-card${videoAction !== 'register' ? ' is-action-hidden' : ''}`} style={generatedCardHeight ? { height: `${generatedCardHeight}px` } : undefined}>
           <div className="card-heading-row">
             <PanelTitle icon={VideoFileOutlinedIcon} kicker="교육 영상 등록" title="교육 영상 추가" />
             <VideoActionTabs value={videoAction} onChange={setVideoAction} />
@@ -347,14 +491,23 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
             <FormField label="교육명" required>
               <input value={courseForm.title} onChange={(event) => updateCourseForm('title', event.target.value)} placeholder="예: 3분기 지게차 안전교육" />
             </FormField>
-            <div className="two-column-fields">
+            <FormField label="작업 유형" required>
+              <StyledSelect value={courseForm.workType} options={workTypes} onChange={(value) => updateCourseForm('workType', value)} ariaLabel="작업 유형" />
+            </FormField>
+            <div className={courseForm.target === '일반유저' ? 'three-column-fields' : 'two-column-fields'}>
               <FormField label="이수 대상" required>
                 <StyledSelect value={courseForm.target} options={targetGroups} onChange={(value) => updateCourseForm('target', value)} ariaLabel="이수 대상" />
               </FormField>
-              <FormField label="마감일" required>
-                <input type="date" value={courseForm.deadline} onChange={(event) => updateCourseForm('deadline', event.target.value)} />
+              {courseForm.target === '일반유저' && <FormField label="세부 카테고리" required>
+                <StyledSelect value={courseForm.targetCategory} options={generalUserCategoryOptions} onChange={(value) => updateCourseForm('targetCategory', value)} ariaLabel="일반유저 세부 카테고리" />
+              </FormField>}
+              <FormField label="이수 유형" required>
+                <StyledSelect value={courseForm.educationType} options={educationTypes} onChange={(value) => updateCourseForm('educationType', value)} ariaLabel="이수 유형" />
               </FormField>
             </div>
+            <FormField label="마감일" required>
+                <input type="date" value={courseForm.deadline} onChange={(event) => updateCourseForm('deadline', event.target.value)} />
+            </FormField>
             <div className="source-tabs" role="tablist" aria-label="영상 등록 방식">
               <button className={videoSourceType === 'file' ? 'is-active' : ''} type="button" onClick={() => setVideoSourceType('file')}><CloudUploadOutlinedIcon /> 파일 첨부</button>
               <button className={videoSourceType === 'url' ? 'is-active' : ''} type="button" onClick={() => setVideoSourceType('url')}><LinkRoundedIcon /> URL 입력</button>
@@ -376,28 +529,59 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
           </form>
         </article>
 
-        <article className={`education-panel ai-video-card${videoAction !== 'generate' ? ' is-action-hidden' : ''}`}>
+        <article ref={generatedCardRef} className={`education-panel ai-video-card${videoAction !== 'generate' && !generatedMeasureWidth ? ' is-action-hidden' : ''}${generatedMeasureWidth ? ' is-generated-measurement' : ''}${aiStatus === 'queued' ? ' is-generating' : ''}`} style={generatedMeasureWidth ? { width: `${generatedMeasureWidth}px` } : undefined} aria-busy={aiStatus === 'queued'}>
           <div className="ai-card-glow" />
           <div className="card-heading-row">
             <PanelTitle icon={MovieCreationOutlinedIcon} kicker="교육 영상 생성" title="교육 영상 생성" dark />
             <VideoActionTabs value={videoAction} onChange={setVideoAction} dark />
           </div>
+          {!generatedVideo && <>
+          {aiStatus === 'published' && <div className="ai-publish-notice" role="status"><CheckCircleOutlineRoundedIcon /><span><strong>교육 목록에 등록되었습니다.</strong> 교육 관리와 내 교육 리스트에서 확인할 수 있습니다.</span></div>}
           <p className="card-intro">교육 자료를 업로드하면 핵심 내용을 분석해 교육용 영상 초안을 만듭니다.</p>
           <form className="ai-video-form" onSubmit={requestAiVideo}>
-            <EducationSelect label="작업 유형" value={aiForm.workType} options={workTypes} onChange={(value) => updateAiForm('workType', value)} />
-            <label className="education-select"><span>사용 장비</span><input value={aiForm.equipment} onChange={(event) => updateAiForm('equipment', event.target.value)} placeholder="예: 지게차, 안전모, 절단기" /></label>
-            <label className="education-select"><span>위험 요인</span><input value={aiForm.riskFactor} onChange={(event) => updateAiForm('riskFactor', event.target.value)} placeholder="예: 충돌, 낙하, 끼임" /></label>
-            <label className="education-select generation-request"><span>추가 생성 요청</span><textarea value={aiForm.request} onChange={(event) => updateAiForm('request', event.target.value)} placeholder="예: 지게차 운전자의 시점으로, 보호구 착용을 강조해 주세요." rows="3" /></label>
+            <label className="education-select"><span>교육명<b>*</b></span><input value={aiForm.title} onChange={(event) => updateAiForm('title', event.target.value)} placeholder="예: 창고 화재 예방 안전 교육" /></label>
+            <EducationSelect label="작업 유형" value={aiForm.workType} options={workTypes} onChange={(value) => updateAiForm('workType', value)} required />
+            <div className={aiForm.target === '일반유저' ? 'three-column-fields ai-generation-metadata' : 'two-column-fields ai-generation-metadata'}>
+              <EducationSelect label="이수 대상" value={aiForm.target} options={targetGroups} onChange={updateAiTarget} required />
+              {aiForm.target === '일반유저' && <EducationSelect label="세부 카테고리" value={aiForm.category} options={generalUserCategoryOptions} onChange={(value) => updateAiForm('category', value)} required />}
+              <EducationSelect label="이수 유형" value={aiForm.educationType} options={educationTypes} onChange={(value) => updateAiForm('educationType', value)} required />
+            </div>
+            <label className="education-select"><span>교육 마감일<b>*</b></span><input type="date" value={aiForm.dueDate} onChange={(event) => updateAiForm('dueDate', event.target.value)} required /></label>
+            <label className="education-select"><span>사용 장비<b>*</b></span><input value={aiForm.equipment} onChange={(event) => updateAiForm('equipment', event.target.value)} placeholder="예: 지게차, 안전모, 절단기" /></label>
+            <label className="education-select"><span>위험 요인<b>*</b></span><input value={aiForm.riskFactor} onChange={(event) => updateAiForm('riskFactor', event.target.value)} placeholder="예: 충돌, 낙하, 끼임" /></label>
+            <label className="education-select generation-request"><span>요청 사항</span><textarea value={aiForm.request} onChange={(event) => updateAiForm('request', event.target.value)} placeholder="예: 지게차 운전자의 시점으로, 보호구 착용을 강조해 주세요." rows="3" /></label>
             <button className={`upload-dropzone ai-upload${materialFile ? ' has-file' : ''}`} type="button" onClick={() => materialInputRef.current?.click()}>
               <input ref={materialInputRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.hwp,.txt" onChange={(event) => setMaterialFile(event.target.files?.[0] ?? null)} />
               <CloudUploadOutlinedIcon />
               <span><strong>{materialFile?.name ?? '교육 자료 업로드'}</strong><small>PDF, Word, PPT, HWP · 원본은 서버에 저장하지 않습니다</small></span>
             </button>
             <button className="ai-generate-button" type="submit"><VideoLibraryOutlinedIcon /> AI 교육 영상 생성</button>
-            {aiStatus === 'error' && <p className="ai-form-status is-error">사용 장비와 위험 요인을 입력해 주세요.</p>}
-            {aiStatus === 'queued' && <p className="ai-form-status"><CheckCircleOutlineRoundedIcon /> AI 교육 자료를 생성하고 있습니다.</p>}
-            {aiStatus === 'complete' && <p className="ai-form-status"><CheckCircleOutlineRoundedIcon /> AI 교육 자료가 교육 목록에 추가되었습니다.</p>}
+            {aiStatus === 'error' && <p className="ai-form-status is-error">교육명, 사용 장비, 위험 요인, 교육 마감일을 입력해 주세요.</p>}
           </form>
+          </>}
+          {generatedVideo && aiStatus !== 'queued' && (
+            <section className="ai-review-panel" aria-label="생성된 교육 영상 검토">
+              <div className="ai-review-heading"><div><span>생성 결과 검토</span><h4>등록 전 영상을 확인해 주세요</h4></div></div>
+              {generatedVideo.qualityReport?.visual_qa?.visual_score != null && <p className="ai-quality-score"><span className="ai-quality-warning" role="img" aria-label="주의">⚠️</span> AI 영상 품질 점수가 <strong>{generatedVideo.qualityReport.visual_qa.visual_score}점</strong>입니다. 기준 미달로 등록 전 검수가 필요합니다.</p>}
+              <video className="ai-review-video" controls preload="metadata" src={generatedVideo.videoUrl}>생성된 교육 영상 미리보기</video>
+              <section className="ai-request-editor is-editing">
+                <span className="ai-request-tab">재생성 요청 사항</span>
+                <div className="ai-request-editor-body"><textarea value={regenerationRequestDraft} onChange={(event) => setRegenerationRequestDraft(event.target.value)} placeholder="수정하고 싶은 장면, 강조할 내용, 말투 등을 입력해 주세요." rows="3" /><button className="ai-regenerate-confirm" type="button" disabled={aiStatus === 'queued' || isPublishing} onClick={() => requestAiVideo(null, true)}>영상 재생성</button></div>
+              </section>
+              <div className="ai-review-actions">
+                <button className="ai-cancel-review-button" type="button" disabled={isCancellingReview || isPublishing} onClick={cancelReview}>{isCancellingReview ? '취소하는 중...' : '등록 취소'}</button>
+                <button className="ai-publish-button" type="button" disabled={isPublishing} onClick={() => publishGeneratedVideo()}>{isPublishing ? '등록 중...' : '교육 목록에 등록 ▶'}</button>
+              </div>
+              {publishError && <p className="ai-review-error">{publishError}</p>}
+            </section>
+          )}
+          {aiStatus === 'queued' && (
+            <div className="ai-generation-overlay" role="status" aria-live="polite" aria-label={isRegenerating ? '교육 영상을 재생성하고 있습니다' : 'AI 교육 영상을 생성하고 있습니다'}>
+              <span className="ai-generation-spinner" aria-hidden="true" />
+              <strong>{isRegenerating ? '교육 영상을 재생성하고 있습니다' : 'AI 교육 영상을 생성하고 있습니다'}</strong>
+              <p>자료를 분석하고 장면을 제작 중입니다.</p>
+            </div>
+          )}
         </article>
       </div>
 
@@ -421,7 +605,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
         </article>
 
         {/* 하단 테이블: 대상자별 교육 리스트 */}
-        <article className="education-panel management-course-table-card">
+        <article ref={courseTableCardRef} className="education-panel management-course-table-card">
           <div className="management-card-heading table-card-heading"><PanelTitle icon={GroupsOutlinedIcon} kicker="교육 대상자" title="대상자별 교육 리스트" /><span className="course-count">총 {allCourses.length}개 과정</span></div>
           <div className="course-table-toolbar">
             <label className="course-search"><SearchRoundedIcon /><input value={courseSearch} onChange={(event) => { setCourseSearch(event.target.value); setCoursePage(0) }} placeholder="교육명 검색" /></label>
@@ -498,8 +682,8 @@ function AnimatedNumber({ value, suffix }) {
   return <strong>{displayValue}<small>{suffix}</small></strong>
 }
 
-function EducationSelect({ label, value, options, onChange }) {
-  return <label className="education-select"><span>{label}</span><StyledSelect value={value} options={options} onChange={onChange} ariaLabel={label} /></label>
+function EducationSelect({ label, value, options, onChange, required = false }) {
+  return <label className="education-select"><span>{label}{required && <b>*</b>}</span><StyledSelect value={value} options={options} onChange={onChange} ariaLabel={label} /></label>
 }
 
 function StyledSelect({ value, options, onChange, ariaLabel, className = '' }) {
