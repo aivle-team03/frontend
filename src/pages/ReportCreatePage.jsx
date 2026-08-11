@@ -8,11 +8,18 @@ import { loadGeneratedReports, saveGeneratedReport } from '../utils/reportArchiv
 import { BACKEND_API_URL } from '../config/api.js'
 import '../styles/report.css'
 
+const REPORT_TYPE_OPTIONS = [
+  { key: 'risk-assessment-form', label: '위험성평가표' },
+  { key: 'risk-assessment-report', label: '위험성평가 보고서' },
+  { key: 'management-order-report', label: '경영책임자 지시 보고서' },
+  { key: 'worker-risk-report', label: '종사자에 의한 유해 위험요인 보고서' },
+]
+
 function ReportCreatePage() {
   const navigate = useNavigate()
   const [creatorName, setCreatorName] = useState('')
   const [reportForm, setReportForm] = useState({
-    type: 'risk-assessment',
+    type: 'risk-assessment-form',
     startDate: '2026-07-21',
     endDate: '2026-07-21',
     customTitle: '',
@@ -46,9 +53,14 @@ function ReportCreatePage() {
   }, [reportForm.endDate, reportForm.startDate])
 
   const selectedTypeOption = useMemo(
-    () => REPORT_PAGE_MOCK_DATA.reportTypes.find((item) => item.key === reportForm.type),
+    () => REPORT_TYPE_OPTIONS.find((item) => item.key === reportForm.type),
     [reportForm.type],
   )
+  const isRiskAssessmentForm = reportForm.type === 'risk-assessment-form'
+  const isManagementOrderReport = reportForm.type === 'management-order-report'
+  const isWorkerRiskReport = reportForm.type === 'worker-risk-report'
+  const isRiskAssessmentReport = reportForm.type === 'risk-assessment-report'
+  const isPeriodDisabled = isRiskAssessmentForm || isWorkerRiskReport
 
   const previewTitle = useMemo(() => {
     if (reportForm.type === 'etc' && reportForm.customTitle.trim()) {
@@ -63,7 +75,25 @@ function ReportCreatePage() {
   }
 
   const createReport = async () => {
-    await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/form/generate`)
+    if (isRiskAssessmentForm) {
+      await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/form/generate`)
+    } else if (isManagementOrderReport) {
+      await axios.post(`${BACKEND_API_URL}/api/report/management-review-order/generate`, null, {
+        params: {
+          start_date: reportForm.startDate,
+          end_date: reportForm.endDate,
+        },
+      })
+    } else if (isWorkerRiskReport) {
+      await axios.post(`${BACKEND_API_URL}/api/report/worker-feedback/generate`)
+    } else if ( isRiskAssessmentReport)  
+        await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/report/generate`, null, {
+        params: {
+          start_date: reportForm.startDate,
+          end_date: reportForm.endDate,
+        },
+      })
+
 
     const isEtcReport = reportForm.type === 'etc'
     const isIncidentReport = reportForm.type === 'incident-investigation'
@@ -103,7 +133,7 @@ function ReportCreatePage() {
           <label className="report-field">
             <span>보고서 유형 <em>*</em></span>
             <select value={reportForm.type} onChange={(event) => updateReportForm('type', event.target.value)}>
-              {REPORT_PAGE_MOCK_DATA.reportTypes.map((type) => (
+              {REPORT_TYPE_OPTIONS.map((type) => (
                 <option key={type.key} value={type.key}>{type.label}</option>
               ))}
             </select>
@@ -121,13 +151,14 @@ function ReportCreatePage() {
             </label>
           )}
 
-          <div className="report-field">
+          <div className={`report-field${isPeriodDisabled ? ' is-disabled' : ''}`}>
             <span>작성 기간 <em>*</em></span>
             <div className="report-range-field">
               <input
                 aria-label="시작일"
                 type="date"
                 value={reportForm.startDate}
+                disabled={isPeriodDisabled}
                 onChange={(event) => updateReportForm('startDate', event.target.value)}
               />
               <b>~</b>
@@ -135,6 +166,7 @@ function ReportCreatePage() {
                 aria-label="종료일"
                 type="date"
                 value={reportForm.endDate}
+                disabled={isPeriodDisabled}
                 onChange={(event) => updateReportForm('endDate', event.target.value)}
               />
             </div>
