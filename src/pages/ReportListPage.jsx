@@ -1,4 +1,5 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
@@ -6,6 +7,13 @@ import { renderAsync } from 'docx-preview'
 import Filtering from '../components/Report/Filtering.jsx'
 import { BACKEND_API_URL } from '../config/api.js'
 import '../styles/report.css'
+
+const REPORT_TYPE_OPTIONS = [
+  { key: 'risk-assessment-form', label: '위험성평가표' },
+  { key: 'risk-assessment-report', label: '위험성평가 보고서' },
+  { key: 'management-order-report', label: '경영책임자 지시 보고서' },
+  { key: 'worker-risk-report', label: '종사자에 의한 유해 위험요인 보고서' },
+]
 
 function mapReport(report) {
   const createdAt = String(report.created_at ?? '').slice(0, 10)
@@ -152,9 +160,15 @@ function ReportListPage() {
   const [reports, setReports] = useState([])
   const [filters, setFilters] = useState(getInitialFilters)
   const [selectedReportId, setSelectedReportId] = useState(null)
+  const [creatorName, setCreatorName] = useState('')
+  const [reportForm, setReportForm] = useState({
+    type: 'risk-assessment-form',
+    startDate: '2026-07-21',
+    endDate: '2026-07-21',
+  })
 
-  useEffect(() => {
-    axios.get(`${BACKEND_API_URL}/api/report`, { params: { page: 1, size: 100 } })
+  const loadReports = () => {
+    return axios.get(`${BACKEND_API_URL}/api/report`, { params: { page: 1, size: 100 } })
       .then((response) => {
         const items = response.data?.items ?? []
         setReports(items.map(mapReport))
@@ -163,6 +177,31 @@ function ReportListPage() {
         console.error('보고서 목록 조회 실패:', error)
         setReports([])
       })
+  }
+
+  useEffect(() => {
+    loadReports()
+  }, [])
+
+  useEffect(() => {
+    const fetchCreatorProfile = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) return
+
+        const response = await axios.get(`${BACKEND_API_URL}/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const userData = response.data
+
+        setCreatorName(userData?.name || userData?.user_id || '관리자')
+      } catch (error) {
+        console.error('보고서 생성자 정보 조회 실패:', error)
+        setCreatorName('관리자')
+      }
+    }
+
+    fetchCreatorProfile()
   }, [])
 
   const filteredReports = useMemo(() => reports.filter((report) => {
@@ -187,8 +226,22 @@ function ReportListPage() {
     [reports, selectedReportId],
   )
 
+  const selectedTypeOption = useMemo(
+    () => REPORT_TYPE_OPTIONS.find((item) => item.key === reportForm.type),
+    [reportForm.type],
+  )
+  const isRiskAssessmentForm = reportForm.type === 'risk-assessment-form'
+  const isManagementOrderReport = reportForm.type === 'management-order-report'
+  const isWorkerRiskReport = reportForm.type === 'worker-risk-report'
+  const isRiskAssessmentReport = reportForm.type === 'risk-assessment-report'
+  const isPeriodDisabled = isRiskAssessmentForm || isWorkerRiskReport
+
   const updateFilter = (field, value) => {
     setFilters((currentFilters) => ({ ...currentFilters, [field]: value }))
+  }
+
+  const updateReportForm = (field, value) => {
+    setReportForm((currentForm) => ({ ...currentForm, [field]: value }))
   }
 
   const resetFilters = () => {
@@ -197,6 +250,30 @@ function ReportListPage() {
 
   const openReportPreview = (report) => {
     setSelectedReportId(report.id)
+  }
+
+  const createReport = async () => {
+    if (isRiskAssessmentForm) {
+      await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/form/generate`)
+    } else if (isManagementOrderReport) {
+      await axios.post(`${BACKEND_API_URL}/api/report/management-review-order/generate`, null, {
+        params: {
+          start_date: reportForm.startDate,
+          end_date: reportForm.endDate,
+        },
+      })
+    } else if (isWorkerRiskReport) {
+      await axios.post(`${BACKEND_API_URL}/api/report/worker-feedback/generate`)
+    } else if (isRiskAssessmentReport) {
+      await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/report/generate`, null, {
+        params: {
+          start_date: reportForm.startDate,
+          end_date: reportForm.endDate,
+        },
+      })
+    }
+
+    await loadReports()
   }
 
   const downloadReport = async (event, report) => {
@@ -225,13 +302,74 @@ function ReportListPage() {
   }
 
   return (
-    <section className="report-page" aria-label="보고서 목록">
+    <section className="report-page" aria-label="보고서">
+      <section className="report-basic-card">
+        <div className="report-card-heading compact">
+          <div>
+            <span>Report</span>
+            <h2>보고서 생성</h2>
+            <p className="report-heading-description">위험성평가표는 매일 자동으로 생성됩니다.</p>
+          </div>
+        </div>
+
+        <div className="report-basic-grid">
+          <label className="report-field">
+            <span>보고서 유형 <em>*</em></span>
+            <select value={reportForm.type} onChange={(event) => updateReportForm('type', event.target.value)}>
+              {REPORT_TYPE_OPTIONS.map((type) => (
+                <option key={type.key} value={type.key}>{type.label}</option>
+              ))}
+            </select>
+          </label>
+
+          <div className={`report-field${isPeriodDisabled ? ' is-disabled' : ''}`}>
+            <span>작성 기간 <em>*</em></span>
+            <div className="report-range-field">
+              <input
+                aria-label="시작일"
+                type="date"
+                value={reportForm.startDate}
+                disabled={isPeriodDisabled}
+                onChange={(event) => updateReportForm('startDate', event.target.value)}
+              />
+              <b>~</b>
+              <input
+                aria-label="종료일"
+                type="date"
+                value={reportForm.endDate}
+                disabled={isPeriodDisabled}
+                onChange={(event) => updateReportForm('endDate', event.target.value)}
+              />
+            </div>
+          </div>
+
+          <label className="report-field">
+            <span>생성자</span>
+            <input
+              type="text"
+              value=""
+              placeholder={creatorName || '계정 정보를 불러오는 중입니다'}
+              disabled
+              readOnly
+            />
+          </label>
+        </div>
+
+        <div className="report-form-action">
+          <p className="report-form-note">보고서 생성에는 약 1~10분이 소요될 수 있습니다.</p>
+          <button className="report-create-button" type="button" onClick={createReport}>
+            <DescriptionOutlinedIcon /> 리포트 생성
+          </button>
+        </div>
+      </section>
+
       <div className="report-list-workspace">
         <section className="report-archive-card">
           <div className="report-card-heading">
             <div>
               <span>Archive</span>
               <h2>보고서 목록</h2>
+              <p className="report-heading-description">보고서 항목을 선택하면 문서 미리보기를 확인할 수 있습니다.</p>
             </div>
             <strong>{filteredReports.length}건</strong>
           </div>

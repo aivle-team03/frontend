@@ -168,10 +168,18 @@
 .report-form-action {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 16px;
   padding: 16px 22px 22px;
   border-top: 1px solid #e7edf5;
   background: #fbfdff;
+}
+
+.report-form-note {
+  margin: 0;
+  color: #7b8799;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .report-form-action .report-create-button {
@@ -457,6 +465,13 @@
   color: #172033;
   font-size: 18px;
   font-weight: 900;
+}
+
+.report-heading-description {
+  margin: 7px 0 0;
+  color: #7b8799;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .report-heading-title {
@@ -894,6 +909,8 @@
   }
 
   .report-form-action {
+    align-items: stretch;
+    flex-direction: column;
     justify-content: stretch;
   }
 
