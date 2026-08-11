@@ -10,7 +10,7 @@ function mapReport(report) {
   const createdAt = String(report.created_at ?? '').slice(0, 10)
   return {
     id: report.report_id,
-    title: report.summary || report.content?.split('\n')[0] || `보고서 #${report.report_id}`,
+    title: report.title || `보고서 #${report.report_id}`,
     createdAt,
     period: createdAt,
     owner: report.writer || `사용자 #${report.uid}`,
