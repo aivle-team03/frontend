@@ -1,3 +1,4 @@
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
@@ -8,17 +9,23 @@ import '../styles/report.css'
 
 function mapReport(report) {
   const createdAt = String(report.created_at ?? '').slice(0, 10)
+
   return {
     id: report.report_id,
     title: report.title || `보고서 #${report.report_id}`,
     createdAt,
     period: createdAt,
     owner: report.writer || `사용자 #${report.uid}`,
-    docxUrl: '',
+    retentionUntil: report.retention_until ? String(report.retention_until).slice(0, 10) : '-',
   }
 }
 
-const formatDate = (date) => date.toISOString().slice(0, 10)
+const formatDate = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const getInitialFilters = () => {
   const endDate = new Date()
@@ -31,6 +38,11 @@ const getInitialFilters = () => {
     endDate: formatDate(endDate),
     author: '',
   }
+}
+
+const fetchReportFileUrl = async (reportId, signal) => {
+  const response = await axios.get(`${BACKEND_API_URL}/api/report/${reportId}/file-url/`, { signal })
+  return response.data?.file_url ?? ''
 }
 
 function DocxPreview({ report }) {
@@ -51,12 +63,8 @@ function DocxPreview({ report }) {
     setRenderState('loading')
     setDocxUrl('')
 
-    axios.get(`${BACKEND_API_URL}/api/report/${report.id}/file-url/`, { signal: controller.signal })
-      .then((response) => {
-        const nextDocxUrl = response.data?.file_url ?? ''
-        console.log('보고서 파일 URL:', nextDocxUrl)
-        setDocxUrl(nextDocxUrl)
-      })
+    fetchReportFileUrl(report.id, controller.signal)
+      .then((nextDocxUrl) => setDocxUrl(nextDocxUrl))
       .catch((error) => {
         if (axios.isCancel(error) || error.name === 'CanceledError') return
         console.error('보고서 파일 URL 조회 실패:', error)
@@ -108,13 +116,31 @@ function DocxPreview({ report }) {
     }
   }, [docxUrl])
 
+  const openDocument = () => {
+    if (docxUrl) {
+      window.open(docxUrl, '_blank', 'noopener,noreferrer')
+    }
+  }
+
   return (
-    <section className="report-docx-preview-card" aria-label="보고서 문서 미리보기">
-      <div className="report-card-heading compact">
-        <div>
-          <span>Preview</span>
-          <h2>{report?.title ?? '보고서 미리보기'}</h2>
+    <section className="report-docx-preview-card report-docx-preview-full" aria-label="보고서 문서 미리보기">
+      <div className="report-card-heading">
+        <div className="report-heading-title">
+          <div>
+            <span>Preview</span>
+            <h2>{report?.title ?? '보고서 미리보기'}</h2>
+          </div>
+          <small>생성 {report?.createdAt ?? '-'}</small>
         </div>
+        <button
+          className="report-preview-download"
+          type="button"
+          onClick={openDocument}
+          disabled={!docxUrl}
+        >
+          <DownloadRoundedIcon />
+          다운로드
+        </button>
       </div>
 
       <div className="report-docx-preview-body">
@@ -130,15 +156,13 @@ function DocxPreview({ report }) {
 function ReportListPage() {
   const [reports, setReports] = useState([])
   const [filters, setFilters] = useState(getInitialFilters)
-  const [selectedReportId, setSelectedReportId] = useState(reports[0]?.id ?? null)
+  const [selectedReportId, setSelectedReportId] = useState(null)
 
   useEffect(() => {
     axios.get(`${BACKEND_API_URL}/api/report`, { params: { page: 1, size: 100 } })
       .then((response) => {
         const items = response.data?.items ?? []
-        const mappedReports = items.map(mapReport)
-        setReports(mappedReports)
-        setSelectedReportId(mappedReports[0]?.id ?? null)
+        setReports(items.map(mapReport))
       })
       .catch((error) => {
         console.error('보고서 목록 조회 실패:', error)
@@ -164,7 +188,7 @@ function ReportListPage() {
   }), [filters, reports])
 
   const selectedReport = useMemo(
-    () => reports.find((report) => report.id === selectedReportId) ?? reports[0],
+    () => reports.find((report) => report.id === selectedReportId) ?? null,
     [reports, selectedReportId],
   )
 
@@ -176,14 +200,33 @@ function ReportListPage() {
     setFilters(getInitialFilters())
   }
 
-  const downloadReport = (event, report) => {
-    event.stopPropagation()
-    if (report.docxUrl) {
-      window.open(report.docxUrl, '_blank', 'noopener,noreferrer')
-      return
-    }
+  const openReportPreview = (report) => {
+    setSelectedReportId(report.id)
+  }
 
-    console.log(`${report.title} 다운로드`)
+  const downloadReport = async (event, report) => {
+    event.stopPropagation()
+
+    try {
+      const docxUrl = await fetchReportFileUrl(report.id)
+      if (docxUrl) {
+        window.open(docxUrl, '_blank', 'noopener,noreferrer')
+      }
+    } catch (error) {
+      console.error('보고서 다운로드 URL 조회 실패:', error)
+    }
+  }
+
+  if (selectedReport) {
+    return (
+      <section className="report-page report-preview-page" aria-label="보고서 미리보기">
+        <button className="report-preview-back" type="button" onClick={() => setSelectedReportId(null)}>
+          <ArrowBackRoundedIcon />
+          목록으로
+        </button>
+        <DocxPreview report={selectedReport} />
+      </section>
+    )
   }
 
   return (
@@ -193,6 +236,7 @@ function ReportListPage() {
           <div className="report-card-heading">
             <div>
               <span>Archive</span>
+              <h2>보고서 목록</h2>
             </div>
             <strong>{filteredReports.length}건</strong>
           </div>
@@ -209,16 +253,15 @@ function ReportListPage() {
                 <tr>
                   <th>제목</th>
                   <th>기간</th>
-                  <th>작성자</th>
+                  <th>생성자</th>
                   <th>다운로드</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredReports.map((report) => (
                   <tr
-                    className={selectedReport?.id === report.id ? 'is-selected' : ''}
                     key={report.id}
-                    onClick={() => setSelectedReportId(report.id)}
+                    onClick={() => openReportPreview(report)}
                   >
                     <td>
                       <div className="report-title-cell">
@@ -249,8 +292,6 @@ function ReportListPage() {
             </table>
           </div>
         </section>
-
-        {selectedReport && <DocxPreview report={selectedReport} />}
       </div>
     </section>
   )

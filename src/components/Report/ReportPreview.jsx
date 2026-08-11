@@ -26,8 +26,8 @@ function ReportPreview({ title, type, period, author, overview }) {
             <dd>{period}</dd>
           </div>
           <div>
-            <dt>작성자</dt>
-            <dd>{author || '작성자 미입력'}</dd>
+            <dt>생성자</dt>
+            <dd>{author || '생성자 확인 중'}</dd>
           </div>
         </dl>
 
