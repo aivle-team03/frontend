@@ -1,5 +1,5 @@
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import ReportPreview from '../components/Report/ReportPreview.jsx'
@@ -10,14 +10,35 @@ import '../styles/report.css'
 
 function ReportCreatePage() {
   const navigate = useNavigate()
+  const [creatorName, setCreatorName] = useState('')
   const [reportForm, setReportForm] = useState({
     type: 'risk-assessment',
     startDate: '2026-07-21',
     endDate: '2026-07-21',
     customTitle: '',
     incidentOverview: '',
-    author: '김태니지 (안전책임자)',
   })
+
+  useEffect(() => {
+    const fetchCreatorProfile = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) return
+
+        const response = await axios.get(`${BACKEND_API_URL}/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const userData = response.data
+
+        setCreatorName(userData?.name || userData?.user_id || '관리자')
+      } catch (error) {
+        console.error('보고서 생성자 정보 조회 실패:', error)
+        setCreatorName('관리자')
+      }
+    }
+
+    fetchCreatorProfile()
+  }, [])
 
   const selectedPeriodLabel = useMemo(() => {
     if (reportForm.startDate === reportForm.endDate) return reportForm.startDate
@@ -59,7 +80,7 @@ function ReportCreatePage() {
       type: selectedTypeOption?.label ?? '리포트',
       createdAt: today,
       period: selectedPeriodLabel,
-      owner: reportForm.author,
+      owner: creatorName || '관리자',
       attachments: 1,
       retentionUntil: '2026-10-21',
       retentionStatus: 'normal',
@@ -120,12 +141,13 @@ function ReportCreatePage() {
           </div>
 
           <label className="report-field">
-            <span>작성자 <em>*</em></span>
+            <span>생성자</span>
             <input
               type="text"
-              value={reportForm.author}
-              placeholder="작성자를 입력하세요"
-              onChange={(event) => updateReportForm('author', event.target.value)}
+              value=""
+              placeholder={creatorName || '계정 정보를 불러오는 중입니다'}
+              disabled
+              readOnly
             />
           </label>
 
@@ -153,7 +175,7 @@ function ReportCreatePage() {
         title={previewTitle}
         type={selectedTypeOption?.label ?? '보고서'}
         period={selectedPeriodLabel}
-        author={reportForm.author}
+        author={creatorName}
         overview={reportForm.type === 'incident-investigation' ? reportForm.incidentOverview : ''}
       />
     </section>

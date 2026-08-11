@@ -21,11 +21,11 @@ function Filtering({ filters, onChange, onReset }) {
       </div>
 
       <label className="report-filter-field">
-        <span>작성자</span>
+        <span>생성자</span>
         <input
           type="text"
           value={filters.author}
-          placeholder="작성자 검색"
+          placeholder="생성자 검색"
           onChange={(event) => onChange('author', event.target.value)}
         />
       </label>
