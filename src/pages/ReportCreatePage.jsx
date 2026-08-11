@@ -36,7 +36,9 @@ function ReportCreatePage() {
     [reportForm.type],
   )
   const isRiskAssessmentForm = reportForm.type === 'risk-assessment-form'
+  const isManagementOrderReport = reportForm.type === 'management-order-report'
   const isWorkerRiskReport = reportForm.type === 'worker-risk-report'
+  const isRiskAssessmentReport = reportForm.type === 'risk-assessment-report'
   const isPeriodDisabled = isRiskAssessmentForm || isWorkerRiskReport
 
   const previewTitle = useMemo(() => {
@@ -54,9 +56,23 @@ function ReportCreatePage() {
   const createReport = async () => {
     if (isRiskAssessmentForm) {
       await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/form/generate`)
+    } else if (isManagementOrderReport) {
+      await axios.post(`${BACKEND_API_URL}/api/report/management-review-order/generate`, null, {
+        params: {
+          start_date: reportForm.startDate,
+          end_date: reportForm.endDate,
+        },
+      })
     } else if (isWorkerRiskReport) {
       await axios.post(`${BACKEND_API_URL}/api/report/worker-feedback/generate`)
-    }
+    } else if ( isRiskAssessmentReport)  
+        await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/report/generate`, null, {
+        params: {
+          start_date: reportForm.startDate,
+          end_date: reportForm.endDate,
+        },
+      })
+
 
     const isEtcReport = reportForm.type === 'etc'
     const isIncidentReport = reportForm.type === 'incident-investigation'
