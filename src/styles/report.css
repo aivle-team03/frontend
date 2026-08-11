@@ -96,6 +96,22 @@
   box-shadow: 0 0 0 4px rgba(47, 100, 183, 0.1);
 }
 
+.report-field.is-disabled > span {
+  color: #9aa6b2;
+}
+
+.report-field.is-disabled .report-range-field,
+.report-field.is-disabled input:disabled {
+  border-color: #d7dde5;
+  color: #8b97a6;
+  background: #f1f4f8;
+  cursor: not-allowed;
+}
+
+.report-field.is-disabled .report-range-field b {
+  color: #a8b1bd;
+}
+
 .report-overview-field {
   grid-column: 1 / -1;
 }
