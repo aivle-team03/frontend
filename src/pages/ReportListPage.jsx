@@ -11,9 +11,11 @@ import '../styles/report.css'
 const REPORT_TYPE_OPTIONS = [
   { key: 'risk-assessment-form', label: '위험성평가표' },
   { key: 'risk-assessment-report', label: '위험성평가 보고서' },
-  { key: 'management-order-report', label: '경영책임자 지시 보고서' },
+  { key: 'management-order-report', label: '경영책임자 검토지시서' },
   { key: 'worker-risk-report', label: '종사자에 의한 유해 위험요인 보고서' },
 ]
+
+const REPORTS_PER_PAGE = 10
 
 function mapReport(report) {
   const createdAt = String(report.created_at ?? '').slice(0, 10)
@@ -28,17 +30,25 @@ function mapReport(report) {
   }
 }
 
-const formatDate = (date) => date.toISOString().slice(0, 10)
-
 const getInitialFilters = () => {
-  const endDate = new Date()
-  const startDate = new Date(endDate)
-  startDate.setMonth(startDate.getMonth() - 1)
+  return {
+    keyword: '',
+    startDate: '',
+    endDate: '',
+    author: '',
+  }
+}
+
+const getReportDateRangeFilters = (reports) => {
+  const reportDates = reports
+    .map((report) => report.createdAt)
+    .filter(Boolean)
+    .sort()
 
   return {
     keyword: '',
-    startDate: formatDate(startDate),
-    endDate: formatDate(endDate),
+    startDate: reportDates[0] ?? '',
+    endDate: reportDates.at(-1) ?? '',
     author: '',
   }
 }
@@ -161,6 +171,9 @@ function ReportListPage() {
   const [filters, setFilters] = useState(getInitialFilters)
   const [selectedReportId, setSelectedReportId] = useState(null)
   const [creatorName, setCreatorName] = useState('')
+  const [isCreatingReport, setIsCreatingReport] = useState(false)
+  const [currentReportPage, setCurrentReportPage] = useState(1)
+  const didSetInitialDateRangeRef = useRef(false)
   const [reportForm, setReportForm] = useState({
     type: 'risk-assessment-form',
     startDate: '2026-07-21',
@@ -171,7 +184,13 @@ function ReportListPage() {
     return axios.get(`${BACKEND_API_URL}/api/report`, { params: { page: 1, size: 100 } })
       .then((response) => {
         const items = response.data?.items ?? []
-        setReports(items.map(mapReport))
+        const mappedReports = items.map(mapReport)
+        setReports(mappedReports)
+
+        if (!didSetInitialDateRangeRef.current) {
+          setFilters(getReportDateRangeFilters(mappedReports))
+          didSetInitialDateRangeRef.current = true
+        }
       })
       .catch((error) => {
         console.error('보고서 목록 조회 실패:', error)
@@ -221,6 +240,20 @@ function ReportListPage() {
       && matchesAuthor
   }), [filters, reports])
 
+  const reportPageCount = Math.max(1, Math.ceil(filteredReports.length / REPORTS_PER_PAGE))
+  const visibleReports = useMemo(() => {
+    const pageStartIndex = (currentReportPage - 1) * REPORTS_PER_PAGE
+    return filteredReports.slice(pageStartIndex, pageStartIndex + REPORTS_PER_PAGE)
+  }, [currentReportPage, filteredReports])
+
+  useEffect(() => {
+    setCurrentReportPage(1)
+  }, [filters])
+
+  useEffect(() => {
+    setCurrentReportPage((currentPage) => Math.min(currentPage, reportPageCount))
+  }, [reportPageCount])
+
   const selectedReport = useMemo(
     () => reports.find((report) => report.id === selectedReportId) ?? null,
     [reports, selectedReportId],
@@ -245,7 +278,11 @@ function ReportListPage() {
   }
 
   const resetFilters = () => {
-    setFilters(getInitialFilters())
+    setFilters(getReportDateRangeFilters(reports))
+  }
+
+  const moveReportPage = (nextPage) => {
+    setCurrentReportPage(Math.min(Math.max(nextPage, 1), reportPageCount))
   }
 
   const openReportPreview = (report) => {
@@ -253,27 +290,37 @@ function ReportListPage() {
   }
 
   const createReport = async () => {
-    if (isRiskAssessmentForm) {
-      await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/form/generate`)
-    } else if (isManagementOrderReport) {
-      await axios.post(`${BACKEND_API_URL}/api/report/management-review-order/generate`, null, {
-        params: {
-          start_date: reportForm.startDate,
-          end_date: reportForm.endDate,
-        },
-      })
-    } else if (isWorkerRiskReport) {
-      await axios.post(`${BACKEND_API_URL}/api/report/worker-feedback/generate`)
-    } else if (isRiskAssessmentReport) {
-      await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/report/generate`, null, {
-        params: {
-          start_date: reportForm.startDate,
-          end_date: reportForm.endDate,
-        },
-      })
-    }
+    if (isCreatingReport) return
 
-    await loadReports()
+    setIsCreatingReport(true)
+
+    try {
+      if (isRiskAssessmentForm) {
+        await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/form/generate`)
+      } else if (isManagementOrderReport) {
+        await axios.post(`${BACKEND_API_URL}/api/report/management-review-order/generate`, null, {
+          params: {
+            start_date: reportForm.startDate,
+            end_date: reportForm.endDate,
+          },
+        })
+      } else if (isWorkerRiskReport) {
+        await axios.post(`${BACKEND_API_URL}/api/report/worker-feedback/generate`)
+      } else if (isRiskAssessmentReport) {
+        await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/report/generate`, null, {
+          params: {
+            start_date: reportForm.startDate,
+            end_date: reportForm.endDate,
+          },
+        })
+      }
+
+      await loadReports()
+    } catch (error) {
+      console.error('보고서 생성 실패:', error)
+    } finally {
+      setIsCreatingReport(false)
+    }
   }
 
   const downloadReport = async (event, report) => {
@@ -357,8 +404,13 @@ function ReportListPage() {
 
         <div className="report-form-action">
           <p className="report-form-note">보고서 생성에는 약 1~10분이 소요될 수 있습니다.</p>
-          <button className="report-create-button" type="button" onClick={createReport}>
-            <DescriptionOutlinedIcon /> 리포트 생성
+          <button
+            className="report-create-button"
+            type="button"
+            onClick={createReport}
+            disabled={isCreatingReport}
+          >
+            <DescriptionOutlinedIcon /> {isCreatingReport ? '생성 중...' : '리포트 생성'}
           </button>
         </div>
       </section>
@@ -391,7 +443,7 @@ function ReportListPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredReports.map((report) => (
+                {visibleReports.map((report) => (
                   <tr
                     key={report.id}
                     onClick={() => openReportPreview(report)}
@@ -423,6 +475,18 @@ function ReportListPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          <div className="report-pagination" aria-label="보고서 목록 페이지 이동">
+            <span>페이지 {currentReportPage} / {reportPageCount}</span>
+            <div>
+              <button type="button" disabled={currentReportPage === 1} onClick={() => moveReportPage(currentReportPage - 1)}>
+                이전
+              </button>
+              <button type="button" disabled={currentReportPage === reportPageCount} onClick={() => moveReportPage(currentReportPage + 1)}>
+                다음
+              </button>
+            </div>
           </div>
         </section>
       </div>

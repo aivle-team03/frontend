@@ -11,7 +11,7 @@ import '../styles/report.css'
 const REPORT_TYPE_OPTIONS = [
   { key: 'risk-assessment-form', label: '위험성평가표' },
   { key: 'risk-assessment-report', label: '위험성평가 보고서' },
-  { key: 'management-order-report', label: '경영책임자 지시 보고서' },
+  { key: 'management-order-report', label: '경영책임자 검토지시서' },
   { key: 'worker-risk-report', label: '종사자에 의한 유해 위험요인 보고서' },
 ]
 
