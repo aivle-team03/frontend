@@ -288,9 +288,7 @@ function ChecklistManagementPage() {
           .map((item) => axios.patch(`${API_BASE_URL}/api/inspection/histories/${item.rawId}`, { uid: member.userId }, { headers })))
       } else {
         const actionIds = targetRecords.filter((item) => item.sourceKind === 'action' && item.rawId).map((item) => item.rawId)
-        const checklistIds = targetRecords.filter((item) => item.sourceKind === 'checklist' && item.rawId).map((item) => item.rawId)
         if (actionIds.length) await axios.patch(`${API_BASE_URL}/api/action-histories/assignments`, { action_history_ids: actionIds, handler_uid: member.userId }, { headers })
-        await Promise.all(checklistIds.map((checklistId) => axios.patch(`${API_BASE_URL}/api/checklists/${checklistId}/assign`, { user_id: String(member.userId) }, { headers })))
       }
       setRecords((current) => current.map((item) => selected.includes(item.id) ? { ...item, [field]: member.name, progress: assignmentMode === 'action' ? '조치 중' : item.progress } : item))
       setSelected([]); setMemberQuery(''); setAssignmentMode(null)
