@@ -20,7 +20,7 @@ function mapReport(report) {
 
   return {
     id: report.report_id,
-    title: report.summary || report.content?.split('\n')[0] || `보고서 #${report.report_id}`,
+    title: report.title || `보고서 #${report.report_id}`,
     createdAt,
     period: createdAt,
     owner: report.writer || `사용자 #${report.uid}`,
