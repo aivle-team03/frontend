@@ -1,7 +1,7 @@
-import { Navigate } from 'react-router-dom'
+import ReportListPage from './ReportListPage.jsx'
 
 function ReportPage() {
-  return <Navigate replace to="/report/list" />
+  return <ReportListPage />
 }
 
 export default ReportPage

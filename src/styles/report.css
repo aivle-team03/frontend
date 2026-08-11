@@ -109,6 +109,22 @@
   box-shadow: 0 0 0 4px rgba(47, 100, 183, 0.1);
 }
 
+.report-field.is-disabled > span {
+  color: #9aa6b2;
+}
+
+.report-field.is-disabled .report-range-field,
+.report-field.is-disabled input:disabled {
+  border-color: #d7dde5;
+  color: #8b97a6;
+  background: #f1f4f8;
+  cursor: not-allowed;
+}
+
+.report-field.is-disabled .report-range-field b {
+  color: #a8b1bd;
+}
+
 .report-field input:disabled {
   color: #8a96a8;
   background: #f5f8fc;
@@ -152,10 +168,18 @@
 .report-form-action {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 16px;
   padding: 16px 22px 22px;
   border-top: 1px solid #e7edf5;
   background: #fbfdff;
+}
+
+.report-form-note {
+  margin: 0;
+  color: #7b8799;
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .report-form-action .report-create-button {
@@ -443,6 +467,13 @@
   font-weight: 900;
 }
 
+.report-heading-description {
+  margin: 7px 0 0;
+  color: #7b8799;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .report-heading-title {
   display: flex;
   align-items: baseline;
@@ -684,6 +715,47 @@
   white-space: nowrap;
 }
 
+.report-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 22px 18px;
+  border-top: 1px solid #e7edf5;
+  color: #7b8799;
+  background: #fbfdff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.report-pagination > div {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.report-pagination button {
+  min-width: 58px;
+  min-height: 34px;
+  border: 1px solid #cbd6e5;
+  border-radius: 8px;
+  color: #42526a;
+  background: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.report-pagination button:hover:not(:disabled) {
+  color: #2f64b7;
+  background: #f5f9ff;
+}
+
+.report-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .report-type-badge {
   display: inline-flex;
   min-height: 30px;
@@ -793,6 +865,12 @@
   background: #24559e;
 }
 
+.report-create-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  box-shadow: none;
+}
+
 .report-create-button svg {
   width: 18px;
   height: 18px;
@@ -878,6 +956,8 @@
   }
 
   .report-form-action {
+    align-items: stretch;
+    flex-direction: column;
     justify-content: stretch;
   }
 

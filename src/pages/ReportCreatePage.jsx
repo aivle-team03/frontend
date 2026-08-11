@@ -11,9 +11,16 @@ import '../styles/report.css'
 const REPORT_TYPE_OPTIONS = [
   { key: 'risk-assessment-form', label: '위험성평가표' },
   { key: 'risk-assessment-report', label: '위험성평가 보고서' },
-  { key: 'management-order-report', label: '경영책임자 지시 보고서' },
+  { key: 'management-order-report', label: '경영책임자 검토지시서' },
   { key: 'worker-risk-report', label: '종사자에 의한 유해 위험요인 보고서' },
 ]
+
+const formatLocalDate = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 function ReportCreatePage() {
   const navigate = useNavigate()
@@ -21,7 +28,7 @@ function ReportCreatePage() {
   const [reportForm, setReportForm] = useState({
     type: 'risk-assessment-form',
     startDate: '2026-07-21',
-    endDate: '2026-07-21',
+    endDate: formatLocalDate(new Date()),
     customTitle: '',
     incidentOverview: '',
   })
