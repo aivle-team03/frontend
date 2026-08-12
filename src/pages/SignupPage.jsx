@@ -165,4 +165,3 @@ function SignupPage() {
 }
 
 export default SignupPage
-import { BACKEND_API_URL } from '../config/api.js'
