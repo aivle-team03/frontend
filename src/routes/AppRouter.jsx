@@ -15,9 +15,7 @@ import LoginPage from '../pages/LoginPage.jsx'
 import SignupPage from '../pages/SignupPage.jsx'
 import MonitoringDetailPage from '../pages/MonitoringDetailPage.jsx'
 import BoardPage from '../pages/BoardPage.jsx'
-import ReportCreatePage from '../pages/ReportCreatePage.jsx'
 import ReportListPage from '../pages/ReportListPage.jsx'
-import ReportPage from '../pages/ReportPage.jsx'
 import RiskManagementPage from '../pages/RiskManagementPage.jsx'
 import SafetyManagementPage from '../pages/SafetyManagementPage.jsx'
 import ServiceFooter from '../components/common/ServiceFooter.jsx'
@@ -47,9 +45,9 @@ function AppRouter() {
             <Route path="law-qa" element={<LawQaPage />} />
             <Route path="education" element={<EducationPage addedCourses={addedCourses} />} />
             <Route path="board" element={<BoardPage />} />
-            <Route path="report" element={<ReportPage />} />
-            <Route path="report/create" element={<ReportCreatePage />} />
-            <Route path="report/list" element={<ReportListPage />} />
+            <Route path="report" element={<ReportListPage />} />
+            <Route path="report/create" element={<Navigate replace to="/report" />} />
+            <Route path="report/list" element={<Navigate replace to="/report" />} />
             <Route
               path="education-management"
               element={
