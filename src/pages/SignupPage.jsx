@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import '../styles/signup.css'
+import { BACKEND_API_URL } from '../config/api.js'
+import '../styles/Signup.css'
 
 const API_BASE_URL = `${BACKEND_API_URL}/api`
 
