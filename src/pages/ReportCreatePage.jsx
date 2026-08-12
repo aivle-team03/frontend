@@ -1,21 +1,58 @@
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import ReportPreview from '../components/Report/ReportPreview.jsx'
 import { REPORT_PAGE_MOCK_DATA } from '../mocks/mockData.js'
 import { loadGeneratedReports, saveGeneratedReport } from '../utils/reportArchiveStorage.js'
+import { BACKEND_API_URL } from '../config/api.js'
 import '../styles/report.css'
+
+const REPORT_TYPE_OPTIONS = [
+  { key: 'risk-assessment-form', label: '위험성평가표' },
+  { key: 'risk-assessment-report', label: '위험성평가 보고서' },
+  { key: 'management-order-report', label: '경영책임자 검토지시서' },
+  { key: 'worker-risk-report', label: '종사자에 의한 유해 위험요인 보고서' },
+]
+
+const formatLocalDate = (date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 function ReportCreatePage() {
   const navigate = useNavigate()
+  const [creatorName, setCreatorName] = useState('')
   const [reportForm, setReportForm] = useState({
-    type: 'risk-assessment',
+    type: 'risk-assessment-form',
     startDate: '2026-07-21',
-    endDate: '2026-07-21',
+    endDate: formatLocalDate(new Date()),
     customTitle: '',
     incidentOverview: '',
-    author: '김태니지 (안전책임자)',
   })
+
+  useEffect(() => {
+    const fetchCreatorProfile = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) return
+
+        const response = await axios.get(`${BACKEND_API_URL}/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const userData = response.data
+
+        setCreatorName(userData?.name || userData?.user_id || '관리자')
+      } catch (error) {
+        console.error('보고서 생성자 정보 조회 실패:', error)
+        setCreatorName('관리자')
+      }
+    }
+
+    fetchCreatorProfile()
+  }, [])
 
   const selectedPeriodLabel = useMemo(() => {
     if (reportForm.startDate === reportForm.endDate) return reportForm.startDate
@@ -23,9 +60,14 @@ function ReportCreatePage() {
   }, [reportForm.endDate, reportForm.startDate])
 
   const selectedTypeOption = useMemo(
-    () => REPORT_PAGE_MOCK_DATA.reportTypes.find((item) => item.key === reportForm.type),
+    () => REPORT_TYPE_OPTIONS.find((item) => item.key === reportForm.type),
     [reportForm.type],
   )
+  const isRiskAssessmentForm = reportForm.type === 'risk-assessment-form'
+  const isManagementOrderReport = reportForm.type === 'management-order-report'
+  const isWorkerRiskReport = reportForm.type === 'worker-risk-report'
+  const isRiskAssessmentReport = reportForm.type === 'risk-assessment-report'
+  const isPeriodDisabled = isRiskAssessmentForm || isWorkerRiskReport
 
   const previewTitle = useMemo(() => {
     if (reportForm.type === 'etc' && reportForm.customTitle.trim()) {
@@ -39,7 +81,27 @@ function ReportCreatePage() {
     setReportForm((currentForm) => ({ ...currentForm, [field]: value }))
   }
 
-  const createReport = () => {
+  const createReport = async () => {
+    if (isRiskAssessmentForm) {
+      await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/form/generate`)
+    } else if (isManagementOrderReport) {
+      await axios.post(`${BACKEND_API_URL}/api/report/management-review-order/generate`, null, {
+        params: {
+          start_date: reportForm.startDate,
+          end_date: reportForm.endDate,
+        },
+      })
+    } else if (isWorkerRiskReport) {
+      await axios.post(`${BACKEND_API_URL}/api/report/worker-feedback/generate`)
+    } else if ( isRiskAssessmentReport)  
+        await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/report/generate`, null, {
+        params: {
+          start_date: reportForm.startDate,
+          end_date: reportForm.endDate,
+        },
+      })
+
+
     const isEtcReport = reportForm.type === 'etc'
     const isIncidentReport = reportForm.type === 'incident-investigation'
     const reportTitle = isEtcReport && reportForm.customTitle.trim()
@@ -55,7 +117,7 @@ function ReportCreatePage() {
       type: selectedTypeOption?.label ?? '리포트',
       createdAt: today,
       period: selectedPeriodLabel,
-      owner: reportForm.author,
+      owner: creatorName || '관리자',
       attachments: 1,
       retentionUntil: '2026-10-21',
       retentionStatus: 'normal',
@@ -78,7 +140,7 @@ function ReportCreatePage() {
           <label className="report-field">
             <span>보고서 유형 <em>*</em></span>
             <select value={reportForm.type} onChange={(event) => updateReportForm('type', event.target.value)}>
-              {REPORT_PAGE_MOCK_DATA.reportTypes.map((type) => (
+              {REPORT_TYPE_OPTIONS.map((type) => (
                 <option key={type.key} value={type.key}>{type.label}</option>
               ))}
             </select>
@@ -96,13 +158,14 @@ function ReportCreatePage() {
             </label>
           )}
 
-          <div className="report-field">
+          <div className={`report-field${isPeriodDisabled ? ' is-disabled' : ''}`}>
             <span>작성 기간 <em>*</em></span>
             <div className="report-range-field">
               <input
                 aria-label="시작일"
                 type="date"
                 value={reportForm.startDate}
+                disabled={isPeriodDisabled}
                 onChange={(event) => updateReportForm('startDate', event.target.value)}
               />
               <b>~</b>
@@ -110,18 +173,20 @@ function ReportCreatePage() {
                 aria-label="종료일"
                 type="date"
                 value={reportForm.endDate}
+                disabled={isPeriodDisabled}
                 onChange={(event) => updateReportForm('endDate', event.target.value)}
               />
             </div>
           </div>
 
           <label className="report-field">
-            <span>작성자 <em>*</em></span>
+            <span>생성자</span>
             <input
               type="text"
-              value={reportForm.author}
-              placeholder="작성자를 입력하세요"
-              onChange={(event) => updateReportForm('author', event.target.value)}
+              value=""
+              placeholder={creatorName || '계정 정보를 불러오는 중입니다'}
+              disabled
+              readOnly
             />
           </label>
 
@@ -149,7 +214,7 @@ function ReportCreatePage() {
         title={previewTitle}
         type={selectedTypeOption?.label ?? '보고서'}
         period={selectedPeriodLabel}
-        author={reportForm.author}
+        author={creatorName}
         overview={reportForm.type === 'incident-investigation' ? reportForm.incidentOverview : ''}
       />
     </section>
