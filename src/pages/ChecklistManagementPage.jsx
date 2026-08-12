@@ -22,7 +22,7 @@ const CATEGORY_ID_BY_NAME = {
   기타: 4,
 }
 const MANAGERS = ['이안전', '김안전', '박점검', '최점검']
-const API_BASE_URL = 'http://127.0.0.1:8000'
+const API_BASE_URL = BACKEND_API_URL
 const rows = [
   ['비상구 피난 통로 점검','시설 안전','A동 1층 복도','매일','이안전','','2026-07-10 09:00','점검 대기'],['소화기 및 소방설비 점검','화재 예방','A동 2층 복도','매주','김안전','최점검','2026-07-11 14:00','조치 대기'],['운반 장비 방호설비 점검','작업 안전','A동 5층 작업장','매월','','','2026-07-12 10:00','점검 대기'],['전기 분전반 및 차단기 점검','시설 안전','C동 지하 1층','매월','최점검','이안전','2026-07-13 11:00','조치 완료'],['보호구 착용 상태 점검','작업 안전','B동 3층 작업장','매일','박점검','','2026-07-14 13:00','점검 완료'],['적재물 전도 위험 점검','시설 안전','C동 창고','매주','이안전','김안전','2026-07-15 15:00','조치 대기'],['비상 조명 및 유도등 점검','화재 예방','A동 3층 계단','매월','','','2026-07-16 10:00','점검 대기'],['가스 차단 밸브 점검','시설 안전','식당 조리실','매주','최점검','김안전','2026-07-17 08:30','조치 완료'],['방화문 폐쇄 상태 점검','화재 예방','B동 2층 복도','매일','이안전','','2026-07-18 09:30','점검 대기'],['비상 방송 설비 점검','화재 예방','A동 안내실','매주','김안전','','2026-07-19 11:00','점검 대기'],['작업장 바닥 미끄럼 점검','작업 안전','B동 1층 포장실','매일','박점검','최점검','2026-07-20 16:00','조치 대기'],['산업용 배터리 보관 점검','시설 안전','C동 충전실','매월','최점검','이안전','2026-07-21 13:30','조치 완료'],['하역장 안전 난간 점검','작업 안전','A동 하역장','매월','이안전','박점검','2026-07-22 07:30','조치 완료'],['환기 설비 필터 점검','시설 안전','B동 지하 기계실','매월','','','2026-07-23 10:00','점검 대기'],['휴게실 소화 설비 점검','화재 예방','C동 휴게실','매주','김안전','박점검','2026-07-24 12:00','조치 완료'],['지게차 충전 구역 점검','작업 안전','B동 1층 충전 구역','매일','박점검','','2026-07-25 17:00','점검 대기'],
 ]
@@ -288,9 +288,7 @@ function ChecklistManagementPage() {
           .map((item) => axios.patch(`${API_BASE_URL}/api/inspection/histories/${item.rawId}`, { uid: member.userId }, { headers })))
       } else {
         const actionIds = targetRecords.filter((item) => item.sourceKind === 'action' && item.rawId).map((item) => item.rawId)
-        const checklistIds = targetRecords.filter((item) => item.sourceKind === 'checklist' && item.rawId).map((item) => item.rawId)
         if (actionIds.length) await axios.patch(`${API_BASE_URL}/api/action-histories/assignments`, { action_history_ids: actionIds, handler_uid: member.userId }, { headers })
-        await Promise.all(checklistIds.map((checklistId) => axios.patch(`${API_BASE_URL}/api/checklists/${checklistId}/assign`, { user_id: String(member.userId) }, { headers })))
       }
       setRecords((current) => current.map((item) => selected.includes(item.id) ? { ...item, [field]: member.name, progress: assignmentMode === 'action' ? '조치 중' : item.progress } : item))
       setSelected([]); setMemberQuery(''); setAssignmentMode(null)
@@ -483,3 +481,4 @@ export default ChecklistManagementPage
 
 
 
+import { BACKEND_API_URL } from '../config/api.js'

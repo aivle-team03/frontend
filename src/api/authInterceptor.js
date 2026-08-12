@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { AI_API_URL, BACKEND_API_URL } from '../config/api.js'
+import { BACKEND_API_URL, CHATBOT_API_URL, VISION_API_URL } from '../config/api.js'
 
 const REFRESH_ENDPOINT = `${BACKEND_API_URL}/api/auth/refresh`
 
@@ -15,7 +15,7 @@ export function clearAuthSession() {
 }
 
 function isAuthenticatedRequest(url = '') {
-  return url.startsWith(BACKEND_API_URL) || url.startsWith(AI_API_URL) || url.startsWith('/api/')
+  return url.startsWith(BACKEND_API_URL) || url.startsWith(CHATBOT_API_URL) || url.startsWith(VISION_API_URL) || url.startsWith('/api/')
 }
 
 function isRefreshRequest(url = '') {

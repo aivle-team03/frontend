@@ -12,7 +12,7 @@ import {
 } from '../utils/checklistStatusStorage.js'
 import '../styles/board.css'
 
-const API_BASE_URL = 'http://127.0.0.1:8000'
+const API_BASE_URL = BACKEND_API_URL
 
 const CATEGORY=['소방안전','시설안전','산업안전','기타']
 
@@ -712,3 +712,4 @@ function BoardPage() {
 }
 
 export default BoardPage
+import { BACKEND_API_URL } from '../config/api.js'

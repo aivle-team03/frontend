@@ -4,6 +4,7 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
 import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
+import { BACKEND_API_URL } from '../config/api.js'
 import '../styles/checklist.css'
 import {
   getStoredChecklistManagementRecords,
@@ -74,7 +75,7 @@ function InspectionListPage() {
     const loadInspections = async () => {
       try {
         const token = localStorage.getItem('token')
-        const response = await axios.get('http://127.0.0.1:8000/api/inspection', { headers: token ? { Authorization: `Bearer ${token}` } : undefined })
+        const response = await axios.get(`${BACKEND_API_URL}/api/inspection`, { headers: token ? { Authorization: `Bearer ${token}` } : undefined })
         const items = Array.isArray(response.data) ? response.data : []
         setCatalogRecords(items.map((item) => ({
           id: item.inspection_id, name: item.name, category: item.category || '기타', categoryId: item.category_id,
@@ -102,7 +103,7 @@ function InspectionListPage() {
     if (!selectedRecord) return
     try {
       const token = localStorage.getItem('token')
-      await axios.patch(`http://127.0.0.1:8000/api/inspection/${selectedRecord.id}`, { cycle }, { headers: token ? { Authorization: `Bearer ${token}` } : undefined })
+      await axios.patch(`${BACKEND_API_URL}/api/inspection/${selectedRecord.id}`, { cycle }, { headers: token ? { Authorization: `Bearer ${token}` } : undefined })
       setCatalogRecords((current) => current.map((record) => record.id === selectedRecord.id ? { ...record, cycle } : record))
       return
     } catch (error) {

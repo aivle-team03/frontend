@@ -9,7 +9,7 @@ import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
 
-const API_BASE_URL = 'http://127.0.0.1:8000'
+const API_BASE_URL = BACKEND_API_URL
 
 function mapRiskFactor(riskFactor) {
   return {
@@ -262,3 +262,4 @@ function RiskManagementLoadingSkeleton() {
 }
 
 export default RiskManagementPage
+import { BACKEND_API_URL } from '../config/api.js'

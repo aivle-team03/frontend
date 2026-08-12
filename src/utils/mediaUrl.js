@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://127.0.0.1:8000'
+import { BACKEND_API_URL } from '../config/api.js'
 
 export function getYouTubeEmbedUrl(mediaUrl, { autoplay = false } = {}) {
   if (!mediaUrl) return null
@@ -31,5 +31,5 @@ export function getYouTubeEmbedUrl(mediaUrl, { autoplay = false } = {}) {
 
 export function resolveMediaUrl(mediaUrl) {
   if (!mediaUrl || !mediaUrl.startsWith('/')) return mediaUrl
-  return `${API_BASE_URL}${mediaUrl}`
+  return `${BACKEND_API_URL}${mediaUrl}`
 }

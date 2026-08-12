@@ -3,7 +3,7 @@ import SendIcon from '@mui/icons-material/Send'
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined'
 import axios from 'axios'
 import { useEffect, useRef, useState } from 'react'
-import { AI_API_URL } from '../config/api.js'
+import { CHATBOT_API_URL } from '../config/api.js'
 import '../styles/law-qa.css'
 
 const RECOMMENDED_QUESTIONS = [
@@ -59,7 +59,7 @@ function LawQaPage() {
     setIsTyping(true)
 
     try {
-      const response = await axios.post(`${AI_API_URL}/api/agent/query`, {
+      const response = await axios.post(`${CHATBOT_API_URL}/api/agent/query`, {
         conversation_id: conversationId,
         user_message: trimmedText,
       })

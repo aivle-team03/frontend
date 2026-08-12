@@ -2,6 +2,7 @@ import "../styles/ActionHistoryPage.css";
 import { useState, useEffect, useMemo } from "react";
 import PeriodSelector from "../components/dashboard/PeriodSelector";
 import axios from "axios";
+import { BACKEND_API_URL } from '../config/api.js'
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
@@ -49,7 +50,7 @@ function ActionHistoryPage() {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await axios.get("http://127.0.0.1:8000/api/action-histories", {
+      const response = await axios.get(`${BACKEND_API_URL}/api/action-histories`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -108,7 +109,7 @@ function ActionHistoryPage() {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await axios.get("http://127.0.0.1:8000/api/inspection/histories/all", {
+      const response = await axios.get(`${BACKEND_API_URL}/api/inspection/histories/all`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -154,7 +155,7 @@ function ActionHistoryPage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       await axios.patch(
-        `http://127.0.0.1:8000/api/action-histories/${selectedRecord.id}/approve`,
+        `${BACKEND_API_URL}/api/action-histories/${selectedRecord.id}/approve`,
         {},
         { headers }
       );
@@ -182,7 +183,7 @@ function ActionHistoryPage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       await axios.patch(
-        `http://127.0.0.1:8000/api/action-histories/${selectedRecord.id}/reject`,
+        `${BACKEND_API_URL}/api/action-histories/${selectedRecord.id}/reject`,
         {
           rejection_reason: rejectReason.trim(),
         },
@@ -205,7 +206,7 @@ function ActionHistoryPage() {
     try {
       const token = localStorage.getItem("token")
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await axios.get(`http://127.0.0.1:8000/api/action-histories/${record.id}`, { headers })
+      const response = await axios.get(`${BACKEND_API_URL}/api/action-histories/${record.id}`, { headers })
 
       setSelectedActionRecord((current) => (
         current?.id === record.id
@@ -230,7 +231,7 @@ function ActionHistoryPage() {
     try {
       const token = localStorage.getItem("token")
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
-      const response = await axios.get(`http://127.0.0.1:8000/api/action-histories/${record.id}`, { headers })
+      const response = await axios.get(`${BACKEND_API_URL}/api/action-histories/${record.id}`, { headers })
 
       setSelectedRecord((current) => (
         current?.id === record.id

@@ -8,7 +8,7 @@ import {
 import { resolveMediaUrl } from '../utils/mediaUrl'
 
 const today = '2026-07-25'
-const API_BASE_URL = 'http://127.0.0.1:8000'
+const API_BASE_URL = BACKEND_API_URL
 
 function createKey(prefix, id) {
   return `${prefix}-${id}`
@@ -256,46 +256,7 @@ function ChecklistPage() {
   const [actionPhotoFilesByTask, setActionPhotoFilesByTask] = useState({})
   const [previewPhoto, setPreviewPhoto] = useState(null)
   const actionPhotoInputRef = useRef(null)
-  const isApiActionTasksLoaded = useRef(false)
   const completingInspectionIds = useRef(new Set())
-
-  useEffect(() => {
-    const fetchChecklists = async () => {
-      try {
-        const token = localStorage.getItem('token')
-        const response = await axios.get(`${API_BASE_URL}/api/checklists`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        })
-        if (!Array.isArray(response.data) || !response.data.length) return
-
-        const inspections = []
-        const actions = []
-        response.data.forEach((item, index) => {
-          const id = item.checklist_id ?? item.id ?? index
-          const isAction = item.type === '조치' || ['미조치', '조치 대기', '조치 중', '조치 필요', '조치 완료', '승인 대기', '승인 완료'].includes(item.status)
-          const task = {
-            id,
-            taskKey: createKey(isAction ? 'action' : 'inspection', id),
-            text: item.name || item.inspection_name || item.content || '점검 항목',
-            location: item.location || (item.camera_id ? `CCTV #${item.camera_id} 구역` : '현장 구역'),
-            date: item.date ? String(item.date).slice(0, 10) : today,
-            inspectedAt: item.inspected_at ? String(item.inspected_at).slice(0, 10) : (item.date ? String(item.date).slice(0, 10) : today),
-            inspector: item.inspector || item.manager_name || item.manager || '미지정',
-          }
-          if (isAction) {
-            actions.push({ ...task, inspectionRef: item.inspection_name || item.name || '점검 항목', inspectionLocation: item.location || '현장 구역', category: item.risk_category || '시설 안전', risk: item.risk_level || '-', status: normalizeActionStatus(item.status), assignee: item.assignee || item.manager_name || item.manager || '미지정', inspectionContent: item.inspection_content || item.content || '', content: item.action_content || '', photos: item.image_url ? [{ name: '첨부 사진', url: resolveMediaUrl(item.image_url) }] : [], completed: ['조치 완료', '승인 대기', '승인 완료'].includes(item.status) })
-          } else {
-            inspections.push({ ...task, category: item.risk_category || item.category || '미분류', inspectionStatus: item.status || '점검 대기', movedToAction: Boolean(item.moved_to_action), description: getInspectionDescription(item) || item.content || '', inspectorMemo: item.history_content || '' })
-          }
-        })
-        if (inspections.length) setInspectionTasks(inspections)
-        if (actions.length) { setActionTasks(actions); isApiActionTasksLoaded.current = true }
-      } catch (error) {
-        console.warn('체크리스트 API 조회에 실패해 기존 데이터를 표시합니다.', error)
-      }
-    }
-    fetchChecklists()
-  }, [])
 
   useEffect(() => {
     const syncAssignedActions = () => {
@@ -361,7 +322,6 @@ function ChecklistPage() {
           const previous = current.find((task) => String(task.id) === String(action.id) || task.taskKey === action.taskKey)
           return { ...action, content: action.content || previous?.content || '', photos: action.photos.length ? action.photos : previous?.photos || [] }
         }))
-        isApiActionTasksLoaded.current = true
       } catch (error) {
         console.warn('내 점검·조치 이력을 불러오지 못했습니다.', error)
       }
@@ -793,3 +753,4 @@ function ChecklistPage() {
 }
 
 export default ChecklistPage
+import { BACKEND_API_URL } from '../config/api.js'

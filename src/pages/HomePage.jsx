@@ -23,7 +23,7 @@ import {
   summaryCards,
 } from '../data/dashboardMock.js'
 
-const API_BASE_URL = 'http://127.0.0.1:8000'
+const API_BASE_URL = BACKEND_API_URL
 
 function isCompleteStatus(status) {
   return status === '조치 완료' || status === '점검 완료'
@@ -275,3 +275,4 @@ function HomePage() {
 }
 
 export default HomePage
+import { BACKEND_API_URL } from '../config/api.js'
