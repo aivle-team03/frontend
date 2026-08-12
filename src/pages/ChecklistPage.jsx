@@ -8,7 +8,7 @@ import {
 import { resolveMediaUrl } from '../utils/mediaUrl'
 
 const today = '2026-07-25'
-const API_BASE_URL = 'http://127.0.0.1:8000'
+const API_BASE_URL = BACKEND_API_URL
 
 function createKey(prefix, id) {
   return `${prefix}-${id}`
@@ -753,3 +753,4 @@ function ChecklistPage() {
 }
 
 export default ChecklistPage
+import { BACKEND_API_URL } from '../config/api.js'

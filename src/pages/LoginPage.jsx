@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { useNavigate } from 'react-router-dom';
+import { BACKEND_API_URL } from '../config/api.js'
 import '../styles/login.css';
 
 function LoginPage({ setIsLoggedIn }) {
@@ -27,7 +28,7 @@ function LoginPage({ setIsLoggedIn }) {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/login', {
+      const response = await fetch(`${BACKEND_API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +76,7 @@ function LoginPage({ setIsLoggedIn }) {
     setIsResetLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/find/password', {
+      const response = await fetch(`${BACKEND_API_URL}/api/auth/find/password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

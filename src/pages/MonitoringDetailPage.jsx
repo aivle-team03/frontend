@@ -12,6 +12,7 @@ import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
 import DetectionAlertDialog from '../components/monitoring/DetectionAlertDialog.jsx'
 import { readAiEventSession, saveAiEventSession } from '../utils/aiEventSession.js'
 import { toMonitoringCamera } from '../utils/cctvCamera.js'
+import { BACKEND_API_URL, VISION_API_URL } from '../config/api.js'
 
 function getAiPreviewUrl(aiStreamUrl, nonce) {
   const url = new URL(aiStreamUrl)
@@ -117,7 +118,7 @@ function MonitoringDetailPage() {
   }, []);
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/risk/list', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+    axios.get(`${BACKEND_API_URL}/api/risk/list`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
       .then((response) => setRiskCategories(Array.isArray(response.data) ? response.data : []))
       .catch((error) => console.info('위험도 카테고리를 불러오지 못했습니다.', error))
   }, [])
@@ -132,7 +133,7 @@ function MonitoringDetailPage() {
   const fetchCameraList = async () => {
     // 모니터링 화면과 동일하게 1차 시연에서는 AI 서비스의 두 카메라만 쓴다.
     try {
-      const response = await axios.get('http://127.0.0.1:8000/api/cctvs', {
+      const response = await axios.get(`${BACKEND_API_URL}/api/cctvs`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       })
       setCameraList((response.data || []).map(toMonitoringCamera))
@@ -152,7 +153,7 @@ function MonitoringDetailPage() {
     if (!activeCamera?.aiCameraId) return undefined
     const pollAiEvents = async () => {
       try {
-        const response = await axios.get(`http://127.0.0.1:8001/events?after=${lastAiEventId.current}`)
+        const response = await axios.get(`${VISION_API_URL}/events?after=${lastAiEventId.current}`)
         const serverInstanceId = response.data?.serverInstanceId || ''
         if (serverInstanceId && aiServerInstanceId.current !== serverInstanceId) {
           if (aiServerInstanceId.current) lastAiEventId.current = 0
@@ -170,7 +171,7 @@ function MonitoringDetailPage() {
             location: activeCamera.location,
             streamUrl: activeCamera.streamUrl,
             aiStreamUrl: activeCamera.aiStreamUrl,
-            snapshotUrl: aiEvent.snapshotDataUrl || (aiEvent.snapshotUrl ? (aiEvent.snapshotUrl.startsWith('http') ? aiEvent.snapshotUrl : `http://127.0.0.1:8001${aiEvent.snapshotUrl}`) : ''),
+            snapshotUrl: aiEvent.snapshotDataUrl || (aiEvent.snapshotUrl ? (aiEvent.snapshotUrl.startsWith('http') ? aiEvent.snapshotUrl : `${VISION_API_URL}${aiEvent.snapshotUrl}`) : ''),
             categoryName: category?.category_name ?? aiEvent.categoryName,
             riskLevel: category?.risk_level ?? '확인 필요',
             level: category?.level ?? null,

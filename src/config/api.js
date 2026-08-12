@@ -7,7 +7,12 @@ export const BACKEND_API_URL = normalizeBaseUrl(
   'http://127.0.0.1:8000',
 )
 
-export const AI_API_URL = normalizeBaseUrl(
-  import.meta.env.VITE_AI_API_URL,
+export const CHATBOT_API_URL = normalizeBaseUrl(
+  import.meta.env.VITE_CHATBOT_API_URL,
   'http://127.0.0.1:8001',
+)
+
+export const VISION_API_URL = normalizeBaseUrl(
+  import.meta.env.VITE_VISION_API_URL,
+  'http://127.0.0.1:8002',
 )

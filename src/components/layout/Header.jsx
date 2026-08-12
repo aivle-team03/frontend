@@ -20,6 +20,7 @@ import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { BACKEND_API_URL } from '../../config/api.js'
 import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { clearAuthSession } from '../../api/authInterceptor.js'
@@ -92,7 +93,7 @@ function Header({ items }) {
       const token = localStorage.getItem('token')
       if (!token) return
 
-      const response = await axios.get('http://127.0.0.1:8000/api/users/me', {
+      const response = await axios.get(`${BACKEND_API_URL}/api/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       })
 
@@ -116,7 +117,7 @@ function Header({ items }) {
   const handleLogout = async () => {
     if (window.confirm('로그아웃 하시겠습니까?')) {
       try {
-        await axios.post('http://127.0.0.1:8000/api/auth/logout')
+        await axios.post(`${BACKEND_API_URL}/api/auth/logout`)
       } catch (error) {
         console.warn('로그아웃 토큰 무효화 요청 실패:', error)
       }

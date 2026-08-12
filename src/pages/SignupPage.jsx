@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../styles/signup.css'
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api'
+const API_BASE_URL = `${BACKEND_API_URL}/api`
 
 function SignupPage() {
   const [userId, setUserId] = useState('')
@@ -164,3 +164,4 @@ function SignupPage() {
 }
 
 export default SignupPage
+import { BACKEND_API_URL } from '../config/api.js'

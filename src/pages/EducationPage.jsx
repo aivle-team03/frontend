@@ -10,7 +10,7 @@ import axios from 'axios'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
 
-const API_BASE_URL = 'http://127.0.0.1:8000'
+const API_BASE_URL = BACKEND_API_URL
 const completionRingColors = ['#4f78d1', '#2f9d75', '#8b63d6', '#e18a3f']
 
 function EducationPage({ addedCourses = [] }) {
@@ -591,3 +591,4 @@ function CompletionRing({ label, value, detail, toneIndex }) {
 }
 
 export default EducationPage
+import { BACKEND_API_URL } from '../config/api.js'

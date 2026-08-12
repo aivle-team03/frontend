@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import '../styles/SafetyManagementPage.css'
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api'
+const API_BASE_URL = `${BACKEND_API_URL}/api`
 const GENERAL_USER_ROLE = '일반유저'
 const COMPANY_ROLE_OPTIONS = ['안전관리자', '관제사', '현장관리자', GENERAL_USER_ROLE]
 
@@ -209,3 +209,4 @@ function SafetyManagementPage() {
 }
 
 export default SafetyManagementPage
+import { BACKEND_API_URL } from '../config/api.js'

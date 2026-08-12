@@ -15,7 +15,7 @@ import styles from '../styles/CCTVMonitoring.module.css'
 import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
 import { clearAiEventSession, readAiEventSession, saveAiEventSession } from '../utils/aiEventSession.js'
 import { toMonitoringCamera } from '../utils/cctvCamera.js'
-import { AI_API_URL } from '../config/api.js'
+import { BACKEND_API_URL, VISION_API_URL } from '../config/api.js'
 
 const EQUIPMENT_CARDS = [
   { cameraId: 'extinguisher-01', displayName: '소화기 확인', categoryName: '소화기 미감지', detector: 'extinguisher', status: 'warming_up' },
@@ -110,7 +110,7 @@ function MonitoringPage() {
     const loadMonitoringData = async () => {
       const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` }
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/monitoring/events', { headers })
+        const response = await axios.get(`${BACKEND_API_URL}/api/monitoring/events`, { headers })
         setServerEvents((response.data || []).map((event) => ({
           id: event.event_id ?? event.id,
           time: event.date ? String(event.date).replace('T', ' ').substring(0, 16) : '-',
@@ -129,7 +129,7 @@ function MonitoringPage() {
     const loadCameras = async () => {
       const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` }
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/cctvs', { headers })
+        const response = await axios.get(`${BACKEND_API_URL}/api/cctvs`, { headers })
         setCameras((response.data || []).map(toMonitoringCamera))
       } catch (error) {
         console.info('CCTV 목록을 불러오지 못했습니다.', error)
@@ -149,7 +149,7 @@ function MonitoringPage() {
     let refreshTimeoutId
     const loadEquipmentInspections = async () => {
       try {
-        const response = await axios.get(`${AI_API_URL}/equipment/status`)
+        const response = await axios.get(`${VISION_API_URL}/equipment/status`)
         const equipment = response.data?.equipment || []
         if (isMounted) {
           setEquipmentInspections(EQUIPMENT_CARDS.map((card) => ({
@@ -190,7 +190,7 @@ function MonitoringPage() {
     if (!aiSessionReady) return undefined
     const pollAiEvents = async () => {
       try {
-        const response = await axios.get(`http://127.0.0.1:8001/events?after=${lastAiEventId.current}`)
+        const response = await axios.get(`${VISION_API_URL}/events?after=${lastAiEventId.current}`)
         const serverInstanceId = response.data?.serverInstanceId || ''
         if (serverInstanceId && aiServerInstanceId.current !== serverInstanceId) {
           // Same browser refresh keeps the cursor, but an AI server restart gets
@@ -208,13 +208,13 @@ function MonitoringPage() {
           const key = `ai-${aiEvent.id}`
           if (emittedDetectionKeys.current.has(key)) continue
           emittedDetectionKeys.current.add(key)
-          const snapshotUrl = aiEvent.snapshotDataUrl || (aiEvent.snapshotUrl ? (aiEvent.snapshotUrl.startsWith('http') ? aiEvent.snapshotUrl : `http://127.0.0.1:8001${aiEvent.snapshotUrl}`) : '')
+          const snapshotUrl = aiEvent.snapshotDataUrl || (aiEvent.snapshotUrl ? (aiEvent.snapshotUrl.startsWith('http') ? aiEvent.snapshotUrl : `${VISION_API_URL}${aiEvent.snapshotUrl}`) : '')
           // AI 서버가 백엔드 기동 직후 전송에 실패해도, 브라우저가 AI 감지를
           // 수신한 순간 동일한 저장 API를 한 번 더 호출한다. 백엔드는 snapshotUrl을
           // 멱등 키로 처리하므로 AI 전송과 동시에 성공해도 DB event는 중복되지 않는다.
           const fallbackCategoryId = aiEvent.cameraId === 'fire-01' ? 1 : 1000006
           if (camera.id && snapshotUrl) {
-            axios.post('http://127.0.0.1:8000/api/ai/events', {
+            axios.post(`${BACKEND_API_URL}/api/ai/events`, {
               cctv_id: camera.id,
               category_id: category?.category_id ?? fallbackCategoryId,
               image_url: snapshotUrl,
@@ -260,7 +260,7 @@ function MonitoringPage() {
   useEffect(() => {
     const loadRiskCategories = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/api/risk/list', {
+        const response = await axios.get(`${BACKEND_API_URL}/api/risk/list`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         })
         setRiskCategories(Array.isArray(response.data) ? response.data : [])
@@ -327,7 +327,7 @@ function MonitoringPage() {
     setDemoRun((run) => run + 1)
     setAiSessionReady(false)
     setAiSessionReady(true)
-    axios.post('http://127.0.0.1:8001/reset').catch(() => {
+    axios.post(`${VISION_API_URL}/reset`).catch(() => {
       console.info('AI 서버를 찾을 수 없습니다.')
     })
   }

@@ -11,7 +11,7 @@ import axios from 'axios'
 import { clearAuthSession } from '../api/authInterceptor.js'
 import '../styles/MyPage.css'
 
-const API_BASE_URL = 'http://127.0.0.1:8000'
+const API_BASE_URL = BACKEND_API_URL
 
 function MyPage() {
   const [user, setUser] = useState(null)
@@ -300,3 +300,4 @@ function MyPage() {
 }
 
 export default MyPage
+import { BACKEND_API_URL } from '../config/api.js'

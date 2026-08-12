@@ -1,3 +1,5 @@
+import { VISION_API_URL } from '../config/api.js'
+
 export const DEMO_CAMERAS = [
   {
     id: 'demo-fire-01',
@@ -7,7 +9,7 @@ export const DEMO_CAMERAS = [
     status: 'running',
     streamUrl: '/demo-cctv/fire-cam-01.mp4',
     aiCameraId: 'fire-01',
-    aiStreamUrl: 'http://127.0.0.1:8001/streams/fire-01',
+    aiStreamUrl: `${VISION_API_URL}/streams/fire-01`,
     isDemo: true,
     detections: [{ id: 'fire-01', at: 4.2, type: '화재/연기 의심 감지', categoryName: '화재 감지' }],
   },
@@ -19,7 +21,7 @@ export const DEMO_CAMERAS = [
     status: 'running',
     streamUrl: '/demo-cctv/forklift-cam-03.mp4',
     aiCameraId: 'forklift-03',
-    aiStreamUrl: 'http://127.0.0.1:8001/streams/forklift-03',
+    aiStreamUrl: `${VISION_API_URL}/streams/forklift-03`,
     isDemo: true,
     detections: [{ id: 'forklift-01', at: 14, type: '지게차·보행자 근접 위험', categoryName: '지게차 접근 위험' }],
   },
