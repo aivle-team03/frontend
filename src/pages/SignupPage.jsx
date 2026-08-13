@@ -142,7 +142,7 @@ function SignupPage() {
             <button type="button" onClick={handleCheckId} className="button" style={{ width: '100px', margin: 0, padding: '0 10px', fontSize: '13px', whiteSpace: 'nowrap' }} disabled={isLoading}>중복확인</button>
           </div>
           {idCheckMessage && <p className="message" style={{ color: isIdChecked ? '#2e7d32' : '#d32f2f' }}>{idCheckMessage}</p>}
-          <input type="password" placeholder="비밀번호를 입력해주세요" value={password} onChange={(event) => setPassword(event.target.value)} className="input" disabled={isLoading} />
+          <input type="password" placeholder="비밀번호 (영대/소문자·숫자·특수문자 중 3종류 이상, 10자 이상)" value={password} onChange={(event) => setPassword(event.target.value)} className="input" disabled={isLoading} />
 
           <div className="input-with-button" style={{ display: 'flex', gap: '8px', width: '100%' }}>
             <input type="text" placeholder="회사 코드를 입력해주세요" value={signupCode} onChange={handleSignupCodeChange} className="input" style={{ flex: 1 }} disabled={isLoading} />
