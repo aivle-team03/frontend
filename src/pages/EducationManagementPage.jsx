@@ -40,7 +40,6 @@ const courseMetrics = [
   { progress: 48, assigned: 32, completed: 15 },
 ]
 
-const workTypes = ['지게차 작업', '고소 작업', '설비 점검', '화재 예방', '화학물질 취급', '기타']
 const educationCategoryOptions = ['공통', '지게차', '화물트럭', '토잉카', '팔레트', '적재', '현장보조', '유지보수', '재고', '위험물']
 const generalUserCategoryOptions = educationCategoryOptions.filter((category) => category !== '공통')
 const educationTypes = ['필수', '정기']
@@ -134,14 +133,12 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
     title: '',
     target: targetGroups[0],
     targetCategory: generalUserCategoryOptions[0],
-    workType: workTypes[0],
     educationType: educationTypes[0],
     deadline: getTodayDate(),
     videoUrl: '',
   })
   const [aiForm, setAiForm] = useState({
     title: '',
-    workType: workTypes[0],
     target: targetGroups[0],
     category: '공통',
     educationType: educationTypes[0],
@@ -389,10 +386,16 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
 
   const addVideoCourse = async (event) => {
     event.preventDefault()
-    if (!courseForm.title.trim() || !courseForm.workType || !courseForm.educationType || !courseForm.deadline || (videoSourceType === 'file' ? !videoFile : !courseForm.videoUrl.trim())) {
+    if (!courseForm.title.trim() || !courseForm.target || !courseForm.educationType || !courseForm.deadline || (videoSourceType === 'file' ? !videoFile : !courseForm.videoUrl.trim())) {
       setNotice('교육명, 마감일, 교육 영상을 모두 입력해 주세요.')
       return
     }
+
+    // education.category 에는 이수 대상을 넣는다. 일반유저는 대상이 넓어
+    // 세부 카테고리로 좁힌다 (AI 생성 폼의 updateAiTarget 과 같은 규칙).
+    const educationCategory = courseForm.target === '일반유저'
+      ? courseForm.targetCategory
+      : courseForm.target
 
     try {
       const token = localStorage.getItem('token')
@@ -400,7 +403,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       const formData = new FormData()
       formData.append('title', courseForm.title.trim())
       formData.append('due_date', courseForm.deadline)
-      formData.append('category', courseForm.workType)
+      formData.append('category', educationCategory)
       formData.append('type', courseForm.educationType)
       if (videoSourceType === 'file') formData.append('video', videoFile)
       else formData.append('video_url', courseForm.videoUrl.trim())
@@ -418,12 +421,12 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
         status: '대기',
         progress: 0,
         duration: courseForm.educationType,
-        category: courseForm.workType,
+        category: educationCategory,
         videoUrl: response.data.video_url,
         sourceName: videoSourceType === 'file' ? videoFile.name : '외부 영상 URL',
         isCustom: true,
       })
-      setCourseForm({ title: '', target: targetGroups[0], targetCategory: generalUserCategoryOptions[0], workType: workTypes[0], educationType: educationTypes[0], deadline: getTodayDate(), videoUrl: '' })
+      setCourseForm({ title: '', target: targetGroups[0], targetCategory: generalUserCategoryOptions[0], educationType: educationTypes[0], deadline: getTodayDate(), videoUrl: '' })
       setVideoFile(null)
       if (videoInputRef.current) videoInputRef.current.value = ''
       setNotice('교육 영상이 등록되었습니다.')
@@ -461,8 +464,8 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
       const formData = new FormData()
       if (materialFile) formData.append('file', materialFile)
-      else formData.append('text_content', `작업 유형: ${aiForm.workType}\n사용 장비: ${aiForm.equipment.trim()}\n위험 요인: ${aiForm.riskFactor.trim()}`)
-      formData.append('title', aiForm.title.trim() || `${aiForm.workType} 안전 교육`)
+      else formData.append('text_content', `사용 장비: ${aiForm.equipment.trim()}\n위험 요인: ${aiForm.riskFactor.trim()}`)
+      formData.append('title', aiForm.title.trim() || `${aiForm.equipment.trim()} 안전 교육`)
       formData.append('category', aiForm.category)
       formData.append('type', aiForm.educationType)
       formData.append('due_date', aiForm.dueDate)
@@ -492,7 +495,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
       const formData = new FormData()
       formData.append('due_date', aiForm.dueDate)
-      formData.append('title', aiForm.title.trim() || `${aiForm.workType} 안전 교육`)
+      formData.append('title', aiForm.title.trim() || `${aiForm.equipment.trim()} 안전 교육`)
       formData.append('category', aiForm.category)
       formData.append('type', aiForm.educationType)
       await axios.post(`${API_BASE_URL}/api/education/veo-generate/${taskId}/publish`, formData, { headers })
@@ -547,9 +550,6 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
             <FormField label="교육명" required>
               <input value={courseForm.title} onChange={(event) => updateCourseForm('title', event.target.value)} placeholder="예: 3분기 지게차 안전교육" />
             </FormField>
-            <FormField label="작업 유형" required>
-              <StyledSelect value={courseForm.workType} options={workTypes} onChange={(value) => updateCourseForm('workType', value)} ariaLabel="작업 유형" />
-            </FormField>
             <div className={courseForm.target === '일반유저' ? 'three-column-fields' : 'two-column-fields'}>
               <FormField label="이수 대상" required>
                 <StyledSelect value={courseForm.target} options={targetGroups} onChange={(value) => updateCourseForm('target', value)} ariaLabel="이수 대상" />
@@ -596,7 +596,6 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
           <p className="card-intro">교육 자료를 업로드하면 핵심 내용을 분석해 교육용 영상 초안을 만듭니다.</p>
           <form className="ai-video-form" onSubmit={requestAiVideo}>
             <label className="education-select"><span>교육명<b>*</b></span><input value={aiForm.title} onChange={(event) => updateAiForm('title', event.target.value)} placeholder="예: 창고 화재 예방 안전 교육" /></label>
-            <EducationSelect label="작업 유형" value={aiForm.workType} options={workTypes} onChange={(value) => updateAiForm('workType', value)} required />
             <div className={aiForm.target === '일반유저' ? 'three-column-fields ai-generation-metadata' : 'two-column-fields ai-generation-metadata'}>
               <EducationSelect label="이수 대상" value={aiForm.target} options={targetGroups} onChange={updateAiTarget} required />
               {aiForm.target === '일반유저' && <EducationSelect label="세부 카테고리" value={aiForm.category} options={generalUserCategoryOptions} onChange={(value) => updateAiForm('category', value)} required />}
