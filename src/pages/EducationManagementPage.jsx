@@ -387,32 +387,50 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
     })))
   }
 
-  const addVideoCourse = (event) => {
+  const addVideoCourse = async (event) => {
     event.preventDefault()
     if (!courseForm.title.trim() || !courseForm.workType || !courseForm.educationType || !courseForm.deadline || (videoSourceType === 'file' ? !videoFile : !courseForm.videoUrl.trim())) {
       setNotice('교육명, 마감일, 교육 영상을 모두 입력해 주세요.')
       return
     }
 
-    const fileUrl = videoFile ? URL.createObjectURL(videoFile) : ''
-    onAddCourse({
-      id: `custom-${Date.now()}`,
-      contentId: `custom-content-${Date.now()}`,
-      title: courseForm.title.trim(),
-      target: courseForm.target,
-      deadline: courseForm.deadline,
-      status: '대기',
-      progress: 0,
-      duration: courseForm.educationType,
-      category: courseForm.workType,
-      videoUrl: videoSourceType === 'file' ? fileUrl : courseForm.videoUrl.trim(),
-      sourceName: videoSourceType === 'file' ? videoFile.name : '외부 영상 URL',
-      isCustom: true,
-    })
-    setCourseForm({ title: '', target: targetGroups[0], targetCategory: generalUserCategoryOptions[0], workType: workTypes[0], educationType: educationTypes[0], deadline: getTodayDate(), videoUrl: '' })
-    setVideoFile(null)
-    if (videoInputRef.current) videoInputRef.current.value = ''
-    setNotice('교육 영상이 대상자 교육 리스트와 내 교육 리스트에 추가되었습니다.')
+    try {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      const formData = new FormData()
+      formData.append('title', courseForm.title.trim())
+      formData.append('due_date', courseForm.deadline)
+      formData.append('category', courseForm.workType)
+      formData.append('type', courseForm.educationType)
+      if (videoSourceType === 'file') formData.append('video', videoFile)
+      else formData.append('video_url', courseForm.videoUrl.trim())
+
+      // 서버에 먼저 저장한 뒤 화면에 반영한다. 저장 실패를 성공처럼 보이지 않게 한다.
+      const response = await axios.post(`${API_BASE_URL}/api/education/add`, formData, { headers })
+
+      onAddCourse({
+        id: response.data.education_id,
+        contentId: response.data.education_id,
+        educationId: response.data.education_id,
+        title: courseForm.title.trim(),
+        target: courseForm.target,
+        deadline: courseForm.deadline,
+        status: '대기',
+        progress: 0,
+        duration: courseForm.educationType,
+        category: courseForm.workType,
+        videoUrl: response.data.video_url,
+        sourceName: videoSourceType === 'file' ? videoFile.name : '외부 영상 URL',
+        isCustom: true,
+      })
+      setCourseForm({ title: '', target: targetGroups[0], targetCategory: generalUserCategoryOptions[0], workType: workTypes[0], educationType: educationTypes[0], deadline: getTodayDate(), videoUrl: '' })
+      setVideoFile(null)
+      if (videoInputRef.current) videoInputRef.current.value = ''
+      setNotice('교육 영상이 등록되었습니다.')
+    } catch (error) {
+      console.error('교육 영상 등록 실패:', error)
+      setNotice(`교육 영상 등록에 실패했습니다. ${error.response?.data?.detail ?? ''}`)
+    }
   }
 
   const requestAiVideo = async (event, isRegeneration = false) => {
