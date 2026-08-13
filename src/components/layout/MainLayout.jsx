@@ -8,9 +8,7 @@ const ROLE_DEFAULT_PATH = {
   '안전관리자': '/',
   '관제사': '/monitoring',
   '현장관리자': '/checklists',
-  '작업자': '/checklists',
-  '근무자': '/checklists',
-  '일반유저': '/education',
+  '일반유저': '/checklists',
 }
 
 const navigationItems = [
@@ -19,7 +17,7 @@ const navigationItems = [
   {
     label: '체크리스트', icon: 'checklist',
     children: [
-      { path: '/checklists', label: '오늘의 할일', icon: 'checklist', allowedRoles: ['안전관리자', '현장관리자', '작업자', '근무자'] },
+      { path: '/checklists', label: '오늘의 할일', icon: 'checklist', allowedRoles: ['안전관리자', '현장관리자', '일반유저'] },
       { path: '/checklists/management', label: '담당자 배정', icon: 'manage', allowedRoles: ['안전관리자'] },
       { path: '/checklists/inspections', label: '정기 점검 목록', icon: 'checklist', allowedRoles: ['안전관리자'] },
     ],
