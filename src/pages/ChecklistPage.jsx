@@ -599,7 +599,7 @@ function ChecklistPage() {
           },
         }
       ).then((res) => {
-        console.log('[AI 백그라운드 검증 완료]:', res.data)
+        console.log('[AI 백그라운드 검증 완료]')
       }).catch((aiErr) => {
         console.warn('[AI 백그라운드 검증 예외]:', aiErr)
       })
