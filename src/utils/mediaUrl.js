@@ -1,4 +1,4 @@
-import { BACKEND_API_URL } from '../config/api.js'
+import { BACKEND_API_URL, VISION_API_URL } from '../config/api.js'
 
 export function getYouTubeEmbedUrl(mediaUrl, { autoplay = false } = {}) {
   if (!mediaUrl) return null
@@ -32,4 +32,22 @@ export function getYouTubeEmbedUrl(mediaUrl, { autoplay = false } = {}) {
 export function resolveMediaUrl(mediaUrl) {
   if (!mediaUrl || !mediaUrl.startsWith('/')) return mediaUrl
   return `${BACKEND_API_URL}${mediaUrl}`
+}
+
+export function resolveVisionSnapshotUrl(snapshotUrl) {
+  if (!snapshotUrl) return ''
+  if (
+    snapshotUrl.startsWith('data:')
+    || snapshotUrl.startsWith('http://')
+    || snapshotUrl.startsWith('https://')
+  ) {
+    return snapshotUrl
+  }
+
+  // AI snapshots are public application media paths, not Vision API routes.
+  // Keeping /media/... relative matches the action-history image contract and
+  // prevents an invalid /vision/media/... request in deployed environments.
+  if (snapshotUrl.startsWith('/media/')) return snapshotUrl
+
+  return `${VISION_API_URL}${snapshotUrl}`
 }

@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom'
 import RecentEventsTable from '../components/monitoring/RecentEventsTableMonitoring.jsx'
 import DetectionAlertDialog from '../components/monitoring/DetectionAlertDialog.jsx'
 import styles from '../styles/CCTVMonitoring.module.css'
-import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
+import { getYouTubeEmbedUrl, resolveMediaUrl, resolveVisionSnapshotUrl } from '../utils/mediaUrl.js'
 import { clearAiEventSession, readAiEventSession, saveAiEventSession } from '../utils/aiEventSession.js'
 import { toMonitoringCamera } from '../utils/cctvCamera.js'
 import { BACKEND_API_URL, VISION_API_URL } from '../config/api.js'
@@ -208,7 +208,9 @@ function MonitoringPage() {
           const key = `ai-${aiEvent.id}`
           if (emittedDetectionKeys.current.has(key)) continue
           emittedDetectionKeys.current.add(key)
-          const snapshotUrl = aiEvent.snapshotDataUrl || (aiEvent.snapshotUrl ? (aiEvent.snapshotUrl.startsWith('http') ? aiEvent.snapshotUrl : `${VISION_API_URL}${aiEvent.snapshotUrl}`) : '')
+          const snapshotUrl = resolveVisionSnapshotUrl(
+            aiEvent.snapshotDataUrl || aiEvent.snapshotUrl,
+          )
           // The AI server is the sole writer for AI detection events.
           // Posting the same event from this browser can create duplicate
           // event/action-history rows when both requests arrive together.
