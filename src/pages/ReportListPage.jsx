@@ -61,7 +61,7 @@ const getReportDateRangeFilters = (reports) => {
 }
 
 const fetchReportFileUrl = async (reportId, signal) => {
-  const response = await axios.get(`${BACKEND_API_URL}/api/report/${reportId}/file-url/`, { signal })
+  const response = await axios.get(`${BACKEND_API_URL}/api/report/${reportId}/file-url`, { signal })
   return response.data?.file_url ?? ''
 }
 
