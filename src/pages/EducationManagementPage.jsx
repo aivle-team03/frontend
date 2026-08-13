@@ -205,6 +205,41 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   }, [videoAction])
 
   useEffect(() => {
+    const restorePersistedVideoJob = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const headers = token ? { Authorization: `Bearer ${token}` } : {}
+        const { data: jobs } = await axios.get(`${API_BASE_URL}/api/education/veo-generate/pending`, { headers })
+        const job = jobs?.find((item) => item.publication_status === 'REVIEW_REQUIRED') ?? jobs?.[0]
+        if (!job) return
+
+        setAiForm((current) => ({
+          ...current,
+          title: job.title ?? current.title,
+          category: job.category ?? current.category,
+          educationType: job.type ?? current.educationType,
+          dueDate: job.due_date ?? current.dueDate,
+        }))
+
+        if (job.publication_status === 'REVIEW_REQUIRED') {
+          setAiStatus('review')
+          setGeneratedVideo({ taskId: job.task_id, videoUrl: job.video_url, qualityReport: job.quality_report })
+          setNotice('검토 대기 중인 AI 교육 영상을 복원했습니다.')
+          return
+        }
+
+        setAiStatus('queued')
+        setAiTaskId(job.task_id)
+        setNotice('진행 중인 AI 교육 영상 생성을 다시 확인합니다.')
+      } catch (error) {
+        console.error('저장된 AI 교육 영상 작업 복원 실패:', error)
+      }
+    }
+
+    restorePersistedVideoJob()
+  }, [])
+
+  useEffect(() => {
     if (!aiTaskId) return undefined
 
     const token = localStorage.getItem('token')
@@ -223,10 +258,12 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
             setGeneratedVideo({ taskId: aiTaskId, videoUrl: data.video_url, qualityReport: data.quality_report })
             setNotice('품질 기준 미달 영상입니다. 검수 후 등록하거나 추가 요청으로 재생성해 주세요.')
           } else {
-            setAiStatus('publishing')
-            await publishGeneratedVideo(aiTaskId, true)
+            setAiStatus('published')
+            setGeneratedVideo(null)
+            setNotice('품질 검수를 통과해 교육 목록에 자동 등록되었습니다.')
+            await fetchAdminEducationData()
           }
-        } else if (data.status === 'FAILED') {
+        } else if (data.status === 'FAILED' || data.publication_status === 'TIMED_OUT') {
           setAiStatus('error')
           setAiTaskId(null)
           setIsRegenerating(false)
@@ -410,6 +447,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       formData.append('title', aiForm.title.trim() || `${aiForm.workType} 안전 교육`)
       formData.append('category', aiForm.category)
       formData.append('type', aiForm.educationType)
+      formData.append('due_date', aiForm.dueDate)
       formData.append('request', requestToSend)
       const response = await axios.post(`${API_BASE_URL}/api/education/veo-generate`, formData, { headers })
       setAiTaskId(response.data.task_id)
