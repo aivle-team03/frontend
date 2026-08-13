@@ -123,7 +123,6 @@ function HomePage() {
 
     axios.get(`${API_BASE_URL}/api/admin/education/dashboard`, { headers })
       .then((response) => {
-        console.log('교육 dashboard response:', response.data)
         const courses = Array.isArray(response.data?.courses) ? response.data.courses : []
         setHomeDebugData((current) => ({ ...current, education: response.data }))
         setEducationChartData(courses)
@@ -139,7 +138,6 @@ function HomePage() {
 
     axios.get(`${API_BASE_URL}/api/admin/users`, { headers })
       .then((response) => {
-        console.log('users response:', response.data)
         const users = Array.isArray(response.data) ? response.data : (response.data?.items ?? response.data?.value ?? response.data?.users ?? [])
         setHomeDebugData((current) => ({ ...current, users: response.data }))
         setUserData(users)
@@ -201,7 +199,7 @@ function HomePage() {
           />
         ))}
       </section>
-      
+
 
 
       <section className="dashboard-main-grid">
@@ -214,12 +212,12 @@ function HomePage() {
         />
 
         <EducationPieChart eduData={educationChartData} userData={userData}></EducationPieChart>
-     
+
       </section>
-      
 
 
-        <section className="risk-section">
+
+      <section className="risk-section">
         <div className="section-heading">
           <div>
             <h2 className="section-title">위험도 관리</h2>
@@ -240,9 +238,9 @@ function HomePage() {
         />
 
         <div className="Page-move-wrapper">
-            <button className="Page-move-button" type="button" onClick={() => navigate('/actions')}>
-              조치 이력 페이지로 이동
-            </button>
+          <button className="Page-move-button" type="button" onClick={() => navigate('/actions')}>
+            조치 이력 페이지로 이동
+          </button>
         </div>
 
       </section>

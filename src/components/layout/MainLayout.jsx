@@ -22,7 +22,6 @@ const navigationItems = [
       { path: '/risk-management', label: '위험도 관리', icon: 'risk' },
     ],
   },
-  { path: '/law-qa', label: 'AI 비서', icon: 'help' },
   {
     label: '안전 교육', icon: 'education',
     // TODO(auth): Replace this role flag with the authenticated user's permission set from the backend.
@@ -31,8 +30,9 @@ const navigationItems = [
       { path: '/education-management', label: '교육 관리', icon: 'manage', requiresRole: 'safety-manager' },
     ],
   },
-  { path: '/board', label: '위험 신고 게시판', icon: 'board' },
   { path: '/report', label: '보고서', icon: 'report' },
+  { path: '/board', label: '위험 신고 게시판', icon: 'board' },
+  { path: '/law-qa', label: 'AI 비서', icon: 'help' },
 ]
 
 function MainLayout({ setIsLoggedIn }) {
