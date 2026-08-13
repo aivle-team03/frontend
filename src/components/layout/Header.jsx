@@ -89,26 +89,26 @@ function Header({ items }) {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) return
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) return
 
-      const response = await axios.get(`${BACKEND_API_URL}/api/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      const userData = response.data
-      if (userData) {
-        setUser({
-          name: userData.name || userData.user_id || '관리자',
-          role: userData.role || '소방안전 관리자',
-          department: userData.department || '시설관리팀',
-          email: userData.email || '',
+        const response = await axios.get(`${BACKEND_API_URL}/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
         })
+
+        const userData = response.data
+        if (userData) {
+          setUser({
+            name: userData.name || userData.user_id || '관리자',
+            role: userData.role || '소방안전 관리자',
+            department: userData.department || '시설관리팀',
+            email: userData.email || '',
+          })
+        }
+      } catch (error) {
+        console.error('헤더 사용자 프로필 로드 실패:', error)
       }
-    } catch (error) {
-      console.error('헤더 사용자 프로필 로드 실패:', error)
-    }
     }
 
     fetchUserProfile()

@@ -45,7 +45,14 @@ function LoginPage({ setIsLoggedIn }) {
         localStorage.setItem('token', data.access_token);
         localStorage.setItem('refresh_token', data.refresh_token);
         localStorage.setItem('isLoggedIn', 'true');
+
+        const userRole = data.role || '일반유저'; // 기본값을 '일반유저'로 설정
+        localStorage.setItem('userRole', userRole);
+
+        window.dispatchEvent(new CustomEvent('roleUpdated', { detail: userRole }));
+
         setIsLoggedIn(true);
+        navigate('/')
       } else {
         setErrorMessage(data.detail || 'ID 또는 비밀번호가 일치하지 않습니다.');
       }

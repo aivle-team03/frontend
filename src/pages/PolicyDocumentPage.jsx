@@ -1,4 +1,6 @@
 import '../styles/policy-document.css'
+import { useNavigate } from 'react-router-dom'
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 
 const privacy = [
   ['제1조 총칙', ['AI/2반/3조(이하 “운영팀”)는 시설안전 관리 플랫폼 BOSS를 운영하며, 「개인정보 보호법」 등 관계 법령을 준수합니다.', '운영팀은 서비스 제공에 필요한 최소한의 개인정보를 수집하고, 고지한 목적 범위 안에서만 처리합니다. BOSS는 시설 점검·조치 관리, CCTV 기반 위험 탐지, 시설안전 교육 이수 관리, 보고서 관리 및 법령·매뉴얼 질의응답 기능을 제공합니다.', '이 방침은 BOSS 웹 서비스, 서비스에서 처리하는 사진·영상 및 이용자가 입력하거나 생성한 업무 기록에 적용됩니다. 관계 법령 또는 서비스 기능의 변경에 따라 방침을 보완하는 경우에는 변경 내용을 사전에 안내합니다.']],
@@ -26,6 +28,7 @@ const terms = [
   ['제10조 책임, 분쟁 해결 및 시행일', ['운영팀은 서비스를 안정적으로 제공하고 정보를 안전하게 보호하기 위해 노력합니다. 운영팀의 고의 또는 중대한 과실로 손해가 발생한 경우 관계 법령에 따라 책임을 부담하며, 계정관리 소홀·허위정보 등록·약관 위반으로 인한 손해는 해당 이용자가 부담할 수 있습니다.', '분쟁은 상호 협의를 우선하며, 해결되지 않을 경우 대한민국 법률에 따라 처리합니다. 공고일·시행일: 2026년 7월 29일 / 버전: v1.0']]
 ]
 function PolicyDocumentPage({ type }) {
+  const navigate = useNavigate()
   const isPrivacy = type === 'privacy'
   const sections = isPrivacy ? privacy : terms
   const title = isPrivacy ? '개인정보 처리방침' : '이용약관'
@@ -33,6 +36,15 @@ function PolicyDocumentPage({ type }) {
   return (
     <main className="policy-page">
       <header className="policy-page-head">
+        <button
+          type="button"
+          className="policy-back-button"
+          onClick={() => navigate(-1)}
+          aria-label="이전 페이지로 이동"
+        >
+          <ArrowBackRoundedIcon />
+          <span>뒤로 가기</span>
+        </button>
         <div>
           <span>POLICY CENTER</span>
           <h1>{title}</h1>
