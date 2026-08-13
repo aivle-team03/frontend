@@ -209,19 +209,9 @@ function MonitoringPage() {
           if (emittedDetectionKeys.current.has(key)) continue
           emittedDetectionKeys.current.add(key)
           const snapshotUrl = aiEvent.snapshotDataUrl || (aiEvent.snapshotUrl ? (aiEvent.snapshotUrl.startsWith('http') ? aiEvent.snapshotUrl : `${VISION_API_URL}${aiEvent.snapshotUrl}`) : '')
-          // AI 서버가 백엔드 기동 직후 전송에 실패해도, 브라우저가 AI 감지를
-          // 수신한 순간 동일한 저장 API를 한 번 더 호출한다. 백엔드는 snapshotUrl을
-          // 멱등 키로 처리하므로 AI 전송과 동시에 성공해도 DB event는 중복되지 않는다.
-          const fallbackCategoryId = aiEvent.cameraId === 'fire-01' ? 1 : 1000006
-          if (camera.id && snapshotUrl) {
-            axios.post(`${BACKEND_API_URL}/api/ai/events`, {
-              cctv_id: camera.id,
-              category_id: category?.category_id ?? fallbackCategoryId,
-              image_url: snapshotUrl,
-            }).catch((error) => {
-              console.info('AI 감지 이벤트 DB 보완 저장에 실패했습니다.', error)
-            })
-          }
+          // The AI server is the sole writer for AI detection events.
+          // Posting the same event from this browser can create duplicate
+          // event/action-history rows when both requests arrive together.
           const event = {
             id: key,
             // 목록 폭을 고정하기 위해 날짜·시간은 분 단위까지만 표시한다.
@@ -244,8 +234,6 @@ function MonitoringPage() {
             level: category?.level ?? null,
             isDemo: false,
           }
-          setDemoEvents((current) => [event, ...current])
-          setSelectedEvent(event)
           setAlertQueue((queue) => [...queue, event])
         }
       } catch {
@@ -336,7 +324,7 @@ function MonitoringPage() {
     <section className={styles.dashboardFrame} aria-label="BOSS CCTV 모니터링 작업 공간">
       <div className={styles.monitoringOverview}>
         <div><span className={styles.overviewIcon}><SensorsRoundedIcon /></span><div><strong>CCTV AI 감지 모니터링</strong><p>현장 CCTV와 실시간 감지 상태를 확인하세요.</p></div></div>
-        <div className={styles.overviewStats}><span><i />온라인 <strong>{cameras.filter((camera) => camera.status === '정상' || camera.status === 'running').length}</strong></span><span>감지 이벤트 <strong>{demoEvents.length}</strong></span></div>
+        <div className={styles.overviewStats}><span><i />온라인 <strong>{cameras.filter((camera) => camera.status === '정상' || camera.status === 'running').length}</strong></span><span>감지 이벤트 <strong>{events.length}</strong></span></div>
       </div>
 
       <div className={styles.cctvemptyarea}>

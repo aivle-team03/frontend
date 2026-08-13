@@ -290,7 +290,10 @@ function ChecklistManagementPage() {
         const actionIds = targetRecords.filter((item) => item.sourceKind === 'action' && item.rawId).map((item) => item.rawId)
         if (actionIds.length) await axios.patch(`${API_BASE_URL}/api/action-histories/assignments`, { action_history_ids: actionIds, handler_uid: member.userId }, { headers })
       }
-      setRecords((current) => current.map((item) => selected.includes(item.id) ? { ...item, [field]: member.name, progress: assignmentMode === 'action' ? '조치 중' : item.progress } : item))
+      // 담당자 배정은 담당자만 변경한다. 백엔드의 조치 상태는
+      // '조치 대기'와 '조치 완료'만 사용하므로 여기서 임의의 '조치 중'을
+      // 표시하면 새로고침 후 서버값과 화면값이 달라진다.
+      setRecords((current) => current.map((item) => selected.includes(item.id) ? { ...item, [field]: member.name } : item))
       setSelected([]); setMemberQuery(''); setAssignmentMode(null)
     } catch (error) {
       console.error('담당자 DB 배정 실패:', error)
