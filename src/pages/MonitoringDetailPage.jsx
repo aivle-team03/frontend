@@ -8,7 +8,7 @@ import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import '../styles/monitoringdetail.css'
-import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
+import { getYouTubeEmbedUrl, resolveMediaUrl, resolveVisionSnapshotUrl } from '../utils/mediaUrl.js'
 import DetectionAlertDialog from '../components/monitoring/DetectionAlertDialog.jsx'
 import { readAiEventSession, saveAiEventSession } from '../utils/aiEventSession.js'
 import { toMonitoringCamera } from '../utils/cctvCamera.js'
@@ -171,7 +171,9 @@ function MonitoringDetailPage() {
             location: activeCamera.location,
             streamUrl: activeCamera.streamUrl,
             aiStreamUrl: activeCamera.aiStreamUrl,
-            snapshotUrl: aiEvent.snapshotDataUrl || (aiEvent.snapshotUrl ? (aiEvent.snapshotUrl.startsWith('http') ? aiEvent.snapshotUrl : `${VISION_API_URL}${aiEvent.snapshotUrl}`) : ''),
+            snapshotUrl: resolveVisionSnapshotUrl(
+              aiEvent.snapshotDataUrl || aiEvent.snapshotUrl,
+            ),
             categoryName: category?.category_name ?? aiEvent.categoryName,
             riskLevel: category?.risk_level ?? '확인 필요',
             level: category?.level ?? null,
