@@ -1,13 +1,10 @@
 import axios from 'axios'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AiSummaryCard from '../components/dashboard/AiSummaryCard.jsx'
-import DailyReportCard from '../components/dashboard/DailyReportCard.jsx'
 import PeriodSelector from '../components/dashboard/PeriodSelector.jsx'
 import RecentEventsTable from '../components/dashboard/RecentEventsTable.jsx'
 import RiskTrendChart from '../components/dashboard/RiskTrendChart.jsx'
 import RiskTypeDonutChart from '../components/dashboard/RiskTypeDonutChart.jsx'
-import SafetyGradeCard from '../components/dashboard/SafetyGradeCard.jsx'
 import SummaryCard from '../components/dashboard/SummaryCard.jsx'
 import RiskTypePieChart from '../components/dashboard/RiskTypePieChart.jsx'
 import RiskSectionStackChart from '../components/dashboard/RiskSectionStackChart.jsx'
@@ -262,12 +259,6 @@ function HomePage() {
         </div>
       </section>
 
-      <DailyReportCard />
-
-      <section className="safety-summary-row">
-        <SafetyGradeCard />
-        <AiSummaryCard />
-      </section>
     </div>
   )
 }
