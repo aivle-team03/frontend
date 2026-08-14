@@ -19,12 +19,11 @@ import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { BACKEND_API_URL } from '../../config/api.js'
 import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { clearAuthSession } from '../../api/authInterceptor.js'
-import { MY_PAGE_MOCK_DATA } from '../../mocks/mockData.js'
 import '../../styles/Header.css'
 
 const NOTIFICATION_STORAGE_KEY = 'boss-read-notification-ids'
@@ -57,9 +56,10 @@ const pageHeaderMeta = {
 }
 
 const notificationIconMap = {
-  schedule: EventAvailableRoundedIcon,
-  danger: WarningAmberRoundedIcon,
-  complete: TaskAltRoundedIcon,
+  schedule: EventAvailableRoundedIcon, // 📅 일정/배정
+  danger: WarningAmberRoundedIcon,      // ⚠️ 위험 감지
+  complete: TaskAltRoundedIcon,        //  조치/점검/보고서/영상 완료
+  board: CampaignOutlinedIcon,          // 📢 게시판 제보
 }
 
 function getStoredReadIds() {
@@ -74,13 +74,13 @@ function getStoredReadIds() {
 
 function Header({ items }) {
   const [user, setUser] = useState({})
+  const [notifications, setNotifications] = useState([])
 
   const [activeMenu, setActiveMenu] = useState(null)
   const [readNotificationIds, setReadNotificationIds] = useState(getStoredReadIds)
   const menuRootRef = useRef(null)
   const location = useLocation()
   const navigate = useNavigate()
-  const { notifications } = MY_PAGE_MOCK_DATA
   const headerPath = location.pathname === '/monitoringdetail' ? '/monitoring' : location.pathname
   const currentItem = [...items, ...items.flatMap((item) => item.children ?? [])].find((item) => item.path === headerPath)
   const headerMeta = pageHeaderMeta[headerPath]
@@ -89,30 +89,51 @@ function Header({ items }) {
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) return
+      try {
+        const token = localStorage.getItem('token')
+        if (!token) return
 
-      const response = await axios.get(`${BACKEND_API_URL}/api/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      const userData = response.data
-      if (userData) {
-        setUser({
-          name: userData.name || userData.user_id || '관리자',
-          role: userData.role || '소방안전 관리자',
-          department: userData.department || '시설관리팀',
-          email: userData.email || '',
+        const response = await axios.get(`${BACKEND_API_URL}/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
         })
+
+        const userData = response.data
+        if (userData) {
+          setUser({
+            name: userData.name || userData.user_id || '관리자',
+            role: userData.role || '소방안전 관리자',
+            department: userData.department || '시설관리팀',
+            email: userData.email || '',
+          })
+        }
+      } catch (error) {
+        console.error('헤더 사용자 프로필 로드 실패:', error)
       }
-    } catch (error) {
-      console.error('헤더 사용자 프로필 로드 실패:', error)
-    }
     }
 
     fetchUserProfile()
   }, [])
+
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!token) return
+
+      const response = await axios.get(`${BACKEND_API_URL}/api/notifications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setNotifications(response.data || [])
+    } catch (error) {
+      console.error('알림 목록 조회 실패:', error)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchNotifications()
+    const interval = setInterval(fetchNotifications, 15000)
+    return () => clearInterval(interval)
+  }, [fetchNotifications])
 
   const handleLogout = async () => {
     if (window.confirm('로그아웃 하시겠습니까?')) {
@@ -128,22 +149,9 @@ function Header({ items }) {
     }
   }
 
-  const notificationItems = useMemo(
-    () => notifications.map((notification) => ({
-      ...notification,
-      read: notification.read || readNotificationIds.includes(notification.id),
-    })),
-    [notifications, readNotificationIds],
-  )
-  const unreadCount = notificationItems.filter((notification) => !notification.read).length
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(readNotificationIds))
-    } catch {
-      // 저장소를 사용할 수 없는 환경에서도 알림 확인은 현재 세션에서 동작합니다.
-    }
-  }, [readNotificationIds])
+  const unreadCount = useMemo(() => {
+    return notifications.filter((notification) => !notification.read).length
+  }, [notifications])
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -163,20 +171,43 @@ function Header({ items }) {
     }
   }, [])
 
-  const markNotificationAsRead = (notificationId) => {
-    setReadNotificationIds((currentIds) => (
-      currentIds.includes(notificationId) ? currentIds : [...currentIds, notificationId]
-    ))
-  }
+  const handleNotificationClick = async (notification) => {
+    try {
+      const token = localStorage.getItem('token')
+      if (!notification.read) {
+        // 백엔드 단일 읽음 처리 API 호출
+        await axios.patch(
+          `${BACKEND_API_URL}/api/notifications/${notification.id}/read`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        // 로컬 State 즉시 반영
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
+        )
+      }
+    } catch (error) {
+      console.error('단일 알림 읽음 처리 실패:', error)
+    }
 
-  const handleNotificationClick = (notification) => {
-    markNotificationAsRead(notification.id)
     setActiveMenu(null)
-    if (notification.path) navigate(notification.path)
+    if (notification.path) {
+      navigate(notification.path)
+    }
   }
 
-  const handleMarkAllAsRead = () => {
-    setReadNotificationIds(notifications.map((notification) => notification.id))
+  const handleMarkAllAsRead = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      await axios.patch(
+        `${BACKEND_API_URL}/api/notifications/read-all`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+    } catch (error) {
+      console.error('전체 알림 읽음 처리 실패:', error)
+    }
   }
 
   const handleMoveToMyPage = () => {
@@ -209,7 +240,7 @@ function Header({ items }) {
             aria-label={`알림${unreadCount ? `, 미확인 ${unreadCount}개` : ''}`}
             aria-expanded={activeMenu === 'notifications'}
             aria-haspopup="menu"
-            onClick={() => setActiveMenu((current) => current === 'notifications' ? null : 'notifications')}
+            onClick={() => setActiveMenu((current) => (current === 'notifications' ? null : 'notifications'))}
           >
             <NotificationsNoneOutlinedIcon />
             {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
@@ -228,28 +259,36 @@ function Header({ items }) {
               </div>
 
               <div className="notification-list">
-                {notificationItems.map((notification) => {
-                  const NotificationIcon = notificationIconMap[notification.category] ?? NotificationsNoneOutlinedIcon
-                  return (
-                    <button
-                      className={`notification-item notification-${notification.category}${notification.read ? ' is-read' : ''}`}
-                      type="button"
-                      role="menuitem"
-                      key={notification.id}
-                      onClick={() => handleNotificationClick(notification)}
-                    >
-                      <span className="notification-type-icon"><NotificationIcon /></span>
-                      <span className="notification-copy">
-                        <span className="notification-title-row">
-                          <strong>{notification.title}</strong>
-                          {!notification.read && <i aria-label="미확인" />}
+                {notifications.length === 0 ? (
+                  <div style={{ padding: '24px 16px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+                    알림이 없습니다.
+                  </div>
+                ) : (
+                  notifications.map((notification) => {
+                    const NotificationIcon = notificationIconMap[notification.category] ?? NotificationsNoneOutlinedIcon
+                    return (
+                      <button
+                        className={`notification-item notification-${notification.category}${notification.read ? ' is-read' : ''}`}
+                        type="button"
+                        role="menuitem"
+                        key={notification.id}
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <span className="notification-type-icon">
+                          <NotificationIcon />
                         </span>
-                        <span>{notification.message}</span>
-                        <small>{notification.time}</small>
-                      </span>
-                    </button>
-                  )
-                })}
+                        <span className="notification-copy">
+                          <span className="notification-title-row">
+                            <strong>{notification.title}</strong>
+                            {!notification.read && <i aria-label="미확인" />}
+                          </span>
+                          <span>{notification.message}</span>
+                          <small>{notification.time}</small>
+                        </span>
+                      </button>
+                    )
+                  })
+                )}
               </div>
 
               <button className="notification-settings-link" type="button" onClick={handleMoveToMyPage}>
@@ -266,9 +305,11 @@ function Header({ items }) {
             type="button"
             aria-expanded={activeMenu === 'profile'}
             aria-haspopup="menu"
-            onClick={() => setActiveMenu((current) => current === 'profile' ? null : 'profile')}
+            onClick={() => setActiveMenu((current) => (current === 'profile' ? null : 'profile'))}
           >
-            <span className="profile-avatar" aria-hidden="true"><AccountCircleRoundedIcon /></span>
+            <span className="profile-avatar" aria-hidden="true">
+              <AccountCircleRoundedIcon />
+            </span>
             <span className="profile-button-copy">
               <strong>{user.name}</strong>
               <small>{user.role}</small>
@@ -279,14 +320,28 @@ function Header({ items }) {
           {activeMenu === 'profile' && (
             <div className="profile-dropdown" role="menu">
               <div className="profile-dropdown-overview">
-                <span className="profile-avatar profile-avatar-large" aria-hidden="true"><AccountCircleRoundedIcon /></span>
-                <button className="profile-account-summary" type="button" role="menuitem" onClick={handleMoveToSafetyManagement}>
+                <span className="profile-avatar profile-avatar-large" aria-hidden="true">
+                  <AccountCircleRoundedIcon />
+                </span>
+                <button
+                  className="profile-account-summary"
+                  type="button"
+                  role="menuitem"
+                  onClick={handleMoveToSafetyManagement}
+                >
                   <strong>{user.name}</strong>
-                  <span>{user.department} · {user.role}</span>
+                  <span>
+                    {user.department} · {user.role}
+                  </span>
                   <small>{user.email}</small>
                 </button>
-                {/* TODO(auth): Connect this control to the logout endpoint/session cleanup flow. */}
-                <button className="profile-logout-button" type="button" role="menuitem" aria-label="로그아웃" onClick={handleLogout}>
+                <button
+                  className="profile-logout-button"
+                  type="button"
+                  role="menuitem"
+                  aria-label="로그아웃"
+                  onClick={handleLogout}
+                >
                   <LogoutOutlinedIcon />
                   <span>로그아웃</span>
                 </button>
@@ -295,7 +350,6 @@ function Header({ items }) {
                 <ManageAccountsOutlinedIcon />
                 <span>
                   <strong>마이페이지</strong>
-                  <small>프로필과 알림 설정 관리</small>
                 </span>
                 <ArrowForwardIosRoundedIcon />
               </button>
