@@ -1,0 +1,43 @@
+name: Deploy frontend
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # EC2 는 메모리가 1.9GB 라 서버에서 빌드하면 OOM 으로 다른 서비스가 죽을 수 있다.
+      # 러너에서 빌드하고 결과물만 보낸다.
+      - name: 빌드
+        env:
+          VITE_BACKEND_API_URL: ${{ secrets.VITE_BACKEND_API_URL }}
+          VITE_CHATBOT_API_URL: ${{ secrets.VITE_CHATBOT_API_URL }}
+          VITE_VISION_API_URL: ${{ secrets.VITE_VISION_API_URL }}
+        run: |
+          npm ci
+          npm run build
+
+      - name: dist 전송
+        if: ${{ env.EC2_HOST != '' }}
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "dist/*"
+          target: "/var/www/boss"
+          strip_components: 1
+          rm: true          # 기존 파일 삭제 후 교체
