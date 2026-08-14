@@ -1,6 +1,7 @@
 import bossLogo from '../../assets/boss-logo.png'
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 
 function SidebarIcon({ name }) {
@@ -102,7 +103,7 @@ function SidebarIcon({ name }) {
   )
 }
 
-function Sidebar({ isCollapsed, items, currentUserRole, onToggle }) {
+function SidebarLegacy({ isCollapsed, items, currentUserRole, onToggle }) {
   const location = useLocation()
   const [openSubmenu, setOpenSubmenu] = useState(null)
 
@@ -140,4 +141,49 @@ function Sidebar({ isCollapsed, items, currentUserRole, onToggle }) {
   )
 }
 
-export default Sidebar
+function SidebarWithFlyout({ isCollapsed, items, currentUserRole, onToggle }) {
+  const location = useLocation()
+  const [openSubmenu, setOpenSubmenu] = useState(null)
+
+  useEffect(() => {
+    if (!isCollapsed) setOpenSubmenu(null)
+  }, [isCollapsed])
+
+  const toggleSubmenu = (parentKey, event) => {
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const top = Math.max(12, Math.min(bounds.top, window.innerHeight - 220))
+
+    setOpenSubmenu((current) => current?.key === parentKey && current.locationKey === location.key
+      ? null
+      : { key: parentKey, locationKey: location.key, anchor: { top, left: bounds.right + 10 } })
+  }
+
+  return (
+    <aside className="app-sidebar" aria-label="Primary navigation">
+      <div className="sidebar-logo">
+        <Link to="/" aria-label="Home"><img src={bossLogo} alt="BOSS" /></Link>
+      </div>
+      <nav className="sidebar-nav" aria-label="Main menu" onScroll={() => isCollapsed && setOpenSubmenu(null)}>
+        {items.map((item) => {
+          const children = (item.children ?? []).filter((child) => !child.requiresRole || child.requiresRole === currentUserRole)
+          const isChildRouteActive = children.some((child) => location.pathname === child.path)
+          const isParentActive = location.pathname === item.path || (item.path === '/monitoring' && location.pathname === '/monitoringdetail') || isChildRouteActive
+          const parentKey = item.path ?? item.label
+          const hasManualStateForCurrentEntry = openSubmenu?.locationKey === location.key
+          const isSubmenuOpen = children.length > 0 && (isChildRouteActive || (hasManualStateForCurrentEntry && openSubmenu.key === parentKey))
+          const submenuLinks = children.map((child) => <NavLink className={({ isActive }) => isActive ? 'sidebar-submenu-link is-active' : 'sidebar-submenu-link'} end key={child.path} to={child.path} onClick={() => setOpenSubmenu(null)}><span className="sidebar-submenu-icon"><SidebarIcon name={child.icon} /></span>{child.label}</NavLink>)
+          const popupStyle = openSubmenu?.anchor ? { '--sidebar-submenu-top': `${openSubmenu.anchor.top}px`, '--sidebar-submenu-left': `${openSubmenu.anchor.left}px` } : undefined
+
+          return <div className={`sidebar-item${children.length ? ' has-children' : ''}${isParentActive ? ' is-active' : ''}${isChildRouteActive ? ' is-child-active' : ''}${isSubmenuOpen ? ' is-open' : ''}`} key={parentKey}>
+            {children.length > 0 ? <button className="sidebar-tab" type="button" title={isCollapsed ? item.label : undefined} aria-expanded={isSubmenuOpen} onClick={(event) => toggleSubmenu(parentKey, event)}><span className="sidebar-icon-box"><SidebarIcon name={item.icon} /></span><span className="sidebar-label">{item.label}</span><span className="sidebar-submenu-caret" aria-hidden="true">›</span></button> : <NavLink className="sidebar-tab" end={item.path === '/'} title={isCollapsed ? item.label : undefined} to={item.path} onClick={() => setOpenSubmenu(null)}><span className="sidebar-icon-box"><SidebarIcon name={item.icon} /></span><span className="sidebar-label">{item.label}</span></NavLink>}
+            {children.length > 0 && !isCollapsed && <div className="sidebar-submenu" aria-label={`${item.label} 하위 메뉴`}>{submenuLinks}</div>}
+            {children.length > 0 && isCollapsed && isSubmenuOpen && openSubmenu?.anchor && createPortal(<div className="sidebar-submenu sidebar-submenu-popover" aria-label={`${item.label} 하위 메뉴`} style={popupStyle}>{submenuLinks}</div>, document.body)}
+          </div>
+        })}
+      </nav>
+      <button className="sidebar-toggle" type="button" aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'} aria-expanded={!isCollapsed} onClick={onToggle}><span aria-hidden="true" /></button>
+    </aside>
+  )
+}
+
+export default SidebarWithFlyout

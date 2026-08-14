@@ -357,3 +357,25 @@
 }
 
 .sidebar-collapsed .sidebar-submenu { position: absolute; z-index: 40; top: 0; left: calc(100% + 10px); min-width: 162px; margin: 0; padding: 8px; border: 1px solid #dce7f6; border-radius: 12px; background: #fff; box-shadow: 0 14px 30px rgba(30, 58, 92, .18); }.sidebar-collapsed .sidebar-submenu-link { color: #41546f; }.sidebar-collapsed .sidebar-submenu-link:hover { color: #225d9f; background: #edf5ff; }.sidebar-collapsed .sidebar-submenu-link.is-active { color: #fff; background: #3974c6; }
+
+/* Render collapsed submenus above the scrollable navigation, so they never get clipped. */
+.sidebar-submenu-popover {
+  position: fixed;
+  z-index: 1000;
+  top: var(--sidebar-submenu-top);
+  left: var(--sidebar-submenu-left);
+  display: grid;
+  gap: 4px;
+  min-width: 162px;
+  max-height: calc(100dvh - var(--sidebar-submenu-top) - 12px);
+  overflow-y: auto;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid #dce7f6;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 14px 30px rgba(30, 58, 92, .18);
+}
+.sidebar-submenu-popover .sidebar-submenu-link { color: #41546f; }
+.sidebar-submenu-popover .sidebar-submenu-link:hover { color: #225d9f; background: #edf5ff; }
+.sidebar-submenu-popover .sidebar-submenu-link.is-active { color: #fff; background: #3974c6; }
