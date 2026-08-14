@@ -1,3 +1,6 @@
+.attendance-modal { max-height: min(760px, calc(100dvh - 48px)); overflow-y: auto; }
+.learning-summary-modal { max-height: min(680px, calc(100dvh - 48px)); overflow-y: auto; }
+
 .education-page { max-width: 1440px; margin: 0 auto; color: #17243a; }
 .education-loading-skeleton .skeleton-block,
 .education-management-loading-skeleton .skeleton-block {

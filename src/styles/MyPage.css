@@ -1,3 +1,7 @@
+.approval-modal-backdrop { overflow-y: auto !important; padding: 24px !important; }
+.mypage-password-modal { max-height: calc(100dvh - 48px); overflow-y: auto; }
+.withdrawal-modal { max-height: calc(100dvh - 40px); overflow-y: auto; }
+
 .my-page-container {
   display: flex;
   flex-direction: column;
