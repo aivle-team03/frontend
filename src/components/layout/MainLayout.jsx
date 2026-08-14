@@ -18,7 +18,7 @@ const navigationItems = [
   {
     label: '이력 관리', icon: 'history',
     children: [
-      { path: '/actions', label: '점검/조치 이력 관리', icon: 'history' },
+      { path: '/actions', label: '점검/조치 관리', icon: 'history' },
       { path: '/risk-management', label: '위험도 관리', icon: 'risk' },
     ],
   },
