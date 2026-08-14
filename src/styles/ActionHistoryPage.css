@@ -1,3 +1,10 @@
+/* Long modal content must stay within the viewport, leaving its top reachable. */
+.inspection-history-detail-modal,
+.approval-review-modal-v2,
+.photo-preview-modal { max-height: calc(100dvh - 48px) !important; overflow-y: auto !important; }
+.approval-modal-backdrop { overflow-y: auto !important; padding: 24px !important; }
+.approval-review-modal-v2 .modal-v2-body { min-height: 0; overflow-y: auto; }
+
 /* ==========================================================================
    1. 페이지 레이아웃 & 상단 서머리 카드
    ========================================================================== */

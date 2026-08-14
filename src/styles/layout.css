@@ -24,6 +24,7 @@
 
 .sidebar-logo {
   display: flex;
+  flex: 0 0 auto;
   justify-content: center;
   align-items: center;
   min-height: 68px;
@@ -42,10 +43,17 @@
 .sidebar-nav {
   display: flex;
   flex: 1;
+  min-height: 0;
   flex-direction: column;
   gap: 8px;
   margin-top: 26px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(49, 91, 142, 0.42) transparent;
 }
+
+.sidebar-nav::-webkit-scrollbar { width: 6px; }
+.sidebar-nav::-webkit-scrollbar-thumb { border-radius: 999px; background: rgba(49, 91, 142, 0.42); }
 
 .sidebar-tab {
   display: flex;
@@ -123,6 +131,8 @@
 .sidebar-toggle {
   position: relative;
   display: flex;
+  flex: 0 0 38px;
+  box-sizing: border-box;
   align-items: center;
   justify-content: center;
   align-self: flex-end;
@@ -167,6 +177,11 @@
   border-radius: 14px;
   color: var(--color-sidebar-text);
   background: transparent;
+}
+
+/* A collapsed parent opens its flyout on click, so a second caret only offsets its icon. */
+.sidebar-collapsed .sidebar-submenu-caret {
+  display: none;
 }
 
 .sidebar-collapsed .sidebar-item.is-active > .sidebar-tab {

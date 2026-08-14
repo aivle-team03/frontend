@@ -1,3 +1,6 @@
+.approval-modal-backdrop { overflow-y: auto !important; padding: 24px !important; }
+.login-password-modal { max-height: calc(100dvh - 48px) !important; overflow-y: auto !important; }
+
 .container {
     display: flex;
     flex-direction: column;

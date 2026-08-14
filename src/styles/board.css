@@ -1,3 +1,5 @@
+.board-report-modal { max-height: min(760px, calc(100dvh - 48px)); }
+
 .board-page {
   display: grid;
   gap: 32px;
