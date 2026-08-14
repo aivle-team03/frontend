@@ -25,8 +25,8 @@ const navigationItems = [
   {
     label: '이력 관리', icon: 'history',
     children: [
-      { path: '/actions', label: '점검/조치 이력 관리', icon: 'history', allowedRoles: ['안전관리자'] },
-      { path: '/risk-management', label: '위험도 관리', icon: 'risk', allowedRoles: ['안전관리자'] },
+      { path: '/actions', label: '점검/조치 관리', icon: 'history' },
+      { path: '/risk-management', label: '위험도 관리', icon: 'risk' },
     ],
   },
   {
