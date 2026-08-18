@@ -50,14 +50,9 @@ export function synchronizeStaticUiLanguage(language) {
   }
 
   walk(document.body)
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (mutation.type === 'characterData') translateNode(mutation.target)
-      mutation.addedNodes.forEach(walk)
-    })
-  })
-  observer.observe(document.body, { childList: true, characterData: true, subtree: true })
-  return () => observer.disconnect()
+  // Do not observe the entire React tree. A global MutationObserver can repeatedly
+  // process React's own text updates and make the page unresponsive.
+  return () => {}
 }
 
 export function useUiLanguage() {
