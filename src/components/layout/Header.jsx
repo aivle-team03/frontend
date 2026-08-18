@@ -6,6 +6,8 @@ import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined'
 import CampaignOutlinedIcon from '@mui/icons-material/CampaignOutlined'
 import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined'
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded'
+import DeleteSweepOutlinedIcon from '@mui/icons-material/DeleteSweepOutlined'
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import EventAvailableRoundedIcon from '@mui/icons-material/EventAvailableRounded'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
@@ -245,6 +247,34 @@ function Header({ items }) {
     }
   }
 
+  const handleDeleteNotification = async (event, notificationId) => {
+    event.stopPropagation() // 항목 클릭(페이지 이동) 방지
+    try {
+      const token = localStorage.getItem('token')
+      await axios.delete(`${BACKEND_API_URL}/api/notifications/${notificationId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId))
+    } catch (error) {
+      console.error('알림 삭제 실패:', error)
+    }
+  }
+
+  const handleClearAllNotifications = async () => {
+    if (!notifications.length) return
+    if (!window.confirm('모든 알림을 삭제하시겠습니까?')) return
+
+    try {
+      const token = localStorage.getItem('token')
+      await axios.delete(`${BACKEND_API_URL}/api/notifications/clear-all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      setNotifications([])
+    } catch (error) {
+      console.error('전체 알림 삭제 실패:', error)
+    }
+  }
+
   const handleMoveToMyPage = () => {
     setActiveMenu(null)
     navigate('/mypage')
@@ -292,9 +322,19 @@ function Header({ items }) {
                   <strong>알림</strong>
                   <span>미확인 알림 {unreadCount}개</span>
                 </div>
-                <button type="button" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
-                  <DoneAllRoundedIcon />모두 읽음
-                </button>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <button type="button" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
+                    <DoneAllRoundedIcon fontSize="small" />모두 읽음
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClearAllNotifications}
+                    disabled={notifications.length === 0}
+                    style={{ color: '#ef4444' }}
+                  >
+                    <DeleteSweepOutlinedIcon fontSize="small" />모두 삭제
+                  </button>
+                </div>
               </div>
 
               <div className="notification-list">
@@ -306,12 +346,18 @@ function Header({ items }) {
                   notifications.map((notification) => {
                     const NotificationIcon = notificationIconMap[notification.category] ?? NotificationsNoneOutlinedIcon
                     return (
-                      <button
+                      <div
                         className={`notification-item notification-${notification.category}${notification.read ? ' is-read' : ''}`}
-                        type="button"
                         role="menuitem"
+                        tabIndex={0}
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            handleNotificationClick(notification)
+                          }
+                        }}
+                        style={{ position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
                       >
                         <span className="notification-type-icon">
                           <NotificationIcon />
@@ -324,7 +370,27 @@ function Header({ items }) {
                           <span>{notification.message}</span>
                           <small>{notification.time}</small>
                         </span>
-                      </button>
+                        <button
+                          type="button"
+                          className="notification-delete-btn"
+                          title="삭제"
+                          onClick={(e) => handleDeleteNotification(e, notification.id)}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#94a3b8',
+                            padding: '4px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginLeft: 'auto'
+                          }}
+                        >
+                          <CloseRoundedIcon fontSize="small" />
+                        </button>
+                      </div>
                     )
                   })
                 )}
