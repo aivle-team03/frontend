@@ -329,7 +329,10 @@ function Header({ items }) {
                     type="button"
                     onClick={handleClearAllNotifications}
                     disabled={notifications.length === 0}
-                    style={{ color: '#ef4444' }}
+                    style={{
+                      color: notifications.length === 0 ? undefined : '#ef4444',
+                      cursor: notifications.length === 0 ? 'not-allowed' : 'pointer',
+                    }}
                   >
                     <DeleteSweepOutlinedIcon fontSize="small" />모두 삭제
                   </button>
