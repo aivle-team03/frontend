@@ -64,6 +64,10 @@ function LawQaPage() {
       const response = await axios.post(`${CHATBOT_API_URL}/api/agent/query`, {
         conversation_id: conversationId,
         user_message: trimmedText,
+        language,
+        response_language: language,
+      }, {
+        headers: { 'Accept-Language': language },
       })
       const answer = response.data?.final_answer?.trim()
       if (!answer) throw new Error('AI response does not include final_answer')
