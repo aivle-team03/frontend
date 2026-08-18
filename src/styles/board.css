@@ -204,6 +204,10 @@
   vertical-align: middle;
 }
 
+.board-center-column {
+  text-align: center !important;
+}
+
 .board-table tr:last-child td {
   border-bottom: 0;
 }
@@ -711,6 +715,40 @@
 .board-bulk-toolbar button:disabled {
   cursor: not-allowed;
   opacity: .45;
+}
+
+.board-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.board-bulk-actions .board-report-button {
+  display: inline-flex;
+  min-width: auto;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-left: 0;
+  padding: 0 14px;
+  border: 1px solid #a9bdf0;
+  color: #284b99;
+  background: linear-gradient(135deg, #f0f3ff 0%, #e5edff 48%, #f6eaff 100%);
+  box-shadow: 0 7px 16px rgba(86, 101, 194, .16), inset 0 1px 0 rgba(255, 255, 255, .92);
+  font-size: 13px;
+}
+
+.board-bulk-actions .board-report-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.board-bulk-actions .board-report-button:hover {
+  border-color: #829ee3;
+  color: #ffffff;
+  background: linear-gradient(135deg, #4c63b7, #496cc3 50%, #7658ae);
+  box-shadow: 0 10px 20px rgba(86, 101, 194, .23);
 }
 
 .board-loading {

@@ -1,3 +1,5 @@
+import { useUiLanguage } from '../../utils/uiLanguage.js'
+
 function ReportList({
   reports,
   selectedReportIds,
@@ -5,6 +7,7 @@ function ReportList({
   onToggleReport,
   onToggleAllReports,
 }) {
+  const { t } = useUiLanguage()
   const handleReportRowKeyDown = (event, reportId) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
@@ -25,14 +28,14 @@ function ReportList({
                 aria-label="접수할 게시글 전체 선택"
               />
             </th>
-            <th>번호</th>
-            <th>카테고리</th>
-            <th>제목</th>
-            <th>위험도</th>
-            <th>장소</th>
-            <th>신고자</th>
-            <th>신고일</th>
-            <th>상태</th>
+            <th>{t('번호')}</th>
+            <th>{t('카테고리')}</th>
+            <th>{t('제목')}</th>
+            <th className="board-center-column">{t('위험도')}</th>
+            <th>{t('장소')}</th>
+            <th>{t('신고자')}</th>
+            <th>{t('신고일')}</th>
+            <th className="board-center-column">{t('상태')}</th>
           </tr>
         </thead>
         <tbody>
@@ -56,19 +59,19 @@ function ReportList({
                   />
                 </td>
                 <td>{reports.length - index}</td>
-                <td>{report.category}</td>
+                <td>{t(report.category)}</td>
                 <td className="board-title-cell">
                   <strong>{report.title}</strong>
                   <span>{report.description}</span>
                 </td>
-                <td>
-                  <span className={`board-risk-badge risk-${report.riskLevel}`}>{report.riskLabel}</span>
+                <td className="board-center-column">
+                  <span className={`board-risk-badge risk-${report.riskLevel}`}>{t(report.riskLabel)}</span>
                 </td>
                 <td>{report.location}</td>
-                <td>{report.reporter}</td>
+                <td>{t(report.reporter)}</td>
                 <td>{report.reportedAt}</td>
-                <td>
-                  <span className={`board-status-badge status-${report.statusKey}`}>{report.status}</span>
+                <td className="board-center-column">
+                  <span className={`board-status-badge status-${report.statusKey}`}>{t(report.status)}</span>
                 </td>
               </tr>
             )

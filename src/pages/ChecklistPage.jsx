@@ -6,6 +6,7 @@ import {
   saveChecklistManagementRecords,
 } from '../utils/checklistStatusStorage'
 import { resolveMediaUrl } from '../utils/mediaUrl'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const today = '2026-07-25'
 const API_BASE_URL = BACKEND_API_URL
@@ -245,6 +246,7 @@ function getInitialInspectionTasks() {
 }
 
 function ChecklistPage() {
+  const { t } = useUiLanguage()
   const [inspectionTasks, setInspectionTasks] = useState([])
   const [actionTasks, setActionTasks] = useState([])
   const [taskRefreshKey, setTaskRefreshKey] = useState(0)
@@ -616,27 +618,27 @@ function ChecklistPage() {
         <article className="checklist-card">
           <div className="checklist-card-header">
             <div>
-              <h2>점검 · 조치 목록</h2>
-              <p>점검 결과를 확인하고 조치가 필요한 건을 등록하세요.</p>
+              <h2>{t('점검 · 조치 목록')}</h2>
+              <p>{t('점검 결과를 확인하고 조치가 필요한 건을 등록하세요.')}</p>
             </div>
-            <span className="task-badge-count">총 {visibleTasks.length}건</span>
+            <span className="task-badge-count">{t('총')} {visibleTasks.length}{t('건')}</span>
           </div>
 
-          <div className="daily-task-tabs" role="tablist" aria-label="점검 및 조치 목록 전환">
+          <div className="daily-task-tabs" role="tablist" aria-label={t('점검 및 조치 목록 전환')}>
             <button className={activeTaskView === 'inspection' ? 'is-active' : ''} type="button" onClick={() => setActiveTaskView('inspection')}>
-              점검 목록 <span>{inspectionTasks.length}</span>
+              {t('점검 목록')} <span>{inspectionTasks.length}</span>
             </button>
             <button
               className={activeTaskView === 'action' ? 'is-active' : ''}
               type="button"
               onClick={() => setActiveTaskView('action')}
             >
-              조치 목록 <span>{visibleActionCount}</span>
+              {t('조치 목록')} <span>{visibleActionCount}</span>
             </button>
           </div>
 
           <div className="checklist-progress">
-            <div><strong>전체 진행률</strong><span>{progress.done}/{progress.total} ({progress.percent}%)</span></div>
+            <div><strong>{t('전체 진행률')}</strong><span>{progress.done}/{progress.total} ({progress.percent}%)</span></div>
             <div className="progress-track"><span style={{ width: `${progress.percent}%` }} /></div>
           </div>
 
@@ -660,7 +662,7 @@ function ChecklistPage() {
                 </button>
               )
             })}
-            {!visibleTasks.length && <div className="checklist-empty">등록된 조치 항목이 없습니다.</div>}
+            {!visibleTasks.length && <div className="checklist-empty">{t('등록된 조치 항목이 없습니다.')}</div>}
           </div>
         </article>
 
@@ -669,49 +671,49 @@ function ChecklistPage() {
             <div className="action-registration-panel">
               <div className="strength-request-header">
                 <span>ACTION REGISTRATION</span>
-                <h2>완료/조치 등록</h2>
-                <p>점검 이력에서 조치가 필요한 항목을 선택해 조치 업무로 등록합니다.</p>
+                <h2>{t('완료/조치 등록')}</h2>
+                <p>{t('점검 이력에서 조치가 필요한 항목을 선택해 조치 업무로 등록합니다.')}</p>
               </div>
               <section className="inspection-reference-card">
-                <div><span>이름</span><strong>{currentTask.text}</strong></div><div><span>현장 구역</span><strong>{currentTask.location}</strong></div>
-                <div><span>위험도 카테고리</span><strong>{currentTask.category || '미분류'}</strong></div><div><span>진행 상황</span><strong>{currentTask.inspectionStatus}</strong></div>
-                <div className="is-wide"><span>내용</span><strong>{currentTask.description || '등록된 내용이 없습니다.'}</strong></div>
+                <div><span>{t('이름')}</span><strong>{currentTask.text}</strong></div><div><span>{t('현장 구역')}</span><strong>{currentTask.location}</strong></div>
+                <div><span>{t('위험도 카테고리')}</span><strong>{t(currentTask.category || '미분류')}</strong></div><div><span>{t('진행 상황')}</span><strong>{t(currentTask.inspectionStatus)}</strong></div>
+                <div className="is-wide"><span>{t('내용')}</span><strong>{currentTask.description || t('등록된 내용이 없습니다.')}</strong></div>
               </section>
 
               {currentTask.movedToAction ? (
-                <div className="action-already-registered">이 점검 건은 이미 조치 목록에 등록되어 있습니다.</div>
+                <div className="action-already-registered">{t('이 점검 건은 이미 조치 목록에 등록되어 있습니다.')}</div>
               ) : currentTask.completed || currentTask.inspectionStatus === '점검 완료' ? (
-                <div className="action-already-registered">완료된 점검 항목입니다.</div>
+                <div className="action-already-registered">{t('완료된 점검 항목입니다.')}</div>
               ) : (
                 <div className="action-registration-form">
-                  <label className="is-wide"><span>점검자 메모</span><textarea value={actionContent} onChange={(event) => setActionContent(event.target.value)} placeholder="점검 결과 또는 필요한 조치 내용을 입력하세요." rows="4" /></label>
+                  <label className="is-wide"><span>{t('점검자 메모')}</span><textarea value={actionContent} onChange={(event) => setActionContent(event.target.value)} placeholder={t('점검 결과 또는 필요한 조치 내용을 입력하세요.')} rows="4" /></label>
                   <div className="inspection-result-actions">
-                    <button className="inspection-complete-button" type="button" onClick={completeInspection}>점검 완료</button>
-                    <button className="action-required-button" type="button" onClick={registerAction}>조치 필요</button>
+                    <button className="inspection-complete-button" type="button" onClick={completeInspection}>{t('점검 완료')}</button>
+                    <button className="action-required-button" type="button" onClick={registerAction}>{t('조치 필요')}</button>
                   </div>
                 </div>
               )}
             </div>
           ) : currentTask ? (
             <div className="action-detail-panel">
-              <div className="strength-request-header"><span>ACTION DETAIL</span><h2>조치내용</h2><p>점검 이력이 연결된 조치 업무입니다.</p></div>
+              <div className="strength-request-header"><span>ACTION DETAIL</span><h2>{t('조치내용')}</h2><p>{t('점검 이력이 연결된 조치 업무입니다.')}</p></div>
               <section className="inspection-reference-card">
-                <div><span>이름</span><strong>{currentTask.inspectionRef}</strong></div><div><span>위치</span><strong>{currentTask.inspectionLocation || currentTask.location}</strong></div>
-                <div><span>위험도 카테고리</span><strong>{currentTask.category}</strong></div><div><span>위험도</span><strong>{currentTask.risk}</strong></div>
-                <div><span>진행 상황</span><strong>{currentTask.status}</strong></div>
-                <div><span>점검 담당자</span><strong>{currentTask.assignee}</strong></div>
-                <div className="is-wide"><span>점검내용</span><strong>{currentTask.inspectionContent || '점검 시 입력한 내용이 없습니다.'}</strong></div>
+                <div><span>{t('이름')}</span><strong>{currentTask.inspectionRef}</strong></div><div><span>{t('위치')}</span><strong>{currentTask.inspectionLocation || currentTask.location}</strong></div>
+                <div><span>{t('위험도 카테고리')}</span><strong>{t(currentTask.category)}</strong></div><div><span>{t('위험도')}</span><strong>{t(currentTask.risk)}</strong></div>
+                <div><span>{t('진행 상황')}</span><strong>{t(currentTask.status)}</strong></div>
+                <div><span>{t('점검 담당자')}</span><strong>{currentTask.assignee}</strong></div>
+                <div className="is-wide"><span>{t('점검내용')}</span><strong>{currentTask.inspectionContent || t('점검 시 입력한 내용이 없습니다.')}</strong></div>
               </section>
               <div className="action-registration-form">
                 <label className="is-wide">
-                  <span>조치내용</span>
-                  <textarea value={actionDetailContent} readOnly={currentTask.completed} onChange={(event) => setActionDetailContent(event.target.value)} placeholder="수행한 조치 내용을 입력하세요." rows="5" />
+                  <span>{t('조치내용')}</span>
+                  <textarea value={actionDetailContent} readOnly={currentTask.completed} onChange={(event) => setActionDetailContent(event.target.value)} placeholder={t('수행한 조치 내용을 입력하세요.')} rows="5" />
                 </label>
                 {currentTask.completed ? (
                   <div className="upload-section">
                     <div className="upload-label">
-                      <strong>조치완료 사진</strong>
-                      <span>{actionPhotoFiles.length}장</span>
+                      <strong>{t('조치완료 사진')}</strong>
+                      <span>{actionPhotoFiles.length}{t('장')}</span>
                     </div>
                     {actionPhotoFiles.length ? (
                       <div className="photo-grid">
@@ -724,22 +726,22 @@ function ChecklistPage() {
                         ))}
                       </div>
                     ) : (
-                      <div className="checklist-empty">등록된 사진이 없습니다.</div>
+                      <div className="checklist-empty">{t('등록된 사진이 없습니다.')}</div>
                     )}
                   </div>
                 ) : (
                   <div className="upload-section">
                     <div className="upload-label">
-                      <strong>사진 첨부</strong>
-                      <span>{actionPhotoFiles.length}장</span>
+                      <strong>{t('사진 첨부')}</strong>
+                      <span>{actionPhotoFiles.length}{t('장')}</span>
                     </div>
                     <div className="photo-grid">{actionPhotoFiles.map((photo) => <div className="photo-preview" key={photo.url}><button type="button" aria-label={`${photo.name} 크게 보기`} onClick={() => setPreviewPhoto(photo)}><img src={photo.url} alt={photo.name} /></button><button className="delete-photo-button" type="button" aria-label={`${photo.name} 삭제`} onClick={() => removeActionPhoto(photo)}>×</button></div>)}<input ref={actionPhotoInputRef} type="file" accept="image/*" multiple hidden onChange={handleActionPhotoChange} /><button className="add-photo-button" type="button" aria-label="사진 추가" onClick={() => actionPhotoInputRef.current?.click()}>+</button></div>
                   </div>
                 )}
-                {!currentTask.completed && <button className="submit-action-button" type="button" onClick={completeAction}>조치완료</button>}
+                {!currentTask.completed && <button className="submit-action-button" type="button" onClick={completeAction}>{t('조치완료')}</button>}
               </div>
             </div>
-          ) : <div className="checklist-empty">목록에서 항목을 선택해 주세요.</div>}
+          ) : <div className="checklist-empty">{t('목록에서 항목을 선택해 주세요.')}</div>}
         </article>
       </div>
 

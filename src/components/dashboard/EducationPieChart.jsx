@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 import {
   Bar,
   BarChart,
@@ -41,6 +42,7 @@ function makeTitleRoleEducationData(eduData, userData) {
         role,
         type: educationTitle,
         chartLabel: educationTitle,
+        createdAt: course.created_at || course.createdAt || course.updated_at || course.education_id || 0,
         total: 0,
         trained: 0,
         untrained: 0,
@@ -61,12 +63,18 @@ function makeTitleRoleEducationData(eduData, userData) {
 }
 
 function makeEducationChartData(countData) {
-  const roles = [...new Set(countData.map((item) => item.role))]
+  const roleOrder = ['안전관리자', '관제사', '현장관리자', '일반유저']
+  const knownRoles = new Set(countData.map((item) => item.role))
+  const roles = [
+    ...roleOrder,
+    ...[...knownRoles].filter((role) => !roleOrder.includes(role)).sort(),
+  ]
   const chartRows = new Map()
 
   countData.forEach((item) => {
     const current = chartRows.get(item.title) ?? {
       title: item.title,
+      createdAt: item.createdAt,
       details: {},
     }
     const completionRate = item.total ? Number(((item.trained / item.total) * 100).toFixed(1)) : 0
@@ -84,39 +92,20 @@ function makeEducationChartData(countData) {
 
   return {
     roles,
-    chartData: [...chartRows.values()],
+    chartData: [...chartRows.values()]
+      .sort((left, right) => String(right.createdAt).localeCompare(String(left.createdAt)))
+      .slice(0, 3),
   }
 }
 
-function splitTitleLines(title) {
-  const words = String(title).split(' ')
-  const lines = []
-
-  words.forEach((word) => {
-    const lastLine = lines[lines.length - 1]
-
-    if (!lastLine || `${lastLine} ${word}`.length > 13) {
-      lines.push(word)
-    } else {
-      lines[lines.length - 1] = `${lastLine} ${word}`
-    }
-  })
-
-  return lines
-}
-
 function EducationTitleTick({ x, y, payload }) {
-  const lines = splitTitleLines(payload.value)
+  const title = String(payload.value)
+  const label = title.length > 12 ? `${title.slice(0, 12)}…` : title
 
   return (
     <g transform={`translate(${x},${y})`}>
-      <text textAnchor="middle" fill="#64748b" fontSize={11} fontWeight={700}>
-        {lines.map((line, index) => (
-          <tspan x="0" dy={index === 0 ? 12 : 14} key={`${line}-${index}`}>
-            {line}
-          </tspan>
-        ))}
-      </text>
+      <title>{title}</title>
+      <text textAnchor="end" fill="#64748b" fontSize={11} fontWeight={700} transform="rotate(-28)">{label}</text>
     </g>
   )
 }
@@ -142,6 +131,7 @@ function EducationTooltip({ active, payload, label }) {
 
 function EducationPieChart({ eduData, userData }) {
   const navigate = useNavigate()
+  const { t } = useUiLanguage()
   const countData = makeTitleRoleEducationData(eduData, userData)
   const { chartData, roles } = makeEducationChartData(countData)
   const roleColors = ['#3974c6', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444', '#64748b']
@@ -150,8 +140,8 @@ function EducationPieChart({ eduData, userData }) {
     <Box className="edu-card compact-card">
       <div className="education-chart-heading">
         <div>
-          <Typography variant="h6">교육 이수 현황</Typography>
-          <p>대상자별 이수 인원을 확인합니다.</p>
+          <Typography variant="h6">{t('교육 이수 현황')}</Typography>
+          <p>{t('대상자별 이수 인원을 확인합니다.')}</p>
         </div>
       </div>
 
@@ -163,17 +153,19 @@ function EducationPieChart({ eduData, userData }) {
               top: 16,
               right: 8,
               left: 0,
-              bottom: 36,
+              bottom: 24,
             }}
           >
             <CartesianGrid vertical={false} stroke="#e7edf5" strokeDasharray="4 4" />
             <XAxis
               dataKey="title"
-              height={88}
+              height={54}
               interval={0}
-              tick={<EducationTitleTick />}
+              tick={({ x, y, payload }) => {
+                const title = String(payload.value)
+                return <g transform={`translate(${x},${y})`}><title>{title}</title><text x={0} y={8} textAnchor="middle" fill="#8fa1b8" fontSize={10} fontWeight={700}>{title.length > 13 ? `${title.slice(0, 13)}…` : title}</text></g>
+              }}
               tickLine={false}
-              tickMargin={10}
             />
             <YAxis
               yAxisId="rate"
@@ -181,7 +173,7 @@ function EducationPieChart({ eduData, userData }) {
               allowDecimals={false}
               axisLine={false}
               domain={[0, 100]}
-              tick={{ fill: '#7c899d', fontSize: 12 }}
+              tick={{ fill: '#8fa1b8', fontSize: 12 }}
               tickFormatter={(value) => `${value}%`}
               tickLine={false}
             />
@@ -189,12 +181,13 @@ function EducationPieChart({ eduData, userData }) {
             <Legend iconType="circle" />
             {roles.map((role, index) => (
               <Bar
-                yAxisId="rate"
                 dataKey={role}
+                name={t(role)}
+                yAxisId="rate"
                 fill={roleColors[index % roleColors.length]}
                 key={role}
-                radius={[9, 9, 0, 0]}
-                barSize={24}
+                radius={[7, 7, 0, 0]}
+                barSize={22}
               />
             ))}
           </BarChart>
@@ -205,7 +198,7 @@ function EducationPieChart({ eduData, userData }) {
 
       <div className="Page-move-wrapper">
         <button className="Page-move-button" type="button" onClick={() => navigate('/education')}>
-          교육 이수 페이지로 이동
+          {t('교육 이수 페이지로 이동')}
         </button>
       </div>
     </Box>

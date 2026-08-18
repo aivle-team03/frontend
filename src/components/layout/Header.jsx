@@ -15,8 +15,11 @@ import LogoutOutlinedIcon from '@mui/icons-material/LogoutOutlined'
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined'
 import QueryStatsRoundedIcon from '@mui/icons-material/QueryStatsRounded'
 import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
+import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded'
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
@@ -24,9 +27,28 @@ import { BACKEND_API_URL } from '../../config/api.js'
 import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { clearAuthSession } from '../../api/authInterceptor.js'
+import { synchronizeStaticUiLanguage, translateUi } from '../../utils/uiLanguage.js'
 import '../../styles/Header.css'
 
 const NOTIFICATION_STORAGE_KEY = 'boss-read-notification-ids'
+const PREFERENCES_STORAGE_KEY = 'boss-user-preferences'
+
+const EN_PAGE_TITLES = {
+  '/': 'Home', '/monitoring': 'CCTV Monitoring', '/checklists': "Today's Tasks",
+  '/checklists/management': 'Assignment', '/checklists/inspections': 'Inspection List',
+  '/actions': 'Inspection & Action History', '/law-qa': 'AI Assistant', '/education': 'Safety Education',
+  '/education-management': 'Education Management', '/risk-management': 'Risk Management',
+  '/safety-management': 'Safety Management', '/board': 'Risk Report Board', '/report': 'Reports',
+  '/report/create': 'Reports', '/report/list': 'Reports', '/mypage': 'My Page',
+}
+
+function getStoredPreferences() {
+  try {
+    return { language: 'ko', compact: false, notifications: true, ...JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}') }
+  } catch {
+    return { language: 'ko', compact: false, notifications: true }
+  }
+}
 
 const extraPageTitles = {
   '/checklists/management': '담당자 배정',
@@ -43,7 +65,7 @@ const pageHeaderMeta = {
   '/checklists/management': { icon: AdminPanelSettingsOutlinedIcon, description: '현장별 체크리스트를 확인하고 담당자를 배정하세요.' },
   '/checklists/inspections': { icon: ChecklistOutlinedIcon, description: '주기적으로 확인해야 할 주요 점검 항목을 한눈에 살펴보세요.' },
   '/actions': { icon: HistoryOutlinedIcon, description: '안전 조치 이력과 처리 상태를 확인하세요.' },
-  '/law-qa': { icon: SmartToyOutlinedIcon, description: '점검·조치 및 교육 현황을 자연어로 확인하세요.' },
+  '/law-qa': { icon: SmartToyOutlinedIcon, description: 'AI 비서에게 점검·조치 및 교육 현황을 물어보세요.' },
   '/education': { icon: SchoolOutlinedIcon, description: '현장에 필요한 안전 교육 콘텐츠와 이수 현황을 확인하세요.' },
   '/education-management': { icon: AdminPanelSettingsOutlinedIcon, description: '대상자별 교육 이수 현황을 관리하고 현장 교육 자료를 생성하세요.' },
   '/risk-management': { icon: QueryStatsRoundedIcon, description: '조치 이력을 바탕으로 현장 위험도를 확인하고 관리하세요.' },
@@ -75,6 +97,9 @@ function getStoredReadIds() {
 function Header({ items }) {
   const [user, setUser] = useState({})
   const [notifications, setNotifications] = useState([])
+  const [preferences, setPreferences] = useState(getStoredPreferences)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [settingsTab, setSettingsTab] = useState('language')
 
   const [activeMenu, setActiveMenu] = useState(null)
   const [readNotificationIds, setReadNotificationIds] = useState(getStoredReadIds)
@@ -84,7 +109,8 @@ function Header({ items }) {
   const headerPath = location.pathname === '/monitoringdetail' ? '/monitoring' : location.pathname
   const currentItem = [...items, ...items.flatMap((item) => item.children ?? [])].find((item) => item.path === headerPath)
   const headerMeta = pageHeaderMeta[headerPath]
-  const title = headerMeta?.title ?? currentItem?.label ?? extraPageTitles[headerPath] ?? 'BOSS'
+  const koreanTitle = headerMeta?.title ?? currentItem?.label ?? extraPageTitles[headerPath] ?? 'BOSS'
+  const title = preferences.language === 'en' ? (EN_PAGE_TITLES[headerPath] ?? koreanTitle) : koreanTitle
   const HeaderIcon = headerMeta?.icon
 
   useEffect(() => {
@@ -113,6 +139,15 @@ function Header({ items }) {
 
     fetchUserProfile()
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences))
+    document.documentElement.lang = preferences.language
+    document.body.classList.remove('boss-compact-mode')
+    window.dispatchEvent(new CustomEvent('boss-language-change', { detail: preferences.language }))
+  }, [preferences])
+
+  useEffect(() => synchronizeStaticUiLanguage(preferences.language), [preferences.language])
 
 
   const fetchNotifications = useCallback(async () => {
@@ -220,6 +255,10 @@ function Header({ items }) {
     navigate('/safety-management')
   }
 
+  const updatePreference = (key, value) => {
+    setPreferences((current) => ({ ...current, [key]: value }))
+  }
+
   return (
     <header className="app-header">
       <div className="header-title">
@@ -229,7 +268,7 @@ function Header({ items }) {
             {title}
           </h1>
         </div>
-        {headerMeta?.description && <p>{headerMeta.description}</p>}
+        {headerMeta?.description && <p>{translateUi(headerMeta.description, preferences.language)}</p>}
       </div>
 
       <div className="header-actions" ref={menuRootRef}>
@@ -330,8 +369,8 @@ function Header({ items }) {
                   onClick={handleMoveToSafetyManagement}
                 >
                   <strong>{user.name}</strong>
-                  <span>
-                    {user.department} · {user.role}
+                <span>
+                  {user.department} · {user.role}
                   </span>
                   <small>{user.email}</small>
                 </button>
@@ -339,11 +378,11 @@ function Header({ items }) {
                   className="profile-logout-button"
                   type="button"
                   role="menuitem"
-                  aria-label="로그아웃"
+                  aria-label={translateUi('로그아웃', preferences.language)}
                   onClick={handleLogout}
                 >
                   <LogoutOutlinedIcon />
-                  <span>로그아웃</span>
+                  <span>{translateUi('로그아웃', preferences.language)}</span>
                 </button>
               </div>
               <button className="profile-dropdown-link" type="button" role="menuitem" onClick={handleMoveToMyPage}>
@@ -353,12 +392,55 @@ function Header({ items }) {
                 </span>
                 <ArrowForwardIosRoundedIcon />
               </button>
+              <button className="profile-dropdown-link profile-settings-link" type="button" role="menuitem" onClick={() => { setActiveMenu(null); setSettingsTab('language'); setIsSettingsOpen(true) }}>
+                <SettingsOutlinedIcon />
+                <span>
+                  <strong>{preferences.language === 'en' ? 'Settings' : '설정'}</strong>
+                  <small>{preferences.language === 'en' ? 'Language settings' : '언어 설정'}</small>
+                </span>
+                <ArrowForwardIosRoundedIcon />
+              </button>
             </div>
           )}
         </div>
       </div>
+      {isSettingsOpen && <SettingsModal
+        preferences={preferences}
+        onChange={updatePreference}
+        activeTab={settingsTab}
+        onTabChange={setSettingsTab}
+        onClose={() => setIsSettingsOpen(false)}
+      />}
     </header>
   )
+}
+
+function SettingsModal({ preferences, onChange, onClose }) {
+  const isEnglish = preferences.language === 'en'
+  const copy = isEnglish
+    ? { title: 'Settings', description: 'Choose the language used for BOSS interface labels.', language: 'Display language', help: 'Static interface labels change immediately. Data entered by users remains unchanged.', close: 'Close' }
+    : { title: '설정', description: 'BOSS 화면에 표시할 언어를 선택하세요.', language: '표시 언어', help: '고정된 화면 문구는 즉시 변경되며, 사용자가 입력한 데이터는 원문을 유지합니다.', close: '닫기' }
+
+  return <div className="settings-modal-backdrop" role="presentation" onMouseDown={onClose}>
+    <section className="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title" onMouseDown={(event) => event.stopPropagation()}>
+      <header>
+        <div><span>PERSONAL PREFERENCES</span><h2 id="settings-modal-title">{copy.title}</h2><p>{copy.description}</p></div>
+        <button type="button" aria-label={copy.close} onClick={onClose}><CloseRoundedIcon /></button>
+      </header>
+      <div className="settings-modal-body settings-modal-body-language">
+        <div className="settings-panel">
+          <section>
+            <div className="settings-label"><strong><TranslateRoundedIcon /> {copy.language}</strong><span>{copy.help}</span></div>
+            <div className="settings-choice-grid">
+              <button className={preferences.language === 'ko' ? 'is-selected' : ''} type="button" onClick={() => onChange('language', 'ko')}>한국어</button>
+              <button className={preferences.language === 'en' ? 'is-selected' : ''} type="button" onClick={() => onChange('language', 'en')}>English</button>
+            </div>
+          </section>
+        </div>
+      </div>
+      <footer><button type="button" onClick={onClose}>{copy.close}</button></footer>
+    </section>
+  </div>
 }
 
 export default Header

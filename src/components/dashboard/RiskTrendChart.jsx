@@ -8,18 +8,20 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 function RiskTrendChart({ data }) {
+  const { t } = useUiLanguage()
   return (
     <Box className="chart-card">
-      <Typography variant="h6">위험 발생 추이</Typography>
+      <Typography variant="h6">{t('위험 발생 추이')}</Typography>
       <Box className="chart-body trend-chart-body">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 8, right: 64, bottom: 10, left: 8 }}>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis dataKey="label" padding={{ left: 12, right: 12 }} tick={{ fontSize: 12, fill: '#64748b' }} tickMargin={7} />
             <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} tickMargin={6} />
-            <Tooltip formatter={(value) => [`${value}건`, '발생 건수']} />
+            <Tooltip formatter={(value) => [`${value}${t('건')}`, t('발생 건수')]} />
             <Line
               type="monotone"
               dataKey="count"

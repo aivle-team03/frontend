@@ -11,6 +11,7 @@ import {
   Typography,
 } from '@mui/material'
 import { useState } from 'react'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 const defaultPeriodOptions = ['오늘', '최근 7일', '이번 달', '지난 달', '직접 설정']
 
@@ -20,6 +21,7 @@ function PeriodSelector({
   onApplyCustomPeriod,
   options = defaultPeriodOptions,
 }) {
+  const { t } = useUiLanguage()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -56,15 +58,15 @@ function PeriodSelector({
         size="small"
         value={selectedPeriod}
         onChange={handleChange}
-        aria-label="기간 선택"
+        aria-label={t('기간 선택')}
         className="period-toggle"
       >
         {options.map((option) => (
           <ToggleButton
             key={option}
             value={option}
-            aria-label={option}
-            title={option}
+            aria-label={t(option)}
+            title={t(option)}
             onClick={() => {
               if (option === '직접 설정') {
                 setDateError('')
@@ -72,23 +74,23 @@ function PeriodSelector({
               }
             }}
           >
-            {option === '직접 설정' ? <CalendarMonthIcon fontSize="small" /> : option}
+            {option === '직접 설정' ? <CalendarMonthIcon fontSize="small" /> : t(option)}
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
       <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>직접 설정</DialogTitle>
+        <DialogTitle>{t('직접 설정')}</DialogTitle>
         <DialogContent>
           <Stack spacing={2.2} sx={{ mt: 1 }}>
-            <DateField label="시작일" value={startDate} onChange={setStartDate} />
-            <DateField label="종료일" value={endDate} onChange={setEndDate} />
+            <DateField label={t('시작일')} value={startDate} onChange={setStartDate} />
+            <DateField label={t('종료일')} value={endDate} onChange={setEndDate} />
             {dateError && <Typography className="date-field-error">{dateError}</Typography>}
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsDialogOpen(false)}>닫기</Button>
+          <Button onClick={() => setIsDialogOpen(false)}>{t('닫기')}</Button>
           <Button variant="contained" onClick={handleApply}>
-            적용
+            {t('적용')}
           </Button>
         </DialogActions>
       </Dialog>

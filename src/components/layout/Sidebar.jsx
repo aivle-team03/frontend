@@ -2,6 +2,7 @@ import bossLogo from '../../assets/boss-logo.png'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 
 function SidebarIcon({ name }) {
@@ -105,6 +106,7 @@ function SidebarIcon({ name }) {
 
 function SidebarLegacy({ isCollapsed, items, currentUserRole, onToggle }) {
   const location = useLocation()
+  const { t } = useUiLanguage()
   const [openSubmenu, setOpenSubmenu] = useState(null)
 
   return (
@@ -123,8 +125,8 @@ function SidebarLegacy({ isCollapsed, items, currentUserRole, onToggle }) {
           const hasManualStateForCurrentEntry = openSubmenu?.locationKey === location.key
           const isSubmenuOpen = children.length > 0 && (isChildRouteActive || (hasManualStateForCurrentEntry && openSubmenu.key === parentKey))
           return <div className={`sidebar-item${children.length ? ' has-children' : ''}${isParentActive ? ' is-active' : ''}${isChildRouteActive ? ' is-child-active' : ''}${isSubmenuOpen ? ' is-open' : ''}`} key={parentKey}>
-            {children.length > 0 ? <button className="sidebar-tab" type="button" title={isCollapsed ? item.label : undefined} aria-expanded={isSubmenuOpen} onClick={() => setOpenSubmenu((current) => current?.key === parentKey && current.locationKey === location.key ? null : { key: parentKey, locationKey: location.key })}><span className="sidebar-icon-box"><SidebarIcon name={item.icon} /></span><span className="sidebar-label">{item.label}</span><span className="sidebar-submenu-caret" aria-hidden="true">›</span></button> : <NavLink className="sidebar-tab" end={item.path === '/'} title={isCollapsed ? item.label : undefined} to={item.path} onClick={() => setOpenSubmenu(null)}><span className="sidebar-icon-box"><SidebarIcon name={item.icon} /></span><span className="sidebar-label">{item.label}</span></NavLink>}
-            {children.length > 0 && <div className="sidebar-submenu" aria-label={`${item.label} 하위 메뉴`}>{children.map((child) => <NavLink className={({ isActive }) => isActive ? 'sidebar-submenu-link is-active' : 'sidebar-submenu-link'} end key={child.path} to={child.path}><span className="sidebar-submenu-icon"><SidebarIcon name={child.icon} /></span>{child.label}</NavLink>)}</div>}
+            {children.length > 0 ? <button className="sidebar-tab" type="button" title={isCollapsed ? t(item.label) : undefined} aria-expanded={isSubmenuOpen} onClick={() => setOpenSubmenu((current) => current?.key === parentKey && current.locationKey === location.key ? null : { key: parentKey, locationKey: location.key })}><span className="sidebar-icon-box"><SidebarIcon name={item.icon} /></span><span className="sidebar-label">{t(item.label)}</span><span className="sidebar-submenu-caret" aria-hidden="true">›</span></button> : <NavLink className="sidebar-tab" end={item.path === '/'} title={isCollapsed ? t(item.label) : undefined} to={item.path} onClick={() => setOpenSubmenu(null)}><span className="sidebar-icon-box"><SidebarIcon name={item.icon} /></span><span className="sidebar-label">{t(item.label)}</span></NavLink>}
+            {children.length > 0 && <div className="sidebar-submenu" aria-label={`${t(item.label)} submenu`}>{children.map((child) => <NavLink className={({ isActive }) => isActive ? 'sidebar-submenu-link is-active' : 'sidebar-submenu-link'} end key={child.path} to={child.path}><span className="sidebar-submenu-icon"><SidebarIcon name={child.icon} /></span>{t(child.label)}</NavLink>)}</div>}
           </div>
         })}
       </nav>
@@ -143,6 +145,7 @@ function SidebarLegacy({ isCollapsed, items, currentUserRole, onToggle }) {
 
 function SidebarWithFlyout({ isCollapsed, items, currentUserRole, onToggle }) {
   const location = useLocation()
+  const { t } = useUiLanguage()
   const [openSubmenu, setOpenSubmenu] = useState(null)
 
   useEffect(() => {
@@ -171,13 +174,13 @@ function SidebarWithFlyout({ isCollapsed, items, currentUserRole, onToggle }) {
           const parentKey = item.path ?? item.label
           const hasManualStateForCurrentEntry = openSubmenu?.locationKey === location.key
           const isSubmenuOpen = children.length > 0 && (isChildRouteActive || (hasManualStateForCurrentEntry && openSubmenu.key === parentKey))
-          const submenuLinks = children.map((child) => <NavLink className={({ isActive }) => isActive ? 'sidebar-submenu-link is-active' : 'sidebar-submenu-link'} end key={child.path} to={child.path} onClick={() => setOpenSubmenu(null)}><span className="sidebar-submenu-icon"><SidebarIcon name={child.icon} /></span>{child.label}</NavLink>)
+          const submenuLinks = children.map((child) => <NavLink className={({ isActive }) => isActive ? 'sidebar-submenu-link is-active' : 'sidebar-submenu-link'} end key={child.path} to={child.path} onClick={() => setOpenSubmenu(null)}><span className="sidebar-submenu-icon"><SidebarIcon name={child.icon} /></span>{t(child.label)}</NavLink>)
           const popupStyle = openSubmenu?.anchor ? { '--sidebar-submenu-top': `${openSubmenu.anchor.top}px`, '--sidebar-submenu-left': `${openSubmenu.anchor.left}px` } : undefined
 
           return <div className={`sidebar-item${children.length ? ' has-children' : ''}${isParentActive ? ' is-active' : ''}${isChildRouteActive ? ' is-child-active' : ''}${isSubmenuOpen ? ' is-open' : ''}`} key={parentKey}>
-            {children.length > 0 ? <button className="sidebar-tab" type="button" title={isCollapsed ? item.label : undefined} aria-expanded={isSubmenuOpen} onClick={(event) => toggleSubmenu(parentKey, event)}><span className="sidebar-icon-box"><SidebarIcon name={item.icon} /></span><span className="sidebar-label">{item.label}</span><span className="sidebar-submenu-caret" aria-hidden="true">›</span></button> : <NavLink className="sidebar-tab" end={item.path === '/'} title={isCollapsed ? item.label : undefined} to={item.path} onClick={() => setOpenSubmenu(null)}><span className="sidebar-icon-box"><SidebarIcon name={item.icon} /></span><span className="sidebar-label">{item.label}</span></NavLink>}
-            {children.length > 0 && !isCollapsed && <div className="sidebar-submenu" aria-label={`${item.label} 하위 메뉴`}>{submenuLinks}</div>}
-            {children.length > 0 && isCollapsed && isSubmenuOpen && openSubmenu?.anchor && createPortal(<div className="sidebar-submenu sidebar-submenu-popover" aria-label={`${item.label} 하위 메뉴`} style={popupStyle}>{submenuLinks}</div>, document.body)}
+            {children.length > 0 ? <button className="sidebar-tab" type="button" title={isCollapsed ? t(item.label) : undefined} aria-expanded={isSubmenuOpen} onClick={(event) => toggleSubmenu(parentKey, event)}><span className="sidebar-icon-box"><SidebarIcon name={item.icon} /></span><span className="sidebar-label">{t(item.label)}</span><span className="sidebar-submenu-caret" aria-hidden="true">›</span></button> : <NavLink className="sidebar-tab" end={item.path === '/'} title={isCollapsed ? t(item.label) : undefined} to={item.path} onClick={() => setOpenSubmenu(null)}><span className="sidebar-icon-box"><SidebarIcon name={item.icon} /></span><span className="sidebar-label">{t(item.label)}</span></NavLink>}
+            {children.length > 0 && !isCollapsed && <div className="sidebar-submenu" aria-label={`${t(item.label)} submenu`}>{submenuLinks}</div>}
+            {children.length > 0 && isCollapsed && isSubmenuOpen && openSubmenu?.anchor && createPortal(<div className="sidebar-submenu sidebar-submenu-popover" aria-label={`${t(item.label)} submenu`} style={popupStyle}>{submenuLinks}</div>, document.body)}
           </div>
         })}
       </nav>

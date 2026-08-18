@@ -511,6 +511,13 @@
   white-space: nowrap;
 }
 
+.approval-history-table th:nth-child(2),
+.approval-history-table td:nth-child(2) {
+  max-width: 148px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* 테이블 컬럼 너비 */
 .approval-history-table th:nth-child(1) {
   width: 126px;

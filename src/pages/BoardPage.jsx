@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
+import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import Filtering from '../components/Board/Filtering.jsx'
 import FormModal from '../components/Board/FormModal.jsx'
 import ReportList from '../components/Board/ReportList.jsx'
@@ -11,6 +12,7 @@ import {
   saveChecklistManagementRecords,
 } from '../utils/checklistStatusStorage.js'
 import '../styles/board.css'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const API_BASE_URL = BACKEND_API_URL
 
@@ -266,6 +268,7 @@ function saveBoardReportToChecklistManagement(report) {
 }
 
 function BoardPage() {
+  const { t } = useUiLanguage()
   const [reports, setReports] = useState([])
   const [selectedReportIds, setSelectedReportIds] = useState([])
   const [boardCategoryOptions, setBoardCategoryOptions] = useState(EVENT_CATEGORY_OPTIONS)
@@ -587,12 +590,6 @@ function BoardPage() {
 
   return (
     <section className="board-page" aria-label="위험신고 게시판">
-      <div className="board-title-row">
-        <button className="board-report-button" type="button" onClick={() => setIsReportModalOpen(true)}>
-          위험 신고하기
-        </button>
-      </div>
-
       <div className="board-summary-grid" aria-label="위험 신고 현황">
         {boardSummary.map((item) => (
           <button
@@ -602,7 +599,7 @@ function BoardPage() {
             onClick={() => setSummaryFilter(item.key)}
             aria-pressed={summaryFilter === item.key}
           >
-            <span>{item.label}</span>
+            <span>{t(item.label)}</span>
             <strong>{item.value}</strong>
           </button>
         ))}
@@ -625,10 +622,15 @@ function BoardPage() {
       />
 
       <div className="board-bulk-toolbar">
-        <span>선택 <strong>{selectedReceivableCount}</strong>건</span>
-        <button type="button" disabled={isReceivingReports || !selectedReceivableCount} onClick={() => { setRiskCategoryPage(0); setSelectedRiskCategoryId(null); setIsReceiveConfirmOpen(true) }}>
-          {isReceivingReports ? '접수 중...' : '접수'}
-        </button>
+        <span>{t('선택')} <strong>{selectedReceivableCount}</strong>{t('건')}</span>
+        <div className="board-bulk-actions">
+          <button className="board-report-button" type="button" onClick={() => setIsReportModalOpen(true)}>
+            <AddRoundedIcon /> {t('위험 신고하기')}
+          </button>
+          <button type="button" disabled={isReceivingReports || !selectedReceivableCount} onClick={() => { setRiskCategoryPage(0); setSelectedRiskCategoryId(null); setIsReceiveConfirmOpen(true) }}>
+            {isReceivingReports ? t('접수 중...') : t('접수')}
+          </button>
+        </div>
       </div>
 
       <ReportList
