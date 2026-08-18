@@ -25,6 +25,8 @@ import {
   Typography,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
+import { formatLocationSummary } from '../../utils/locationSummary.js'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 function EventTypeIcon({ type }) {
   if (type === '화재 발생') return <LocalFireDepartmentIcon fontSize="small" />
@@ -66,6 +68,7 @@ function filterEventsBySummary(events, selectedSummaryID) {
 
 function RecentEventsTable({ events = [], selectedSummaryID, selectedEvent, onSelectEvent, onClose }) {
   const navigate = useNavigate()
+  const { t } = useUiLanguage()
   const [page, setPage] = useState(0)
   const pageSize = 8
   const filteredEvents = useMemo(
@@ -83,16 +86,16 @@ function RecentEventsTable({ events = [], selectedSummaryID, selectedEvent, onSe
   return (
     <>
       <Box className="dashboard-card compact-card">
-        <Typography variant="h6">최근 이상 발생 리스트</Typography>
+        <Typography variant="h6">{t('최근 이상 발생 리스트')}</Typography>
         <TableContainer className="events-table-wrap">
-          <Table size="small" aria-label="최근 이상 발생 리스트">
+          <Table size="small" aria-label={t('최근 이상 발생 리스트')}>
             <TableHead>
               <TableRow>
-                <TableCell>시간</TableCell>
-                <TableCell>위치</TableCell>
-                <TableCell>유형</TableCell>
-                <TableCell>담당자</TableCell>
-                <TableCell>상태</TableCell>
+                <TableCell>{t('시간')}</TableCell>
+                <TableCell>{t('위치')}</TableCell>
+                <TableCell>{t('유형')}</TableCell>
+                <TableCell>{t('담당자')}</TableCell>
+                <TableCell>{t('상태')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -112,19 +115,19 @@ function RecentEventsTable({ events = [], selectedSummaryID, selectedEvent, onSe
                   }}
                 >
                   <TableCell>{event.time}</TableCell>
-                  <TableCell>{event.location}</TableCell>
+                  <TableCell title={event.location}>{formatLocationSummary(event.location)}</TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={0.75} alignItems="center">
                       <Box className="event-type-icon">
                         <EventTypeIcon type={event.type} />
                       </Box>
-                      <span>{event.type}</span>
+                      <span>{t(event.type)}</span>
                     </Stack>
                   </TableCell>
                   <TableCell>{event.manager}</TableCell>
                   <TableCell>
                     <Chip
-                      label={event.status}
+                      label={t(event.status)}
                       size="small"
                       color={isCompleteStatus(event.status) ? 'success' : 'warning'}
                       variant="outlined"
@@ -137,13 +140,13 @@ function RecentEventsTable({ events = [], selectedSummaryID, selectedEvent, onSe
           </Table>
         </TableContainer>
         <footer className="checklist-pagination recent-events-pagination">
-          <span>총 <strong>{filteredEvents.length}</strong>건</span>
+          <span>{t('총')} <strong>{filteredEvents.length}</strong>{t('건')}</span>
           <div>
-            <button type="button" aria-label="이전 이벤트 목록" disabled={activePage === 0} onClick={() => setPage((current) => Math.max(0, current - 1))}>
+            <button type="button" aria-label={t('이전 이벤트 목록')} disabled={activePage === 0} onClick={() => setPage((current) => Math.max(0, current - 1))}>
               <ChevronLeftRoundedIcon />
             </button>
             <b>{activePage + 1} / {pageCount}</b>
-            <button type="button" aria-label="다음 이벤트 목록" disabled={activePage === pageCount - 1} onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}>
+            <button type="button" aria-label={t('다음 이벤트 목록')} disabled={activePage === pageCount - 1} onClick={() => setPage((current) => Math.min(pageCount - 1, current + 1))}>
               <ChevronRightRoundedIcon />
             </button>
           </div>
@@ -155,9 +158,9 @@ function RecentEventsTable({ events = [], selectedSummaryID, selectedEvent, onSe
           <div className="event-drawer-header">
             <div>
               <span>DETECTION DETAIL</span>
-              <Typography variant="h6">이상 발생 상세</Typography>
+              <Typography variant="h6">{t('이상 발생 상세')}</Typography>
             </div>
-            <IconButton className="event-drawer-close" aria-label="상세 닫기" onClick={onClose}>
+            <IconButton className="event-drawer-close" aria-label={t('상세 닫기')} onClick={onClose}>
               <CloseIcon />
             </IconButton>
           </div>
@@ -168,11 +171,11 @@ function RecentEventsTable({ events = [], selectedSummaryID, selectedEvent, onSe
                   {isCompleteStatus(selectedEvent.status) ? <CheckCircleRoundedIcon /> : <WarningAmberRoundedIcon />}
                 </span>
                 <div>
-                  <span>{isCompleteStatus(selectedEvent.status) ? '처리가 완료된 이벤트' : '확인이 필요한 이벤트'}</span>
-                  <strong>{selectedEvent.type}</strong>
+                  <span>{t(isCompleteStatus(selectedEvent.status) ? '처리가 완료된 이벤트' : '확인이 필요한 이벤트')}</span>
+                  <strong>{t(selectedEvent.type)}</strong>
                 </div>
                 <Chip
-                  label={selectedEvent.status}
+                  label={t(selectedEvent.status)}
                   size="small"
                   color={selectedEvent.status === '조치 완료' ? 'success' : 'warning'}
                   className="event-drawer-status"
@@ -180,27 +183,27 @@ function RecentEventsTable({ events = [], selectedSummaryID, selectedEvent, onSe
               </div>
 
               <div className="event-detail-list">
-                <Detail icon={<AccessTimeRoundedIcon />} label="감지 시간" value={selectedEvent.time} />
-                <Detail icon={<LocationOnOutlinedIcon />} label="감지 위치" value={selectedEvent.location} />
-                <Detail icon={<EventTypeIcon type={selectedEvent.type} />} label="위험 유형" value={selectedEvent.type} />
-                <Detail icon={<PersonOutlineRoundedIcon />} label="담당자" value={selectedEvent.manager} />
+                <Detail icon={<AccessTimeRoundedIcon />} label={t('감지 시간')} value={selectedEvent.time} />
+                <Detail icon={<LocationOnOutlinedIcon />} label={t('감지 위치')} value={selectedEvent.location} />
+                <Detail icon={<EventTypeIcon type={selectedEvent.type} />} label={t('위험 유형')} value={t(selectedEvent.type)} />
+                <Detail icon={<PersonOutlineRoundedIcon />} label={t('담당자')} value={selectedEvent.manager} />
               </div>
 
               <div className="event-drawer-guidance">
-                <strong>{isCompleteStatus(selectedEvent.status) ? '처리가 완료되었습니다.' : '현장 상태를 확인해 주세요.'}</strong>
-                <p>{isCompleteStatus(selectedEvent.status) ? '상세 이력에서 처리 내용을 확인할 수 있습니다.' : '담당자 배정 후 안전 조치를 진행할 수 있습니다.'}</p>
+                <strong>{t(isCompleteStatus(selectedEvent.status) ? '처리가 완료되었습니다.' : '현장 상태를 확인해 주세요.')}</strong>
+                <p>{t(isCompleteStatus(selectedEvent.status) ? '상세 이력에서 처리 내용을 확인할 수 있습니다.' : '담당자 배정 후 안전 조치를 진행할 수 있습니다.')}</p>
               </div>
               {shouldShowAssignmentButton(selectedEvent.status) && (
                 <div className="Page-move-wrapper event-drawer-action">
                   <button className="Page-move-button" type="button" onClick={() => navigate('/checklists/management')}>
-                    담당자배정 페이지로 이동
+                    {t('담당자배정 페이지로 이동')}
                   </button>
                 </div>
               )}
               {isCompleteStatus(selectedEvent.status) && (
                 <div className="Page-move-wrapper event-drawer-action">
                   <button className="Page-move-button" type="button" onClick={() => navigate('/actions')}>
-                    조치 이력 페이지로 이동
+                    {t('조치 이력 페이지로 이동')}
                   </button>
                 </div>
               )}

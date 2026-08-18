@@ -5,6 +5,7 @@ import axios from 'axios'
 import { useEffect, useRef, useState } from 'react'
 import { CHATBOT_API_URL } from '../config/api.js'
 import '../styles/law-qa.css'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const RECOMMENDED_QUESTIONS = [
   '현재 조치 대기와 조치 완료 건수를 알려줘',
@@ -17,10 +18,10 @@ function getCurrentTime() {
   const now = new Date()
   const hours = now.getHours()
   const minutes = String(now.getMinutes()).padStart(2, '0')
-  const meridiem = hours >= 12 ? '오후' : '오전'
+  const meridiem = hours >= 12 ? 'PM' : 'AM'
   const displayHour = hours % 12 || 12
 
-  return `${meridiem} ${displayHour}:${minutes}`
+  return `${displayHour}:${minutes} ${meridiem}`
 }
 
 function createInitialMessage() {
@@ -36,6 +37,7 @@ function createConversationId() {
 }
 
 function LawQaPage() {
+  const { t } = useUiLanguage()
   const [messages, setMessages] = useState(() => [createInitialMessage()])
   const [conversationId, setConversationId] = useState(createConversationId)
   const [inputValue, setInputValue] = useState('')
@@ -107,12 +109,12 @@ function LawQaPage() {
   return (
     <section className="law-qa-page">
       <aside className="law-qa-sidebar">
-        <h2>추천 질문</h2>
-        <p>자주 확인하는 안전관리 현황입니다.</p>
+        <h2>{t('추천 질문')}</h2>
+        <p>{t('자주 확인하는 안전관리 현황입니다.')}</p>
         <div className="recommend-question-list">
           {RECOMMENDED_QUESTIONS.map((question) => (
             <button key={question} type="button" onClick={() => sendMessage(question)}>
-              {question}
+              {t(question)}
             </button>
           ))}
         </div>
@@ -124,14 +126,14 @@ function LawQaPage() {
             <SmartToyOutlinedIcon fontSize="small" />
           </div>
           <div className="chat-panel-copy">
-            <h2>BOSS AI 비서</h2>
-            <p>점검·조치 및 교육 현황을 확인하세요.</p>
+            <h2>{t('BOSS AI 비서')}</h2>
+            <p>{t('점검·조치 및 교육 현황을 확인하세요.')}</p>
           </div>
           <button
             type="button"
             className="new-conversation-button"
-            aria-label="새 대화"
-            title="새 대화"
+            aria-label={t('새 대화')}
+            title={t('새 대화')}
             disabled={isTyping}
             onClick={startNewConversation}
           >
@@ -148,7 +150,7 @@ function LawQaPage() {
                 </span>
               )}
               <div className="bubble-wrap">
-                <div className="chat-bubble">{message.text}</div>
+                <div className="chat-bubble">{t(message.text)}</div>
                 <span className="chat-time">{message.time}</span>
               </div>
             </div>
@@ -172,13 +174,13 @@ function LawQaPage() {
         <div className="chat-input-area">
           <input
             type="text"
-            placeholder="확인할 안전관리 현황을 입력하세요."
+            placeholder={t('확인할 안전관리 현황을 입력하세요.')}
             value={inputValue}
             onChange={(event) => setInputValue(event.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isTyping}
           />
-          <button type="button" aria-label="질문 전송" disabled={isTyping || !inputValue.trim()} onClick={() => sendMessage(inputValue)}>
+          <button type="button" aria-label={t('질문 전송')} disabled={isTyping || !inputValue.trim()} onClick={() => sendMessage(inputValue)}>
             <SendIcon fontSize="small" />
           </button>
         </div>

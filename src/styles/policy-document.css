@@ -11,8 +11,9 @@
 }
 
 .policy-page-head {
+    position: relative;
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 28px;
     padding: 38px 40px;
@@ -170,26 +171,35 @@
 }
 
 .policy-back-button {
+    position: absolute;
+    top: 24px;
+    right: 28px;
     display: inline-flex;
     align-items: center;
     gap: 6px;
     padding: 8px 12px;
-    background-color: transparent;
-    border: none;
-    border-radius: 8px;
-    color: #374151;
-    font-size: 14px;
-    font-weight: 500;
+    background: #f7faff;
+    border: 1px solid #d8e4f2;
+    border-radius: 10px;
+    color: #3f6595;
+    font-size: 13px;
+    font-weight: 800;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .policy-back-button:hover {
-    background-color: #f3f4f6;
-    color: #111827;
-    border-color: #d1d5db;
+    background: #edf4ff;
+    color: #245698;
+    border-color: #aec6eb;
+    box-shadow: 0 5px 13px rgba(47,100,183,.12);
 }
 
 .policy-back-button svg {
     font-size: 20px;
+}
+
+@media(max-width:600px) {
+    .policy-back-button { top: 16px; right: 16px; }
+    .policy-page-head { padding-top: 70px; }
 }

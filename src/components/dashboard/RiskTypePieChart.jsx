@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 
 const colors = ['#e7b0b5', '#f1d19b', '#b8cbe0', '#8eb6df']
@@ -19,11 +20,12 @@ function makeTypeCountData(events) {
   
 function RiskTypePieChart({ data }) {
   const navigate = useNavigate()
+  const { t } = useUiLanguage()
 
 const countdata= makeTypeCountData(data);
   return (
     <Box className="risk-card compact-card">
-      <Typography variant="h6">전체 위험도 통계</Typography>
+      <Typography variant="h6">{t('전체 위험도 통계')}</Typography>
       <Box className="chart-body donut-chart-body">
         <ResponsiveContainer width="100%" height={200}>
           <PieChart>
@@ -41,7 +43,7 @@ const countdata= makeTypeCountData(data);
           <div className="donut-legend-item" key={item.type}>
             <span>
               <i style={{ backgroundColor: colors[index % colors.length] }}></i>
-              {item.type}
+              {t(item.type)}
             </span>
             <strong>{item.percent}%</strong>
           </div>
@@ -53,7 +55,7 @@ const countdata= makeTypeCountData(data);
 
       <div className="Page-move-wrapper">
             <button className="Page-move-button" type="button" onClick={() => navigate('/risk-management')}>
-              위험도 페이지로 이동
+              {t('위험도 페이지로 이동')}
             </button>
       </div>
     </Box>

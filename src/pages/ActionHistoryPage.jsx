@@ -12,6 +12,7 @@ import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded'
 import HourglassEmptyRoundedIcon from '@mui/icons-material/HourglassEmptyRounded'
+import { formatLocationSummary } from '../utils/locationSummary.js'
 
 function sortByLatestCompletedAt(records) {
   return [...records].sort((left, right) => {
@@ -400,7 +401,7 @@ function ActionHistoryPage() {
                     {isInitialLoading ? <HistoryTableSkeletonRows columns={6} /> : inspectionhistory.map((record) => (
                       <tr key={record.id} className="inspection-history-row" onClick={() => setSelectedInspectionRecord(record)}>
                         <td>{record.completedAt}</td>
-                        <td>{record.location}</td>
+                        <td title={record.location}>{formatLocationSummary(record.location)}</td>
                         <td><span className="approval-type"><TaskAltRoundedIcon />{record.type}</span></td>
                         <td>{record.assignee}</td>
                         <td>
@@ -456,7 +457,7 @@ function ActionHistoryPage() {
                         }}
                       >
                         <td>{record.completedAt}</td>
-                        <td>{record.location}</td>
+                        <td title={record.location}>{formatLocationSummary(record.location)}</td>
                         <td><span className="approval-type"><TaskAltRoundedIcon />{record.actionName || record.type}</span></td>
                         <td>{record.assignee}</td>
                         <td>

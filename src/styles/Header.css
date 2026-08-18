@@ -536,6 +536,72 @@
   font-weight: 700;
 }
 
+.profile-settings-link {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.profile-settings-link > svg:first-child {
+  color: #7652ae;
+  background: linear-gradient(135deg, #f0eaff, #e6f0ff);
+}
+
+.settings-modal-backdrop {
+  position: fixed;
+  z-index: 1200;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, .48);
+  backdrop-filter: blur(5px);
+}
+
+.settings-modal {
+  width: min(680px, 100%);
+  overflow: hidden;
+  border: 1px solid #d9e4f1;
+  border-radius: 20px;
+  color: #243247;
+  background: #fff;
+  box-shadow: 0 26px 70px rgba(15, 23, 42, .28);
+  animation: header-menu-in 180ms ease-out;
+}
+
+.settings-modal header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 25px 28px 20px;
+  border-bottom: 1px solid #e5edf6;
+  background: linear-gradient(125deg, #f8fbff, #f2f1ff);
+}
+
+.settings-modal header span { color: #5579bf; font-size: 10px; font-weight: 900; letter-spacing: .1em; }
+.settings-modal header h2 { margin: 6px 0 5px; color: #1e2f47; font-size: 24px; letter-spacing: -.04em; }
+.settings-modal header p { margin: 0; color: #72849a; font-size: 13px; font-weight: 650; }
+.settings-modal header > button { display: grid; width: 36px; height: 36px; flex: 0 0 auto; place-items: center; border: 1px solid #d7e3ef; border-radius: 10px; color: #60758d; background: #fff; cursor: pointer; }
+.settings-modal header > button:hover { color: #2f64b7; background: #f6f9fe; }
+.settings-modal header > button svg { width: 20px; height: 20px; }
+
+.settings-modal-body { display: grid; grid-template-columns: 160px minmax(0, 1fr); min-height: 275px; }
+.settings-modal-body-language { display: block; min-height: auto; }
+.settings-modal-body-language .settings-panel { padding: 30px 28px 34px; }
+.settings-modal-body-language .settings-label strong { display: flex; align-items: center; gap: 7px; }
+.settings-modal-body-language .settings-label svg { width: 18px; height: 18px; color: #5276bd; }
+.settings-tabs { display: grid; align-content: start; gap: 5px; padding: 17px 12px; border-right: 1px solid #e5edf6; background: #fafcff; }
+.settings-tabs button { display: flex; align-items: center; gap: 9px; padding: 11px 12px; border: 0; border-radius: 10px; color: #728198; background: transparent; cursor: pointer; font: inherit; font-size: 13px; font-weight: 850; text-align: left; }
+.settings-tabs button svg { width: 18px; height: 18px; }.settings-tabs button:hover { color: #376bb8; background: #f0f5ff; }.settings-tabs button.is-active { color: #244d98; background: #e8efff; box-shadow: inset 0 0 0 1px #d5e2ff; }
+.settings-panel { padding: 27px; }.settings-panel section { display: grid; gap: 18px; }.settings-label { display: grid; gap: 5px; }.settings-label strong,.settings-switch strong { color: #273b57; font-size: 14px; }.settings-label span,.settings-switch small { color: #8291a3; font-size: 12px; font-weight: 650; line-height: 1.45; }
+.settings-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }.settings-choice-grid button { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; gap: 7px; border: 1px solid #d7e1ee; border-radius: 10px; color: #5d7089; background: #fff; cursor: pointer; font: inherit; font-size: 13px; font-weight: 850; }.settings-choice-grid button:hover { border-color: #a8c2eb; background: #f7faff; }.settings-choice-grid button.is-selected { border-color: #779ce0; color: #2452a4; background: linear-gradient(135deg, #edf4ff, #f2ecff); box-shadow: 0 5px 14px rgba(70, 104, 180, .14); }.settings-choice-grid svg { width: 18px; height: 18px; }
+.settings-switch { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 18px; border-top: 1px solid #edf1f6; }.settings-switch span { display: grid; gap: 4px; }.settings-switch input { width: 42px; height: 23px; accent-color: #496fc5; cursor: pointer; }
+.settings-modal footer { display: flex; justify-content: flex-end; padding: 14px 28px; border-top: 1px solid #e5edf6; background: #fafcff; }.settings-modal footer button { min-width: 70px; min-height: 35px; border: 1px solid #cfdbeb; border-radius: 8px; color: #45637f; background: #fff; cursor: pointer; font: inherit; font-size: 12px; font-weight: 850; }
+
+body.boss-compact-mode .board-table td { height: 64px; padding-top: 9px; padding-bottom: 9px; }
+body.boss-compact-mode .approval-history-table td { height: 54px; padding-top: 7px; padding-bottom: 7px; }
+body.boss-compact-mode .checklist-management-table td { padding-top: 9px; padding-bottom: 9px; }
+
 @media (max-width: 680px) {
   .app-content>.app-header {
     min-height: 68px;
@@ -563,6 +629,13 @@
   }
 }
 
+@media (max-width: 560px) {
+  .settings-modal-backdrop { padding: 12px; }
+  .settings-modal-body { grid-template-columns: 1fr; }
+  .settings-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); border-right: 0; border-bottom: 1px solid #e5edf6; }
+  .settings-tabs button { justify-content: center; padding: 10px 5px; font-size: 11px; }.settings-tabs button svg { display: none; }
+  .settings-panel { padding: 20px; }
+}
 .notification-delete-btn {
   opacity: 0.5;
   transition: opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease;

@@ -1,7 +1,4 @@
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded'
-import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
-import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
-import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined'
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
@@ -9,11 +6,13 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { clearAuthSession } from '../api/authInterceptor.js'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 import '../styles/MyPage.css'
 
 const API_BASE_URL = BACKEND_API_URL
 
 function MyPage() {
+  const { t } = useUiLanguage()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('password')
@@ -34,11 +33,9 @@ function MyPage() {
         const userData = response.data
         setUser({
           name: userData.name || userData.user_id || '관리자',
-          email: userData.email || '이메일 미등록',
+          email: userData.email || '',
           role: userData.role || '안전관리자',
-          department: userData.department || '시설관리팀',
-          area: userData.area || '담당 구역 미지정',
-          unreadNotifications: userData.unread_notifications || 0,
+          department: userData.department || '',
         })
       } catch (error) {
         console.error('사용자 정보 조회 실패:', error)
@@ -135,31 +132,19 @@ function MyPage() {
           <div className="my-profile-copy">
             <span className="my-role-badge"><ShieldOutlinedIcon />{user.role}</span>
             <h2>{user.name}</h2>
-            <p>{user.department}</p>
-            <span className="my-email"><EmailOutlinedIcon />{user.email}</span>
-          </div>
-        </div>
-        <div className="my-profile-stats">
-          <div>
-            <LocationOnOutlinedIcon />
-            <span>담당 구역</span>
-            <strong>{user.area}</strong>
-          </div>
-          <div>
-            <NotificationsActiveOutlinedIcon />
-            <span>새 알림</span>
-            <strong>{user.unreadNotifications}건</strong>
+            {user.department && <p>{user.department}</p>}
+            {user.email && <span className="my-email">{user.email}</span>}
           </div>
         </div>
       </article>
 
       <article className="account-settings-card">
         <div className="account-settings-heading">
-          <h3>계정 설정</h3>
-          <p>계정 정보와 보안 설정을 관리할 수 있습니다.</p>
+          <h3>{t('계정 설정')}</h3>
+          <p>{t('계정 정보와 보안 설정을 관리할 수 있습니다.')}</p>
         </div>
 
-        <div className="account-settings-tabs" role="tablist" aria-label="계정 설정 메뉴">
+        <div className="account-settings-tabs" role="tablist" aria-label={t('계정 설정 메뉴')}>
           <button
             type="button"
             role="tab"
@@ -167,7 +152,7 @@ function MyPage() {
             className={activeTab === 'password' ? 'is-active' : ''}
             onClick={() => selectTab('password')}
           >
-            비밀번호 변경
+            {t('비밀번호 변경')}
           </button>
           <button
             type="button"
@@ -176,16 +161,16 @@ function MyPage() {
             className={activeTab === 'withdrawal' ? 'is-active is-danger' : 'is-danger'}
             onClick={() => selectTab('withdrawal')}
           >
-            회원탈퇴
+            {t('회원탈퇴')}
           </button>
         </div>
 
         {activeTab === 'password' ? (
-          <section className="account-settings-panel" role="tabpanel" aria-label="비밀번호 변경">
-            <p className="account-settings-guide">안전을 위해 현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다.</p>
+          <section className="account-settings-panel" role="tabpanel" aria-label={t('비밀번호 변경')}>
+            <p className="account-settings-guide">{t('안전을 위해 현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다.')}</p>
             <form className="account-settings-form" onSubmit={handlePasswordChange}>
               <label>
-                <span>현재 비밀번호</span>
+                <span>{t('현재 비밀번호')}</span>
                 <span className="password-input-wrap">
                   <LockOutlinedIcon aria-hidden="true" />
                   <input
@@ -193,13 +178,13 @@ function MyPage() {
                     value={passwordForm.currentPassword}
                     onChange={(event) => setPasswordForm((current) => ({ ...current, currentPassword: event.target.value }))}
                     autoComplete="current-password"
-                    placeholder="현재 비밀번호를 입력하세요"
+                    placeholder={t('현재 비밀번호를 입력하세요')}
                     disabled={isChangingPassword}
                   />
                 </span>
               </label>
               <label>
-                <span>새 비밀번호</span>
+                <span>{t('새 비밀번호')}</span>
                 <span className="password-input-wrap">
                   <LockOutlinedIcon aria-hidden="true" />
                   <input
@@ -207,13 +192,13 @@ function MyPage() {
                     value={passwordForm.newPassword}
                     onChange={(event) => setPasswordForm((current) => ({ ...current, newPassword: event.target.value }))}
                     autoComplete="new-password"
-                    placeholder="새 비밀번호를 입력하세요"
+                    placeholder={t('새 비밀번호를 입력하세요')}
                     disabled={isChangingPassword}
                   />
                 </span>
               </label>
               <label>
-                <span>새 비밀번호 확인</span>
+                <span>{t('새 비밀번호 확인')}</span>
                 <span className="password-input-wrap">
                   <LockOutlinedIcon aria-hidden="true" />
                   <input
@@ -221,43 +206,43 @@ function MyPage() {
                     value={passwordForm.confirmPassword}
                     onChange={(event) => setPasswordForm((current) => ({ ...current, confirmPassword: event.target.value }))}
                     autoComplete="new-password"
-                    placeholder="새 비밀번호를 한 번 더 입력하세요"
+                    placeholder={t('새 비밀번호를 한 번 더 입력하세요')}
                     disabled={isChangingPassword}
                   />
                 </span>
               </label>
-              {passwordError && <p className="account-settings-message is-error" role="alert">{passwordError}</p>}
-              {passwordSuccess && <p className="account-settings-message is-success" role="status">{passwordSuccess}</p>}
+              {passwordError && <p className="account-settings-message is-error" role="alert">{t(passwordError)}</p>}
+              {passwordSuccess && <p className="account-settings-message is-success" role="status">{t(passwordSuccess)}</p>}
               <button className="account-settings-submit" type="submit" disabled={isChangingPassword}>
-                {isChangingPassword ? '변경 중…' : '비밀번호 변경'}
+                {t(isChangingPassword ? '변경 중…' : '비밀번호 변경')}
               </button>
             </form>
           </section>
         ) : (
-          <section className="account-settings-panel withdrawal-panel" role="tabpanel" aria-label="회원탈퇴">
+          <section className="account-settings-panel withdrawal-panel" role="tabpanel" aria-label={t('회원탈퇴')}>
             {withdrawalComplete ? (
               <div className="withdrawal-complete">
                 <DeleteForeverOutlinedIcon aria-hidden="true" />
-                <h2>회원 탈퇴가 완료되었습니다.</h2>
-                <p>안전하게 로그아웃 처리한 뒤 로그인 화면으로 이동합니다.</p>
+                <h2>{t('회원 탈퇴가 완료되었습니다.')}</h2>
+                <p>{t('안전하게 로그아웃 처리한 뒤 로그인 화면으로 이동합니다.')}</p>
               </div>
             ) : (
               <>
                 <div className="withdrawal-tab-notice">
                   <WarningAmberRoundedIcon aria-hidden="true" />
                   <div>
-                    <strong>탈퇴 전 확인해 주세요</strong>
-                    <p>회원 탈퇴가 완료되면 계정은 즉시 삭제되며, 같은 계정으로 다시 로그인하거나 복구할 수 없습니다.</p>
+                    <strong>{t('탈퇴 전 확인해 주세요')}</strong>
+                    <p>{t('회원 탈퇴가 완료되면 계정은 즉시 삭제되며, 같은 계정으로 다시 로그인하거나 복구할 수 없습니다.')}</p>
                     <ul>
-                      <li>계정에 저장된 로그인 정보와 개인 설정이 삭제됩니다.</li>
-                      <li>작성한 게시글·보고서·점검 이력 등 업무 기록은 작성자 정보 없이 유지될 수 있습니다.</li>
-                      <li>계속 이용할 계획이라면 탈퇴 대신 비밀번호 변경을 이용해 주세요.</li>
+                      <li>{t('계정에 저장된 로그인 정보와 개인 설정이 삭제됩니다.')}</li>
+                      <li>{t('작성한 게시글·보고서·점검 이력 등 업무 기록은 작성자 정보 없이 유지될 수 있습니다.')}</li>
+                      <li>{t('계속 이용할 계획이라면 탈퇴 대신 비밀번호 변경을 이용해 주세요.')}</li>
                     </ul>
                   </div>
                 </div>
                 <form className="account-settings-form" onSubmit={handleWithdrawal}>
                   <label>
-                    <span>현재 비밀번호</span>
+                    <span>{t('현재 비밀번호')}</span>
                     <span className="password-input-wrap">
                       <LockOutlinedIcon aria-hidden="true" />
                       <input
@@ -268,7 +253,7 @@ function MyPage() {
                           setWithdrawalError('')
                         }}
                         autoComplete="current-password"
-                        placeholder="현재 비밀번호를 입력하세요"
+                        placeholder={t('현재 비밀번호를 입력하세요')}
                         disabled={isWithdrawing}
                       />
                     </span>
@@ -283,11 +268,11 @@ function MyPage() {
                       }}
                       disabled={isWithdrawing}
                     />
-                    <span>탈퇴 시 계정을 복구할 수 없음을 확인했습니다.</span>
+                    <span>{t('탈퇴 시 계정을 복구할 수 없음을 확인했습니다.')}</span>
                   </label>
-                  {withdrawalError && <p className="account-settings-message is-error" role="alert">{withdrawalError}</p>}
+                  {withdrawalError && <p className="account-settings-message is-error" role="alert">{t(withdrawalError)}</p>}
                   <button className="account-settings-submit withdrawal-submit" type="submit" disabled={isWithdrawing}>
-                    {isWithdrawing ? '탈퇴 처리 중…' : '회원 탈퇴'}
+                    {t(isWithdrawing ? '탈퇴 처리 중…' : '회원 탈퇴')}
                   </button>
                 </form>
               </>

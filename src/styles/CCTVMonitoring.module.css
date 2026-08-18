@@ -18,6 +18,7 @@
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
 }
 
+
 .monitoringOverview>div,
 .overviewStats,
 .overviewStats span {
@@ -626,6 +627,7 @@
   font-size: 9px;
   font-weight: 800;
 }
+
 
 .liveEvent {
   min-height: 442px;

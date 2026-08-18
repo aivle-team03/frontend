@@ -9,11 +9,13 @@ import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
 import axios from 'axios'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getYouTubeEmbedUrl, resolveMediaUrl } from '../utils/mediaUrl.js'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const API_BASE_URL = BACKEND_API_URL
 const completionRingColors = ['#4f78d1', '#2f9d75', '#8b63d6', '#e18a3f']
 
 function EducationPage({ addedCourses = [] }) {
+  const { t } = useUiLanguage()
   const [apiCourses, setApiCourses] = useState(null)
   const [apiSummary, setApiSummary] = useState(null)
   const [apiRates, setApiRates] = useState(null)
@@ -234,21 +236,21 @@ function EducationPage({ addedCourses = [] }) {
   }
 
   const summaryCards = [
-    { key: 'due', icon: <MenuBookOutlinedIcon />, tone: 'blue', label: '이번 주 마감', value: `${apiSummary?.due_this_week_count ?? dueCourses.length}건`, description: '마감 전 교육을 확인하세요', courses: dueCourses },
-    { key: 'progress', icon: <PlayCircleOutlineRoundedIcon />, tone: 'green', label: '진행 중', value: `${apiSummary?.in_progress_count ?? inProgressCourses.length}건`, description: '수강 중인 교육이 있습니다', courses: inProgressCourses },
-    { key: 'complete', icon: <CheckCircleOutlineRoundedIcon />, tone: 'purple', label: '이수 완료', value: `${apiSummary?.completed_count ?? completedCourses.length}건`, description: '완료한 교육을 확인하세요', courses: completedCourses },
+    { key: 'due', icon: <MenuBookOutlinedIcon />, tone: 'blue', label: t('이번 주 마감'), value: `${apiSummary?.due_this_week_count ?? dueCourses.length}${t('건')}`, description: t('마감 전 교육을 확인하세요'), courses: dueCourses },
+    { key: 'progress', icon: <PlayCircleOutlineRoundedIcon />, tone: 'green', label: t('진행 중'), value: `${apiSummary?.in_progress_count ?? inProgressCourses.length}${t('건')}`, description: t('수강 중인 교육이 있습니다'), courses: inProgressCourses },
+    { key: 'complete', icon: <CheckCircleOutlineRoundedIcon />, tone: 'purple', label: t('이수 완료'), value: `${apiSummary?.completed_count ?? completedCourses.length}${t('건')}`, description: t('완료한 교육을 확인하세요'), courses: completedCourses },
   ]
 
   const completionSummaryData = apiRates
     ? [
-      { label: '필수 교육', value: apiRates.essential_rate ?? 0, detail: '서버 집계' },
-      { label: '정기 교육', value: apiRates.regular_rate ?? 0, detail: '서버 집계' },
-      { label: '전체', value: apiRates.total_rate ?? 0, detail: '서버 집계' },
+      { label: t('필수 교육'), value: apiRates.essential_rate ?? 0, detail: t('서버 집계') },
+      { label: t('정기 교육'), value: apiRates.regular_rate ?? 0, detail: t('서버 집계') },
+      { label: t('전체'), value: apiRates.total_rate ?? 0, detail: t('서버 집계') },
     ]
     : [
-      { label: '필수 교육', value: 0, detail: '집계 중' },
-      { label: '정기 교육', value: 0, detail: '집계 중' },
-      { label: '전체', value: 0, detail: '집계 중' },
+      { label: t('필수 교육'), value: 0, detail: t('집계 중') },
+      { label: t('정기 교육'), value: 0, detail: t('집계 중') },
+      { label: t('전체'), value: 0, detail: t('집계 중') },
     ]
 
   if (loading) return <EducationLoadingSkeleton />
@@ -259,10 +261,10 @@ function EducationPage({ addedCourses = [] }) {
         <div className="learner-new-course-banner">
           <span>
             <PlayCircleOutlineRoundedIcon />
-            <strong>새 교육이 배정되었습니다.</strong> 교육 관리에서 등록한 {addedCourses[0].title}을 확인해 보세요.
+            <strong>{t('새 교육이 배정되었습니다.')}</strong> {t('교육 관리에서 등록한')} {addedCourses[0].title}{t('을 확인해 보세요.')}
           </span>
           <button type="button" onClick={() => setContentId(addedCourses[0].contentId)}>
-            지금 보기
+            {t('지금 보기')}
           </button>
         </div>
       )}
@@ -277,10 +279,10 @@ function EducationPage({ addedCourses = [] }) {
         <article className="education-panel content-panel course-player-panel">
           <div className="panel-heading panel-heading-row">
             <div>
-              <span className="panel-kicker">교육 영상</span>
+              <span className="panel-kicker">{t('교육 영상')}</span>
               <h3>{currentContent.title}</h3>
             </div>
-            <span className="content-category">{currentContent.category ?? '안전 교육'}</span>
+            <span className="content-category">{currentContent.category ?? t('안전 교육')}</span>
           </div>
 
           {currentContent.videoUrl ? (
@@ -288,7 +290,7 @@ function EducationPage({ addedCourses = [] }) {
               {currentYouTubeEmbedUrl ? (
                 <iframe
                   src={currentYouTubeEmbedUrl}
-                  title={`${currentContent.title} 교육 영상`}
+                  title={`${currentContent.title} ${t('교육 영상')}`}
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
@@ -303,16 +305,16 @@ function EducationPage({ addedCourses = [] }) {
                   onLoadedMetadata={handleLoadedMetadata}
                   onSeeking={handleSeeking}
                   onTimeUpdate={handleTimeUpdate}
-                  aria-label={`${currentContent.title} 교육 영상`}
+                  aria-label={`${currentContent.title} ${t('교육 영상')}`}
                 />
               )}
             </div>
           ) : (
-            <div className="course-video" aria-label="교육 영상 미리보기">
+            <div className="course-video" aria-label={t('교육 영상 미리보기')}>
               <div className="course-video-glow" />
               <div className="video-topline">
                 <span>
-                  <PlayCircleOutlineRoundedIcon /> 교육 영상
+                  <PlayCircleOutlineRoundedIcon /> {t('교육 영상')}
                 </span>
               </div>
               <div className="video-preview-center">
@@ -320,28 +322,28 @@ function EducationPage({ addedCourses = [] }) {
                   <PlayArrowRoundedIcon />
                 </span>
                 <strong>{currentContent.title}</strong>
-                <small>재생 버튼을 눌러 교육을 시작하세요</small>
+                <small>{t('재생 버튼을 눌러 교육을 시작하세요')}</small>
               </div>
               <div className="video-bottom">
-                <span>재생 시간 {currentContent.duration}</span>
+                <span>{t('재생 시간')} {currentContent.duration}</span>
               </div>
             </div>
           )}
 
           {/* 프로그레스 바 */}
           <div className="course-progress">
-            <span>진행률</span>
+            <span>{t('진행률')}</span>
             <div>
               <i style={{ width: `${currentProgress}%` }} />
             </div>
             <strong>{currentProgress}%</strong>
           </div>
-          <p className="course-progress-caption">영상의 80% 이상을 수강하면 자동으로 이수가 완료됩니다.</p>
+          <p className="course-progress-caption">{t('영상의 80% 이상을 수강하면 자동으로 이수가 완료됩니다.')}</p>
 
           {/* 네비게이션 버튼 */}
           <div className="content-navigation">
             <button type="button" disabled={currentContentIndex <= 0} onClick={showPreviousCourse}>
-              <ArrowBackIosNewOutlinedIcon fontSize="inherit" /> 이전 강의
+              <ArrowBackIosNewOutlinedIcon fontSize="inherit" /> {t('이전 강의')}
             </button>
 
             <button
@@ -349,7 +351,7 @@ function EducationPage({ addedCourses = [] }) {
               disabled={currentContentIndex < 0 || currentContentIndex >= allContent.length - 1}
               onClick={showNextCourse}
             >
-              다음 강의 <ArrowForwardIosOutlinedIcon fontSize="inherit" />
+              {t('다음 강의')} <ArrowForwardIosOutlinedIcon fontSize="inherit" />
             </button>
           </div>
         </article>
@@ -357,18 +359,18 @@ function EducationPage({ addedCourses = [] }) {
         {/* 내 교육 리스트 */}
         <article className="education-panel required-panel learner-list-panel">
           <div className="panel-heading">
-            <span className="panel-kicker">나의 수강 현황</span>
-            <h3>내 교육 리스트</h3>
+            <span className="panel-kicker">{t('나의 수강 현황')}</span>
+            <h3>{t('내 교육 리스트')}</h3>
           </div>
           <div className="required-table-wrap">
             <table className="required-table learner-table">
               <thead>
                 <tr>
-                  <th>교육명</th>
-                  <th>구분</th>
-                  <th>마감일</th>
-                  <th>진도율</th>
-                  <th>상태</th>
+                  <th>{t('교육명')}</th>
+                  <th>{t('구분')}</th>
+                  <th>{t('마감일')}</th>
+                  <th>{t('진도율')}</th>
+                  <th>{t('상태')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -411,9 +413,9 @@ function EducationPage({ addedCourses = [] }) {
             </table>
           </div>
           <div className="required-footer">
-            <span>총 {allCourses.length}개 과정</span>
+            <span>{t('총')} {allCourses.length}{t('개 과정')}</span>
             <div className="required-pagination">
-              <button type="button" aria-label="이전 교육 목록" disabled={requiredPage === 0} onClick={() => setRequiredPage((v) => v - 1)}>
+              <button type="button" aria-label={t('이전 교육 목록')} disabled={requiredPage === 0} onClick={() => setRequiredPage((v) => v - 1)}>
                 <ArrowBackIosNewOutlinedIcon fontSize="inherit" />
               </button>
               <span>
@@ -421,7 +423,7 @@ function EducationPage({ addedCourses = [] }) {
               </span>
               <button
                 type="button"
-                aria-label="다음 교육 목록"
+                aria-label={t('다음 교육 목록')}
                 disabled={requiredPage === pageCount - 1}
                 onClick={() => setRequiredPage((v) => v + 1)}
               >
@@ -435,8 +437,8 @@ function EducationPage({ addedCourses = [] }) {
       <div className="learner-bottom-grid">
         <article className="education-panel learner-completion-panel">
           <div className="panel-heading">
-            <span className="panel-kicker">나의 학습 현황</span>
-            <h3>교육 이수 현황</h3>
+            <span className="panel-kicker">{t('나의 학습 현황')}</span>
+            <h3>{t('교육 이수 현황')}</h3>
           </div>
           <div className="learner-rings">
             {completionSummaryData.map((item, index) => (
@@ -446,14 +448,14 @@ function EducationPage({ addedCourses = [] }) {
         </article>
         <article className="education-panel learning-guide-card">
           <div className="guide-copy">
-            <span className="panel-kicker">학습 안내</span>
+            <span className="panel-kicker">{t('학습 안내')}</span>
             <h3>
-              <SchoolOutlinedIcon /> 수강 전 확인하세요
+              <SchoolOutlinedIcon /> {t('수강 전 확인하세요')}
             </h3>
             <ul>
-              <li>영상의 80% 이상을 시청하면 자동으로 이수가 완료됩니다.</li>
-              <li>이수 여부에 상관없이 [다음 강의] 버튼을 눌러 목록을 순회할 수 있습니다.</li>
-              <li>타임라인 건너뛰기는 제한되며, 중간에 벗어나도 마지막 시청 위치가 자동 저장됩니다.</li>
+              <li>{t('영상의 80% 이상을 시청하면 자동으로 이수가 완료됩니다.')}</li>
+              <li>{t('이수 여부에 상관없이 [다음 강의] 버튼을 눌러 목록을 순회할 수 있습니다.')}</li>
+              <li>{t('타임라인 건너뛰기는 제한되며, 중간에 벗어나도 마지막 시청 위치가 자동 저장됩니다.')}</li>
             </ul>
           </div>
           <div className="guide-illustration">
@@ -528,22 +530,23 @@ function SummaryCard({ icon, tone, label, value, description, onClick }) {
 }
 
 function LearningSummaryModal({ summary, getProgress, onClose }) {
+  const { t } = useUiLanguage()
   return (
     <div className="learning-summary-modal-backdrop" role="presentation" onMouseDown={onClose}>
-      <section className="learning-summary-modal" role="dialog" aria-modal="true" aria-label={`${summary.label} 교육 목록`} onMouseDown={(e) => e.stopPropagation()}>
+      <section className="learning-summary-modal" role="dialog" aria-modal="true" aria-label={`${summary.label} ${t('교육 목록')}`} onMouseDown={(e) => e.stopPropagation()}>
         <header>
           <div>
-            <span>내 교육 현황</span>
+            <span>{t('내 교육 현황')}</span>
             <h3>{summary.label}</h3>
             <p>{summary.description}</p>
           </div>
-          <button type="button" aria-label="교육 목록 창 닫기" onClick={onClose}>
+          <button type="button" aria-label={t('교육 목록 창 닫기')} onClick={onClose}>
             <CloseRoundedIcon />
           </button>
         </header>
         <div className="learning-summary-modal-count">
           <strong>{summary.value}</strong>
-          <span>현재 내 교육 리스트 기준</span>
+          <span>{t('현재 내 교육 리스트 기준')}</span>
         </div>
         <div className="learning-summary-course-list">
           {summary.courses.length ? (
@@ -554,7 +557,7 @@ function LearningSummaryModal({ summary, getProgress, onClose }) {
                   <div>
                     <strong>{course.title}</strong>
                     <span>
-                      {course.target} · 마감 {course.deadline}
+                      {course.target} · {t('마감')} {course.deadline}
                     </span>
                   </div>
                   <div>
@@ -570,7 +573,7 @@ function LearningSummaryModal({ summary, getProgress, onClose }) {
               )
             })
           ) : (
-            <p className="learning-summary-empty">해당하는 교육이 없습니다.</p>
+            <p className="learning-summary-empty">{t('해당하는 교육이 없습니다.')}</p>
           )}
         </div>
       </section>

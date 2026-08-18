@@ -20,6 +20,7 @@ import RiskManagementPage from '../pages/RiskManagementPage.jsx'
 import SafetyManagementPage from '../pages/SafetyManagementPage.jsx'
 import ServiceFooter from '../components/common/ServiceFooter.jsx'
 import { PrivacyPolicyPage, TermsPage } from '../pages/PolicyDocumentPage.jsx'
+// Must be last: page styles are imported above and dark mode overrides them.
 
 function AppRouter() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {

@@ -10,13 +10,12 @@ import RiskTypePieChart from '../components/dashboard/RiskTypePieChart.jsx'
 import RiskSectionStackChart from '../components/dashboard/RiskSectionStackChart.jsx'
 import EducationPieChart from '../components/dashboard/EducationPieChart.jsx'
 import ActionHistoryTable from '../components/dashboard/ActionHistoryTable.jsx'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 import {
   EVENT_CATEGORY_MOCKUP_DATA,
   EDUCATION_INFO_MOCKUP_DATA,
 } from '../mocks/mockData.js'
 import {
-  periodChartData,
-  riskTypeData,
   summaryCards,
 } from '../data/dashboardMock.js'
 
@@ -85,8 +84,47 @@ function makeActionEvent(item) {
   }
 }
 
+function makeRiskTypeData(riskFactors) {
+  const counts = new Map()
+  riskFactors.forEach((item) => {
+    const name = item.type || item.item
+    if (name) counts.set(name, (counts.get(name) || 0) + 1)
+  })
+  return [...counts].map(([name, value]) => ({ name, value }))
+}
+
+function makeTrendData(events, selectedPeriod) {
+  const today = new Date()
+  const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const bucketCount = selectedPeriod === '오늘' ? 4 : selectedPeriod === '최근 7일' ? 7 : 4
+  const buckets = Array.from({ length: bucketCount }, (_, index) => ({ label: '', count: 0, start: null }))
+
+  if (selectedPeriod === '오늘') {
+    buckets.forEach((bucket, index) => { bucket.label = `${String(index * 6).padStart(2, '0')}:00`; bucket.start = index * 6 })
+    events.forEach((event) => {
+      const date = new Date(event.time)
+      if (Number.isNaN(date.getTime()) || date.toDateString() !== dayStart.toDateString()) return
+      const index = Math.min(3, Math.floor(date.getHours() / 6))
+      buckets[index].count += 1
+    })
+  } else {
+    const rangeDays = selectedPeriod === '최근 7일' ? 7 : 28
+    buckets.forEach((bucket, index) => { bucket.label = selectedPeriod === '최근 7일' ? `${index + 1}d` : `${index + 1}w` })
+    events.forEach((event) => {
+      const date = new Date(event.time)
+      if (Number.isNaN(date.getTime())) return
+      const diffDays = Math.floor((dayStart - new Date(date.getFullYear(), date.getMonth(), date.getDate())) / 86400000)
+      if (diffDays < 0 || diffDays >= rangeDays) return
+      const index = selectedPeriod === '최근 7일' ? rangeDays - 1 - diffDays : Math.min(3, 3 - Math.floor(diffDays / 7))
+      buckets[index].count += 1
+    })
+  }
+  return buckets
+}
+
 function HomePage() {
   const navigate = useNavigate()
+  const { t } = useUiLanguage()
   const [selectedPeriod, setSelectedPeriod] = useState('오늘')
   const [selectedSummaryId, setSelectedSummaryId] = useState('realtime')
   const [selectedEvent, setSelectedEvent] = useState(null)
@@ -183,10 +221,12 @@ function HomePage() {
       value: countSummaryEvents(mergedEvents, card.id),
     }))
   }, [mergedEvents])
+  const riskTypeData = useMemo(() => makeRiskTypeData(riskFactors), [riskFactors])
+  const trendData = useMemo(() => makeTrendData(mergedEvents, selectedPeriod), [mergedEvents, selectedPeriod])
 
   return (
     <div className="home-dashboard">
-      <section className="summary-grid" aria-label="홈 요약 지표">
+      <section className="summary-grid" aria-label={t('홈 요약 지표')}>
         {dashboardSummaryCards.map((item) => (
           <SummaryCard
             item={item}
@@ -217,8 +257,8 @@ function HomePage() {
       <section className="risk-section">
         <div className="section-heading">
           <div>
-            <h2 className="section-title">위험도 관리</h2>
-            <p>전체 위험도 통계와 유형별 위험도 분포를 확인합니다.</p>
+            <h2 className="section-title">{t('위험도 관리')}</h2>
+            <p>{t('전체 위험도 통계와 유형별 위험도 분포를 확인합니다.')}</p>
           </div>
         </div>
 
@@ -236,7 +276,7 @@ function HomePage() {
 
         <div className="Page-move-wrapper">
           <button className="Page-move-button" type="button" onClick={() => navigate('/actions')}>
-            조치 이력 페이지로 이동
+            {t('조치 이력 페이지로 이동')}
           </button>
         </div>
 
@@ -247,14 +287,14 @@ function HomePage() {
       <section className="statistics-section">
         <div className="section-heading">
           <div>
-            <h2 className="section-title">기간별 통계량</h2>
-            <p>기간별 위험 발생 추이와 위험 유형 비율을 확인합니다.</p>
+            <h2 className="section-title">{t('기간별 통계량')}</h2>
+            <p>{t('기간별 위험 발생 추이와 위험 유형 비율을 확인합니다.')}</p>
           </div>
           <PeriodSelector selectedPeriod={selectedPeriod} onSelectPeriod={setSelectedPeriod} />
         </div>
 
         <div className="statistics-chart-grid">
-          <RiskTrendChart data={periodChartData[selectedPeriod]} />
+          <RiskTrendChart data={trendData} />
           <RiskTypeDonutChart data={riskTypeData} />
         </div>
       </section>

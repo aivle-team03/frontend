@@ -5,6 +5,7 @@ import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined
 import SensorsIcon from '@mui/icons-material/Sensors'
 import { Box, Card, CardActionArea, Typography } from '@mui/material'
 import { useEffect, useState } from 'react'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 const iconMap = {
   realtime: SensorsIcon,
@@ -14,6 +15,7 @@ const iconMap = {
 }
 
 function SummaryCard({ item, isSelected, onSelect }) {
+  const { t } = useUiLanguage()
   const Icon = iconMap[item.id] ?? SensorsIcon
   const [displayValue, setDisplayValue] = useState(0)
 
@@ -41,19 +43,19 @@ function SummaryCard({ item, isSelected, onSelect }) {
             <Icon fontSize="small" />
           </Box>
           <Typography variant="subtitle2" className="summary-title">
-            {item.title}
+            {t(item.title)}
           </Typography>
         </div>
         <div className="summary-value-wrap">
           <Typography className="summary-value">{displayValue}</Typography>
-          <span className="summary-unit">건</span>
+          <span className="summary-unit">{t('건')}</span>
         </div>
         <div className="summary-footer">
           <span className="summary-change">
             <ArrowUpwardIcon fontSize="inherit" />
             {item.change}
           </span>
-          <span className="summary-description">{item.description}</span>
+          <span className="summary-description">{t(item.description)}</span>
         </div>
       </CardActionArea>
     </Card>
