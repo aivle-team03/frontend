@@ -775,7 +775,7 @@ function VideoActionTabs({ value, onChange, dark = false }) {
   const { language, t } = useUiLanguage()
   return <div className={`video-action-tabs${dark ? ' is-dark' : ''}${language === 'en' ? ' is-english' : ''}`} role="tablist" aria-label={t('교육 영상 추가 방식')}>
     <button className={value === 'register' ? 'is-active' : ''} type="button" role="tab" aria-selected={value === 'register'} onClick={() => onChange('register')}>{t('등록')}</button>
-    <button className={value === 'generate' ? 'is-active' : ''} type="button" role="tab" aria-selected={value === 'generate'} onClick={() => onChange('generate')}>{t('교육 영상 생성 탭')}</button>
+    <button className={value === 'generate' ? 'is-active' : ''} type="button" role="tab" aria-selected={value === 'generate'} onClick={() => onChange('generate')}>{language === 'en' ? t('교육 영상 생성 탭') : '생성'}</button>
   </div>
 }
 

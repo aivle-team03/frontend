@@ -143,6 +143,7 @@
   font-size: 13px;
   font-weight: 850;
 }
+.company-code-tabs.is-english button { min-width: 88px; }
 
 .company-code-tabs button.active {
   color: #2f64b7;
