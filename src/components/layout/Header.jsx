@@ -21,7 +21,6 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import TranslateRoundedIcon from '@mui/icons-material/TranslateRounded'
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
@@ -395,11 +394,6 @@ function Header({ items }) {
                   })
                 )}
               </div>
-
-              <button className="notification-settings-link" type="button" onClick={handleMoveToMyPage}>
-                알림 설정 관리
-                <ArrowForwardIosRoundedIcon />
-              </button>
             </div>
           )}
         </div>
@@ -435,8 +429,8 @@ function Header({ items }) {
                   onClick={handleMoveToSafetyManagement}
                 >
                   <strong>{user.name}</strong>
-                <span>
-                  {user.department} · {user.role}
+                  <span>
+                    {user.department} · {user.role}
                   </span>
                   <small>{user.email}</small>
                 </button>
