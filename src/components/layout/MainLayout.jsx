@@ -41,39 +41,46 @@ const navigationItems = [
   { path: '/law-qa', label: 'AI 비서', icon: 'help' },
 ]
 
-function filterNavItemsByRole(items, userRole) {
-  if (!userRole) {
-    return items.filter((item) => !item.allowedRoles && !item.requiresRole)
-  }
-
-  const normalizedUserRole = String(userRole).toLowerCase().replace('_', '-')
+function filterNavItemsByRole(items, userRole = '') {
+  const normalizedUserRole = String(userRole).toLowerCase().replace(/_/g, '-')
 
   return items
+    .map((item) => {
+      if (item.children) {
+        const filteredChildren = filterNavItemsByRole(item.children, userRole)
+        return {
+          ...item,
+          children: filteredChildren,
+        }
+      }
+      return item
+    })
     .filter((item) => {
-      if (!item.allowedRoles && !item.requiresRole) return true
+      if (item.children) {
+        return item.children.length > 0
+      }
+
+      if (!item.allowedRoles && !item.requiresRole) {
+        return true
+      }
+
+      if (!userRole) {
+        return false
+      }
 
       if (item.allowedRoles && Array.isArray(item.allowedRoles)) {
         return item.allowedRoles.some(
-          (role) => String(role).toLowerCase().replace('_', '-') === normalizedUserRole
+          (role) => String(role).toLowerCase().replace(/_/g, '-') === normalizedUserRole
         )
       }
+
       if (item.requiresRole) {
-        const reqRole = String(item.requiresRole).toLowerCase().replace('_', '-')
+        const reqRole = String(item.requiresRole).toLowerCase().replace(/_/g, '-')
         return reqRole === normalizedUserRole
       }
 
       return true
     })
-    .map((item) => {
-      if (item.children) {
-        return {
-          ...item,
-          children: filterNavItemsByRole(item.children, userRole),
-        }
-      }
-      return item
-    })
-    .filter((item) => !item.children || item.children.length > 0)
 }
 
 function MainLayout({ setIsLoggedIn }) {
@@ -84,14 +91,11 @@ function MainLayout({ setIsLoggedIn }) {
   const navigate = useNavigate()
 
   useEffect(() => {
-    const handleStorageChange = () => {
-      const role = localStorage.getItem('userRole') || ''
+    const role = localStorage.getItem('userRole') || ''
+    if (role !== userRole) {
       setUserRole(role)
     }
-
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [])
+  }, [location.pathname, userRole])
 
   const filteredNavItems = useMemo(() => {
     return filterNavItemsByRole(navigationItems, userRole)
