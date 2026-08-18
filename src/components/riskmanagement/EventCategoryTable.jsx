@@ -14,6 +14,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 function EventTypeIcon({ type }) {
   if (type === '화재') return <LocalFireDepartmentIcon fontSize="small" />
@@ -24,32 +25,29 @@ function EventTypeIcon({ type }) {
 }
 
 function EventCategoryTable({ events, isDeleteMode = false, onDelete, onSeverityChange }) {
+  const { t } = useUiLanguage()
 
   return (
     <TableContainer className="events-table-wrap">
       <Table size="small" aria-label="위험 요인 리스트">
         <TableHead>
           <TableRow>
-            <TableCell>유형</TableCell>
-            <TableCell>항목</TableCell>
-            <TableCell>위험도</TableCell>
-            <TableCell>강도</TableCell>
-            <TableCell>빈도</TableCell>
+            {['유형', '항목', '위험도', '강도', '빈도'].map((label) => <TableCell key={label}>{t(label)}</TableCell>)}
           </TableRow>
         </TableHead>
         <TableBody>
           {events.map((event) => (
             <TableRow hover key={event.id} className={`event-row${isDeleteMode ? ' is-delete-mode' : ''}`}>
-              <TableCell>{event.type}</TableCell>
+              <TableCell>{t(event.type)}</TableCell>
               <TableCell>
                 <Stack direction="row" spacing={0.8} alignItems="center">
                   <Box className="event-type-icon">
                     <EventTypeIcon type={event.item} />
                   </Box>
-                  <span>{event.item}</span>
+                  <span>{t(event.item)}</span>
                 </Stack>
               </TableCell>
-              <TableCell>{event.risk}</TableCell>
+              <TableCell>{t(event.risk)}</TableCell>
               <TableCell>
                 <label className="risk-severity-select">
                   <select

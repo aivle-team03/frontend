@@ -16,6 +16,7 @@ import { getYouTubeEmbedUrl, resolveMediaUrl, resolveVisionSnapshotUrl } from '.
 import { clearAiEventSession, readAiEventSession, saveAiEventSession } from '../utils/aiEventSession.js'
 import { toMonitoringCamera } from '../utils/cctvCamera.js'
 import { BACKEND_API_URL, VISION_API_URL } from '../config/api.js'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const EQUIPMENT_CARDS = [
   { cameraId: 'extinguisher-01', displayName: '소화기 확인', categoryName: '소화기 미감지', detector: 'extinguisher', status: 'warming_up' },
@@ -33,6 +34,7 @@ function getAiPreviewUrl(aiStreamUrl, nonce) {
 }
 
 function StreamViewer({ streamUrl, aiStreamUrl, cameraId, onTimeUpdate, demoRun, waitingForAiStart = false }) {
+  const { t } = useUiLanguage()
   const [hasError, setHasError] = useState(false)
   const [previewNonce, setPreviewNonce] = useState(0)
   const videoRef = useRef(null)
@@ -48,10 +50,10 @@ function StreamViewer({ streamUrl, aiStreamUrl, cameraId, onTimeUpdate, demoRun,
   }, [])
 
   if (waitingForAiStart) {
-    return <span className={styles.cameraPlaceholder}><VideocamOutlinedIcon /><small>AI 분석 시작 중...</small></span>
+    return <span className={styles.cameraPlaceholder}><VideocamOutlinedIcon /><small>{t('AI 분석 시작 중...')}</small></span>
   }
   if (!streamUrl || hasError) {
-    return <span className={styles.cameraPlaceholder}><VideocamOutlinedIcon /><small>{hasError ? '영상 로드 실패' : '연결 중...'}</small></span>
+    return <span className={styles.cameraPlaceholder}><VideocamOutlinedIcon /><small>{hasError ? t('영상 로드 실패') : t('연결 중...')}</small></span>
   }
   if (youTubeEmbedUrl) {
     return <iframe key={youTubeEmbedUrl} src={youTubeEmbedUrl} title={`CAM #${cameraId} YouTube 영상`} allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowFullScreen style={{ width: '100%', height: '100%', border: 0, display: 'block' }} />
@@ -77,6 +79,7 @@ function formatInspectionTime(timestamp) {
 
 function MonitoringPage() {
   const navigate = useNavigate()
+  const { t } = useUiLanguage()
   const emittedDetectionKeys = useRef(new Set())
   const [serverEvents, setServerEvents] = useState([])
   const [demoEvents, setDemoEvents] = useState([])
@@ -325,23 +328,23 @@ function MonitoringPage() {
   return (
     <section className={styles.dashboardFrame} aria-label="BOSS CCTV 모니터링 작업 공간">
       <div className={styles.monitoringOverview}>
-        <div><span className={styles.overviewIcon}><SensorsRoundedIcon /></span><div><strong>CCTV AI 감지 모니터링</strong><p>현장 CCTV와 실시간 감지 상태를 확인하세요.</p></div></div>
-        <div className={styles.overviewStats}><span><i />온라인 <strong>{cameras.filter((camera) => camera.status === '정상' || camera.status === 'running').length}</strong></span><span>감지 이벤트 <strong>{events.length}</strong></span></div>
+        <div><span className={styles.overviewIcon}><SensorsRoundedIcon /></span><div><strong>{t('CCTV AI 감지 모니터링')}</strong><p>{t('현장 CCTV와 실시간 감지 상태를 확인하세요.')}</p></div></div>
+        <div className={styles.overviewStats}><span><i />{t('온라인')} <strong>{cameras.filter((camera) => camera.status === '정상' || camera.status === 'running').length}</strong></span><span>{t('감지 이벤트')} <strong>{events.length}</strong></span></div>
       </div>
 
       <div className={styles.cctvemptyarea}>
         <div className={styles.cctvSection}>
           <section className={styles.cctvmonitoringSection}>
-            <header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><span className={styles.sectionIcon}><GridViewRoundedIcon /></span><div><h2 className={styles.title}>실시간 CCTV</h2><p>화재 테스트와 지게차·보행자 거리 테스트를 분석합니다.</p></div></div><div className={styles.headerActions}><button className={styles.panelAction} type="button" onClick={restartDemo}><ReplayRoundedIcon />데모 재시작</button></div></header>
+            <header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><span className={styles.sectionIcon}><GridViewRoundedIcon /></span><div><h2 className={styles.title}>{t('실시간 CCTV')}</h2><p>{t('화재 테스트와 지게차·보행자 거리 테스트를 분석합니다.')}</p></div></div><div className={styles.headerActions}><button className={styles.panelAction} type="button" onClick={restartDemo}><ReplayRoundedIcon />{t('데모 재시작')}</button></div></header>
             <div className={styles.videodashBoard}>{cameras.map((camera) => <button className={styles.video} onClick={() => navigate(`/monitoringdetail?camera=${camera.id}${camera.isDemo ? `&t=${Math.floor(playbackTimes.current[camera.id] || 0)}` : ''}`)} key={camera.id} type="button" aria-label={`${camera.area} 영상 상세 보기`}><span className={styles.cameraTopbar}><span className={styles.cameraLive}><i />LIVE</span>{!camera.isDemo && <span>CAM {camera.id}</span>}</span><StreamViewer streamUrl={camera.streamUrl} aiStreamUrl={camera.aiStreamUrl || ''} cameraId={camera.id} demoRun={camera.isDemo ? demoRun : 0} waitingForAiStart={Boolean(camera.aiStreamUrl) && !aiSessionReady} onTimeUpdate={(event) => handleVideoTimeUpdate(camera, event)} /><span className={styles.cameraFooter}><span><strong>{camera.name || camera.area}</strong>{camera.location}</span></span></button>)}</div>
           </section>
           <section className={styles.equipmentSection}>
             <header className={styles.sectionHeader}>
               <div className={styles.sectionTitleGroup}>
                 <span className={styles.sectionIcon}><SensorsRoundedIcon /></span>
-                <div><h2 className={styles.title}>소화설비 자동 점검</h2><p>최근 점검 프레임의 AI 탐지 결과를 확인합니다.</p></div>
+                <div><h2 className={styles.title}>{t('소화설비 자동 점검')}</h2><p>{t('최근 점검 프레임의 AI 탐지 결과를 확인합니다.')}</p></div>
               </div>
-              <span className={styles.inspectionInterval}>10분 주기</span>
+              <span className={styles.inspectionInterval}>{t('10분 주기')}</span>
             </header>
             <div className={styles.equipmentGrid}>
               {equipmentInspections.map((inspection) => {
@@ -351,13 +354,13 @@ function MonitoringPage() {
                 const imageUrl = inspection.inspectedAt ? `${inspection.imageUrl}?updated=${inspection.inspectedAt}` : ''
                 return <article className={`${styles.equipmentCard} ${isWarning ? styles.equipmentWarning : ''}`} key={inspection.cameraId}>
                   <div className={styles.equipmentImage}>
-                    {imageUrl ? <img src={imageUrl} alt={`${inspection.displayName} 점검 결과`} /> : <span className={styles.equipmentPlaceholder}><VideocamOutlinedIcon />{isOffline ? 'AI 서버 연결 안 됨' : '점검 준비 중'}</span>}
-                    <span className={`${styles.equipmentStatus} ${isWarning || isOffline ? styles.equipmentStatusWarning : ''}`}>{isOffline ? '연결 안 됨' : isWaiting ? '점검 준비 중' : isWarning ? '조치 필요' : '정상'}</span>
+                    {imageUrl ? <img src={imageUrl} alt={`${inspection.displayName} ${t('점검 결과')}`} /> : <span className={styles.equipmentPlaceholder}><VideocamOutlinedIcon />{isOffline ? t('AI 서버 연결 안 됨') : t('점검 준비 중')}</span>}
+                    <span className={`${styles.equipmentStatus} ${isWarning || isOffline ? styles.equipmentStatusWarning : ''}`}>{isOffline ? t('연결 안 됨') : isWaiting ? t('점검 준비 중') : isWarning ? t('조치 필요') : t('정상')}</span>
                   </div>
                   <div className={styles.equipmentContent}>
                     <strong>{inspection.displayName}</strong>
                     <p>{isOffline ? (inspection.inspectedAt ? '마지막 점검 결과를 표시하고 있습니다.' : 'AI 서버를 시작하면 점검 프레임이 표시됩니다.') : isWaiting ? 'AI 서버가 첫 점검 결과를 준비하고 있습니다.' : isWarning ? inspection.reason || '설비 미감지' : `${inspection.detectedCount}개 탐지됨 · 신뢰도 ${Math.round((inspection.confidence || 0) * 100)}%`}</p>
-                    <small>최근 점검 {formatInspectionTime(inspection.inspectedAt)}</small>
+                    <small>{t('최근 점검')} {formatInspectionTime(inspection.inspectedAt)}</small>
                   </div>
                 </article>
               })}
@@ -366,7 +369,7 @@ function MonitoringPage() {
         </div>
 
         <div className={styles.EventSection}>
-          <section className={styles.liveEvent}><header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><span className={`${styles.sectionIcon} ${styles.alertIcon}`}><WarningAmberRoundedIcon /></span><div><h2 className={styles.title}>최근 감지 이벤트</h2><p>CCTV 감지 이벤트와 연결된 조치 내역을 최근순으로 표시합니다.</p></div></div><span className={styles.alertCount}>{events.length}건</span></header><RecentEventsTable events={events} selectedEvent={selectedEvent} onSelectEvent={setSelectedEvent} /></section>
+          <section className={styles.liveEvent}><header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><span className={`${styles.sectionIcon} ${styles.alertIcon}`}><WarningAmberRoundedIcon /></span><div><h2 className={styles.title}>{t('최근 감지 이벤트')}</h2><p>{t('CCTV 감지 이벤트와 연결된 조치 내역을 최근순으로 표시합니다.')}</p></div></div><span className={styles.alertCount}>{events.length}{t('건')}</span></header><RecentEventsTable events={events} selectedEvent={selectedEvent} onSelectEvent={setSelectedEvent} /></section>
           <section className={styles.emptyBox}><header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><div><h2 className={styles.title}>이벤트 상세</h2><p>선택한 감지 결과를 확인합니다.</p></div></div></header>{selectedEvent ? <div className={styles.eventDetail}><div className={styles.eventDetailHeadline}><span className={styles.eventWarningIcon}><WarningAmberRoundedIcon /></span><div><span>{selectedEvent.isDemo ? 'AI 데모 감지' : selectedEvent.status}</span><strong>{selectedEvent.type}</strong></div></div><dl><div><dt><LocationOnOutlinedIcon />감지 위치</dt><dd>{selectedEvent.location}</dd></div><div><dt><AccessTimeRoundedIcon />감지 시간</dt><dd>{selectedEvent.time}</dd></div><div><dt>신뢰도</dt><dd>{selectedEvent.confidence ? `${Math.round(selectedEvent.confidence * 100)}%` : '-'}</dd></div></dl><button type="button" onClick={() => navigate('/checklists/management')}>체크리스트 확인 <ArrowForwardRoundedIcon /></button></div> : <div className={styles.emptyEvent}>아직 감지된 데모 이벤트가 없습니다.</div>}</section>
         </div>
       </div>

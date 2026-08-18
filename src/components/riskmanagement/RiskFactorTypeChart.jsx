@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 const riskTypeColors = [
   '#f76773',
@@ -33,7 +34,7 @@ function getRiskColor(index) {
   return riskTypeColors[index % riskTypeColors.length]
 }
 
-function makeTypeCountData(risks) {
+function makeTypeCountData(risks, t) {
   const countMap = {}
   risks.forEach((risk) => {
     countMap[risk.type] = (countMap[risk.type] || 0) + 1
@@ -45,7 +46,7 @@ function makeTypeCountData(risks) {
   }))
 
   typeData.push({
-    type: '전체',
+    type: t('전체'),
     count: risks.length,
   })
 
@@ -53,7 +54,8 @@ function makeTypeCountData(risks) {
 }
 
 function RiskFactorTypeChart({ risks }) {
-  const chartData = makeTypeCountData(risks)
+  const { t } = useUiLanguage()
+  const chartData = makeTypeCountData(risks, t)
 
   return (
     <Box>
@@ -63,7 +65,7 @@ function RiskFactorTypeChart({ risks }) {
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <YAxis dataKey="count" allowDecimals={false} />
             <XAxis dataKey="type" width={20} />
-            <Tooltip formatter={(value) => [`${value}`, '개수']} />
+            <Tooltip formatter={(value) => [`${value}`, t('개수')]} />
             <Bar
               dataKey="count"
               radius={[8, 8, 0, 0]}

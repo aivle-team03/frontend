@@ -12,6 +12,7 @@ import {
   saveChecklistManagementRecords,
   saveInspectionCatalogRecords,
 } from '../utils/checklistStatusStorage'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const CATEGORIES = ['소방안전', '산업안전', '시설안전', '기타']
 export const BASE_INSPECTION_RECORDS = [
@@ -44,7 +45,9 @@ const getRecords = () => {
     return merged.cycle === '작업 전' ? { ...merged, cycle: '매주' } : merged
   })
 }
-const areaLabel = (areas) => areas.length > 1 ? `${areas[0]} 외 ${areas.length - 1}개 구역` : areas[0]
+const areaLabel = (areas, language) => areas.length > 1
+  ? `${areas[0]} ${language === 'en' ? `+ ${areas.length - 1} areas` : `외 ${areas.length - 1}개 구역`}`
+  : areas[0]
 
 const INSPECTION_HISTORY_MANAGERS = ['이안전', '박동준', '최유진', '김민수']
 const INSPECTION_HISTORY_STATUSES = ['점검 완료', '점검 완료', '조치 필요']
@@ -65,6 +68,7 @@ function getAreaLatestInspectionHistories(record) {
 }
 
 function InspectionListPage() {
+  const { language, t } = useUiLanguage()
   const [catalogRecords, setCatalogRecords] = useState([])
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('전체 카테고리')
@@ -129,18 +133,18 @@ function InspectionListPage() {
     <section className={`inspection-list-page${isCatalogLoading ? ' is-data-loading' : ''}`} aria-busy={isCatalogLoading}>
       <article className="inspection-table-card">
         <header>
-          <div><span>INSPECTION DIRECTORY</span><h3>점검 목록</h3><p>주기적으로 확인해야 할 핵심 안전 점검 항목입니다. 행을 선택하면 점검 주기를 변경할 수 있습니다.</p></div>
+          <div><span>INSPECTION DIRECTORY</span><h3>{t('점검 목록')}</h3><p>{t('주기적으로 확인해야 할 핵심 안전 점검 항목입니다. 행을 선택하면 점검 주기를 변경할 수 있습니다.')}</p></div>
           <div className="inspection-filters">
-            <label className="inspection-search"><SearchRoundedIcon /><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(0) }} placeholder="점검 이름 또는 구역 검색" /></label>
-            <select value={category} onChange={(event) => { setCategory(event.target.value); setPage(0) }}><option>전체 카테고리</option>{CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select>
+            <label className="inspection-search"><SearchRoundedIcon /><input value={query} onChange={(event) => { setQuery(event.target.value); setPage(0) }} placeholder={t('점검 이름 또는 구역 검색')} /></label>
+            <select value={category} onChange={(event) => { setCategory(event.target.value); setPage(0) }}><option>{t('전체 카테고리')}</option>{CATEGORIES.map((item) => <option key={item} value={item}>{t(item)}</option>)}</select>
           </div>
         </header>
-        <div className="inspection-table-scroll"><table className="inspection-table"><thead><tr><th>번호</th><th>점검 이름</th><th>카테고리</th><th>적용 구역</th><th>점검 주기</th><th>내용</th></tr></thead><tbody>
+        <div className="inspection-table-scroll"><table className="inspection-table"><thead><tr><th>{t('번호')}</th><th>{t('점검 이름')}</th><th>{t('카테고리')}</th><th>{t('적용 구역')}</th><th>{t('점검 주기')}</th><th>{t('내용')}</th></tr></thead><tbody>
           {isCatalogLoading ? <InspectionTableSkeletonRows /> : visibleRecords.map((record, index) => <tr key={record.id} onClick={() => setSelectedId(record.id)} tabIndex="0" onKeyDown={(event) => event.key === 'Enter' && setSelectedId(record.id)}>
-            <td><span className="inspection-id">{activePage * 10 + index + 1}</span></td><td><strong>{record.name}</strong></td><td><span className="inspection-category">{record.category}</span></td><td title={record.areas.join(', ')}>{areaLabel(record.areas)}</td><td><span className="inspection-cycle">{record.cycle}</span></td><td className="inspection-content-cell">{record.content}</td>
+            <td><span className="inspection-id">{activePage * 10 + index + 1}</span></td><td><strong>{record.name}</strong></td><td><span className="inspection-category">{t(record.category)}</span></td><td title={record.areas.join(', ')}>{areaLabel(record.areas, language)}</td><td><span className="inspection-cycle">{t(record.cycle)}</span></td><td className="inspection-content-cell">{record.content}</td>
           </tr>)}
-          {!isCatalogLoading && !records.length && <tr><td className="inspection-empty" colSpan="6">조건에 맞는 점검 항목이 없습니다.</td></tr>}
-        </tbody></table></div><footer className="checklist-pagination inspection-pagination"><span>총 <strong>{records.length}</strong>건</span><div><button type="button" disabled={activePage === 0} onClick={() => setPage((current) => current - 1)}><ChevronLeftRoundedIcon /></button><b>{activePage + 1} / {pageCount}</b><button type="button" disabled={activePage === pageCount - 1} onClick={() => setPage((current) => current + 1)}><ChevronRightRoundedIcon /></button></div></footer>
+          {!isCatalogLoading && !records.length && <tr><td className="inspection-empty" colSpan="6">{t('조건에 맞는 점검 항목이 없습니다.')}</td></tr>}
+        </tbody></table></div><footer className="checklist-pagination inspection-pagination"><span>{t('전체')} <strong>{records.length}</strong>{t('건')}</span><div><button type="button" disabled={activePage === 0} onClick={() => setPage((current) => current - 1)}><ChevronLeftRoundedIcon /></button><b>{activePage + 1} / {pageCount}</b><button type="button" disabled={activePage === pageCount - 1} onClick={() => setPage((current) => current + 1)}><ChevronRightRoundedIcon /></button></div></footer>
       </article>
 
       {selectedRecord && <div className="inspection-modal-backdrop" role="presentation" onMouseDown={() => setSelectedId(null)}><section className="inspection-detail-modal" role="dialog" aria-modal="true" aria-labelledby="inspection-detail-title" onMouseDown={(event) => event.stopPropagation()}>

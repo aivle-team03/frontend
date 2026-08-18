@@ -19,6 +19,7 @@ import VideoLibraryOutlinedIcon from '@mui/icons-material/VideoLibraryOutlined'
 import VideoFileOutlinedIcon from '@mui/icons-material/VideoFileOutlined'
 import axios from 'axios'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const API_BASE_URL = BACKEND_API_URL
 
@@ -59,6 +60,7 @@ const targetCompletionColors = {
   '안전 관리자': '#df626c',
 }
 function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) {
+  const { t } = useUiLanguage()
   const [apiCourses, setApiCourses] = useState(null)
   const [apiCompletion, setApiCompletion] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -542,45 +544,45 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       <div className="education-creation-grid">
         <article ref={registerCardRef} className={`education-panel video-register-card${videoAction !== 'register' ? ' is-action-hidden' : ''}`} style={generatedCardHeight ? { height: `${generatedCardHeight}px` } : undefined}>
           <div className="card-heading-row">
-            <PanelTitle icon={VideoFileOutlinedIcon} kicker="교육 영상 등록" title="교육 영상 추가" />
+            <PanelTitle icon={VideoFileOutlinedIcon} kicker={t('교육 영상 등록')} title={t('교육 영상 추가')} />
             <VideoActionTabs value={videoAction} onChange={setVideoAction} />
           </div>
-          <p className="card-intro">영상을 등록하면 선택한 대상자의 교육 목록에 즉시 표시됩니다.</p>
+          <p className="card-intro">{t('영상을 등록하면 선택한 대상자의 교육 목록에 즉시 표시됩니다.')}</p>
           <form className="video-register-form" onSubmit={addVideoCourse}>
-            <FormField label="교육명" required>
-              <input value={courseForm.title} onChange={(event) => updateCourseForm('title', event.target.value)} placeholder="예: 3분기 지게차 안전교육" />
+            <FormField label={t('교육명')} required>
+              <input value={courseForm.title} onChange={(event) => updateCourseForm('title', event.target.value)} placeholder={t('예: 3분기 지게차 안전교육')} />
             </FormField>
             <div className={courseForm.target === '일반유저' ? 'three-column-fields' : 'two-column-fields'}>
-              <FormField label="이수 대상" required>
-                <StyledSelect value={courseForm.target} options={targetGroups} onChange={(value) => updateCourseForm('target', value)} ariaLabel="이수 대상" />
+              <FormField label={t('이수 대상')} required>
+                <StyledSelect value={courseForm.target} options={targetGroups} onChange={(value) => updateCourseForm('target', value)} ariaLabel={t('이수 대상')} displayValue={t} />
               </FormField>
-              {courseForm.target === '일반유저' && <FormField label="세부 카테고리" required>
-                <StyledSelect value={courseForm.targetCategory} options={generalUserCategoryOptions} onChange={(value) => updateCourseForm('targetCategory', value)} ariaLabel="일반유저 세부 카테고리" />
+              {courseForm.target === '일반유저' && <FormField label={t('세부 카테고리')} required>
+                <StyledSelect value={courseForm.targetCategory} options={generalUserCategoryOptions} onChange={(value) => updateCourseForm('targetCategory', value)} ariaLabel={t('일반유저 세부 카테고리')} displayValue={t} />
               </FormField>}
-              <FormField label="이수 유형" required>
-                <StyledSelect value={courseForm.educationType} options={educationTypes} onChange={(value) => updateCourseForm('educationType', value)} ariaLabel="이수 유형" />
+              <FormField label={t('이수 유형')} required>
+                <StyledSelect value={courseForm.educationType} options={educationTypes} onChange={(value) => updateCourseForm('educationType', value)} ariaLabel={t('이수 유형')} displayValue={t} />
               </FormField>
             </div>
-            <FormField label="마감일" required>
+            <FormField label={t('마감일')} required>
                 <input type="date" value={courseForm.deadline} onChange={(event) => updateCourseForm('deadline', event.target.value)} />
             </FormField>
-            <div className="source-tabs" role="tablist" aria-label="영상 등록 방식">
-              <button className={videoSourceType === 'file' ? 'is-active' : ''} type="button" onClick={() => setVideoSourceType('file')}><CloudUploadOutlinedIcon /> 파일 첨부</button>
-              <button className={videoSourceType === 'url' ? 'is-active' : ''} type="button" onClick={() => setVideoSourceType('url')}><LinkRoundedIcon /> URL 입력</button>
+            <div className="source-tabs" role="tablist" aria-label={t('영상 등록 방식')}>
+              <button className={videoSourceType === 'file' ? 'is-active' : ''} type="button" onClick={() => setVideoSourceType('file')}><CloudUploadOutlinedIcon /> {t('파일 첨부')}</button>
+              <button className={videoSourceType === 'url' ? 'is-active' : ''} type="button" onClick={() => setVideoSourceType('url')}><LinkRoundedIcon /> {t('URL 입력')}</button>
             </div>
             {videoSourceType === 'file' ? (
               <button className={`upload-dropzone compact${videoFile ? ' has-file' : ''}`} type="button" onClick={() => videoInputRef.current?.click()}>
                 <input ref={videoInputRef} type="file" accept="video/*" onChange={(event) => setVideoFile(event.target.files?.[0] ?? null)} />
                 <VideoFileOutlinedIcon />
-                <span><strong>{videoFile?.name ?? '교육 영상 파일을 선택하세요'}</strong><small>MP4, MOV, WebM 등 영상 파일</small></span>
-                <b>{videoFile ? '변경' : '찾아보기'}</b>
+                <span><strong>{videoFile?.name ?? t('교육 영상 파일을 선택하세요')}</strong><small>{t('MP4, MOV, WebM 등 영상 파일')}</small></span>
+                <b>{videoFile ? t('변경') : t('찾아보기')}</b>
               </button>
             ) : (
-              <FormField label="영상 URL" required>
+              <FormField label={t('영상 URL')} required>
                 <input type="url" value={courseForm.videoUrl} onChange={(event) => updateCourseForm('videoUrl', event.target.value)} placeholder="https://..." />
               </FormField>
             )}
-            <button className="primary-course-button" type="submit"><AddCircleOutlineRoundedIcon /> 교육 리스트에 추가</button>
+            <button className="primary-course-button" type="submit"><AddCircleOutlineRoundedIcon /> {t('교육 리스트에 추가')}</button>
             {(notice || apiError) && <p className={`form-notice${notice.includes('추가되었습니다') ? ' is-success' : ''}`} role="status">{notice || apiError}</p>}
           </form>
         </article>
@@ -588,30 +590,30 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
         <article ref={generatedCardRef} className={`education-panel ai-video-card${videoAction !== 'generate' && !generatedMeasureWidth ? ' is-action-hidden' : ''}${generatedMeasureWidth ? ' is-generated-measurement' : ''}${aiStatus === 'queued' ? ' is-generating' : ''}`} style={generatedMeasureWidth ? { width: `${generatedMeasureWidth}px` } : undefined} aria-busy={aiStatus === 'queued'}>
           <div className="ai-card-glow" />
           <div className="card-heading-row">
-            <PanelTitle icon={MovieCreationOutlinedIcon} kicker="교육 영상 생성" title="교육 영상 생성" dark />
+            <PanelTitle icon={MovieCreationOutlinedIcon} kicker={t('교육 영상 생성')} title={t('교육 영상 생성')} dark />
             <VideoActionTabs value={videoAction} onChange={setVideoAction} dark />
           </div>
           {!generatedVideo && <>
           {aiStatus === 'published' && <div className="ai-publish-notice" role="status"><CheckCircleOutlineRoundedIcon /><span><strong>교육 목록에 등록되었습니다.</strong> 교육 관리와 내 교육 리스트에서 확인할 수 있습니다.</span></div>}
-          <p className="card-intro">교육 자료를 업로드하면 핵심 내용을 분석해 교육용 영상 초안을 만듭니다.</p>
+          <p className="card-intro">{t('교육 자료를 업로드하면 핵심 내용을 분석해 교육용 영상 초안을 만듭니다.')}</p>
           <form className="ai-video-form" onSubmit={requestAiVideo}>
-            <label className="education-select"><span>교육명<b>*</b></span><input value={aiForm.title} onChange={(event) => updateAiForm('title', event.target.value)} placeholder="예: 창고 화재 예방 안전 교육" /></label>
+            <label className="education-select"><span>{t('교육명')}<b>*</b></span><input value={aiForm.title} onChange={(event) => updateAiForm('title', event.target.value)} placeholder={t('예: 창고 화재 예방 안전 교육')} /></label>
             <div className={aiForm.target === '일반유저' ? 'three-column-fields ai-generation-metadata' : 'two-column-fields ai-generation-metadata'}>
-              <EducationSelect label="이수 대상" value={aiForm.target} options={targetGroups} onChange={updateAiTarget} required />
-              {aiForm.target === '일반유저' && <EducationSelect label="세부 카테고리" value={aiForm.category} options={generalUserCategoryOptions} onChange={(value) => updateAiForm('category', value)} required />}
-              <EducationSelect label="이수 유형" value={aiForm.educationType} options={educationTypes} onChange={(value) => updateAiForm('educationType', value)} required />
+              <EducationSelect label={t('이수 대상')} value={aiForm.target} options={targetGroups} onChange={updateAiTarget} required />
+              {aiForm.target === '일반유저' && <EducationSelect label={t('세부 카테고리')} value={aiForm.category} options={generalUserCategoryOptions} onChange={(value) => updateAiForm('category', value)} required />}
+              <EducationSelect label={t('이수 유형')} value={aiForm.educationType} options={educationTypes} onChange={(value) => updateAiForm('educationType', value)} required />
             </div>
-            <label className="education-select"><span>교육 마감일<b>*</b></span><input type="date" value={aiForm.dueDate} onChange={(event) => updateAiForm('dueDate', event.target.value)} required /></label>
-            <label className="education-select"><span>사용 장비<b>*</b></span><input value={aiForm.equipment} onChange={(event) => updateAiForm('equipment', event.target.value)} placeholder="예: 지게차, 안전모, 절단기" /></label>
-            <label className="education-select"><span>위험 요인<b>*</b></span><input value={aiForm.riskFactor} onChange={(event) => updateAiForm('riskFactor', event.target.value)} placeholder="예: 충돌, 낙하, 끼임" /></label>
-            <label className="education-select generation-request"><span>요청 사항</span><textarea value={aiForm.request} onChange={(event) => updateAiForm('request', event.target.value)} placeholder="예: 지게차 운전자의 시점으로, 보호구 착용을 강조해 주세요." rows="3" /></label>
+            <label className="education-select"><span>{t('교육 마감일')}<b>*</b></span><input type="date" value={aiForm.dueDate} onChange={(event) => updateAiForm('dueDate', event.target.value)} required /></label>
+            <label className="education-select"><span>{t('사용 장비')}<b>*</b></span><input value={aiForm.equipment} onChange={(event) => updateAiForm('equipment', event.target.value)} placeholder={t('예: 지게차, 안전모, 절단기')} /></label>
+            <label className="education-select"><span>{t('위험 요인')}<b>*</b></span><input value={aiForm.riskFactor} onChange={(event) => updateAiForm('riskFactor', event.target.value)} placeholder={t('예: 충돌, 낙하, 끼임')} /></label>
+            <label className="education-select generation-request"><span>{t('요청 사항')}</span><textarea value={aiForm.request} onChange={(event) => updateAiForm('request', event.target.value)} placeholder={t('예: 지게차 운전자의 시점으로, 보호구 착용을 강조해 주세요.')} rows="3" /></label>
             <button className={`upload-dropzone ai-upload${materialFile ? ' has-file' : ''}`} type="button" onClick={() => materialInputRef.current?.click()}>
               <input ref={materialInputRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.hwp,.txt" onChange={(event) => setMaterialFile(event.target.files?.[0] ?? null)} />
               <CloudUploadOutlinedIcon />
-              <span><strong>{materialFile?.name ?? '교육 자료 업로드'}</strong><small>PDF, Word, PPT, HWP · 원본은 서버에 저장하지 않습니다</small></span>
+              <span><strong>{materialFile?.name ?? t('교육 자료 업로드')}</strong><small>PDF, Word, PPT, HWP · {t('원본은 서버에 저장하지 않습니다')}</small></span>
             </button>
-            <button className="ai-generate-button" type="submit"><VideoLibraryOutlinedIcon /> AI 교육 영상 생성</button>
-            {aiStatus === 'error' && <p className="ai-form-status is-error">교육명, 사용 장비, 위험 요인, 교육 마감일을 입력해 주세요.</p>}
+            <button className="ai-generate-button" type="submit"><VideoLibraryOutlinedIcon /> {t('AI 교육 영상 생성')}</button>
+            {aiStatus === 'error' && <p className="ai-form-status is-error">{t('교육명, 사용 장비, 위험 요인, 교육 마감일을 입력해 주세요.')}</p>}
           </form>
           </>}
           {generatedVideo && aiStatus !== 'queued' && (
@@ -643,8 +645,8 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       <div className="management-overview-row">
         <article className="education-panel completion-summary-card">
           <div className="management-card-heading">
-            <PanelTitle icon={DonutSmallRoundedIcon} kicker="교육 현황" title="교육 이수 현황" />
-            <StyledSelect className="management-filter-select" ariaLabel="교육 이수 현황 기준" value={selectedTarget} options={orderedCompletion.map((item) => item.label)} onChange={setSelectedTarget} />
+            <PanelTitle icon={DonutSmallRoundedIcon} kicker={t('교육 현황')} title={t('교육 이수 현황')} />
+            <StyledSelect className="management-filter-select" ariaLabel={t('교육 이수 현황 기준')} value={selectedTarget} options={orderedCompletion.map((item) => item.label)} onChange={setSelectedTarget} displayValue={t} />
           </div>
           {selectedTarget === '전체' ? (
             <div className="completion-metric-grid" key={selectedTarget}>
@@ -652,26 +654,26 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
             </div>
           ) : (
             <div className="completion-focus-card is-clickable" key={selectedTarget} style={{ '--focus-color': targetCompletionColors[selectedTarget] ?? '#4f75d1' }} role="button" tabIndex="0" onClick={() => openAttendanceModal({ title: `${selectedCompletion.label} 교육 이수 현황`, target: selectedCompletion.label, total: selectedCompletion.total, completed: selectedCompletion.completed })} onKeyDown={(event) => event.key === 'Enter' && openAttendanceModal({ title: `${selectedCompletion.label} 교육 이수 현황`, target: selectedCompletion.label, total: selectedCompletion.total, completed: selectedCompletion.completed })}>
-              <div className="completion-focus-chart" style={{ '--completion-rate': `${selectedCompletion.value}%` }}><div><strong>{selectedCompletion.value}<small>%</small></strong><span>이수율</span></div></div>
-              <div className="completion-focus-copy"><span>선택 대상</span><h4>{selectedCompletion.label}</h4><p><strong>{selectedCompletion.completed}명</strong> 이수 / 전체 {selectedCompletion.total}명</p><div className="completion-focus-progress"><i style={{ width: `${selectedCompletion.value}%` }} /></div></div>
-              <div className="completion-focus-courses"><div><strong>대상 교육</strong><span>{selectedTargetCourses.length}개 과정</span></div>{selectedTargetCourses.slice(0, 2).map((course) => <p key={course.id}><span>{course.title}</span><b>{course.status}</b></p>)}</div>
+              <div className="completion-focus-chart" style={{ '--completion-rate': `${selectedCompletion.value}%` }}><div><strong>{selectedCompletion.value}<small>%</small></strong><span>{t('이수율')}</span></div></div>
+              <div className="completion-focus-copy"><span>{t('선택 대상')}</span><h4>{t(selectedCompletion.label)}</h4><p><strong>{selectedCompletion.completed}{t('명')}</strong> {t('이수')} / {t('전체')} {selectedCompletion.total}{t('명')}</p><div className="completion-focus-progress"><i style={{ width: `${selectedCompletion.value}%` }} /></div></div>
+              <div className="completion-focus-courses"><div><strong>{t('대상 교육')}</strong><span>{selectedTargetCourses.length}{t('개 과정')}</span></div>{selectedTargetCourses.slice(0, 2).map((course) => <p key={course.id}><span>{course.title}</span><b>{t(course.status)}</b></p>)}</div>
             </div>
           )}
         </article>
 
         {/* 하단 테이블: 대상자별 교육 리스트 */}
         <article ref={courseTableCardRef} className="education-panel management-course-table-card">
-          <div className="management-card-heading table-card-heading"><PanelTitle icon={GroupsOutlinedIcon} kicker="교육 대상자" title="대상자별 교육 리스트" /><span className="course-count">총 {allCourses.length}개 과정</span></div>
+          <div className="management-card-heading table-card-heading"><PanelTitle icon={GroupsOutlinedIcon} kicker={t('교육 대상자')} title={t('대상자별 교육 리스트')} /><span className="course-count">{t('총')} {allCourses.length}{t('개 과정')}</span></div>
           <div className="course-table-toolbar">
-            <label className="course-search"><SearchRoundedIcon /><input value={courseSearch} onChange={(event) => { setCourseSearch(event.target.value); setCoursePage(0) }} placeholder="교육명 검색" /></label>
-            <StyledSelect className="course-target-select" value={tableTarget} options={targetOptions} onChange={(value) => { setTableTarget(value); setCoursePage(0) }} ariaLabel="교육 대상 필터" />
+            <label className="course-search"><SearchRoundedIcon /><input value={courseSearch} onChange={(event) => { setCourseSearch(event.target.value); setCoursePage(0) }} placeholder={t('교육명 검색')} /></label>
+            <StyledSelect className="course-target-select" value={tableTarget} options={targetOptions} onChange={(value) => { setTableTarget(value); setCoursePage(0) }} ariaLabel={t('교육 대상 필터')} displayValue={t} />
           </div>
           <div className="management-table-wrap">
             <table className="management-course-table">
-              <thead><tr><th>교육명</th><th>대상</th><th>마감일</th><th>이수 대상</th><th>이수 완료</th><th>이수율</th><th>상태</th></tr></thead>
+              <thead><tr><th>{t('교육명')}</th><th>{t('대상')}</th><th>{t('마감일')}</th><th>{t('이수 대상')}</th><th>{t('이수 완료')}</th><th>{t('이수율')}</th><th>{t('상태')}</th></tr></thead>
               <tbody>{visibleCourses.map((course, index) => {
                 const metric = course.isCustom ? { progress: 0, assigned: course.target === '전체 임직원' ? 152 : 24, completed: 0 } : (course.apiMetric ?? courseMetrics[course.id - 1] ?? courseMetrics[index])
-                return <tr className={`${course.isCustom ? 'is-new-course ' : ''}is-course-row`} key={course.id} role="button" tabIndex="0" onClick={() => openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed, educationId: course.educationId })} onKeyDown={(event) => event.key === 'Enter' && openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed, educationId: course.educationId })}><td>{course.title}{course.isCustom && <span className="new-course-dot">NEW</span>}</td><td>{course.target}</td><td>{course.deadline}</td><td>{metric.assigned}명</td><td>{metric.completed}명</td><td><span className="course-rate"><b>{metric.progress}%</b><i><em style={{ width: `${metric.progress}%` }} /></i></span></td><td><span className={`education-status${course.isCustom ? ' status-waiting' : ` status-${course.id}`}`}>{course.status}</span></td></tr>
+                return <tr className={`${course.isCustom ? 'is-new-course ' : ''}is-course-row`} key={course.id} role="button" tabIndex="0" onClick={() => openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed, educationId: course.educationId })} onKeyDown={(event) => event.key === 'Enter' && openAttendanceModal({ title: course.title, target: course.target, total: metric.assigned, completed: metric.completed, educationId: course.educationId })}><td>{course.title}{course.isCustom && <span className="new-course-dot">NEW</span>}</td><td>{t(course.target)}</td><td>{course.deadline}</td><td>{metric.assigned}{t('명')}</td><td>{metric.completed}{t('명')}</td><td><span className="course-rate"><b>{metric.progress}%</b><i><em style={{ width: `${metric.progress}%` }} /></i></span></td><td><span className={`education-status${course.isCustom ? ' status-waiting' : ` status-${course.id}`}`}>{t(course.status)}</span></td></tr>
               })}</tbody>
             </table>
           </div>
@@ -698,8 +700,9 @@ function EducationManagementLoadingSkeleton() {
 }
 
 function CompletionMetric({ item, overall, metricIndex, onOpen }) {
+  const { t } = useUiLanguage()
   const MetricIcon = completionMetricIcons[metricIndex] ?? GroupsOutlinedIcon
-  return <div className={`completion-metric metric-tone-${metricIndex}${overall ? ' is-featured is-overall' : ''}`} style={{ '--metric-color': completionColors[metricIndex % completionColors.length], '--animation-delay': `${metricIndex * 90}ms` }} role="button" tabIndex="0" onClick={onOpen} onKeyDown={(event) => event.key === 'Enter' && onOpen()}><div className="metric-label"><span className="metric-icon"><MetricIcon /></span><strong>{item.label}</strong></div><div className="metric-value-row"><strong>{item.value}<small>%</small></strong><span className="metric-ring" style={{ '--completion-rate': `${item.value}%` }}><i /></span></div><small>{item.completed} / {item.total}명</small></div>
+  return <div className={`completion-metric metric-tone-${metricIndex}${overall ? ' is-featured is-overall' : ''}`} style={{ '--metric-color': completionColors[metricIndex % completionColors.length], '--animation-delay': `${metricIndex * 90}ms` }} role="button" tabIndex="0" onClick={onOpen} onKeyDown={(event) => event.key === 'Enter' && onOpen()}><div className="metric-label"><span className="metric-icon"><MetricIcon /></span><strong>{t(item.label)}</strong></div><div className="metric-value-row"><strong>{item.value}<small>%</small></strong><span className="metric-ring" style={{ '--completion-rate': `${item.value}%` }}><i /></span></div><small>{item.completed} / {item.total}{t('명')}</small></div>
 }
 
 function AttendanceModal({ detail, attendees, loading, filter, onFilterChange, search, onSearchChange, onClose }) {
@@ -738,10 +741,11 @@ function AnimatedNumber({ value, suffix }) {
 }
 
 function EducationSelect({ label, value, options, onChange, required = false }) {
-  return <label className="education-select"><span>{label}{required && <b>*</b>}</span><StyledSelect value={value} options={options} onChange={onChange} ariaLabel={label} /></label>
+  const { t } = useUiLanguage()
+  return <label className="education-select"><span>{label}{required && <b>*</b>}</span><StyledSelect value={value} options={options} onChange={onChange} ariaLabel={label} displayValue={t} /></label>
 }
 
-function StyledSelect({ value, options, onChange, ariaLabel, className = '' }) {
+function StyledSelect({ value, options, onChange, ariaLabel, className = '', displayValue = (option) => option }) {
   const [isOpen, setIsOpen] = useState(false)
   const selectRef = useRef(null)
 
@@ -755,10 +759,10 @@ function StyledSelect({ value, options, onChange, ariaLabel, className = '' }) {
 
   return <div className={`styled-select ${className}${isOpen ? ' is-open' : ''}`} ref={selectRef}>
     <button className="styled-select-trigger" type="button" aria-label={ariaLabel} aria-haspopup="listbox" aria-expanded={isOpen} onClick={() => setIsOpen((open) => !open)} onKeyDown={(event) => event.key === 'Escape' && setIsOpen(false)}>
-      <span>{value}</span><KeyboardArrowDownRoundedIcon />
+      <span>{displayValue(value)}</span><KeyboardArrowDownRoundedIcon />
     </button>
     {isOpen && <div className="styled-select-menu" role="listbox" aria-label={ariaLabel}>
-      {options.map((option) => <button className={option === value ? 'is-selected' : ''} type="button" role="option" aria-selected={option === value} key={option} onClick={() => { onChange(option); setIsOpen(false) }}><span>{option}</span>{option === value && <CheckRoundedIcon />}</button>)}
+      {options.map((option) => <button className={option === value ? 'is-selected' : ''} type="button" role="option" aria-selected={option === value} key={option} onClick={() => { onChange(option); setIsOpen(false) }}><span>{displayValue(option)}</span>{option === value && <CheckRoundedIcon />}</button>)}
     </div>}
   </div>
 }
@@ -768,9 +772,10 @@ function FormField({ label, required, children }) {
 }
 
 function VideoActionTabs({ value, onChange, dark = false }) {
-  return <div className={`video-action-tabs${dark ? ' is-dark' : ''}`} role="tablist" aria-label="교육 영상 추가 방식">
-    <button className={value === 'register' ? 'is-active' : ''} type="button" role="tab" aria-selected={value === 'register'} onClick={() => onChange('register')}>등록</button>
-    <button className={value === 'generate' ? 'is-active' : ''} type="button" role="tab" aria-selected={value === 'generate'} onClick={() => onChange('generate')}>생성</button>
+  const { language, t } = useUiLanguage()
+  return <div className={`video-action-tabs${dark ? ' is-dark' : ''}${language === 'en' ? ' is-english' : ''}`} role="tablist" aria-label={t('교육 영상 추가 방식')}>
+    <button className={value === 'register' ? 'is-active' : ''} type="button" role="tab" aria-selected={value === 'register'} onClick={() => onChange('register')}>{t('등록')}</button>
+    <button className={value === 'generate' ? 'is-active' : ''} type="button" role="tab" aria-selected={value === 'generate'} onClick={() => onChange('generate')}>{t('교육 영상 생성 탭')}</button>
   </div>
 }
 

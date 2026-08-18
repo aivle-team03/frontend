@@ -213,6 +213,7 @@
 .local-only-badge { padding: 6px 9px; border-radius: 999px; color: #63748a; background: #eff3f8; font-size: 10px; font-weight: 900; }
 .video-action-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; min-width: 112px; padding: 3px; border: 1px solid #dce5f0; border-radius: 10px; background: #f2f5f9; }
 .education-creation-grid .video-action-tabs { flex: 0 0 112px; margin-left: auto; }
+.education-creation-grid .video-action-tabs.is-english { flex-basis: 158px; min-width: 158px; }
 .video-action-tabs button { min-height: 31px; padding: 0 14px; border: 0; border-radius: 7px; color: #738298; background: transparent; font-size: 11px; font-weight: 900; cursor: pointer; }
 .video-action-tabs button.is-active { color: #256fc9; background: #fff; box-shadow: 0 3px 9px rgba(44,76,117,.12); }
 .video-action-tabs.is-dark { border-color: rgba(143,190,247,.28); background: rgba(2,23,57,.35); }

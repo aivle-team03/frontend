@@ -8,10 +8,10 @@ import '../styles/law-qa.css'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const RECOMMENDED_QUESTIONS = [
-  '현재 조치 대기와 조치 완료 건수를 알려줘',
-  '이번 달 점검 이력을 상태별로 알려줘',
-  '우리 회사 전체 교육 현황과 이수율을 알려줘',
-  '미이수 교육 현황을 과정별로 알려줘',
+  { ko: '현재 조치 대기와 조치 완료 건수를 알려줘', en: 'Tell me the current counts of pending and completed actions.' },
+  { ko: '이번 달 점검 이력을 상태별로 알려줘', en: 'Show this month’s inspection history by status.' },
+  { ko: '우리 회사 전체 교육 현황과 이수율을 알려줘', en: 'Show our company-wide training status and completion rate.' },
+  { ko: '미이수 교육 현황을 과정별로 알려줘', en: 'Show incomplete training status by course.' },
 ]
 
 function getCurrentTime() {
@@ -37,7 +37,7 @@ function createConversationId() {
 }
 
 function LawQaPage() {
-  const { t } = useUiLanguage()
+  const { t, language } = useUiLanguage()
   const [messages, setMessages] = useState(() => [createInitialMessage()])
   const [conversationId, setConversationId] = useState(createConversationId)
   const [inputValue, setInputValue] = useState('')
@@ -113,8 +113,8 @@ function LawQaPage() {
         <p>{t('자주 확인하는 안전관리 현황입니다.')}</p>
         <div className="recommend-question-list">
           {RECOMMENDED_QUESTIONS.map((question) => (
-            <button key={question} type="button" onClick={() => sendMessage(question)}>
-              {t(question)}
+            <button key={question.ko} type="button" onClick={() => sendMessage(language === 'en' ? question.en : question.ko)}>
+              {language === 'en' ? question.en : question.ko}
             </button>
           ))}
         </div>

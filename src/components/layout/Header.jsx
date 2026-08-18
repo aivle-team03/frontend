@@ -148,7 +148,7 @@ function Header({ items }) {
     window.dispatchEvent(new CustomEvent('boss-language-change', { detail: preferences.language }))
   }, [preferences])
 
-  useEffect(() => synchronizeStaticUiLanguage(preferences.language), [preferences.language])
+  useEffect(() => synchronizeStaticUiLanguage(preferences.language), [preferences.language, location.pathname])
 
 
   const fetchNotifications = useCallback(async () => {

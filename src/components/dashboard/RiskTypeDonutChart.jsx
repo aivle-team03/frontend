@@ -3,6 +3,8 @@ import { Cell, Label, Pie, PieChart, ResponsiveContainer, Tooltip } from 'rechar
 import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 const riskTypeColors = ['#FBB4AE', '#B3CDE3', '#CCEBC5', '#DECBE4']
+const emptyRiskTypeNames = ['소방안전', '시설안전', '산업안전', '기타']
+const emptyRiskTypeColor = '#dfe5ee'
 
 function RiskTypeDonutChart({ data }) {
   const { t } = useUiLanguage()
@@ -11,6 +13,12 @@ function RiskTypeDonutChart({ data }) {
     ...item,
     percent: total ? Number(((Number(item.value || 0) / total) * 100).toFixed(1)) : 0,
   }))
+  // Recharts does not draw a pie when every value is zero. Keep the empty state
+  // informative by rendering four neutral segments while retaining 0% labels.
+  const isEmpty = total === 0
+  const displayData = isEmpty
+    ? emptyRiskTypeNames.map((name) => ({ name, percent: 25, displayPercent: 0 }))
+    : chartData.map((item) => ({ ...item, displayPercent: item.percent }))
   return (
     <Box className="chart-card">
       <div className="chart-card-heading">
@@ -22,24 +30,24 @@ function RiskTypeDonutChart({ data }) {
       <Box className="chart-body donut-chart-body">
         <ResponsiveContainer width="100%" height={200}>
           <PieChart>
-            <Pie data={chartData} dataKey="percent" nameKey="name" innerRadius={60} outerRadius={90} cornerRadius={5} paddingAngle={3} stroke="none" isAnimationActive animationBegin={180} animationDuration={1100} animationEasing="ease-out">
-              {chartData.map((entry, index) => (
-                <Cell key={entry.name} fill={riskTypeColors[index % riskTypeColors.length]} />
+            <Pie data={displayData} dataKey="percent" nameKey="name" innerRadius={60} outerRadius={90} cornerRadius={5} paddingAngle={3} stroke="none" isAnimationActive animationBegin={180} animationDuration={1100} animationEasing="ease-out">
+              {displayData.map((entry, index) => (
+                <Cell key={entry.name} fill={isEmpty ? emptyRiskTypeColor : riskTypeColors[index % riskTypeColors.length]} />
               ))}
               <Label value={t('위험 유형')} position="center" className="donut-center-label" />
             </Pie>
-            <Tooltip formatter={(value) => [`${value}%`, '비율']} cursor={false} />
+            <Tooltip formatter={(_, __, item) => [`${item.payload.displayPercent}%`, t('비율')]} cursor={false} />
           </PieChart>
         </ResponsiveContainer>
       </Box>
       <div className="donut-legend">
-        {chartData.map((item, index) => (
+        {displayData.map((item, index) => (
           <div className="donut-legend-item" key={item.name}>
             <span>
-              <i style={{ backgroundColor: riskTypeColors[index % riskTypeColors.length] }} />
+              <i style={{ backgroundColor: isEmpty ? emptyRiskTypeColor : riskTypeColors[index % riskTypeColors.length] }} />
               {t(item.name)}
             </span>
-            <strong>{item.percent}%</strong>
+            <strong>{item.displayPercent}%</strong>
           </div>
         ))}
       </div>
