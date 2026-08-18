@@ -1,4 +1,4 @@
-.app-content > .app-header {
+.app-content>.app-header {
   position: relative;
   z-index: 20;
   display: flex;
@@ -84,7 +84,7 @@
   border-radius: 13px;
 }
 
-.header-icon-button > svg {
+.header-icon-button>svg {
   width: 21px;
   height: 21px;
 }
@@ -202,6 +202,7 @@
     opacity: 0;
     transform: translateY(-5px) scale(0.985);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -221,7 +222,7 @@
   border-bottom: 1px solid #edf1f6;
 }
 
-.notification-dropdown-header > div {
+.notification-dropdown-header>div {
   display: grid;
   gap: 2px;
 }
@@ -347,7 +348,7 @@
   box-shadow: 0 0 0 3px #dbeafe;
 }
 
-.notification-copy > span:not(.notification-title-row) {
+.notification-copy>span:not(.notification-title-row) {
   margin-top: 3px;
   color: #64748b;
   font-size: 12px;
@@ -503,7 +504,7 @@
   background: #f3f7fd;
 }
 
-.profile-dropdown-link > svg:first-child {
+.profile-dropdown-link>svg:first-child {
   box-sizing: content-box;
   width: 19px;
   height: 19px;
@@ -512,13 +513,13 @@
   background: #eaf2ff;
 }
 
-.profile-dropdown-link > svg:last-child {
+.profile-dropdown-link>svg:last-child {
   width: 12px;
   height: 12px;
   color: #94a3b8;
 }
 
-.profile-dropdown-link > span {
+.profile-dropdown-link>span {
   display: grid;
 }
 
@@ -536,7 +537,7 @@
 }
 
 @media (max-width: 680px) {
-  .app-content > .app-header {
+  .app-content>.app-header {
     min-height: 68px;
     padding: 10px 16px;
   }
@@ -560,4 +561,18 @@
     top: 70px;
     right: 12px;
   }
+}
+
+.notification-delete-btn {
+  opacity: 0.5;
+  transition: opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.notification-item:hover .notification-delete-btn {
+  opacity: 1;
+}
+
+.notification-delete-btn:hover {
+  color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
 }
