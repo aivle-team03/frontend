@@ -12,6 +12,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 function EventTypeIcon({ type }) {
   if (type === '화재 발생') return <LocalFireDepartmentIcon fontSize="small" />
@@ -20,15 +21,16 @@ function EventTypeIcon({ type }) {
 }
 
 function RecentEventsTableMonitoring({ events, selectedEvent, onSelectEvent }) {
+  const { t } = useUiLanguage()
   return (
     <TableContainer className="events-table-wrap">
-      <Table size="small" aria-label="최근 이상 발생 리스트">
+      <Table size="small" aria-label={t('최근 감지 이벤트')}>
         <TableHead>
           <TableRow>
-            <TableCell>시간</TableCell>
-            <TableCell>위치</TableCell>
-            <TableCell>유형</TableCell>
-            <TableCell>상태</TableCell>
+            <TableCell>{t('시간')}</TableCell>
+            <TableCell>{t('위치')}</TableCell>
+            <TableCell>{t('유형')}</TableCell>
+            <TableCell>{t('상태')}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>

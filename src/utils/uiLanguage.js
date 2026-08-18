@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { enFlat } from '../i18n/resources/en.js'
+import { enFlat } from './en.js'
 
 const STORAGE_KEY = 'boss-user-preferences'
 
