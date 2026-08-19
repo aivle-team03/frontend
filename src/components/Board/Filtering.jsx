@@ -3,14 +3,11 @@ import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 function Filtering({
   categories,
-  riskOptions,
   selectedCategory,
-  selectedRiskLevel,
   startDate,
   endDate,
   keyword,
   onChangeCategory,
-  onChangeRiskLevel,
   onChangeStartDate,
   onChangeEndDate,
   onChangeKeyword,
@@ -24,16 +21,6 @@ function Filtering({
         <select value={selectedCategory} onChange={(event) => onChangeCategory(event.target.value)}>
           {categories.map((category) => (
             <option key={category} value={category}>{t(category)}</option>
-          ))}
-        </select>
-      </label>
-
-      <label className="board-select-filter">
-        <span className="sr-only">{t('위험도')}</span>
-        <select value={selectedRiskLevel} onChange={(event) => onChangeRiskLevel(event.target.value)}>
-          <option value="전체">{t('위험도 전체')}</option>
-          {riskOptions.map((risk) => (
-            <option key={risk.level} value={risk.level}>{t(risk.label)}</option>
           ))}
         </select>
       </label>

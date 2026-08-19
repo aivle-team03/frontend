@@ -31,7 +31,6 @@ function ReportList({
             <th>{t('번호')}</th>
             <th>{t('카테고리')}</th>
             <th>{t('제목')}</th>
-            <th className="board-center-column">{t('위험도')}</th>
             <th>{t('장소')}</th>
             <th>{t('신고자')}</th>
             <th>{t('신고일')}</th>
@@ -64,9 +63,6 @@ function ReportList({
                   <strong>{report.title}</strong>
                   <span>{report.description}</span>
                 </td>
-                <td className="board-center-column">
-                  <span className={`board-risk-badge risk-${report.riskLevel}`}>{t(report.riskLabel)}</span>
-                </td>
                 <td>{report.location}</td>
                 <td>{t(report.reporter)}</td>
                 <td>{report.reportedAt}</td>
@@ -78,7 +74,7 @@ function ReportList({
           })}
           {!reports.length && (
             <tr>
-              <td className="board-empty-cell" colSpan="9">검색 조건에 맞는 신고가 없습니다.</td>
+              <td className="board-empty-cell" colSpan="8">검색 조건에 맞는 신고가 없습니다.</td>
             </tr>
           )}
         </tbody>
