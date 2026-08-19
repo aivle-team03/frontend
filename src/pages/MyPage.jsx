@@ -9,6 +9,7 @@ import axios from 'axios'
 import { clearAuthSession } from '../api/authInterceptor.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 import { maskName } from '../utils/userPrivacy.js'
+import { translateNotificationText } from '../utils/en.js'
 import '../styles/MyPage.css'
 
 const API_BASE_URL = BACKEND_API_URL
@@ -30,7 +31,7 @@ function MyPage() {
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
   const [notifications, setNotifications] = useState([])
   const [notificationPage, setNotificationPage] = useState(1)
-  const notificationPageSize = 10
+  const notificationPageSize = 5
   const notificationPageCount = Math.max(1, Math.ceil(notifications.length / notificationPageSize))
   const currentNotificationPage = Math.min(notificationPage, notificationPageCount)
   const pagedNotifications = notifications.slice((currentNotificationPage - 1) * notificationPageSize, currentNotificationPage * notificationPageSize)
@@ -336,9 +337,9 @@ function MyPage() {
             <article className={`notification-history-item${notification.read ? ' is-read' : ''}`} key={notification.id}>
               <span className="notification-history-icon"><NotificationsNoneOutlinedIcon aria-hidden="true" /></span>
               <div>
-                <div className="notification-history-title-row"><strong>{notification.title}</strong>{notification.read ? <small>{language === 'en' ? 'Read' : '확인함'}</small> : <small className="is-unread">{language === 'en' ? 'Unread' : '미확인'}</small>}</div>
-                <p>{notification.message}</p>
-                <time>{notification.time}</time>
+                <div className="notification-history-title-row"><strong>{translateNotificationText(notification.title, language)}</strong></div>
+                <p>{translateNotificationText(notification.message, language)}</p>
+                <time>{translateNotificationText(notification.time, language)}</time>
               </div>
             </article>
           )) : <p className="notification-history-empty">{language === 'en' ? 'There are no notifications.' : '알림 내역이 없습니다.'}</p>}

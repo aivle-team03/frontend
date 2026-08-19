@@ -28,8 +28,9 @@ import { BACKEND_API_URL } from '../../config/api.js'
 import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { clearAuthSession } from '../../api/authInterceptor.js'
-import { synchronizeStaticUiLanguage, translateUi } from '../../utils/uiLanguage.js'
+import { getUiLanguage, setUiLanguage, synchronizeStaticUiLanguage, translateUi } from '../../utils/uiLanguage.js'
 import { maskName } from '../../utils/userPrivacy.js'
+import { translateNotificationText } from '../../utils/en.js'
 import '../../styles/Header.css'
 
 const NOTIFICATION_STORAGE_KEY = 'boss-read-notification-ids'
@@ -46,9 +47,9 @@ const EN_PAGE_TITLES = {
 
 function getStoredPreferences() {
   try {
-    return { language: 'ko', compact: false, notifications: true, ...JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}') }
+    return { compact: false, notifications: true, ...JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) || '{}'), language: getUiLanguage() }
   } catch {
-    return { language: 'ko', compact: false, notifications: true }
+    return { language: getUiLanguage(), compact: false, notifications: true }
   }
 }
 
@@ -145,10 +146,8 @@ function Header({ items }) {
   }, [])
 
   useEffect(() => {
-    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences))
-    document.documentElement.lang = preferences.language
+    setUiLanguage(preferences.language)
     document.body.classList.remove('boss-compact-mode')
-    window.dispatchEvent(new CustomEvent('boss-language-change', { detail: preferences.language }))
   }, [preferences])
 
   useEffect(() => synchronizeStaticUiLanguage(preferences.language), [preferences.language, location.pathname])
@@ -175,7 +174,8 @@ function Header({ items }) {
   }, [fetchNotifications])
 
   const handleLogout = async () => {
-    if (window.confirm('로그아웃 하시겠습니까?')) {
+    const logoutMessage = preferences.language === 'en' ? 'Would you like to log out?' : '로그아웃 하시겠습니까?'
+    if (window.confirm(logoutMessage)) {
       try {
         await axios.post(`${BACKEND_API_URL}/api/auth/logout`)
       } catch (error) {
@@ -313,7 +313,7 @@ function Header({ items }) {
           <button
             className={`header-icon-button${activeMenu === 'notifications' ? ' is-active' : ''}`}
             type="button"
-            aria-label={`알림${unreadCount ? `, 미확인 ${unreadCount}개` : ''}`}
+            aria-label={preferences.language === 'en' ? `Notifications${unreadCount ? `, ${unreadCount} unread` : ''}` : `알림${unreadCount ? `, 미확인 ${unreadCount}개` : ''}`}
             aria-expanded={activeMenu === 'notifications'}
             aria-haspopup="menu"
             onClick={() => setActiveMenu((current) => (current === 'notifications' ? null : 'notifications'))}
@@ -323,15 +323,15 @@ function Header({ items }) {
           </button>
 
           {activeMenu === 'notifications' && (
-            <div className="notification-dropdown" role="menu" aria-label="알림 목록">
+            <div className="notification-dropdown" role="menu" aria-label={preferences.language === 'en' ? 'Notification list' : '알림 목록'}>
               <div className="notification-dropdown-header">
                 <div>
-                  <strong>알림</strong>
-                  <span>미확인 알림 {unreadCount}개</span>
+                  <strong>{preferences.language === 'en' ? 'Notifications' : '알림'}</strong>
+                  <span>{preferences.language === 'en' ? `${unreadCount} unread notifications` : `미확인 알림 ${unreadCount}개`}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                   <button type="button" onClick={handleMarkAllAsRead} disabled={unreadCount === 0}>
-                    <DoneAllRoundedIcon fontSize="small" />모두 읽음
+                    <DoneAllRoundedIcon fontSize="small" />{preferences.language === 'en' ? 'Mark all as read' : '모두 읽음'}
                   </button>
                   <button
                     type="button"
@@ -342,7 +342,7 @@ function Header({ items }) {
                       cursor: notifications.length === 0 ? 'not-allowed' : 'pointer',
                     }}
                   >
-                    <DeleteSweepOutlinedIcon fontSize="small" />모두 삭제
+                    <DeleteSweepOutlinedIcon fontSize="small" />{preferences.language === 'en' ? 'Delete all' : '모두 삭제'}
                   </button>
                 </div>
               </div>
@@ -350,7 +350,7 @@ function Header({ items }) {
               <div className="notification-list">
                 {notifications.length === 0 ? (
                   <div style={{ padding: '24px 16px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
-                    알림이 없습니다.
+                    {preferences.language === 'en' ? 'There are no notifications.' : '알림이 없습니다.'}
                   </div>
                 ) : (
                   notifications.slice(0, 10).map((notification) => {
@@ -374,11 +374,11 @@ function Header({ items }) {
                         </span>
                         <span className="notification-copy">
                           <span className="notification-title-row">
-                            <strong>{notification.title}</strong>
+                            <strong>{translateNotificationText(notification.title, preferences.language)}</strong>
                             {!notification.read && <i aria-label="미확인" />}
                           </span>
-                          <span>{notification.message}</span>
-                          <small>{notification.time}</small>
+                          <span>{translateNotificationText(notification.message, preferences.language)}</span>
+                          <small>{translateNotificationText(notification.time, preferences.language)}</small>
                         </span>
                         <button
                           type="button"
@@ -426,7 +426,7 @@ function Header({ items }) {
             </span>
             <span className="profile-button-copy">
               <strong>{maskName(user.name)}</strong>
-              <small>{user.role}</small>
+              <small>{translateUi(user.role, preferences.language)}</small>
             </span>
             <KeyboardArrowDownRoundedIcon className="profile-chevron" />
           </button>

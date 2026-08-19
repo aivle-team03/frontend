@@ -127,6 +127,18 @@ export const enFlat = Object.assign({}, ...Object.values(en), shared)
 // Static labels that are rendered by legacy screens without calling t() yet.
 // API/user-entered values intentionally do not belong in this map.
 Object.assign(enFlat, {
+  '이벤트 상세': 'Event details',
+  '선택한 감지 결과를 확인합니다.': 'Review the selected detection result.',
+  'AI 데모 감지': 'AI demo detection',
+  '감지 위치': 'Detection location',
+  '감지 시간': 'Detection time',
+  '신뢰도': 'Confidence',
+  '담당자 배정': 'Assign staff',
+  '아직 감지된 데모 이벤트가 없습니다.': 'No demo events have been detected yet.',
+  '알림': 'Notifications',
+  '모두 읽음': 'Mark all as read',
+  '모두 삭제': 'Delete all',
+  '알림이 없습니다.': 'There are no notifications.',
   // Education management
   '교육 영상 등록': 'Training video registration', '교육 영상 추가': 'Add training video', '교육 영상 생성': 'Generate training video',
   '영상을 등록하면 선택한 대상자의 교육 목록에 즉시 표시됩니다.': 'The video will appear immediately in the selected audience\'s training list.',
@@ -225,3 +237,41 @@ Object.assign(enFlat, {
   '리포트 생성': 'Generate report', '다운로드': 'Download', '사진 없음': 'No photo',
   '점검': 'Inspection', '조치': 'Action', '전체': 'All',
 })
+
+const notificationTitleTranslations = {
+  '위험 신고 접수': 'Risk report received',
+  '조치 완료': 'Action completed',
+  '근로자 피드백 보고서 생성 완료': 'Worker feedback report completed',
+  '점검 완료': 'Inspection completed',
+  '점검 배정': 'Inspection assigned',
+  '조치 배정': 'Action assigned',
+  '승인 요청': 'Approval requested',
+  '승인 완료': 'Approval completed',
+  '교육 이수 완료': 'Training completed',
+  '교육 알림': 'Training notification',
+}
+
+const notificationTextReplacements = [
+  ['위험 신고 게시글이 등록되었습니다.', 'A risk report has been submitted.'],
+  ['조치를 완료했습니다.', 'The action has been completed.'],
+  ['근로자 피드백 개선 보고서 생성이 완료되었습니다.', 'The worker feedback improvement report has been generated.'],
+  ['점검이 완료되었습니다.', 'The inspection has been completed.'],
+  ['점검이 배정되었습니다.', 'An inspection has been assigned.'],
+  ['조치가 배정되었습니다.', 'An action has been assigned.'],
+  ['승인 요청이 등록되었습니다.', 'An approval request has been submitted.'],
+  ['승인이 완료되었습니다.', 'Approval has been completed.'],
+  ['교육을 이수했습니다.', 'Training has been completed.'],
+]
+
+export function translateNotificationText(value, language) {
+  if (language !== 'en' || typeof value !== 'string') return value
+  if (notificationTitleTranslations[value]) return notificationTitleTranslations[value]
+
+  let translated = value
+  for (const [korean, english] of notificationTextReplacements) translated = translated.replace(korean, english)
+  return translated
+    .replace(/(\d+)시간 전/g, '$1 hours ago')
+    .replace(/(\d+)분 전/g, '$1 minutes ago')
+    .replace(/(\d+)일 전/g, '$1 days ago')
+    .replace('방금 전', 'Just now')
+}
