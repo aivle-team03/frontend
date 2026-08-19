@@ -742,7 +742,18 @@ function CompletionMetric({ item, overall, metricIndex, onOpen }) {
   return <div className={`completion-metric metric-tone-${metricIndex}${overall ? ' is-featured is-overall' : ''}`} style={{ '--metric-color': completionColors[metricIndex % completionColors.length], '--animation-delay': `${metricIndex * 90}ms` }} role="button" tabIndex="0" onClick={onOpen} onKeyDown={(event) => event.key === 'Enter' && onOpen()}><div className="metric-label"><span className="metric-icon"><MetricIcon /></span><strong>{t(item.label)}</strong></div><div className="metric-value-row"><strong>{item.value}<small>%</small></strong><span className="metric-ring" style={{ '--completion-rate': `${item.value}%` }}><i /></span></div><small>{item.completed} / {item.total}{t('건')}</small></div>
 }
 
+function translateAttendanceTitle(title, language, t) {
+  if (language !== 'en' || typeof title !== 'string') return title
+  const progressSuffix = ' 교육 이수 현황'
+  if (title.endsWith(progressSuffix)) {
+    const audience = title.slice(0, -progressSuffix.length)
+    return `${t(audience)} Learning Progress`
+  }
+  return t(title)
+}
+
 function AttendanceModal({ detail, attendees, loading, filter, onFilterChange, search, onSearchChange, onClose }) {
+  const { language, t } = useUiLanguage()
   const filters = ['전체', '이수', '미이수']
   // 이수율은 카드와 같은 (사람 x 교육) 건 기준이다. 사람 수만으로 재면
   // 교육 하나만 남겨둔 사람도 0으로 잡혀 카드 숫자와 크게 어긋난다.
@@ -751,12 +762,15 @@ function AttendanceModal({ detail, attendees, loading, filter, onFilterChange, s
   const userTotal = detail.userTotal ?? 0
   const userCompleted = detail.userCompleted ?? 0
   const userIncomplete = Math.max(0, userTotal - userCompleted)
+  const translatedTitle = translateAttendanceTitle(detail.title, language, t)
+  const peopleSuffix = language === 'en' ? ' people' : '명'
+  const itemSuffix = language === 'en' ? ' items' : '건'
   return <div className="attendance-modal-backdrop" role="presentation" onMouseDown={onClose}>
-    <section className="attendance-modal" role="dialog" aria-modal="true" aria-busy={loading} aria-label={`${detail.title} 대상자 현황`} onMouseDown={(event) => event.stopPropagation()}>
-      <header className="attendance-modal-header"><div><span>교육 대상자 현황</span><h3>{detail.title}</h3><p>{detail.target} · 이수 현황을 확인하고 대상자를 검색할 수 있습니다.</p></div><button type="button" aria-label="상세 창 닫기" onClick={onClose}><CloseRoundedIcon /></button></header>
-      <div className="attendance-summary"><div className="attendance-total"><span>대상자</span><AnimatedNumber value={userTotal} suffix="명" /></div><div className="attendance-complete"><span>전체 이수</span><AnimatedNumber value={userCompleted} suffix="명" /></div><div className="attendance-incomplete"><span>미이수</span><AnimatedNumber value={userIncomplete} suffix="명" /></div><div className="attendance-rate"><span>이수율</span><AnimatedNumber value={rate} suffix="%" /><i><em style={{ width: `${rate}%` }} /></i><small>{detail.completed} / {total}건</small></div></div>
-      <div className="attendance-tools"><div className="attendance-filter-tabs" role="tablist">{filters.map((item) => <button className={filter === item ? 'is-active' : ''} key={item} type="button" onClick={() => onFilterChange(item)}>{item}</button>)}</div><label className="attendance-search"><SearchRoundedIcon /><input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="이름 또는 부서 검색" /></label></div>
-      <div className="attendance-list" key={`${filter}-${search}`}><div className="attendance-list-head"><span>대상자</span><span>소속</span><span>진도</span><span>이수 상태</span><span>최근 이수일</span></div>{attendees.length ? attendees.map((person, index) => <div className="attendance-list-row" key={person.id} style={{ '--row-delay': `${Math.min(index, 10) * 45}ms` }}><span><b>{person.name.slice(0, 1)}</b>{person.name}</span><span>{person.team}</span><span className="course-rate"><b>{person.completedCount} / {person.totalCount}</b><i><em style={{ width: `${person.totalCount ? Math.round((person.completedCount / person.totalCount) * 100) : 0}%` }} /></i></span><span><i className={person.status === '이수' ? 'is-complete' : person.status === '진행 중' ? 'is-partial' : ''}>{person.status}</i></span><span>{person.date ?? '-'}</span></div>) : <p className="attendance-empty">조건에 맞는 대상자가 없습니다.</p>}</div>
+    <section className="attendance-modal" role="dialog" aria-modal="true" aria-busy={loading} aria-label={language === 'en' ? `${translatedTitle} audience status` : `${detail.title} 대상자 현황`} onMouseDown={(event) => event.stopPropagation()}>
+      <header className="attendance-modal-header"><div><span>{t('교육 대상자 현황')}</span><h3>{translatedTitle}</h3><p>{language === 'en' ? `Review completion for ${t(detail.target)} and search audience members.` : `${detail.target} · 이수 현황을 확인하고 대상자를 검색할 수 있습니다.`}</p></div><button type="button" aria-label={t('상세 창 닫기')} onClick={onClose}><CloseRoundedIcon /></button></header>
+      <div className="attendance-summary"><div className="attendance-total"><span>{t('대상자')}</span><AnimatedNumber value={userTotal} suffix={peopleSuffix} /></div><div className="attendance-complete"><span>{t('전체 이수')}</span><AnimatedNumber value={userCompleted} suffix={peopleSuffix} /></div><div className="attendance-incomplete"><span>{t('미이수')}</span><AnimatedNumber value={userIncomplete} suffix={peopleSuffix} /></div><div className="attendance-rate"><span>{t('이수율')}</span><AnimatedNumber value={rate} suffix="%" /><i><em style={{ width: `${rate}%` }} /></i><small>{detail.completed} / {total}{itemSuffix}</small></div></div>
+      <div className="attendance-tools"><div className="attendance-filter-tabs" role="tablist">{filters.map((item) => <button className={filter === item ? 'is-active' : ''} key={item} type="button" onClick={() => onFilterChange(item)}>{t(item)}</button>)}</div><label className="attendance-search"><SearchRoundedIcon /><input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder={t('이름 또는 부서 검색')} /></label></div>
+      <div className="attendance-list" key={`${filter}-${search}`}><div className="attendance-list-head"><span>{t('대상자')}</span><span>{t('소속')}</span><span>{t('진도')}</span><span>{t('이수 상태')}</span><span>{t('최근 이수일')}</span></div>{attendees.length ? attendees.map((person, index) => <div className="attendance-list-row" key={person.id} style={{ '--row-delay': `${Math.min(index, 10) * 45}ms` }}><span><b>{person.name.slice(0, 1)}</b>{person.name}</span><span>{t(person.team)}</span><span className="course-rate"><b>{person.completedCount} / {person.totalCount}</b><i><em style={{ width: `${person.totalCount ? Math.round((person.completedCount / person.totalCount) * 100) : 0}%` }} /></i></span><span><i className={person.status === '이수' ? 'is-complete' : person.status === '진행 중' ? 'is-partial' : ''}>{t(person.status)}</i></span><span>{person.date ?? '-'}</span></div>) : <p className="attendance-empty">{t('조건에 맞는 대상자가 없습니다.')}</p>}</div>
     </section>
   </div>
 }
