@@ -27,8 +27,6 @@ const EVENT_CATEGORY_OPTIONS = [
   { id: 4, name: CATEGORY[3] },
 ]
 
-const FALLBACK_BOARD_CATEGORY_OPTIONS = EVENT_CATEGORY_OPTIONS
-
 const RISK_OPTIONS = [
   { level: 'high', label: '높음' },
   { level: 'medium', label: '보통' },
@@ -188,12 +186,7 @@ function formatBoardItem(item) {
   }
 
   const statusKey = getStatusKey(item.status)
-
-  // 등록 상태에서는 신고자가 고른 고정 분류를 그대로 보여준다.
-  // 접수되면 관리자가 지정한 위험 요인(event_category)으로 바뀐다.
-  const category = statusKey === 'registered'
-    ? getBoardCategoryName(item) || item.category || '기타'
-    : item.category_name || item.category || getBoardCategoryName(item) || '기타'
+  const category = getBoardCategoryName(item) || item.category || '기타'
 
   return {
     id: item.board_id || item.id,
@@ -233,24 +226,11 @@ function getSortableReportId(reportId) {
   return Number(idDigits) || 0
 }
 
-function getBoardCategoryOptions(items) {
-  const options = new Map(EVENT_CATEGORY_OPTIONS.map((category) => [String(category.id), category]))
-
-  items.forEach((item) => {
-    const name = item.category_name || item.category
-    const id = item.event_category_id ?? item.category_id ?? null
-
-    if (name) options.set(String(id ?? name), { id, name })
-  })
-
-  return options.size ? [...options.values()] : FALLBACK_BOARD_CATEGORY_OPTIONS
-}
-
 function createChecklistActionFromReport(report) {
   return {
     id: `board-action-${report.id}`,
-    name: report.title,
-    category: report.category,
+    name: report.actionName || report.title,
+    category: report.actionCategory || report.category,
     location: report.location,
     type: 'action',
     cycle: null,
@@ -280,7 +260,7 @@ function BoardPage() {
   const { t } = useUiLanguage()
   const [reports, setReports] = useState([])
   const [selectedReportIds, setSelectedReportIds] = useState([])
-  const [boardCategoryOptions, setBoardCategoryOptions] = useState(EVENT_CATEGORY_OPTIONS)
+  const boardCategoryOptions = EVENT_CATEGORY_OPTIONS
   const [riskCategoryItems, setRiskCategoryItems] = useState([])
   const [currentUserName, setCurrentUserName] = useState('익명')
   const [loading, setLoading] = useState(true)
@@ -308,11 +288,9 @@ function BoardPage() {
         params: { page: 1, size: 100 },
       })
       const rawItems = response.data.items || response.data || []
-      setBoardCategoryOptions(getBoardCategoryOptions(rawItems))
       setReports(rawItems.map((item) => formatBoardItem(item)))
     } catch (error) {
       console.error('게시글 목록 로드 실패:', error)
-      setBoardCategoryOptions([])
       setReports([])
     } finally {
       setLoading(false)
@@ -332,12 +310,6 @@ function BoardPage() {
         const response = await axios.get(`${API_BASE_URL}/api/risk/list`, { headers })
         const rawItems = Array.isArray(response.data) ? response.data : (response.data?.items ?? [])
         setRiskCategoryItems(rawItems)
-        const categories = rawItems.map((item) => ({
-          id: item.category_id,
-          name: item.category_name || item.category,
-        })).filter((category) => category.id && category.name)
-
-        setBoardCategoryOptions(categories.length ? categories : EVENT_CATEGORY_OPTIONS)
       } catch (error) {
         console.error('event_category 조회 실패:', error)
       }
@@ -421,37 +393,7 @@ function BoardPage() {
   const activeRiskCategoryPage = Math.min(riskCategoryPage, riskCategoryPageCount - 1)
   const visibleRiskCategoryItems = riskCategoryItems.slice(activeRiskCategoryPage * riskCategoryPageSize, activeRiskCategoryPage * riskCategoryPageSize + riskCategoryPageSize)
 
-  const updateReportEventCategory = async (reportId, eventCategoryId) => {
-    try {
-      const token = localStorage.getItem('token')
-      const formData = new FormData()
-      formData.append('event_category_id', String(eventCategoryId))
-
-      await axios.patch(`${API_BASE_URL}/api/boards/${reportId}`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-
-      const selectedRiskCategory = riskCategoryItems.find((item) => Number(item.category_id) === Number(eventCategoryId))
-      setReports((currentReports) => currentReports.map((report) => (
-        report.id === reportId
-          ? {
-            ...report,
-            category: selectedRiskCategory?.category_name || selectedRiskCategory?.category || report.category,
-          }
-          : report
-      )))
-
-      return true
-    } catch (error) {
-      console.error(`게시글 #${reportId} 위험요인 변경 실패:`, error)
-      alert(error.response?.data?.detail || '위험요인 변경에 실패했습니다. 다시 시도해 주세요.')
-      return false
-    }
-  }
-
-  const updateReportStatus = async (reportId, statusKey) => {
+  const updateReportStatus = async (reportId, statusKey, selectedRiskCategory = null) => {
     const nextStatus = STATUS_OPTIONS.find((status) => status.key === statusKey)
     if (!nextStatus) return false
 
@@ -472,7 +414,11 @@ function BoardPage() {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await axios.patch(`${API_BASE_URL}/api/boards/${reportId}/status`, { status: nextStatus.label }, {
+      const requestBody = { status: nextStatus.label }
+      if (statusKey === 'received' && selectedRiskCategory?.category_id) {
+        requestBody.risk_category_id = selectedRiskCategory.category_id
+      }
+      const response = await axios.patch(`${API_BASE_URL}/api/boards/${reportId}/status`, requestBody, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -487,7 +433,13 @@ function BoardPage() {
     }
 
     if (statusKey === 'received' && reportToUpdate) {
-      saveBoardReportToChecklistManagement({ ...reportToUpdate, status: '접수', statusKey: 'received' })
+      saveBoardReportToChecklistManagement({
+        ...reportToUpdate,
+        status: '접수',
+        statusKey: 'received',
+        actionName: selectedRiskCategory?.category_name,
+        actionCategory: selectedRiskCategory?.category,
+      })
     }
 
     return true
@@ -565,12 +517,14 @@ function BoardPage() {
 
     const selectedReports = reports.filter((report) => selectedReportIds.includes(report.id) && report.statusKey === 'registered')
     if (!selectedReports.length) return
+    const selectedRiskCategory = riskCategoryItems.find((item) => Number(item.category_id) === Number(selectedRiskCategoryId))
+    if (!selectedRiskCategory) return
 
     setIsReceiveConfirmOpen(false)
     setIsReceivingReports(true)
     try {
       const updatedReportIds = (await Promise.all(selectedReports.map(async (report) => (
-        (await updateReportEventCategory(report.id, selectedRiskCategoryId)) && (await updateReportStatus(report.id, 'received')) ? report.id : null
+        (await updateReportStatus(report.id, 'received', selectedRiskCategory)) ? report.id : null
       )))).filter(Boolean)
       setSelectedReportIds((current) => current.filter((id) => !updatedReportIds.includes(id)))
       setSelectedRiskCategoryId(null)
