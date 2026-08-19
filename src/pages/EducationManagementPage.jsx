@@ -296,7 +296,9 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
   const activeCoursePage = Math.min(coursePage, coursePageCount - 1)
   const visibleCourses = filteredCourses.slice(activeCoursePage * 8, (activeCoursePage + 1) * 8)
   const visibleAttendees = attendanceList.filter((person) => {
-    const matchesStatus = attendanceFilter === '전체' || person.status === attendanceFilter
+    // '진행 중'(일부만 이수)은 아직 다 못 들은 사람이므로 '미이수' 탭에 포함한다.
+    const matchesStatus = attendanceFilter === '전체'
+      || (attendanceFilter === '이수' ? person.status === '이수' : person.status !== '이수')
     const query = attendeeSearch.trim()
     const matchesSearch = !query || person.name.includes(query) || person.team.includes(query)
     return matchesStatus && matchesSearch
@@ -375,15 +377,50 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
     const completed = source?.completed_count ?? attendees.filter((attendee) => attendee.status === '이수').length
     const total = source?.target_count ?? attendees.length
 
-    setAttendanceDetail((current) => current ? { ...current, total, completed } : current)
-    setAttendanceList(attendees.map((attendee) => ({
-      id: `${attendee.uid}-${attendee.education_id ?? detail.educationId ?? detail.target ?? 'all'}`,
-      name: attendee.name,
-      educationTitle: attendee.education_title ?? detail.title,
-      team: attendee.category ?? '-',
-      status: attendee.status,
-      date: attendee.completed_date ? String(attendee.completed_date).replaceAll('-', '. ') : null,
-    })))
+    // attendees 는 (사람 × 교육) 쌍이라 같은 사람이 교육 수만큼 반복된다.
+    // 사람 단위로 묶어 한 줄에 진도로 보여준다.
+    const byUser = new Map()
+    for (const attendee of attendees) {
+      if (!byUser.has(attendee.uid)) {
+        byUser.set(attendee.uid, {
+          uid: attendee.uid,
+          name: attendee.name,
+          // 관리자 계정은 category 가 없다. 그때는 역할을 소속 칸에 보여준다.
+          team: attendee.category ?? attendee.role ?? '-',
+          totalCount: 0,
+          completedCount: 0,
+          lastDate: null,
+        })
+      }
+      const row = byUser.get(attendee.uid)
+      row.totalCount += 1
+      if (attendee.status === '이수') {
+        row.completedCount += 1
+        // 여러 교육 중 가장 나중에 이수한 날을 대표로 보여준다.
+        if (attendee.completed_date && (!row.lastDate || attendee.completed_date > row.lastDate)) {
+          row.lastDate = attendee.completed_date
+        }
+      }
+    }
+
+    const rows = [...byUser.values()].map((row) => ({
+      id: String(row.uid),
+      name: row.name,
+      team: row.team,
+      completedCount: row.completedCount,
+      totalCount: row.totalCount,
+      status: row.completedCount === row.totalCount ? '이수' : row.completedCount === 0 ? '미이수' : '진행 중',
+      date: row.lastDate ? String(row.lastDate).replaceAll('-', '. ') : null,
+    }))
+
+    setAttendanceDetail((current) => current ? {
+      ...current,
+      total,
+      completed,
+      userTotal: rows.length,
+      userCompleted: rows.filter((row) => row.status === '이수').length,
+    } : current)
+    setAttendanceList(rows)
   }
 
   const addVideoCourse = async (event) => {
@@ -655,7 +692,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
           ) : (
             <div className="completion-focus-card is-clickable" key={selectedTarget} style={{ '--focus-color': targetCompletionColors[selectedTarget] ?? '#4f75d1' }} role="button" tabIndex="0" onClick={() => openAttendanceModal({ title: `${selectedCompletion.label} 교육 이수 현황`, target: selectedCompletion.label, total: selectedCompletion.total, completed: selectedCompletion.completed })} onKeyDown={(event) => event.key === 'Enter' && openAttendanceModal({ title: `${selectedCompletion.label} 교육 이수 현황`, target: selectedCompletion.label, total: selectedCompletion.total, completed: selectedCompletion.completed })}>
               <div className="completion-focus-chart" style={{ '--completion-rate': `${selectedCompletion.value}%` }}><div><strong>{selectedCompletion.value}<small>%</small></strong><span>{t('이수율')}</span></div></div>
-              <div className="completion-focus-copy"><span>{t('선택 대상')}</span><h4>{t(selectedCompletion.label)}</h4><p><strong>{selectedCompletion.completed}{t('명')}</strong> {t('이수')} / {t('전체')} {selectedCompletion.total}{t('명')}</p><div className="completion-focus-progress"><i style={{ width: `${selectedCompletion.value}%` }} /></div></div>
+              <div className="completion-focus-copy"><span>{t('선택 대상')}</span><h4>{t(selectedCompletion.label)}</h4><p><strong>{selectedCompletion.completed}{t('건')}</strong> {t('이수')} / {t('전체')} {selectedCompletion.total}{t('건')}</p><div className="completion-focus-progress"><i style={{ width: `${selectedCompletion.value}%` }} /></div></div>
               <div className="completion-focus-courses"><div><strong>{t('대상 교육')}</strong><span>{selectedTargetCourses.length}{t('개 과정')}</span></div>{selectedTargetCourses.slice(0, 2).map((course) => <p key={course.id}><span>{course.title}</span><b>{t(course.status)}</b></p>)}</div>
             </div>
           )}
@@ -702,20 +739,24 @@ function EducationManagementLoadingSkeleton() {
 function CompletionMetric({ item, overall, metricIndex, onOpen }) {
   const { t } = useUiLanguage()
   const MetricIcon = completionMetricIcons[metricIndex] ?? GroupsOutlinedIcon
-  return <div className={`completion-metric metric-tone-${metricIndex}${overall ? ' is-featured is-overall' : ''}`} style={{ '--metric-color': completionColors[metricIndex % completionColors.length], '--animation-delay': `${metricIndex * 90}ms` }} role="button" tabIndex="0" onClick={onOpen} onKeyDown={(event) => event.key === 'Enter' && onOpen()}><div className="metric-label"><span className="metric-icon"><MetricIcon /></span><strong>{t(item.label)}</strong></div><div className="metric-value-row"><strong>{item.value}<small>%</small></strong><span className="metric-ring" style={{ '--completion-rate': `${item.value}%` }}><i /></span></div><small>{item.completed} / {item.total}{t('명')}</small></div>
+  return <div className={`completion-metric metric-tone-${metricIndex}${overall ? ' is-featured is-overall' : ''}`} style={{ '--metric-color': completionColors[metricIndex % completionColors.length], '--animation-delay': `${metricIndex * 90}ms` }} role="button" tabIndex="0" onClick={onOpen} onKeyDown={(event) => event.key === 'Enter' && onOpen()}><div className="metric-label"><span className="metric-icon"><MetricIcon /></span><strong>{t(item.label)}</strong></div><div className="metric-value-row"><strong>{item.value}<small>%</small></strong><span className="metric-ring" style={{ '--completion-rate': `${item.value}%` }}><i /></span></div><small>{item.completed} / {item.total}{t('건')}</small></div>
 }
 
 function AttendanceModal({ detail, attendees, loading, filter, onFilterChange, search, onSearchChange, onClose }) {
   const filters = ['전체', '이수', '미이수']
+  // 이수율은 카드와 같은 (사람 x 교육) 건 기준이다. 사람 수만으로 재면
+  // 교육 하나만 남겨둔 사람도 0으로 잡혀 카드 숫자와 크게 어긋난다.
   const total = detail.total
-  const incomplete = Math.max(0, total - detail.completed)
   const rate = total ? Math.round((detail.completed / total) * 100) : 0
+  const userTotal = detail.userTotal ?? 0
+  const userCompleted = detail.userCompleted ?? 0
+  const userIncomplete = Math.max(0, userTotal - userCompleted)
   return <div className="attendance-modal-backdrop" role="presentation" onMouseDown={onClose}>
     <section className="attendance-modal" role="dialog" aria-modal="true" aria-busy={loading} aria-label={`${detail.title} 대상자 현황`} onMouseDown={(event) => event.stopPropagation()}>
       <header className="attendance-modal-header"><div><span>교육 대상자 현황</span><h3>{detail.title}</h3><p>{detail.target} · 이수 현황을 확인하고 대상자를 검색할 수 있습니다.</p></div><button type="button" aria-label="상세 창 닫기" onClick={onClose}><CloseRoundedIcon /></button></header>
-      <div className="attendance-summary"><div className="attendance-total"><span>이수 대상</span><AnimatedNumber value={total} suffix="명" /></div><div className="attendance-complete"><span>이수 완료</span><AnimatedNumber value={detail.completed} suffix="명" /></div><div className="attendance-incomplete"><span>미이수</span><AnimatedNumber value={incomplete} suffix="명" /></div><div className="attendance-rate"><span>이수율</span><AnimatedNumber value={rate} suffix="%" /><i><em style={{ width: `${rate}%` }} /></i></div></div>
+      <div className="attendance-summary"><div className="attendance-total"><span>대상자</span><AnimatedNumber value={userTotal} suffix="명" /></div><div className="attendance-complete"><span>전체 이수</span><AnimatedNumber value={userCompleted} suffix="명" /></div><div className="attendance-incomplete"><span>미이수</span><AnimatedNumber value={userIncomplete} suffix="명" /></div><div className="attendance-rate"><span>이수율</span><AnimatedNumber value={rate} suffix="%" /><i><em style={{ width: `${rate}%` }} /></i><small>{detail.completed} / {total}건</small></div></div>
       <div className="attendance-tools"><div className="attendance-filter-tabs" role="tablist">{filters.map((item) => <button className={filter === item ? 'is-active' : ''} key={item} type="button" onClick={() => onFilterChange(item)}>{item}</button>)}</div><label className="attendance-search"><SearchRoundedIcon /><input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="이름 또는 부서 검색" /></label></div>
-      <div className="attendance-list" key={`${filter}-${search}`}><div className="attendance-list-head"><span>대상자</span><span>교육명</span><span>소속</span><span>이수 상태</span><span>이수 일시</span></div>{attendees.length ? attendees.map((person, index) => <div className="attendance-list-row" key={person.id} style={{ '--row-delay': `${Math.min(index, 10) * 45}ms` }}><span><b>{person.name.slice(0, 1)}</b>{person.name}</span><span className="attendance-education-title">{person.educationTitle}</span><span>{person.team}</span><span><i className={person.status === '이수' ? 'is-complete' : ''}>{person.status}</i></span><span>{person.date ?? '-'}</span></div>) : <p className="attendance-empty">조건에 맞는 대상자가 없습니다.</p>}</div>
+      <div className="attendance-list" key={`${filter}-${search}`}><div className="attendance-list-head"><span>대상자</span><span>소속</span><span>진도</span><span>이수 상태</span><span>최근 이수일</span></div>{attendees.length ? attendees.map((person, index) => <div className="attendance-list-row" key={person.id} style={{ '--row-delay': `${Math.min(index, 10) * 45}ms` }}><span><b>{person.name.slice(0, 1)}</b>{person.name}</span><span>{person.team}</span><span className="course-rate"><b>{person.completedCount} / {person.totalCount}</b><i><em style={{ width: `${person.totalCount ? Math.round((person.completedCount / person.totalCount) * 100) : 0}%` }} /></i></span><span><i className={person.status === '이수' ? 'is-complete' : person.status === '진행 중' ? 'is-partial' : ''}>{person.status}</i></span><span>{person.date ?? '-'}</span></div>) : <p className="attendance-empty">조건에 맞는 대상자가 없습니다.</p>}</div>
     </section>
   </div>
 }
