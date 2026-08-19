@@ -1,4 +1,7 @@
+import { useUiLanguage } from '../../utils/uiLanguage.js'
+
 function ReportDetail({ report, onClose }) {
+  const { t } = useUiLanguage()
   return (
     <div className="board-modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section
@@ -10,56 +13,56 @@ function ReportDetail({ report, onClose }) {
       >
         <div className="board-modal-header">
           <div>
-            <span>신고 상세</span>
+            <span>{t('신고 상세')}</span>
             <h2 id="board-detail-modal-title">{report.title}</h2>
           </div>
-          <button type="button" aria-label="닫기" onClick={onClose}>×</button>
+          <button type="button" aria-label={t('닫기')} onClick={onClose}>×</button>
         </div>
 
         <div className="board-detail-body">
           <div className="board-detail-badge-row">
-            <span className={`board-status-badge status-${report.statusKey}`}>{report.status}</span>
+            <span className={`board-status-badge status-${report.statusKey}`}>{t(report.status)}</span>
           </div>
 
           <dl className="board-detail-grid">
             <div>
-              <dt>번호</dt>
+              <dt>{t('번호')}</dt>
               <dd>{report.id}</dd>
             </div>
             <div>
-              <dt>카테고리</dt>
-              <dd>{report.category}</dd>
+              <dt>{t('카테고리')}</dt>
+              <dd>{t(report.category)}</dd>
             </div>
             <div>
-              <dt>장소</dt>
+              <dt>{t('장소')}</dt>
               <dd>{report.location}</dd>
             </div>
             <div>
-              <dt>신고자</dt>
+              <dt>{t('신고자')}</dt>
               <dd>{report.reporter}</dd>
             </div>
             <div>
-              <dt>신고일</dt>
+              <dt>{t('신고일')}</dt>
               <dd>{report.reportedAt}</dd>
             </div>
           </dl>
 
-          <section className="board-detail-description" aria-label="신고 내용">
-            <h3>내용</h3>
+          <section className="board-detail-description" aria-label={t('신고 내용')}>
+            <h3>{t('내용')}</h3>
             <p>{report.description}</p>
           </section>
 
           {report.actionContent && (
-            <section className="board-detail-description board-detail-action-content" aria-label="조치 내용">
-              <h3>조치내용</h3>
+            <section className="board-detail-description board-detail-action-content" aria-label={t('조치 내용')}>
+              <h3>{t('조치내용')}</h3>
               <p>{report.actionContent}</p>
             </section>
           )}
 
           {report.photoUrl && (
-            <section className="board-detail-photo" aria-label="신고 사진">
-              <h3>사진</h3>
-              <img src={report.photoUrl} alt={report.photoName || `${report.title} 신고 사진`} />
+            <section className="board-detail-photo" aria-label={t('신고 사진')}>
+              <h3>{t('사진')}</h3>
+              <img src={report.photoUrl} alt={report.photoName || `${report.title} ${t('신고 사진')}`} />
               {report.photoName && <span>{report.photoName}</span>}
             </section>
           )}

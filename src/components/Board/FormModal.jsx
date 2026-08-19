@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 const initialReportForm = {
   category: '소방시설',
@@ -12,6 +13,7 @@ const initialReportForm = {
 }
 
 function FormModal({ categories, reporterName, onClose, onSubmit }) {
+  const { t } = useUiLanguage()
   const [reportForm, setReportForm] = useState(initialReportForm)
   const reportPhotoInputRef = useRef(null)
 
@@ -97,15 +99,15 @@ function FormModal({ categories, reporterName, onClose, onSubmit }) {
       >
         <div className="board-modal-header">
           <div>
-            <span>위험 신고</span>
-            <h2 id="board-report-modal-title">게시글 작성</h2>
+            <span>{t('위험 신고')}</span>
+            <h2 id="board-report-modal-title">{t('게시글 작성')}</h2>
           </div>
-          <button type="button" aria-label="닫기" onClick={closeModal}>×</button>
+          <button type="button" aria-label={t('닫기')} onClick={closeModal}>×</button>
         </div>
 
         <form className="board-report-form" onSubmit={submitReport}>
           <label>
-            <span>카테고리</span>
+            <span>{t('카테고리')}</span>
             <select
               value={String(reportForm.categoryId ?? reportForm.category)}
               onChange={(event) => {
@@ -117,39 +119,39 @@ function FormModal({ categories, reporterName, onClose, onSubmit }) {
               required
             >
               {categories.map((category) => (
-                <option key={category.id ?? category.name} value={String(category.id ?? category.name)}>{category.name}</option>
+                <option key={category.id ?? category.name} value={String(category.id ?? category.name)}>{t(category.name)}</option>
               ))}
             </select>
           </label>
 
           <label>
-            <span>제목</span>
+            <span>{t('제목')}</span>
             <input
               type="text"
               value={reportForm.title}
               onChange={(event) => updateReportForm('title', event.target.value)}
-              placeholder="신고 제목을 입력하세요"
+              placeholder={t('신고 제목을 입력하세요')}
               required
             />
           </label>
 
           <label>
-            <span>장소</span>
+            <span>{t('장소')}</span>
             <input
               type="text"
               value={reportForm.location}
               onChange={(event) => updateReportForm('location', event.target.value)}
-              placeholder="예: A동 2층 복도"
+              placeholder={t('예: A동 2층 복도')}
               required
             />
           </label>
 
           <label>
-            <span>내용</span>
+            <span>{t('내용')}</span>
             <textarea
               value={reportForm.description}
               onChange={(event) => updateReportForm('description', event.target.value)}
-              placeholder="위험 상황을 자세히 입력하세요"
+              placeholder={t('위험 상황을 자세히 입력하세요')}
               rows="4"
               required
             />
@@ -157,17 +159,17 @@ function FormModal({ categories, reporterName, onClose, onSubmit }) {
 
           <div className="board-photo-upload-section">
             <div className="board-photo-upload-label">
-              <strong>사진</strong>
+              <strong>{t('사진')}</strong>
               <span>{reportForm.photoUrl ? 1 : 0}</span>
             </div>
             <div className="board-photo-upload-grid">
               {reportForm.photoUrl && (
                 <div className="board-photo-upload-preview">
-                  <img src={reportForm.photoUrl} alt="신고 사진 미리보기" />
+                  <img src={reportForm.photoUrl} alt={t('신고 사진 미리보기')} />
                   <button
                     className="board-delete-photo-button"
                     type="button"
-                    aria-label="사진 삭제"
+                    aria-label={t('사진 삭제')}
                     onClick={deleteReportPhoto}
                   >
                     ×
@@ -195,8 +197,8 @@ function FormModal({ categories, reporterName, onClose, onSubmit }) {
           </div>
 
           <div className="board-modal-actions">
-            <button className="board-modal-cancel" type="button" onClick={closeModal}>취소</button>
-            <button className="board-modal-submit" type="submit">등록</button>
+            <button className="board-modal-cancel" type="button" onClick={closeModal}>{t('취소')}</button>
+            <button className="board-modal-submit" type="submit">{t('등록')}</button>
           </div>
         </form>
       </section>

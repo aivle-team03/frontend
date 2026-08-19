@@ -409,17 +409,17 @@ function ActionHistoryPage() {
         <div className="approval-modal-backdrop" role="presentation" onMouseDown={() => setSelectedInspectionRecord(null)}>
           <section className="inspection-history-detail-modal" role="dialog" aria-modal="true" aria-labelledby="inspection-history-detail-title" onMouseDown={(event) => event.stopPropagation()}>
             <header>
-              <div><span>INSPECTION HISTORY</span><h2 id="inspection-history-detail-title">{selectedInspectionRecord.type}</h2><p>완료된 점검의 담당자 메모를 확인합니다.</p></div>
-              <button type="button" aria-label="닫기" onClick={() => setSelectedInspectionRecord(null)}><CloseRoundedIcon /></button>
+              <div><span>INSPECTION HISTORY</span><h2 id="inspection-history-detail-title">{t(selectedInspectionRecord.type)}</h2><p>{t('완료된 점검의 담당자 메모를 확인합니다.')}</p></div>
+              <button type="button" aria-label={t('닫기')} onClick={() => setSelectedInspectionRecord(null)}><CloseRoundedIcon /></button>
             </header>
             <div className="inspection-history-detail-grid">
-              <div><span>완료 일시</span><strong>{selectedInspectionRecord.completedAt}</strong></div>
-              <div><span>위치</span><strong>{selectedInspectionRecord.location}</strong></div>
-              <div><span>점검 담당자</span><strong>{selectedInspectionRecord.assignee}</strong></div>
-              <div><span>진행 상태</span><strong className="inspection-complete-badge">{selectedInspectionRecord.statusRaw}</strong></div>
+              <div><span>{t('완료 일시')}</span><strong>{selectedInspectionRecord.completedAt}</strong></div>
+              <div><span>{t('위치')}</span><strong>{selectedInspectionRecord.location}</strong></div>
+              <div><span>{t('점검 담당자')}</span><strong>{selectedInspectionRecord.assignee}</strong></div>
+              <div><span>{t('진행 상태')}</span><strong className="inspection-complete-badge">{t(selectedInspectionRecord.statusRaw)}</strong></div>
             </div>
-            <section className="inspection-history-memo"><span>점검자 메모</span><p>{selectedInspectionRecord.memo}</p></section>
-            <footer><button type="button" onClick={() => setSelectedInspectionRecord(null)}>닫기</button></footer>
+            <section className="inspection-history-memo"><span>{t('점검자 메모')}</span><p>{t(selectedInspectionRecord.memo)}</p></section>
+            <footer><button type="button" onClick={() => setSelectedInspectionRecord(null)}>{t('닫기')}</button></footer>
           </section>
         </div>
       )}
@@ -429,23 +429,23 @@ function ActionHistoryPage() {
         <div className="approval-modal-backdrop" role="presentation" onMouseDown={() => setSelectedActionRecord(null)}>
           <section className="inspection-history-detail-modal" role="dialog" aria-modal="true" aria-labelledby="action-history-detail-title" onMouseDown={(event) => event.stopPropagation()}>
             <header>
-              <div><span>ACTION HISTORY</span><h2 id="action-history-detail-title">{selectedActionRecord.actionName || selectedActionRecord.type}</h2><p>완료된 조치 항목의 상세 정보를 확인합니다.</p></div>
-              <button type="button" aria-label="닫기" onClick={() => setSelectedActionRecord(null)}><CloseRoundedIcon /></button>
+              <div><span>ACTION HISTORY</span><h2 id="action-history-detail-title">{t(selectedActionRecord.actionName || selectedActionRecord.type)}</h2><p>{t('완료된 조치 항목의 상세 정보를 확인합니다.')}</p></div>
+              <button type="button" aria-label={t('닫기')} onClick={() => setSelectedActionRecord(null)}><CloseRoundedIcon /></button>
             </header>
             <div className="inspection-history-detail-grid">
-              <div><span>완료 일시</span><strong>{selectedActionRecord.completedAt}</strong></div>
-              <div><span>위치</span><strong>{selectedActionRecord.location}</strong></div>
-              <div><span>조치 담당자</span><strong>{selectedActionRecord.assignee}</strong></div>
-              <div><span>승인 상태</span><strong className="inspection-complete-badge">{selectedActionRecord.statusRaw}</strong></div>
+              <div><span>{t('완료 일시')}</span><strong>{selectedActionRecord.completedAt}</strong></div>
+              <div><span>{t('위치')}</span><strong>{selectedActionRecord.location}</strong></div>
+              <div><span>{t('조치 담당자')}</span><strong>{selectedActionRecord.assignee}</strong></div>
+              <div><span>{t('승인 상태')}</span><strong className="inspection-complete-badge">{t(selectedActionRecord.statusRaw)}</strong></div>
             </div>
-            <section className="inspection-history-memo"><span>조치 내용</span><p>{selectedActionRecord.content ?? ''}</p></section>
+            <section className="inspection-history-memo"><span>{t('조치 내용')}</span><p>{selectedActionRecord.content ?? ''}</p></section>
             <section className="action-history-detail-photo">
-              <span>조치 사진</span>
+              <span>{t('조치 사진')}</span>
               {selectedActionRecord.imageUrl
-                ? <button type="button" onClick={() => setPhotoPreviewRecord(selectedActionRecord)}><img src={selectedActionRecord.imageUrl} alt={`${selectedActionRecord.location} 조치 사진`} /></button>
-                : <p>등록된 조치 사진이 없습니다.</p>}
+                ? <button type="button" onClick={() => setPhotoPreviewRecord(selectedActionRecord)}><img src={selectedActionRecord.imageUrl} alt={`${selectedActionRecord.location} ${t('조치 사진')}`} /></button>
+                : <p>{t('등록된 조치 사진이 없습니다.')}</p>}
             </section>
-            <footer><button type="button" onClick={() => setSelectedActionRecord(null)}>닫기</button></footer>
+            <footer><button type="button" onClick={() => setSelectedActionRecord(null)}>{t('닫기')}</button></footer>
           </section>
         </div>
       )}
@@ -484,7 +484,7 @@ function ActionHistoryPage() {
                 <div className="summary-item">
                   <span>{t('상태')}</span>
                   <strong className="badge-pending">
-                    {selectedRecord.approvalStatus === 'approved' ? '승인 완료' : selectedRecord.approvalStatus === 'rejected' ? '반려됨' : '승인 대기'}
+                    {t(selectedRecord.approvalStatus === 'approved' ? '승인 완료' : selectedRecord.approvalStatus === 'rejected' ? '반려됨' : '승인 대기')}
                   </strong>
                 </div>
                 <div className="summary-item">
@@ -497,27 +497,27 @@ function ActionHistoryPage() {
 
                 {selectedRecord.beforeImageUrl && (
                   <div className="modal-v2-card before-photo-card" style={{ borderLeft: '4px solid #e53935' }}>
-                    <h3 style={{ color: '#e53935' }}>🚨 조치 전 위험 사진</h3>
+                    <h3 style={{ color: '#e53935' }}>🚨 {t('조치 전 위험 사진')}</h3>
                     <div className="img-box" style={{ marginTop: '10px' }}>
-                      <img src={selectedRecord.beforeImageUrl} alt="조치 전 위험 사진" />
+                      <img src={selectedRecord.beforeImageUrl} alt={t('조치 전 위험 사진')} />
                     </div>
-                    <p className="card-desc" style={{ color: '#d32f2f' }}>감지/등록 당시의 최초 위험 현장 사진</p>
+                    <p className="card-desc" style={{ color: '#d32f2f' }}>{t('감지/등록 당시의 최초 위험 현장 사진')}</p>
                   </div>
                 )}
 
                 <div className="modal-v2-card after-photo-card" style={selectedRecord.beforeImageUrl ? { borderLeft: '4px solid #2e7d32' } : {}}>
                   <h3 style={selectedRecord.beforeImageUrl ? { color: '#2e7d32' } : {}}>
-                    {selectedRecord.beforeImageUrl ? '✅ 조치 후 완료 사진' : '조치 등록 사진'}
+                    {selectedRecord.beforeImageUrl ? `✅ ${t('조치 후 완료 사진')}` : t('조치 등록 사진')}
                   </h3>
                   <div className="img-box" style={{ marginTop: '10px' }}>
                     {selectedRecord.imageUrl ? (
-                      <img src={selectedRecord.imageUrl} alt="조치 후 완료 사진" />
+                      <img src={selectedRecord.imageUrl} alt={t('조치 후 완료 사진')} />
                     ) : (
-                      <p style={{ padding: '40px', textAlign: 'center', color: '#888' }}>등록된 사진이 없습니다.</p>
+                      <p style={{ padding: '40px', textAlign: 'center', color: '#888' }}>{t('등록된 사진이 없습니다.')}</p>
                     )}
                   </div>
                   <p className="card-desc">
-                    {selectedRecord.beforeImageUrl ? '작업자가 현장에서 새로 등록한 완료 사진' : '등록된 현장 사진 확인'}
+                    {t(selectedRecord.beforeImageUrl ? '작업자가 현장에서 새로 등록한 완료 사진' : '등록된 현장 사진 확인')}
                   </p>
                 </div>
 
@@ -528,13 +528,13 @@ function ActionHistoryPage() {
                       <div className="ai-success-box">
                         <CheckCircleRoundedIcon className="ai-check-icon-mui" style={{ color: '#2e7d32' }} />
                         <div className="ai-result-text">
-                          <span className="ai-result-label">결과</span>
-                          <strong className="ai-result-value" style={{ color: '#2e7d32' }}>위험요소 해소</strong>
+                          <span className="ai-result-label">{t('결과')}</span>
+                          <strong className="ai-result-value" style={{ color: '#2e7d32' }}>{t('위험요소 해소')}</strong>
                         </div>
                       </div>
                       <div className="ai-info-list">
                         <div>
-                          <span>신뢰도</span>
+                          <span>{t('신뢰도')}</span>
                           <strong>
                             {selectedRecord.aiConfidence != null
                               ? `${selectedRecord.aiConfidence <= 1
@@ -545,8 +545,8 @@ function ActionHistoryPage() {
                           </strong>
                         </div>
                         <div>
-                          <span>분석 내용</span>
-                          <strong>{selectedRecord.aiSummary || '안전 상태 복구가 확인되었습니다.'}</strong>
+                          <span>{t('분석 내용')}</span>
+                          <strong>{selectedRecord.aiSummary || t('안전 상태 복구가 확인되었습니다.')}</strong>
                         </div>
                       </div>
                     </>
@@ -555,18 +555,18 @@ function ActionHistoryPage() {
                       <div className="ai-success-box" style={{ backgroundColor: '#fff3e0' }}>
                         <WarningRoundedIcon className="ai-check-icon-mui" style={{ color: '#ed6c02' }} />
                         <div className="ai-result-text">
-                          <span className="ai-result-label">결과</span>
-                          <strong className="ai-result-value" style={{ color: '#ed6c02' }}>위험요소 미해소 (확인 필요)</strong>
+                          <span className="ai-result-label">{t('결과')}</span>
+                          <strong className="ai-result-value" style={{ color: '#ed6c02' }}>{t('위험요소 미해소 (확인 필요)')}</strong>
                         </div>
                       </div>
                       <div className="ai-info-list">
                         <div>
-                          <span>신뢰도</span>
+                          <span>{t('신뢰도')}</span>
                           <strong>{selectedRecord.aiConfidence != null ? `${selectedRecord.aiConfidence}%` : '-'}</strong>
                         </div>
                         <div>
-                          <span>분석 내용</span>
-                          <strong>{selectedRecord.aiSummary || '위험 요소가 완전히 해소되지 않았을 수 있습니다.'}</strong>
+                          <span>{t('분석 내용')}</span>
+                          <strong>{selectedRecord.aiSummary || t('위험 요소가 완전히 해소되지 않았을 수 있습니다.')}</strong>
                         </div>
                       </div>
                     </>
@@ -575,14 +575,14 @@ function ActionHistoryPage() {
                       <div className="ai-success-box" style={{ backgroundColor: '#f5f5f5' }}>
                         <HourglassEmptyRoundedIcon className="ai-check-icon-mui" style={{ color: '#9e9e9e' }} />
                         <div className="ai-result-text">
-                          <span className="ai-result-label">결과</span>
-                          <strong className="ai-result-value" style={{ color: '#757575' }}>AI 검증 진행 중 / 미실행</strong>
+                          <span className="ai-result-label">{t('결과')}</span>
+                          <strong className="ai-result-value" style={{ color: '#757575' }}>{t('AI 검증 진행 중 / 미실행')}</strong>
                         </div>
                       </div>
                       <div className="ai-info-list">
                         <div>
-                          <span>안내</span>
-                          <strong>백그라운드에서 AI 검증이 처리 중이거나 아직 진행되지 않았습니다.</strong>
+                          <span>{t('안내')}</span>
+                          <strong>{t('백그라운드에서 AI 검증이 처리 중이거나 아직 진행되지 않았습니다.')}</strong>
                         </div>
                       </div>
                     </>
@@ -590,25 +590,25 @@ function ActionHistoryPage() {
                 </div>
 
                 <div className="modal-v2-card worker-detail-card">
-                  <h3>작업자 조치 내용</h3>
+                  <h3>{t('작업자 조치 내용')}</h3>
                   <div className="worker-detail-group">
                     <div className="detail-item">
-                      <span className="detail-label">조치 담당자</span>
+                      <span className="detail-label">{t('조치 담당자')}</span>
                       <strong className="detail-value">{selectedRecord.assignee}</strong>
                     </div>
                     <div className="detail-item">
-                      <span className="detail-label">내용</span>
+                      <span className="detail-label">{t('내용')}</span>
                       <p className="detail-value text-desc">
-                        {selectedRecord.content || '입력된 내용이 없습니다.'}
+                        {selectedRecord.content || t('입력된 내용이 없습니다.')}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="modal-v2-card reject-reason-card">
-                  <h3>반려 사유</h3>
+                  <h3>{t('반려 사유')}</h3>
                   <textarea
-                    placeholder="반려 시 사유를 입력해주세요. (승인 시 입력 불필요)"
+                    placeholder={t('반려 시 사유를 입력해주세요. (승인 시 입력 불필요)')}
                     rows={4}
                     value={rejectReason}
                     onChange={(e) => setRejectReason(e.target.value)}
@@ -619,14 +619,14 @@ function ActionHistoryPage() {
 
             <div className="modal-v2-footer">
               <button type="button" className="btn-v2-list" onClick={() => setSelectedRecord(null)}>
-                목록
+                {t('목록')}
               </button>
               <div className="footer-right-actions">
                 <button type="button" className="btn-v2-reject" onClick={handleReject}>
-                  반려
+                  {t('반려')}
                 </button>
                 <button type="button" className="btn-v2-approve" onClick={handleApprove}>
-                  승인
+                  {t('승인')}
                 </button>
               </div>
             </div>
@@ -646,12 +646,12 @@ function ActionHistoryPage() {
           >
             <div className="photo-preview-header">
               <div>
-                <span>조치 사진</span>
+                <span>{t('조치 사진')}</span>
                 <h2 id="photo-preview-title">{photoPreviewRecord.location}</h2>
               </div>
-              <button type="button" aria-label="닫기" onClick={() => setPhotoPreviewRecord(null)}><CloseRoundedIcon /></button>
+              <button type="button" aria-label={t('닫기')} onClick={() => setPhotoPreviewRecord(null)}><CloseRoundedIcon /></button>
             </div>
-            <img className="photo-preview-image" src={photoPreviewRecord.imageUrl} alt={`${photoPreviewRecord.location} 조치 사진`} />
+            <img className="photo-preview-image" src={photoPreviewRecord.imageUrl} alt={`${photoPreviewRecord.location} ${t('조치 사진')}`} />
           </section>
         </div>
       )}
