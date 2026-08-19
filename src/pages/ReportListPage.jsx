@@ -1,13 +1,14 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
-import { useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { renderAsync } from 'docx-preview'
 import Filtering from '../components/Report/Filtering.jsx'
 import { BACKEND_API_URL } from '../config/api.js'
-import { useUiLanguage } from '../utils/uiLanguage.js'
 import '../styles/report.css'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const REPORT_TYPE_OPTIONS = [
   { key: 'risk-assessment-form', label: '위험성평가표' },
@@ -62,7 +63,9 @@ const getReportDateRangeFilters = (reports) => {
 }
 
 const fetchReportFileUrl = async (reportId, signal) => {
-  const response = await axios.get(`${BACKEND_API_URL}/api/report/${reportId}/file-url`, { signal })
+  const token = localStorage.getItem('token')
+  const headers = token ? { Authorization: `Bearer ${token}` } : {}
+  const response = await axios.get(`${BACKEND_API_URL}/api/report/${reportId}/file-url`, { headers, signal })
   return response.data?.file_url ?? ''
 }
 
@@ -180,6 +183,7 @@ function ReportListPage() {
   const [reports, setReports] = useState([])
   const [filters, setFilters] = useState(getInitialFilters)
   const [selectedReportId, setSelectedReportId] = useState(null)
+  const [isDeleteMode, setIsDeleteMode] = useState(false)
   const [creatorName, setCreatorName] = useState('')
   const [isCreatingReport, setIsCreatingReport] = useState(false)
   const [currentReportPage, setCurrentReportPage] = useState(1)
@@ -191,7 +195,9 @@ function ReportListPage() {
   })
 
   const loadReports = () => {
-    return axios.get(`${BACKEND_API_URL}/api/report`, { params: { page: 1, size: 100 } })
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+    return axios.get(`${BACKEND_API_URL}/api/report`, { headers, params: { page: 1, size: 100 } })
       .then((response) => {
         const items = response.data?.items ?? []
         const mappedReports = items.map(mapReport)
@@ -269,10 +275,6 @@ function ReportListPage() {
     [reports, selectedReportId],
   )
 
-  const selectedTypeOption = useMemo(
-    () => REPORT_TYPE_OPTIONS.find((item) => item.key === reportForm.type),
-    [reportForm.type],
-  )
   const isRiskAssessmentForm = reportForm.type === 'risk-assessment-form'
   const isManagementOrderReport = reportForm.type === 'management-order-report'
   const isWorkerRiskReport = reportForm.type === 'worker-risk-report'
@@ -296,6 +298,7 @@ function ReportListPage() {
   }
 
   const openReportPreview = (report) => {
+    if (isDeleteMode) return
     setSelectedReportId(report.id)
   }
 
@@ -305,19 +308,24 @@ function ReportListPage() {
     setIsCreatingReport(true)
 
     try {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
       if (isRiskAssessmentForm) {
-        await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/form/generate`)
+        await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/form/generate`, null, { headers })
       } else if (isManagementOrderReport) {
         await axios.post(`${BACKEND_API_URL}/api/report/management-review-order/generate`, null, {
+          headers,
           params: {
             start_date: reportForm.startDate,
             end_date: reportForm.endDate,
           },
         })
       } else if (isWorkerRiskReport) {
-        await axios.post(`${BACKEND_API_URL}/api/report/worker-feedback/generate`)
+        await axios.post(`${BACKEND_API_URL}/api/report/worker-feedback/generate`, null, { headers })
       } else if (isRiskAssessmentReport) {
         await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/report/generate`, null, {
+          headers,
           params: {
             start_date: reportForm.startDate,
             end_date: reportForm.endDate,
@@ -343,6 +351,30 @@ function ReportListPage() {
       }
     } catch (error) {
       console.error('보고서 다운로드 URL 조회 실패:', error)
+    }
+  }
+
+  const deleteReport = async (event, report) => {
+    event.stopPropagation()
+
+    if (!window.confirm(`'${report.title}' 보고서를 삭제하시겠습니까?`)) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      await axios.delete(`${BACKEND_API_URL}/api/report/${report.id}`, { headers })
+
+      setReports((current) => current.filter((item) => item.id !== report.id))
+      try {
+        await loadReports()
+      } catch (e) {
+        console.warn('목록 갱신 실패:', e)
+      }
+    } catch (error) {
+      console.error('보고서 삭제 실패:', error)
+      alert(error.response?.data?.detail ?? '보고서 삭제에 실패했습니다.')
     }
   }
 
@@ -441,6 +473,8 @@ function ReportListPage() {
               filters={filters}
               onChange={updateFilter}
               onReset={resetFilters}
+              isDeleteMode={isDeleteMode}
+              onToggleDeleteMode={() => setIsDeleteMode((prev) => !prev)}
             />
 
             <table className="report-table">
@@ -449,7 +483,9 @@ function ReportListPage() {
                   <th>{t('제목')}</th>
                   <th>{t('기간')}</th>
                   <th>{t('생성자')}</th>
-                  <th>{t('다운로드')}</th>
+                  <th style={{ textAlign: 'center', width: '90px' }}>
+                    {isDeleteMode ? t('삭제') : t('다운로드')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -457,6 +493,7 @@ function ReportListPage() {
                   <tr
                     key={report.id}
                     onClick={() => openReportPreview(report)}
+                    style={{ cursor: isDeleteMode ? 'default' : 'pointer' }}
                   >
                     <td>
                       <div className="report-title-cell">
@@ -467,14 +504,54 @@ function ReportListPage() {
                     <td>{report.period ?? report.createdAt}</td>
                     <td>{report.owner}</td>
                     <td>
-                      <button
-                        className="report-download-button"
-                        type="button"
-                        aria-label={`${report.title} ${t('다운로드')}`}
-                        onClick={(event) => downloadReport(event, report)}
-                      >
-                        <DownloadRoundedIcon />
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {/* 💡 기본 모드: 다운로드 버튼 */}
+                        {!isDeleteMode && (
+                          <button
+                            className="report-download-button"
+                            type="button"
+                            title={t('다운로드')}
+                            aria-label={`${report.title} ${t('다운로드')}`}
+                            onClick={(event) => downloadReport(event, report)}
+                          >
+                            <DownloadRoundedIcon />
+                          </button>
+                        )}
+
+                        {/* 💡 삭제 모드: 빨간색 삭제 버튼 */}
+                        {isDeleteMode && (
+                          <button
+                            type="button"
+                            title={t('삭제')}
+                            aria-label={`${report.title} ${t('삭제')}`}
+                            onClick={(event) => deleteReport(event, report)}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              padding: 0,
+                              background: '#fef2f2',
+                              border: '1px solid #fecaca',
+                              color: '#ef4444',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#fee2e2'
+                              e.currentTarget.style.borderColor = '#fca5a5'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#fef2f2'
+                              e.currentTarget.style.borderColor = '#fecaca'
+                            }}
+                          >
+                            <DeleteOutlineRoundedIcon style={{ fontSize: '20px' }} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

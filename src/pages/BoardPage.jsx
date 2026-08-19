@@ -13,10 +13,11 @@ import {
 } from '../utils/checklistStatusStorage.js'
 import '../styles/board.css'
 import { useUiLanguage } from '../utils/uiLanguage.js'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 
 const API_BASE_URL = BACKEND_API_URL
 
-const CATEGORY=['소방안전','시설안전','산업안전','기타']
+const CATEGORY = ['소방안전', '시설안전', '산업안전', '기타']
 
 // The board API only returns event_category_id, so the UI needs this ID-to-label map.
 const EVENT_CATEGORY_OPTIONS = [
@@ -107,7 +108,7 @@ const MOCK_REPORTS = [
     actionContent: '보관함 잠금 장치를 교체했습니다.',
   },
 
-  
+
   {
     id: 60,
     category: '소방안전',
@@ -172,6 +173,8 @@ function getRiskLabel(level) {
   return RISK_OPTIONS.find((risk) => risk.level === level)?.label ?? '보통'
 }
 
+// 신고자가 고른 고정 분류(소방안전/시설안전/산업안전/기타)를 되돌린다.
+// 접수 전 게시글은 event_category_id 가 이 고정 목록의 인덱스로 저장돼 있다.
 function getBoardCategoryName(item) {
   const categoryId = item.event_category_id ?? item.category_id
 
@@ -186,9 +189,15 @@ function formatBoardItem(item) {
 
   const statusKey = getStatusKey(item.status)
 
+  // 등록 상태에서는 신고자가 고른 고정 분류를 그대로 보여준다.
+  // 접수되면 관리자가 지정한 위험 요인(event_category)으로 바뀐다.
+  const category = statusKey === 'registered'
+    ? getBoardCategoryName(item) || item.category || '기타'
+    : item.category_name || item.category || getBoardCategoryName(item) || '기타'
+
   return {
     id: item.board_id || item.id,
-    category: item.category_name || item.category || '기타',
+    category,
     title: item.title || '',
     description: item.board_contents || item.description || '',
     riskLevel: item.risk_level || item.riskLevel || 'medium',
@@ -287,6 +296,7 @@ function BoardPage() {
   const [selectedRiskCategoryId, setSelectedRiskCategoryId] = useState(null)
   const [selectedReportId, setSelectedReportId] = useState(null)
   const [isReceivingReports, setIsReceivingReports] = useState(false)
+  const [isDeletingReports, setIsDeletingReports] = useState(false)
 
   const fetchBoards = useCallback(async () => {
     try {
@@ -299,10 +309,7 @@ function BoardPage() {
       })
       const rawItems = response.data.items || response.data || []
       setBoardCategoryOptions(getBoardCategoryOptions(rawItems))
-      setReports(rawItems.map((item) => formatBoardItem({
-        ...item,
-        category: item.category || getBoardCategoryName(item),
-      })))
+      setReports(rawItems.map((item) => formatBoardItem(item)))
     } catch (error) {
       console.error('게시글 목록 로드 실패:', error)
       setBoardCategoryOptions([])
@@ -430,9 +437,9 @@ function BoardPage() {
       setReports((currentReports) => currentReports.map((report) => (
         report.id === reportId
           ? {
-              ...report,
-              category: selectedRiskCategory?.category_name || selectedRiskCategory?.category || report.category,
-            }
+            ...report,
+            category: selectedRiskCategory?.category_name || selectedRiskCategory?.category || report.category,
+          }
           : report
       )))
 
@@ -454,10 +461,10 @@ function BoardPage() {
       setReports((currentReports) => currentReports.map((report) => (
         report.id === reportId
           ? {
-              ...report,
-              status: getStatusLabel(nextStatusKey),
-              statusKey: nextStatusKey,
-            }
+            ...report,
+            status: getStatusLabel(nextStatusKey),
+            statusKey: nextStatusKey,
+          }
           : report
       )))
       saveBoardReportStatus(reportId, { status: getStatusLabel(nextStatusKey), statusKey: nextStatusKey })
@@ -484,6 +491,52 @@ function BoardPage() {
     }
 
     return true
+  }
+
+  const deleteSingleReport = async (reportId) => {
+    if (!window.confirm('정말 이 게시글을 삭제하시겠습니까?')) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      await axios.delete(`${API_BASE_URL}/api/boards/${reportId}`, { headers })
+
+      alert('게시글이 삭제되었습니다.')
+      setSelectedReportId(null)
+      setSelectedReportIds((current) => current.filter((id) => id !== reportId))
+      await fetchBoards()
+    } catch (error) {
+      console.error('게시글 삭제 실패:', error)
+      alert(error.response?.data?.detail || '게시글 삭제에 실패했습니다.')
+    }
+  }
+
+  const deleteSelectedReports = async () => {
+    if (!selectedReportIds.length || isDeletingReports) return
+
+    if (!window.confirm(`선택한 ${selectedReportIds.length}건의 게시글을 모두 삭제하시겠습니까?`)) {
+      return
+    }
+
+    setIsDeletingReports(true)
+    try {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+      await Promise.all(
+        selectedReportIds.map((id) => axios.delete(`${API_BASE_URL}/api/boards/${id}`, { headers }))
+      )
+
+      alert('선택한 게시글이 삭제되었습니다.')
+      setSelectedReportIds([])
+      await fetchBoards()
+    } catch (error) {
+      console.error('일괄 삭제 실패:', error)
+      alert('일부 게시글 삭제에 실패했습니다.')
+      await fetchBoards()
+    } finally {
+      setIsDeletingReports(false)
+    }
   }
 
   const toggleSelectedReport = (reportId) => {
@@ -627,8 +680,61 @@ function BoardPage() {
           <button className="board-report-button" type="button" onClick={() => setIsReportModalOpen(true)}>
             <AddRoundedIcon /> {t('위험 신고하기')}
           </button>
-          <button type="button" disabled={isReceivingReports || !selectedReceivableCount} onClick={() => { setRiskCategoryPage(0); setSelectedRiskCategoryId(null); setIsReceiveConfirmOpen(true) }}>
+          <button
+            type="button"
+            className="board-receive-btn"
+            disabled={isReceivingReports || !selectedReceivableCount}
+            onClick={() => { setRiskCategoryPage(0); setSelectedRiskCategoryId(null); setIsReceiveConfirmOpen(true) }}
+            style={{
+              height: '38px',
+              padding: '0 16px',
+              borderRadius: '8px',
+              border: selectedReceivableCount ? '1px solid #3b82f6' : '1px solid #e2e8f0',
+              backgroundColor: selectedReceivableCount ? '#2563eb' : '#f8fafc',
+              color: selectedReceivableCount ? '#ffffff' : '#94a3b8',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: selectedReceivableCount ? 'pointer' : 'not-allowed',
+              transition: 'all 0.15s ease',
+            }}
+          >
             {isReceivingReports ? t('접수 중...') : t('접수')}
+          </button>
+
+          <button
+            type="button"
+            disabled={isDeletingReports || selectedReportIds.length === 0}
+            onClick={deleteSelectedReports}
+            style={{
+              height: '38px',
+              padding: '0 14px',
+              borderRadius: '8px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              border: selectedReportIds.length > 0 ? '1px solid #fca5a5' : '1px solid #e2e8f0',
+              backgroundColor: selectedReportIds.length > 0 ? '#fef2f2' : '#f8fafc',
+              color: selectedReportIds.length > 0 ? '#ef4444' : '#94a3b8',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: selectedReportIds.length > 0 ? 'pointer' : 'not-allowed',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              if (selectedReportIds.length > 0) {
+                e.currentTarget.style.backgroundColor = '#fee2e2'
+                e.currentTarget.style.borderColor = '#ef4444'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (selectedReportIds.length > 0) {
+                e.currentTarget.style.backgroundColor = '#fef2f2'
+                e.currentTarget.style.borderColor = '#fca5a5'
+              }
+            }}
+          >
+            <DeleteOutlineRoundedIcon style={{ fontSize: '18px' }} />
+            {isDeletingReports ? '삭제 중...' : '삭제'}
           </button>
         </div>
       </div>
@@ -643,7 +749,9 @@ function BoardPage() {
 
       {isReportModalOpen && (
         <FormModal
-          categories={boardCategoryOptions}
+          // 신고 폼은 고정 분류만 쓴다. boardCategoryOptions 는 event_category 응답으로
+          // 덮이는 값이라, 그대로 넘기면 조회 시점에 따라 선택지가 달라진다.
+          categories={EVENT_CATEGORY_OPTIONS}
           riskOptions={RISK_OPTIONS}
           reporterName={currentUserName}
           onClose={() => setIsReportModalOpen(false)}
