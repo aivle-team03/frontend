@@ -282,6 +282,11 @@ function Header({ items }) {
     navigate('/mypage')
   }
 
+  const handleMoveToNotificationHistory = () => {
+    setActiveMenu(null)
+    navigate('/mypage#notification-history')
+  }
+
   const handleMoveToSafetyManagement = () => {
     setActiveMenu(null)
     navigate('/safety-management')
@@ -348,7 +353,7 @@ function Header({ items }) {
                     알림이 없습니다.
                   </div>
                 ) : (
-                  notifications.map((notification) => {
+                  notifications.slice(0, 10).map((notification) => {
                     const NotificationIcon = notificationIconMap[notification.category] ?? NotificationsNoneOutlinedIcon
                     return (
                       <div
@@ -400,6 +405,10 @@ function Header({ items }) {
                   })
                 )}
               </div>
+              <button className="notification-settings-link" type="button" onClick={handleMoveToNotificationHistory}>
+                {preferences.language === 'en' ? 'Manage notification history' : '알림 내역 관리'}
+                <ArrowForwardIosRoundedIcon />
+              </button>
             </div>
           )}
         </div>

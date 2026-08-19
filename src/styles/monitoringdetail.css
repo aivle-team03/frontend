@@ -421,15 +421,15 @@
   min-height: 38px;
   border: 0;
   border-radius: 9px;
-  color: #ffffff;
-  background: #0f62fe;
+  color: #25577f;
+  background: linear-gradient(135deg, #d9edff 0%, #c3e2f8 52%, #add5f0 100%);
   cursor: pointer;
   font-size: 11px;
   font-weight: 900;
 }
 
 .detail-event-card>button:hover {
-  background: #0043ce;
+  background: linear-gradient(135deg, #c7e5fa 0%, #acd6f1 52%, #95c8e8 100%);
 }
 
 @media (max-width: 1180px) {
