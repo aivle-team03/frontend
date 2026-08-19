@@ -13,10 +13,11 @@ import {
 } from '../utils/checklistStatusStorage.js'
 import '../styles/board.css'
 import { useUiLanguage } from '../utils/uiLanguage.js'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 
 const API_BASE_URL = BACKEND_API_URL
 
-const CATEGORY=['소방안전','시설안전','산업안전','기타']
+const CATEGORY = ['소방안전', '시설안전', '산업안전', '기타']
 
 // The board API only returns event_category_id, so the UI needs this ID-to-label map.
 const EVENT_CATEGORY_OPTIONS = [
@@ -107,7 +108,7 @@ const MOCK_REPORTS = [
     actionContent: '보관함 잠금 장치를 교체했습니다.',
   },
 
-  
+
   {
     id: 60,
     category: '소방안전',
@@ -287,6 +288,7 @@ function BoardPage() {
   const [selectedRiskCategoryId, setSelectedRiskCategoryId] = useState(null)
   const [selectedReportId, setSelectedReportId] = useState(null)
   const [isReceivingReports, setIsReceivingReports] = useState(false)
+  const [isDeletingReports, setIsDeletingReports] = useState(false)
 
   const fetchBoards = useCallback(async () => {
     try {
@@ -430,9 +432,9 @@ function BoardPage() {
       setReports((currentReports) => currentReports.map((report) => (
         report.id === reportId
           ? {
-              ...report,
-              category: selectedRiskCategory?.category_name || selectedRiskCategory?.category || report.category,
-            }
+            ...report,
+            category: selectedRiskCategory?.category_name || selectedRiskCategory?.category || report.category,
+          }
           : report
       )))
 
@@ -454,10 +456,10 @@ function BoardPage() {
       setReports((currentReports) => currentReports.map((report) => (
         report.id === reportId
           ? {
-              ...report,
-              status: getStatusLabel(nextStatusKey),
-              statusKey: nextStatusKey,
-            }
+            ...report,
+            status: getStatusLabel(nextStatusKey),
+            statusKey: nextStatusKey,
+          }
           : report
       )))
       saveBoardReportStatus(reportId, { status: getStatusLabel(nextStatusKey), statusKey: nextStatusKey })
@@ -484,6 +486,52 @@ function BoardPage() {
     }
 
     return true
+  }
+
+  const deleteSingleReport = async (reportId) => {
+    if (!window.confirm('정말 이 게시글을 삭제하시겠습니까?')) return
+
+    try {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      await axios.delete(`${API_BASE_URL}/api/boards/${reportId}`, { headers })
+
+      alert('게시글이 삭제되었습니다.')
+      setSelectedReportId(null)
+      setSelectedReportIds((current) => current.filter((id) => id !== reportId))
+      await fetchBoards()
+    } catch (error) {
+      console.error('게시글 삭제 실패:', error)
+      alert(error.response?.data?.detail || '게시글 삭제에 실패했습니다.')
+    }
+  }
+
+  const deleteSelectedReports = async () => {
+    if (!selectedReportIds.length || isDeletingReports) return
+
+    if (!window.confirm(`선택한 ${selectedReportIds.length}건의 게시글을 모두 삭제하시겠습니까?`)) {
+      return
+    }
+
+    setIsDeletingReports(true)
+    try {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
+      await Promise.all(
+        selectedReportIds.map((id) => axios.delete(`${API_BASE_URL}/api/boards/${id}`, { headers }))
+      )
+
+      alert('선택한 게시글이 삭제되었습니다.')
+      setSelectedReportIds([])
+      await fetchBoards()
+    } catch (error) {
+      console.error('일괄 삭제 실패:', error)
+      alert('일부 게시글 삭제에 실패했습니다.')
+      await fetchBoards()
+    } finally {
+      setIsDeletingReports(false)
+    }
   }
 
   const toggleSelectedReport = (reportId) => {
@@ -627,8 +675,61 @@ function BoardPage() {
           <button className="board-report-button" type="button" onClick={() => setIsReportModalOpen(true)}>
             <AddRoundedIcon /> {t('위험 신고하기')}
           </button>
-          <button type="button" disabled={isReceivingReports || !selectedReceivableCount} onClick={() => { setRiskCategoryPage(0); setSelectedRiskCategoryId(null); setIsReceiveConfirmOpen(true) }}>
+          <button
+            type="button"
+            className="board-receive-btn"
+            disabled={isReceivingReports || !selectedReceivableCount}
+            onClick={() => { setRiskCategoryPage(0); setSelectedRiskCategoryId(null); setIsReceiveConfirmOpen(true) }}
+            style={{
+              height: '38px',
+              padding: '0 16px',
+              borderRadius: '8px',
+              border: selectedReceivableCount ? '1px solid #3b82f6' : '1px solid #e2e8f0',
+              backgroundColor: selectedReceivableCount ? '#2563eb' : '#f8fafc',
+              color: selectedReceivableCount ? '#ffffff' : '#94a3b8',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: selectedReceivableCount ? 'pointer' : 'not-allowed',
+              transition: 'all 0.15s ease',
+            }}
+          >
             {isReceivingReports ? t('접수 중...') : t('접수')}
+          </button>
+
+          <button
+            type="button"
+            disabled={isDeletingReports || selectedReportIds.length === 0}
+            onClick={deleteSelectedReports}
+            style={{
+              height: '38px',
+              padding: '0 14px',
+              borderRadius: '8px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              border: selectedReportIds.length > 0 ? '1px solid #fca5a5' : '1px solid #e2e8f0',
+              backgroundColor: selectedReportIds.length > 0 ? '#fef2f2' : '#f8fafc',
+              color: selectedReportIds.length > 0 ? '#ef4444' : '#94a3b8',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: selectedReportIds.length > 0 ? 'pointer' : 'not-allowed',
+              transition: 'all 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              if (selectedReportIds.length > 0) {
+                e.currentTarget.style.backgroundColor = '#fee2e2'
+                e.currentTarget.style.borderColor = '#ef4444'
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (selectedReportIds.length > 0) {
+                e.currentTarget.style.backgroundColor = '#fef2f2'
+                e.currentTarget.style.borderColor = '#fca5a5'
+              }
+            }}
+          >
+            <DeleteOutlineRoundedIcon style={{ fontSize: '18px' }} />
+            {isDeletingReports ? '삭제 중...' : '삭제'}
           </button>
         </div>
       </div>

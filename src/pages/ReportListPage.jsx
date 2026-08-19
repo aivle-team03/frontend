@@ -1,4 +1,6 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -177,6 +179,7 @@ function ReportListPage() {
   const [reports, setReports] = useState([])
   const [filters, setFilters] = useState(getInitialFilters)
   const [selectedReportId, setSelectedReportId] = useState(null)
+  const [isDeleteMode, setIsDeleteMode] = useState(false)
   const [creatorName, setCreatorName] = useState('')
   const [isCreatingReport, setIsCreatingReport] = useState(false)
   const [currentReportPage, setCurrentReportPage] = useState(1)
@@ -343,6 +346,24 @@ function ReportListPage() {
     }
   }
 
+  const deleteReport = async (event, report) => {
+    event.stopPropagation()
+
+    if (!window.confirm(`'${report.title}' 보고서를 삭제하시겠습니까?`)) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      await axios.delete(`${BACKEND_API_URL}/api/report/${report.id}`, { headers })
+      await loadReports()
+    } catch (error) {
+      console.error('보고서 삭제 실패:', error)
+      alert(error.response?.data?.detail ?? '보고서 삭제에 실패했습니다.')
+    }
+  }
+
   if (selectedReport) {
     return (
       <section className="report-page report-preview-page" aria-label="보고서 미리보기">
@@ -434,11 +455,17 @@ function ReportListPage() {
           </div>
 
           <div className="report-table-wrap">
-            <Filtering
-              filters={filters}
-              onChange={updateFilter}
-              onReset={resetFilters}
-            />
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+              <div style={{ flex: 1 }}>
+                <Filtering
+                  filters={filters}
+                  onChange={updateFilter}
+                  onReset={resetFilters}
+                  isDeleteMode={isDeleteMode}
+                  onToggleDeleteMode={() => setIsDeleteMode((prev) => !prev)}
+                />
+              </div>
+            </div>
 
             <table className="report-table">
               <thead>
@@ -446,7 +473,9 @@ function ReportListPage() {
                   <th>제목</th>
                   <th>기간</th>
                   <th>생성자</th>
-                  <th>다운로드</th>
+                  <th style={{ textAlign: 'center', width: isDeleteMode ? '120px' : '90px' }}>
+                    {isDeleteMode ? '삭제' : '다운로드'}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -454,6 +483,7 @@ function ReportListPage() {
                   <tr
                     key={report.id}
                     onClick={() => openReportPreview(report)}
+                    style={{ cursor: isDeleteMode ? 'default' : 'pointer' }}
                   >
                     <td>
                       <div className="report-title-cell">
@@ -464,14 +494,52 @@ function ReportListPage() {
                     <td>{report.period ?? report.createdAt}</td>
                     <td>{report.owner}</td>
                     <td>
-                      <button
-                        className="report-download-button"
-                        type="button"
-                        aria-label={`${report.title} 다운로드`}
-                        onClick={(event) => downloadReport(event, report)}
-                      >
-                        <DownloadRoundedIcon />
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {!isDeleteMode && (
+                          <button
+                            className="report-download-button"
+                            type="button"
+                            title="다운로드"
+                            aria-label={`${report.title} 다운로드`}
+                            onClick={(event) => downloadReport(event, report)}
+                          >
+                            <DownloadRoundedIcon />
+                          </button>
+                        )}
+
+                        {isDeleteMode && (
+                          <button
+                            type="button"
+                            title="삭제"
+                            aria-label={`${report.title} 삭제`}
+                            onClick={(event) => deleteReport(event, report)}
+                            style={{
+                              width: '36px',
+                              height: '36px',
+                              padding: 0,
+                              background: '#fef2f2',
+                              border: '1px solid #fecaca',
+                              color: '#ef4444',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#fee2e2'
+                              e.currentTarget.style.borderColor = '#fca5a5'
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#fef2f2'
+                              e.currentTarget.style.borderColor = '#fecaca'
+                            }}
+                          >
+                            <DeleteOutlineRoundedIcon style={{ fontSize: '20px' }} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

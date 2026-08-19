@@ -1,4 +1,7 @@
-function Filtering({ filters, onChange, onReset }) {
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
+
+function Filtering({ filters, onChange, onReset, isDeleteMode, onToggleDeleteMode }) {
   return (
     <section className="report-filter-panel" aria-label="보고서 필터">
       <label className="report-filter-field report-filter-search">
@@ -40,9 +43,56 @@ function Filtering({ filters, onChange, onReset }) {
         />
       </label>
 
-      <button className="report-filter-reset" type="button" onClick={onReset}>
-        초기화
-      </button>
+      {/* 💡 초기화 버튼과 삭제 버튼을 나란히 배치 */}
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end' }}>
+        <button className="report-filter-reset" type="button" onClick={onReset}>
+          초기화
+        </button>
+        <button
+          type="button"
+          onClick={onToggleDeleteMode}
+          style={{
+            height: '42px',
+            padding: '0 14px',
+            borderRadius: '8px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            border: isDeleteMode ? '1px solid #ef4444' : '1px solid #e2e8f0',
+            backgroundColor: isDeleteMode ? '#fef2f2' : '#ffffff',
+            color: isDeleteMode ? '#ef4444' : '#64748b',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            whiteSpace: 'nowrap',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            if (!isDeleteMode) {
+              e.currentTarget.style.borderColor = '#cbd5e1'
+              e.currentTarget.style.backgroundColor = '#f8fafc'
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isDeleteMode) {
+              e.currentTarget.style.borderColor = '#e2e8f0'
+              e.currentTarget.style.backgroundColor = '#ffffff'
+            }
+          }}
+        >
+          {isDeleteMode ? (
+            <>
+              <CheckRoundedIcon style={{ fontSize: '18px' }} />
+              완료
+            </>
+          ) : (
+            <>
+              <DeleteOutlineRoundedIcon style={{ fontSize: '18px' }} />
+              삭제
+            </>
+          )}
+        </button>
+      </div>
     </section>
   )
 }

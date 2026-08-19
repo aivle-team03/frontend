@@ -8,6 +8,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import CloudUploadOutlinedIcon from '@mui/icons-material/CloudUploadOutlined'
 import DonutSmallRoundedIcon from '@mui/icons-material/DonutSmallRounded'
 import EngineeringRoundedIcon from '@mui/icons-material/EngineeringRounded'
+import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined'
 import HealthAndSafetyOutlinedIcon from '@mui/icons-material/HealthAndSafetyOutlined'
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded'
@@ -58,7 +59,7 @@ const targetCompletionColors = {
   '특수 작업자': '#df7a32',
   '안전 관리자': '#df626c',
 }
-function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) {
+function EducationManagementPage({ addedCourses = [], onAddCourse = () => { } }) {
   const [apiCourses, setApiCourses] = useState(null)
   const [apiCompletion, setApiCompletion] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -72,38 +73,38 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
     const dashboard = response.data
     educationDashboardRef.current = dashboard
     setApiCourses((dashboard.courses ?? []).map((course) => {
-        const completed = course.completed_count ?? course.status_counts?.find((item) => item.status === '이수')?.count ?? 0
-        return {
-          id: `api-${course.education_id}`,
-          educationId: course.education_id,
-          title: course.title,
-          videoUrl: course.video_url,
-          target: course.category ?? '전체',
-          deadline: course.due_date ?? '-',
-          status: completed === course.target_count ? '이수 완료' : '진행 중',
-          apiMetric: {
-            progress: course.completion_rate ?? 0,
-            assigned: course.target_count ?? 0,
-            completed,
-          },
-        }
-      }))
+      const completed = course.completed_count ?? course.status_counts?.find((item) => item.status === '이수')?.count ?? 0
+      return {
+        id: `api-${course.education_id}`,
+        educationId: course.education_id,
+        title: course.title,
+        videoUrl: course.video_url,
+        target: course.category ?? '전체',
+        deadline: course.due_date ?? '-',
+        status: completed === course.target_count ? '이수 완료' : '진행 중',
+        apiMetric: {
+          progress: course.completion_rate ?? 0,
+          assigned: course.target_count ?? 0,
+          completed,
+        },
+      }
+    }))
 
     const categoryItems = (dashboard.categories ?? []).filter((item) => !ALL_EMPLOYEE_CATEGORIES.has(item.category))
     setApiCompletion([
-        {
-          label: '전체',
-          value: dashboard.total_completion_rate ?? 0,
-          total: dashboard.total_target_count ?? 0,
-          completed: dashboard.total_completed_count ?? 0,
-        },
-        ...categoryItems.map((item) => ({
-          label: item.category,
-          value: item.completion_rate ?? 0,
-          total: item.target_count ?? 0,
-          completed: item.completed_count ?? 0,
-        })),
-      ])
+      {
+        label: '전체',
+        value: dashboard.total_completion_rate ?? 0,
+        total: dashboard.total_target_count ?? 0,
+        completed: dashboard.total_completed_count ?? 0,
+      },
+      ...categoryItems.map((item) => ({
+        label: item.category,
+        value: item.completion_rate ?? 0,
+        total: item.target_count ?? 0,
+        completed: item.completed_count ?? 0,
+      })),
+    ])
   }
 
   useEffect(() => {
@@ -364,10 +365,10 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       ? dashboard?.courses?.find((course) => Number(course.education_id) === Number(detail.educationId))
       : detail.target === '전체'
         ? {
-            target_count: dashboard?.total_target_count ?? 0,
-            completed_count: dashboard?.total_completed_count ?? 0,
-            attendees: dashboard?.attendees ?? [],
-          }
+          target_count: dashboard?.total_target_count ?? 0,
+          completed_count: dashboard?.total_completed_count ?? 0,
+          attendees: dashboard?.attendees ?? [],
+        }
         : dashboard?.categories?.find((category) => category.category === detail.target)
     const attendees = source?.attendees ?? []
     const completed = source?.completed_count ?? attendees.filter((attendee) => attendee.status === '이수').length
@@ -382,6 +383,27 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
       status: attendee.status,
       date: attendee.completed_date ? String(attendee.completed_date).replaceAll('-', '. ') : null,
     })))
+  }
+
+  const handleDeleteCourse = async (event, course) => {
+    event.stopPropagation() // 상세 모달 열림 방지
+    const targetId = course.educationId ?? course.id
+    if (!targetId) return
+
+    if (!window.confirm(`'${course.title}' 교육을 정말 삭제하시겠습니까?`)) {
+      return
+    }
+
+    try {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+      await axios.delete(`${API_BASE_URL}/api/education/${targetId}`, { headers })
+      setNotice(`'${course.title}' 교육이 삭제되었습니다.`)
+      await fetchAdminEducationData()
+    } catch (error) {
+      console.error('교육 삭제 실패:', error)
+      alert(`교육 삭제에 실패했습니다. ${error.response?.data?.detail ?? error.message}`)
+    }
   }
 
   const addVideoCourse = async (event) => {
@@ -562,7 +584,7 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
               </FormField>
             </div>
             <FormField label="마감일" required>
-                <input type="date" value={courseForm.deadline} onChange={(event) => updateCourseForm('deadline', event.target.value)} />
+              <input type="date" value={courseForm.deadline} onChange={(event) => updateCourseForm('deadline', event.target.value)} />
             </FormField>
             <div className="source-tabs" role="tablist" aria-label="영상 등록 방식">
               <button className={videoSourceType === 'file' ? 'is-active' : ''} type="button" onClick={() => setVideoSourceType('file')}><CloudUploadOutlinedIcon /> 파일 첨부</button>
@@ -592,27 +614,27 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
             <VideoActionTabs value={videoAction} onChange={setVideoAction} dark />
           </div>
           {!generatedVideo && <>
-          {aiStatus === 'published' && <div className="ai-publish-notice" role="status"><CheckCircleOutlineRoundedIcon /><span><strong>교육 목록에 등록되었습니다.</strong> 교육 관리와 내 교육 리스트에서 확인할 수 있습니다.</span></div>}
-          <p className="card-intro">교육 자료를 업로드하면 핵심 내용을 분석해 교육용 영상 초안을 만듭니다.</p>
-          <form className="ai-video-form" onSubmit={requestAiVideo}>
-            <label className="education-select"><span>교육명<b>*</b></span><input value={aiForm.title} onChange={(event) => updateAiForm('title', event.target.value)} placeholder="예: 창고 화재 예방 안전 교육" /></label>
-            <div className={aiForm.target === '일반유저' ? 'three-column-fields ai-generation-metadata' : 'two-column-fields ai-generation-metadata'}>
-              <EducationSelect label="이수 대상" value={aiForm.target} options={targetGroups} onChange={updateAiTarget} required />
-              {aiForm.target === '일반유저' && <EducationSelect label="세부 카테고리" value={aiForm.category} options={generalUserCategoryOptions} onChange={(value) => updateAiForm('category', value)} required />}
-              <EducationSelect label="이수 유형" value={aiForm.educationType} options={educationTypes} onChange={(value) => updateAiForm('educationType', value)} required />
-            </div>
-            <label className="education-select"><span>교육 마감일<b>*</b></span><input type="date" value={aiForm.dueDate} onChange={(event) => updateAiForm('dueDate', event.target.value)} required /></label>
-            <label className="education-select"><span>사용 장비<b>*</b></span><input value={aiForm.equipment} onChange={(event) => updateAiForm('equipment', event.target.value)} placeholder="예: 지게차, 안전모, 절단기" /></label>
-            <label className="education-select"><span>위험 요인<b>*</b></span><input value={aiForm.riskFactor} onChange={(event) => updateAiForm('riskFactor', event.target.value)} placeholder="예: 충돌, 낙하, 끼임" /></label>
-            <label className="education-select generation-request"><span>요청 사항</span><textarea value={aiForm.request} onChange={(event) => updateAiForm('request', event.target.value)} placeholder="예: 지게차 운전자의 시점으로, 보호구 착용을 강조해 주세요." rows="3" /></label>
-            <button className={`upload-dropzone ai-upload${materialFile ? ' has-file' : ''}`} type="button" onClick={() => materialInputRef.current?.click()}>
-              <input ref={materialInputRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.hwp,.txt" onChange={(event) => setMaterialFile(event.target.files?.[0] ?? null)} />
-              <CloudUploadOutlinedIcon />
-              <span><strong>{materialFile?.name ?? '교육 자료 업로드'}</strong><small>PDF, Word, PPT, HWP · 원본은 서버에 저장하지 않습니다</small></span>
-            </button>
-            <button className="ai-generate-button" type="submit"><VideoLibraryOutlinedIcon /> AI 교육 영상 생성</button>
-            {aiStatus === 'error' && <p className="ai-form-status is-error">교육명, 사용 장비, 위험 요인, 교육 마감일을 입력해 주세요.</p>}
-          </form>
+            {aiStatus === 'published' && <div className="ai-publish-notice" role="status"><CheckCircleOutlineRoundedIcon /><span><strong>교육 목록에 등록되었습니다.</strong> 교육 관리와 내 교육 리스트에서 확인할 수 있습니다.</span></div>}
+            <p className="card-intro">교육 자료를 업로드하면 핵심 내용을 분석해 교육용 영상 초안을 만듭니다.</p>
+            <form className="ai-video-form" onSubmit={requestAiVideo}>
+              <label className="education-select"><span>교육명<b>*</b></span><input value={aiForm.title} onChange={(event) => updateAiForm('title', event.target.value)} placeholder="예: 창고 화재 예방 안전 교육" /></label>
+              <div className={aiForm.target === '일반유저' ? 'three-column-fields ai-generation-metadata' : 'two-column-fields ai-generation-metadata'}>
+                <EducationSelect label="이수 대상" value={aiForm.target} options={targetGroups} onChange={updateAiTarget} required />
+                {aiForm.target === '일반유저' && <EducationSelect label="세부 카테고리" value={aiForm.category} options={generalUserCategoryOptions} onChange={(value) => updateAiForm('category', value)} required />}
+                <EducationSelect label="이수 유형" value={aiForm.educationType} options={educationTypes} onChange={(value) => updateAiForm('educationType', value)} required />
+              </div>
+              <label className="education-select"><span>교육 마감일<b>*</b></span><input type="date" value={aiForm.dueDate} onChange={(event) => updateAiForm('dueDate', event.target.value)} required /></label>
+              <label className="education-select"><span>사용 장비<b>*</b></span><input value={aiForm.equipment} onChange={(event) => updateAiForm('equipment', event.target.value)} placeholder="예: 지게차, 안전모, 절단기" /></label>
+              <label className="education-select"><span>위험 요인<b>*</b></span><input value={aiForm.riskFactor} onChange={(event) => updateAiForm('riskFactor', event.target.value)} placeholder="예: 충돌, 낙하, 끼임" /></label>
+              <label className="education-select generation-request"><span>요청 사항</span><textarea value={aiForm.request} onChange={(event) => updateAiForm('request', event.target.value)} placeholder="예: 지게차 운전자의 시점으로, 보호구 착용을 강조해 주세요." rows="3" /></label>
+              <button className={`upload-dropzone ai-upload${materialFile ? ' has-file' : ''}`} type="button" onClick={() => materialInputRef.current?.click()}>
+                <input ref={materialInputRef} type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.hwp,.txt" onChange={(event) => setMaterialFile(event.target.files?.[0] ?? null)} />
+                <CloudUploadOutlinedIcon />
+                <span><strong>{materialFile?.name ?? '교육 자료 업로드'}</strong><small>PDF, Word, PPT, HWP · 원본은 서버에 저장하지 않습니다</small></span>
+              </button>
+              <button className="ai-generate-button" type="submit"><VideoLibraryOutlinedIcon /> AI 교육 영상 생성</button>
+              {aiStatus === 'error' && <p className="ai-form-status is-error">교육명, 사용 장비, 위험 요인, 교육 마감일을 입력해 주세요.</p>}
+            </form>
           </>}
           {generatedVideo && aiStatus !== 'queued' && (
             <section className="ai-review-panel" aria-label="생성된 교육 영상 검토">
@@ -685,7 +707,31 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
           </div>
         </article>
       </div>
-      {attendanceDetail && <AttendanceModal detail={attendanceDetail} attendees={visibleAttendees} loading={attendanceLoading} filter={attendanceFilter} onFilterChange={setAttendanceFilter} search={attendeeSearch} onSearchChange={setAttendeeSearch} onClose={() => setAttendanceDetail(null)} />}
+      {attendanceDetail && (
+        <AttendanceModal
+          detail={attendanceDetail}
+          attendees={visibleAttendees}
+          loading={attendanceLoading}
+          filter={attendanceFilter}
+          onFilterChange={setAttendanceFilter}
+          search={attendeeSearch}
+          onSearchChange={setAttendeeSearch}
+          onClose={() => setAttendanceDetail(null)}
+          onDelete={async (educationId) => {
+            try {
+              const token = localStorage.getItem('token')
+              const headers = token ? { Authorization: `Bearer ${token}` } : {}
+              await axios.delete(`${API_BASE_URL}/api/education/${educationId}`, { headers })
+              setAttendanceDetail(null)
+              setNotice('교육이 성공적으로 삭제되었습니다.')
+              await fetchAdminEducationData()
+            } catch (error) {
+              console.error('교육 삭제 실패:', error)
+              alert(`교육 삭제에 실패했습니다. ${error.response?.data?.detail ?? error.message}`)
+            }
+          }}
+        />
+      )}
     </section>
   )
 }
@@ -702,19 +748,162 @@ function CompletionMetric({ item, overall, metricIndex, onOpen }) {
   return <div className={`completion-metric metric-tone-${metricIndex}${overall ? ' is-featured is-overall' : ''}`} style={{ '--metric-color': completionColors[metricIndex % completionColors.length], '--animation-delay': `${metricIndex * 90}ms` }} role="button" tabIndex="0" onClick={onOpen} onKeyDown={(event) => event.key === 'Enter' && onOpen()}><div className="metric-label"><span className="metric-icon"><MetricIcon /></span><strong>{item.label}</strong></div><div className="metric-value-row"><strong>{item.value}<small>%</small></strong><span className="metric-ring" style={{ '--completion-rate': `${item.value}%` }}><i /></span></div><small>{item.completed} / {item.total}명</small></div>
 }
 
-function AttendanceModal({ detail, attendees, loading, filter, onFilterChange, search, onSearchChange, onClose }) {
+function AttendanceModal({
+  detail,
+  attendees,
+  loading,
+  filter,
+  onFilterChange,
+  search,
+  onSearchChange,
+  onClose,
+  onDelete,
+}) {
   const filters = ['전체', '이수', '미이수']
   const total = detail.total
   const incomplete = Math.max(0, total - detail.completed)
   const rate = total ? Math.round((detail.completed / total) * 100) : 0
-  return <div className="attendance-modal-backdrop" role="presentation" onMouseDown={onClose}>
-    <section className="attendance-modal" role="dialog" aria-modal="true" aria-busy={loading} aria-label={`${detail.title} 대상자 현황`} onMouseDown={(event) => event.stopPropagation()}>
-      <header className="attendance-modal-header"><div><span>교육 대상자 현황</span><h3>{detail.title}</h3><p>{detail.target} · 이수 현황을 확인하고 대상자를 검색할 수 있습니다.</p></div><button type="button" aria-label="상세 창 닫기" onClick={onClose}><CloseRoundedIcon /></button></header>
-      <div className="attendance-summary"><div className="attendance-total"><span>이수 대상</span><AnimatedNumber value={total} suffix="명" /></div><div className="attendance-complete"><span>이수 완료</span><AnimatedNumber value={detail.completed} suffix="명" /></div><div className="attendance-incomplete"><span>미이수</span><AnimatedNumber value={incomplete} suffix="명" /></div><div className="attendance-rate"><span>이수율</span><AnimatedNumber value={rate} suffix="%" /><i><em style={{ width: `${rate}%` }} /></i></div></div>
-      <div className="attendance-tools"><div className="attendance-filter-tabs" role="tablist">{filters.map((item) => <button className={filter === item ? 'is-active' : ''} key={item} type="button" onClick={() => onFilterChange(item)}>{item}</button>)}</div><label className="attendance-search"><SearchRoundedIcon /><input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="이름 또는 부서 검색" /></label></div>
-      <div className="attendance-list" key={`${filter}-${search}`}><div className="attendance-list-head"><span>대상자</span><span>교육명</span><span>소속</span><span>이수 상태</span><span>이수 일시</span></div>{attendees.length ? attendees.map((person, index) => <div className="attendance-list-row" key={person.id} style={{ '--row-delay': `${Math.min(index, 10) * 45}ms` }}><span><b>{person.name.slice(0, 1)}</b>{person.name}</span><span className="attendance-education-title">{person.educationTitle}</span><span>{person.team}</span><span><i className={person.status === '이수' ? 'is-complete' : ''}>{person.status}</i></span><span>{person.date ?? '-'}</span></div>) : <p className="attendance-empty">조건에 맞는 대상자가 없습니다.</p>}</div>
-    </section>
-  </div>
+
+  const handleDelete = () => {
+    if (!detail.educationId) {
+      alert('삭제할 교육 ID를 찾을 수 없습니다.')
+      return
+    }
+    if (window.confirm(`'${detail.title}' 교육을 정말 삭제하시겠습니까?\n모든 대상자의 이수 기록도 함께 삭제됩니다.`)) {
+      onDelete(detail.educationId)
+    }
+  }
+
+  return (
+    <div className="attendance-modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section
+        className="attendance-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-busy={loading}
+        aria-label={`${detail.title} 대상자 현황`}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header className="attendance-modal-header">
+          <div>
+            <span>교육 대상자 현황</span>
+            <h3>{detail.title}</h3>
+            <p>{detail.target} · 이수 현황을 확인하고 대상자를 검색할 수 있습니다.</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {detail.educationId && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid #fca5a5',
+                  backgroundColor: '#fef2f2',
+                  color: '#ef4444',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#fee2e2'
+                  e.currentTarget.style.borderColor = '#ef4444'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#fef2f2'
+                  e.currentTarget.style.borderColor = '#fca5a5'
+                }}
+              >
+                <DeleteOutlineRoundedIcon style={{ fontSize: '17px' }} />
+                교육 삭제
+              </button>
+            )}
+            <button type="button" aria-label="상세 창 닫기" onClick={onClose}>
+              <CloseRoundedIcon />
+            </button>
+          </div>
+        </header>
+        <div className="attendance-summary">
+          <div className="attendance-total">
+            <span>이수 대상</span>
+            <AnimatedNumber value={total} suffix="명" />
+          </div>
+          <div className="attendance-complete">
+            <span>이수 완료</span>
+            <AnimatedNumber value={detail.completed} suffix="명" />
+          </div>
+          <div className="attendance-incomplete">
+            <span>미이수</span>
+            <AnimatedNumber value={incomplete} suffix="명" />
+          </div>
+          <div className="attendance-rate">
+            <span>이수율</span>
+            <AnimatedNumber value={rate} suffix="%" />
+            <i>
+              <em style={{ width: `${rate}%` }} />
+            </i>
+          </div>
+        </div>
+        <div className="attendance-tools">
+          <div className="attendance-filter-tabs" role="tablist">
+            {filters.map((item) => (
+              <button
+                className={filter === item ? 'is-active' : ''}
+                key={item}
+                type="button"
+                onClick={() => onFilterChange(item)}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+          <label className="attendance-search">
+            <SearchRoundedIcon />
+            <input
+              value={search}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder="이름 또는 부서 검색"
+            />
+          </label>
+        </div>
+        <div className="attendance-list" key={`${filter}-${search}`}>
+          <div className="attendance-list-head">
+            <span>대상자</span>
+            <span>교육명</span>
+            <span>소속</span>
+            <span>이수 상태</span>
+            <span>이수 일시</span>
+          </div>
+          {attendees.length ? (
+            attendees.map((person, index) => (
+              <div
+                className="attendance-list-row"
+                key={person.id}
+                style={{ '--row-delay': `${Math.min(index, 10) * 45}ms` }}
+              >
+                <span>
+                  <b>{person.name.slice(0, 1)}</b>
+                  {person.name}
+                </span>
+                <span className="attendance-education-title">{person.educationTitle}</span>
+                <span>{person.team}</span>
+                <span>
+                  <i className={person.status === '이수' ? 'is-complete' : ''}>{person.status}</i>
+                </span>
+                <span>{person.date ?? '-'}</span>
+              </div>
+            ))
+          ) : (
+            <p className="attendance-empty">조건에 맞는 대상자가 없습니다.</p>
+          )}
+        </div>
+      </section>
+    </div>
+  )
 }
 
 function AnimatedNumber({ value, suffix }) {
