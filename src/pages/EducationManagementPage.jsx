@@ -385,7 +385,8 @@ function EducationManagementPage({ addedCourses = [], onAddCourse = () => {} }) 
         byUser.set(attendee.uid, {
           uid: attendee.uid,
           name: attendee.name,
-          team: attendee.category ?? '-',
+          // 관리자 계정은 category 가 없다. 그때는 역할을 소속 칸에 보여준다.
+          team: attendee.category ?? attendee.role ?? '-',
           totalCount: 0,
           completedCount: 0,
           lastDate: null,
