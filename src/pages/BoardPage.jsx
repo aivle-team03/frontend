@@ -173,11 +173,9 @@ function getRiskLabel(level) {
   return RISK_OPTIONS.find((risk) => risk.level === level)?.label ?? '보통'
 }
 
+// 신고자가 고른 고정 분류(소방안전/시설안전/산업안전/기타)를 되돌린다.
+// 접수 전 게시글은 event_category_id 가 이 고정 목록의 인덱스로 저장돼 있다.
 function getBoardCategoryName(item) {
-  // 서버가 event_category 를 조인해 이름을 함께 준다. 접수 때 지정한 위험 요인이
-  // 여기로 온다. 아래 하드코딩 맵은 그 값이 없을 때만 쓰는 폴백이다.
-  if (item.category_name) return item.category_name
-
   const categoryId = item.event_category_id ?? item.category_id
 
   return EVENT_CATEGORY_OPTIONS.find((category) => Number(category.id) === Number(categoryId))?.name
@@ -191,9 +189,15 @@ function formatBoardItem(item) {
 
   const statusKey = getStatusKey(item.status)
 
+  // 등록 상태에서는 신고자가 고른 고정 분류를 그대로 보여준다.
+  // 접수되면 관리자가 지정한 위험 요인(event_category)으로 바뀐다.
+  const category = statusKey === 'registered'
+    ? getBoardCategoryName(item) || item.category || '기타'
+    : item.category_name || item.category || getBoardCategoryName(item) || '기타'
+
   return {
     id: item.board_id || item.id,
-    category: item.category_name || item.category || '기타',
+    category,
     title: item.title || '',
     description: item.board_contents || item.description || '',
     riskLevel: item.risk_level || item.riskLevel || 'medium',
@@ -305,10 +309,7 @@ function BoardPage() {
       })
       const rawItems = response.data.items || response.data || []
       setBoardCategoryOptions(getBoardCategoryOptions(rawItems))
-      setReports(rawItems.map((item) => formatBoardItem({
-        ...item,
-        category: item.category || getBoardCategoryName(item),
-      })))
+      setReports(rawItems.map((item) => formatBoardItem(item)))
     } catch (error) {
       console.error('게시글 목록 로드 실패:', error)
       setBoardCategoryOptions([])
