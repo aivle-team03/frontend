@@ -3,6 +3,7 @@ import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
+import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { clearAuthSession } from '../api/authInterceptor.js'
@@ -13,7 +14,7 @@ import '../styles/MyPage.css'
 const API_BASE_URL = BACKEND_API_URL
 
 function MyPage() {
-  const { t } = useUiLanguage()
+  const { language, t } = useUiLanguage()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('password')
@@ -26,6 +27,13 @@ function MyPage() {
   const [withdrawalError, setWithdrawalError] = useState('')
   const [isWithdrawing, setIsWithdrawing] = useState(false)
   const [withdrawalComplete, setWithdrawalComplete] = useState(false)
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
+  const [notifications, setNotifications] = useState([])
+  const [notificationPage, setNotificationPage] = useState(1)
+  const notificationPageSize = 10
+  const notificationPageCount = Math.max(1, Math.ceil(notifications.length / notificationPageSize))
+  const currentNotificationPage = Math.min(notificationPage, notificationPageCount)
+  const pagedNotifications = notifications.slice((currentNotificationPage - 1) * notificationPageSize, currentNotificationPage * notificationPageSize)
 
   useEffect(() => {
     const fetchMyProfile = async () => {
@@ -48,6 +56,31 @@ function MyPage() {
     }
 
     fetchMyProfile()
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchUnreadNotificationCount = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/notifications`)
+        if (isMounted) {
+          const notifications = Array.isArray(response.data) ? response.data : []
+          setNotifications(notifications)
+          setNotificationPage((currentPage) => Math.min(currentPage, Math.max(1, Math.ceil(notifications.length / notificationPageSize))))
+          setUnreadNotificationCount(notifications.filter((notification) => !notification.read).length)
+        }
+      } catch (error) {
+        console.error('알림 수 조회 실패:', error)
+      }
+    }
+
+    fetchUnreadNotificationCount()
+    const interval = window.setInterval(fetchUnreadNotificationCount, 15000)
+    return () => {
+      isMounted = false
+      window.clearInterval(interval)
+    }
   }, [])
 
   const selectTab = (tab) => {
@@ -136,6 +169,13 @@ function MyPage() {
             <h2>{maskName(user.name)}</h2>
             {user.department && <p>{user.department}</p>}
             {user.email && <span className="my-email">{user.email}</span>}
+          </div>
+        </div>
+        <div className="my-profile-stats" aria-live="polite">
+          <div>
+            <NotificationsNoneOutlinedIcon aria-hidden="true" />
+            <span>{language === 'en' ? 'Unread notifications' : '미확인 알림'}</span>
+            <strong>{language === 'en' ? `${unreadNotificationCount} unread` : `${unreadNotificationCount}건`}</strong>
           </div>
         </div>
       </article>
@@ -281,6 +321,36 @@ function MyPage() {
             )}
           </section>
         )}
+      </article>
+
+      <article id="notification-history" className="notification-history-card" aria-labelledby="notification-history-title">
+        <div className="notification-history-heading">
+          <div>
+            <h3 id="notification-history-title">{language === 'en' ? 'Notification History' : '알림 내역'}</h3>
+            <p>{language === 'en' ? 'Review all notifications, including those already read.' : '확인한 알림을 포함해 전체 알림 내역을 확인할 수 있습니다.'}</p>
+          </div>
+          <strong>{language === 'en' ? `${unreadNotificationCount} unread` : `미확인 ${unreadNotificationCount}건`}</strong>
+        </div>
+        <div className="notification-history-list">
+          {notifications.length ? pagedNotifications.map((notification) => (
+            <article className={`notification-history-item${notification.read ? ' is-read' : ''}`} key={notification.id}>
+              <span className="notification-history-icon"><NotificationsNoneOutlinedIcon aria-hidden="true" /></span>
+              <div>
+                <div className="notification-history-title-row"><strong>{notification.title}</strong>{notification.read ? <small>{language === 'en' ? 'Read' : '확인함'}</small> : <small className="is-unread">{language === 'en' ? 'Unread' : '미확인'}</small>}</div>
+                <p>{notification.message}</p>
+                <time>{notification.time}</time>
+              </div>
+            </article>
+          )) : <p className="notification-history-empty">{language === 'en' ? 'There are no notifications.' : '알림 내역이 없습니다.'}</p>}
+        </div>
+        {notifications.length > 0 && <div className="notification-history-pagination">
+          <span>{language === 'en' ? `${notifications.length} notifications` : `총 ${notifications.length}건`}</span>
+          <div>
+            <button type="button" aria-label={language === 'en' ? 'Previous page' : '이전 페이지'} disabled={currentNotificationPage === 1} onClick={() => setNotificationPage((page) => Math.max(1, page - 1))}>‹</button>
+            <strong>{currentNotificationPage} / {notificationPageCount}</strong>
+            <button type="button" aria-label={language === 'en' ? 'Next page' : '다음 페이지'} disabled={currentNotificationPage === notificationPageCount} onClick={() => setNotificationPage((page) => Math.min(notificationPageCount, page + 1))}>›</button>
+          </div>
+        </div>}
       </article>
     </section>
   )

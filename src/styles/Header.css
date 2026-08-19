@@ -265,7 +265,7 @@
 }
 
 .notification-list {
-  max-height: 330px;
+  max-height: min(520px, calc(100vh - 250px));
   overflow-y: auto;
 }
 
@@ -364,7 +364,19 @@
 }
 
 .notification-item.is-read {
-  opacity: 0.72;
+  color: #94a3b8;
+  background: #f8fafc;
+}
+
+.notification-item.is-read .notification-type-icon {
+  color: #94a3b8;
+  background: #eef2f6;
+}
+
+.notification-item.is-read .notification-title-row strong,
+.notification-item.is-read .notification-copy > span:not(.notification-title-row),
+.notification-item.is-read .notification-copy small {
+  color: #94a3b8;
 }
 
 .notification-settings-link {

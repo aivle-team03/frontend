@@ -308,7 +308,7 @@ function MonitoringDetailPage() {
               <div><dt><AccessTimeRoundedIcon />{t('감지 시간')}</dt><dd>14:28:32</dd></div>
               <div><dt>{t('위험도')}</dt><dd className="detail-risk-level">{t('주의')}</dd></div>
             </dl>
-            <button type="button" onClick={() => navigate('/checklists/management')}>{t('체크리스트 확인')}</button>
+            <button type="button" onClick={() => navigate('/checklists/management')}>{t('담당자 배정')}</button>
           </section>
         </aside>
       </div>
