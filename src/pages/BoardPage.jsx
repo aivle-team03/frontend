@@ -173,6 +173,10 @@ function getRiskLabel(level) {
 }
 
 function getBoardCategoryName(item) {
+  // 서버가 event_category 를 조인해 이름을 함께 준다. 접수 때 지정한 위험 요인이
+  // 여기로 온다. 아래 하드코딩 맵은 그 값이 없을 때만 쓰는 폴백이다.
+  if (item.category_name) return item.category_name
+
   const categoryId = item.event_category_id ?? item.category_id
 
   return EVENT_CATEGORY_OPTIONS.find((category) => Number(category.id) === Number(categoryId))?.name
@@ -643,7 +647,9 @@ function BoardPage() {
 
       {isReportModalOpen && (
         <FormModal
-          categories={boardCategoryOptions}
+          // 신고 폼은 고정 분류만 쓴다. boardCategoryOptions 는 event_category 응답으로
+          // 덮이는 값이라, 그대로 넘기면 조회 시점에 따라 선택지가 달라진다.
+          categories={EVENT_CATEGORY_OPTIONS}
           riskOptions={RISK_OPTIONS}
           reporterName={currentUserName}
           onClose={() => setIsReportModalOpen(false)}
