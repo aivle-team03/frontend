@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { clearAuthSession } from '../api/authInterceptor.js'
 import { useUiLanguage } from '../utils/uiLanguage.js'
+import { maskName } from '../utils/userPrivacy.js'
 import '../styles/MyPage.css'
 
 const API_BASE_URL = BACKEND_API_URL
@@ -132,7 +133,7 @@ function MyPage() {
           <span className="my-profile-avatar" aria-hidden="true"><AccountCircleRoundedIcon /></span>
           <div className="my-profile-copy">
             <span className="my-role-badge"><ShieldOutlinedIcon />{t(user.role)}</span>
-            <h2>{user.name}</h2>
+            <h2>{maskName(user.name)}</h2>
             {user.department && <p>{user.department}</p>}
             {user.email && <span className="my-email">{user.email}</span>}
           </div>
