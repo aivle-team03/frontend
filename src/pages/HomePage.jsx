@@ -67,6 +67,7 @@ function makeInspectionEvent(item) {
     time: formatTime(item.date),
     location: item.location ?? '-',
     type: item.name ?? '-',
+    riskType: item.category ?? item.category_name ?? item.risk_category ?? item.name ?? '-',
     manager: item.user_name ?? '-',
     status,
   }
@@ -79,18 +80,33 @@ function makeActionEvent(item) {
     time: getTimeByStatus(item, status),
     location: item.location ?? '-',
     type: item.action_name ?? '-',
+    riskType: item.category ?? item.category_name ?? item.risk_category ?? item.type ?? item.action_name ?? '-',
     manager: item.handler_name ?? '-',
     status,
   }
 }
 
-function makeRiskTypeData(riskFactors) {
+function makeRiskTypeData(events) {
   const counts = new Map()
-  riskFactors.forEach((item) => {
-    const name = item.type || item.item
+  events.forEach((item) => {
+    const name = item.riskType || item.type
     if (name) counts.set(name, (counts.get(name) || 0) + 1)
   })
   return [...counts].map(([name, value]) => ({ name, value }))
+}
+
+function filterEventsByPeriod(events, selectedPeriod) {
+  const now = new Date()
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const rangeDays = selectedPeriod === '오늘' ? 1 : selectedPeriod === '최근 7일' ? 7 : 28
+
+  return events.filter((event) => {
+    const date = new Date(event.time)
+    if (Number.isNaN(date.getTime())) return false
+    const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    const diffDays = Math.floor((startOfToday - eventDay) / 86400000)
+    return diffDays >= 0 && diffDays < rangeDays
+  })
 }
 
 function makeTrendData(events, selectedPeriod) {
@@ -221,7 +237,8 @@ function HomePage() {
       value: countSummaryEvents(mergedEvents, card.id),
     }))
   }, [mergedEvents])
-  const riskTypeData = useMemo(() => makeRiskTypeData(riskFactors), [riskFactors])
+  const periodEvents = useMemo(() => filterEventsByPeriod(mergedEvents, selectedPeriod), [mergedEvents, selectedPeriod])
+  const riskTypeData = useMemo(() => makeRiskTypeData(periodEvents), [periodEvents])
   const trendData = useMemo(() => makeTrendData(mergedEvents, selectedPeriod), [mergedEvents, selectedPeriod])
 
   return (

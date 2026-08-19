@@ -129,7 +129,9 @@ function Header({ items }) {
           setUser({
             name: userData.name || userData.user_id || '관리자',
             role: userData.role || '소방안전 관리자',
-            department: userData.department || '시설관리팀',
+            // Department is not part of the current profile contract; avoid showing
+            // the legacy mock value returned by older API responses.
+            department: '',
             email: userData.email || '',
           })
         }
@@ -148,7 +150,7 @@ function Header({ items }) {
     window.dispatchEvent(new CustomEvent('boss-language-change', { detail: preferences.language }))
   }, [preferences])
 
-  useEffect(() => synchronizeStaticUiLanguage(preferences.language), [preferences.language])
+  useEffect(() => synchronizeStaticUiLanguage(preferences.language), [preferences.language, location.pathname])
 
 
   const fetchNotifications = useCallback(async () => {
@@ -432,8 +434,8 @@ function Header({ items }) {
                   onClick={handleMoveToSafetyManagement}
                 >
                   <strong>{user.name}</strong>
-                  <span>
-                    {user.department} · {user.role}
+                <span>
+                  {[user.department, translateUi(user.role, preferences.language)].filter(Boolean).join(' · ')}
                   </span>
                   <small>{user.email}</small>
                 </button>
@@ -451,7 +453,7 @@ function Header({ items }) {
               <button className="profile-dropdown-link" type="button" role="menuitem" onClick={handleMoveToMyPage}>
                 <ManageAccountsOutlinedIcon />
                 <span>
-                  <strong>마이페이지</strong>
+                  <strong>{translateUi('마이페이지', preferences.language)}</strong>
                 </span>
                 <ArrowForwardIosRoundedIcon />
               </button>

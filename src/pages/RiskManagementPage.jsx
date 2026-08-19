@@ -8,6 +8,7 @@ import SpeedRoundedIcon from '@mui/icons-material/SpeedRounded'
 import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const API_BASE_URL = BACKEND_API_URL
 
@@ -65,6 +66,7 @@ function getTopEntry(counts) {
 }
 
 function RiskManagementPage() {
+  const { t } = useUiLanguage()
 
   const [isRiskModalOpen, setIsRiskModalOpen] = useState(false)
   const [isDeleteMode, setIsDeleteMode] = useState(false)
@@ -151,10 +153,10 @@ function RiskManagementPage() {
             <div className={`risk-kpi-card risk-kpi-${card.tone}`} key={card.label}>
               <span className="risk-kpi-icon"><card.icon /></span>
               <div>
-                <span>{card.label}</span>
+                <span>{t(card.label)}</span>
                 <strong>
                   {card.value}
-                  <small>{card.unit}</small>
+                  <small>{t(card.unit)}</small>
                 </strong>
               </div>
             </div>
@@ -167,7 +169,7 @@ function RiskManagementPage() {
           <div className="risk-count-layout">
             <div className="risk-card-heading">
               <div>
-                <Typography variant="h6">핵심 위험 요인</Typography>
+                <Typography variant="h6">{t('핵심 위험 요인')}</Typography>
               </div>
             </div>
 
@@ -177,17 +179,17 @@ function RiskManagementPage() {
               </div>
 
               <div className="count-text-box">
-                <span>상 위험 항목</span>
-                <strong>{highRiskCount}건</strong>
-                <p>전체 {totalRiskCount}건 중 즉시 확인 대상</p>
+                <span>{t('상 위험 항목')}</span>
+                <strong>{highRiskCount}{t('건')}</strong>
+                <p>{t('전체')} {totalRiskCount}{t('건')} {t('중 즉시 확인 대상')}</p>
               </div>
             </div>
 
             <div className="risk-focus-list">
               <div>
-                <span>최다 유형</span>
-                <strong>{topType.label}</strong>
-                <em>{topType.value}건</em>
+                <span>{t('최다 유형')}</span>
+                <strong>{t(topType.label)}</strong>
+                <em>{topType.value}{t('건')}</em>
               </div>
             </div>
           </div>
@@ -197,9 +199,9 @@ function RiskManagementPage() {
           <div className="risk-graph-layout">
             <div className="risk-card-heading">
               <div>
-                <Typography variant="h6">위험 요인 유형 그래프</Typography>
+                <Typography variant="h6">{t('위험 요인 유형 그래프')}</Typography>
               </div>
-              <span className="risk-card-chip">전체 {totalRiskCount}건</span>
+              <span className="risk-card-chip">{t('전체')} {totalRiskCount}{t('건')}</span>
             </div>
 
             <div className="risk-chart-frame">
@@ -213,9 +215,9 @@ function RiskManagementPage() {
         <div className="risk-list">
           <div className="risk-card-heading risk-list-heading">
             <div>
-              <Typography variant="h6">위험 요인 리스트</Typography>
+              <Typography variant="h6">{t('위험 요인 리스트')}</Typography>
             </div>
-            <span className="risk-card-chip">{totalRiskCount}개 항목</span>
+            <span className="risk-card-chip">{totalRiskCount}{t('개 항목')}</span>
           </div>
 
           <EventCategoryTable
@@ -226,18 +228,18 @@ function RiskManagementPage() {
           />
         </div>
 
-        <aside className="risk-list-button" aria-label="위험 요인 관리 작업">
+        <aside className="risk-list-button" aria-label={t('위험 요인 관리 작업')}>
           <div className="risk-action-copy">
-            <strong>위험 요인 편집</strong>
+            <strong>{t('위험 요인 편집')}</strong>
           </div>
 
           <div className="risk-button-layout">
             <button className="risk-add-button" type="button"  onClick={() => setIsRiskModalOpen(true)}>
-              항목 추가
+              {t('항목 추가')}
             </button>
 
             <button className="risk-add-button" type="button" onClick={() => setIsDeleteMode((currentMode) => !currentMode)}>
-              {isDeleteMode ? '취소하기' : '항목 제거'}
+              {t(isDeleteMode ? '취소하기' : '항목 제거')}
             </button>
           </div>
         </aside>

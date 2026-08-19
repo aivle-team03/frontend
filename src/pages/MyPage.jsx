@@ -35,7 +35,8 @@ function MyPage() {
           name: userData.name || userData.user_id || '관리자',
           email: userData.email || '',
           role: userData.role || '안전관리자',
-          department: userData.department || '',
+          // Hide the legacy mock department until a verified profile field is available.
+          department: '',
         })
       } catch (error) {
         console.error('사용자 정보 조회 실패:', error)
@@ -121,16 +122,16 @@ function MyPage() {
     }
   }
 
-  if (loading) return <div className="loading-container">내 정보를 불러오는 중…</div>
-  if (!user) return <div className="loading-container">사용자 정보를 불러오지 못했습니다. 로그인 상태를 확인해 주세요.</div>
+  if (loading) return <div className="loading-container">{t('내 정보를 불러오는 중…')}</div>
+  if (!user) return <div className="loading-container">{t('사용자 정보를 불러오지 못했습니다. 로그인 상태를 확인해 주세요.')}</div>
 
   return (
-    <section className="my-page-container" aria-label="마이페이지">
+    <section className="my-page-container" aria-label={t('마이페이지')}>
       <article className="my-profile-hero">
         <div className="my-profile-main">
           <span className="my-profile-avatar" aria-hidden="true"><AccountCircleRoundedIcon /></span>
           <div className="my-profile-copy">
-            <span className="my-role-badge"><ShieldOutlinedIcon />{user.role}</span>
+            <span className="my-role-badge"><ShieldOutlinedIcon />{t(user.role)}</span>
             <h2>{user.name}</h2>
             {user.department && <p>{user.department}</p>}
             {user.email && <span className="my-email">{user.email}</span>}
