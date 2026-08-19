@@ -929,3 +929,13 @@
 .education-management-page .completion-metric:not(.is-overall) .metric-value-row > strong { display: inline-flex; align-items: baseline; white-space: nowrap; line-height: 1; }
 .education-management-page .metric-ring { width: 64px; height: 64px; flex-basis: 64px; }
 .education-management-page .metric-ring i { width: 46px; height: 46px; }
+
+/* Keep the status column aligned with its header and the other table columns. */
+.education-management-page .management-course-table th:last-child,
+.education-management-page .management-course-table td:last-child {
+  text-align: left;
+}
+
+.education-management-page .management-course-table td:last-child .education-status {
+  justify-content: flex-start;
+}

@@ -1,308 +1,283 @@
-/* ==========================================
-   1. 기본 레이아웃 & 컨테이너
-   ========================================== */
-.container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    background-color: #f5f5f5;
-    font-family: Arial, sans-serif;
+@import './login.css';
+
+.signup-page {
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
+  padding-block: 38px;
 }
 
-.logo-area {
-    text-align: center;
-    margin-bottom: 20px;
+.signup-shell {
+  width: min(560px, calc(100vw - 32px));
+  max-width: 100%;
+  gap: 16px;
 }
 
-.sub-title {
-    color: #003366;
-    margin: 0;
-    font-size: 24px;
-    font-weight: bold;
+.signup-card {
+  padding: 26px 30px 22px;
 }
 
-.desc {
-    color: #666;
-    margin: 5px 0 0 0;
-    font-size: 12px;
+.signup-progress {
+  display: grid;
+  width: 76px;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 13px auto 0;
 }
 
-.signup-box {
-    background-color: #fff;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    width: 360px;
-    text-align: center;
+.signup-progress i {
+  height: 4px;
+  border-radius: 999px;
+  background: #dde7f1;
+  transition: background .2s ease, transform .2s ease;
 }
 
-.main-title {
-    font-size: 18px;
-    margin-bottom: 25px;
-    color: #333;
-    font-weight: bold;
+.signup-progress i.is-active {
+  background: #5577a8;
+  transform: scaleX(1.03);
 }
 
-/* ==========================================
-   2. 폼 요소 (입력창, 선택상자, 버튼)
-   ========================================== */
-.form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.input {
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-    outline: none;
-}
-
-.select-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
-}
-
-.label {
-    font-size: 12px;
-    color: #666;
-    font-weight: bold;
-}
-
-.select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: #fff;
-    font-size: 14px;
-}
-
-.message {
-    font-size: 12px;
-    margin: 0;
-    text-align: left;
-    line-height: 1.4;
-}
-
-.button {
-    padding: 12px;
-    background-color: #2f64b7;
-    border: none;
-    border-radius: 4px;
-    color: #fff;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-.button.full-width {
-    width: 100% !important;
-    box-sizing: border-box;
-    margin-top: 24px;
-    padding: 12px 0;
-    font-size: 15px;
-    border-radius: 6px;
-    display: block;
-}
-
-.links {
-    margin-top: 20px;
-    font-size: 12px;
-    color: #666;
-    cursor: pointer;
-}
-
-.signup-code-summary {
-    margin: 0;
-    color: #36516f;
-    font-size: 12px;
-    font-weight: 700;
-    text-align: center;
-}
-
-.password-input-group {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-}
-
-.password-guide-text {
-    font-size: 11px;
-    color: #6b7280;
-    margin-top: 4px;
-    margin-bottom: 8px;
-    margin-left: 2px;
-    text-align: left;
-    line-height: 1.3;
-}
-
-/* ==========================================
-   3. 약관 동의 (Step 1) 레이아웃
-   ========================================== */
-.terms-step-wrapper {
-    width: 100%;
-    text-align: left;
-    font-size: 13px;
-    color: #374151;
-}
-
-/* 체크박스 공통 */
-.checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    white-space: nowrap;
-}
-
-.checkbox-label.bold {
-    font-weight: 600;
-    font-size: 14px;
-}
-
-.checkbox-label input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: #2563eb;
-    cursor: pointer;
-    flex-shrink: 0;
-}
-
-/* 전체 동의 박스 */
-.terms-all-box {
-    padding: 14px;
-    background-color: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    margin-bottom: 12px;
-}
-
-.terms-all-notice {
-    font-size: 11px;
-    color: #6b7280;
-    margin-top: 8px;
-    margin-bottom: 0;
-    line-height: 1.4;
-    word-break: keep-all;
-}
-
-/* 약관 항목 및 아코디언 */
-.terms-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 20px;
+.signup-terms {
+  display: grid;
+  gap: 12px;
+  margin-top: 19px;
 }
 
 .terms-item {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    overflow: hidden;
+  overflow: hidden;
+  border: 1px solid #dce6f0;
+  border-radius: 14px;
+  background: rgba(255,255,255,.78);
 }
 
 .terms-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 14px;
-    background-color: #ffffff;
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 14px 0 16px;
+  background: #fff;
 }
 
-.toggle-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #6b7280;
-    display: flex;
-    align-items: center;
-    padding: 0;
+.terms-item-header label {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  color: #405771;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.terms-item-header input {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  accent-color: #345f91;
+}
+
+.terms-item-header button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 9px;
+  color: #71849a;
+  background: transparent;
+  cursor: pointer;
+}
+
+.terms-item-header button:hover {
+  color: #315b88;
+  background: #edf4fa;
 }
 
 .terms-item-content {
-    padding: 10px 12px;
-    background-color: #f9fafb;
-    border-top: 1px solid #f3f4f6;
-    font-size: 12px;
-    color: #4b5563;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 17px 18px;
+  border-top: 1px solid #e6edf4;
+  color: #65768b;
+  background: #f8fafc;
+  font-size: 11px;
+  line-height: 1.65;
 }
 
-/* ==========================================
-   4. 개인정보 수집·이용 요약 및 표(Table)
-   ========================================== */
-.privacy-summary-wrap {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    text-align: left;
+.terms-item-content section + section {
+  margin-top: 14px;
 }
 
-.privacy-sub-title {
-    font-size: 11px;
-    font-weight: 600;
-    color: #4b5563;
-    margin-bottom: 2px;
+.terms-item-content strong {
+  color: #344c67;
+  font-size: 11px;
+}
+
+.terms-item-content p {
+  margin: 4px 0 0;
+}
+
+.terms-item-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terms-item-content::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #bdcad8;
 }
 
 .privacy-compact-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 11px;
-    background-color: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
-    table-layout: fixed;
+  width: 100%;
+  margin: 10px 0;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid #dce5ee;
+  border-radius: 10px;
+  background: #fff;
 }
 
 .privacy-compact-table th,
 .privacy-compact-table td {
-    border: 1px solid #e5e7eb;
-    padding: 6px 4px;
-    text-align: center;
-    word-break: keep-all;
-    line-height: 1.35;
-    color: #374151;
+  padding: 9px 8px;
+  border-right: 1px solid #e2e9f0;
+  border-bottom: 1px solid #e2e9f0;
+  text-align: left;
+  vertical-align: top;
+  word-break: keep-all;
 }
 
 .privacy-compact-table th {
-    background-color: #f3f4f6;
-    font-weight: 600;
-    color: #1f2937;
-    font-size: 11px;
+  color: #405872;
+  background: #edf3f8;
+  font-weight: 850;
 }
 
-.privacy-compact-table td {
-    font-size: 10.5px;
+.privacy-compact-table tr > *:last-child {
+  border-right: 0;
 }
 
-.terms-item-content {
-    margin-top: 8px;
-    padding: 10px;
-    background-color: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-
-    max-height: 120px;
-    overflow-y: auto;
-
-    font-size: 11px;
-    line-height: 1.6;
-    color: #4b5563;
-    text-align: left;
+.privacy-compact-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
-.terms-item-content::-webkit-scrollbar {
-    width: 5px;
+.signup-terms > .auth-primary {
+  width: 100%;
+  margin-top: 5px;
 }
 
-.terms-item-content::-webkit-scrollbar-thumb {
-    background-color: #d1d5db;
-    border-radius: 3px;
+.signup-form {
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.signup-action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  align-items: end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.signup-action-row > .auth-field {
+  min-width: 0;
+}
+
+.signup-check-button {
+  min-height: 52px;
+  padding: 0 10px;
+  border-color: #ccd9e7;
+  color: #45678e;
+  background: #f4f7fb;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.signup-check-button:hover {
+  border-color: #aebfd1;
+  color: #355a83;
+  background: #edf2f8;
+}
+
+.signup-action-row > .auth-secondary {
+  min-height: 52px;
+  padding-inline: 10px;
+  white-space: nowrap;
+}
+
+.signup-page .auth-primary {
+  border-color: #4d6fa2;
+  background: #5578ad;
+  box-shadow: 0 10px 20px rgba(52,82,126,.18);
+}
+
+.signup-page .auth-primary:hover:not(:disabled) {
+  background: #4d70a5;
+  box-shadow: 0 12px 22px rgba(52,82,126,.22);
+}
+
+.signup-submit-button {
+  transition: transform 140ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+.signup-field-guide {
+  color: #8290a2;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.signup-code-summary {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #385d86;
+  background: #edf5fc;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.signup-login-link {
+  display: block;
+  margin: 21px auto 0;
+  border: 0;
+  color: #76879b;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.signup-login-link strong {
+  margin-left: 4px;
+  color: #315e91;
+}
+
+@media (max-width: 620px) {
+  .signup-page {
+    padding-top: 76px;
+  }
+
+  .signup-card {
+    padding: 28px 20px 24px;
+  }
+
+  .signup-action-row {
+    grid-template-columns: 1fr;
+  }
+
+  .signup-action-row > .auth-secondary {
+    min-height: 44px;
+  }
+
+  .privacy-compact-table {
+    font-size: 9px;
+  }
 }

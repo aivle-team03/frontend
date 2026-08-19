@@ -127,6 +127,18 @@ export const enFlat = Object.assign({}, ...Object.values(en), shared)
 // Static labels that are rendered by legacy screens without calling t() yet.
 // API/user-entered values intentionally do not belong in this map.
 Object.assign(enFlat, {
+  '이벤트 상세': 'Event details',
+  '선택한 감지 결과를 확인합니다.': 'Review the selected detection result.',
+  'AI 데모 감지': 'AI demo detection',
+  '감지 위치': 'Detection location',
+  '감지 시간': 'Detection time',
+  '신뢰도': 'Confidence',
+  '담당자 배정': 'Assign staff',
+  '아직 감지된 데모 이벤트가 없습니다.': 'No demo events have been detected yet.',
+  '알림': 'Notifications',
+  '모두 읽음': 'Mark all as read',
+  '모두 삭제': 'Delete all',
+  '알림이 없습니다.': 'There are no notifications.',
   // Education management
   '교육 영상 등록': 'Training video registration', '교육 영상 추가': 'Add training video', '교육 영상 생성': 'Generate training video',
   '영상을 등록하면 선택한 대상자의 교육 목록에 즉시 표시됩니다.': 'The video will appear immediately in the selected audience\'s training list.',
@@ -138,6 +150,7 @@ Object.assign(enFlat, {
   '교육 목록에 등록되었습니다.': 'Added to the training list.', '교육 관리와 내 교육 리스트에서 확인할 수 있습니다.': 'You can find it in Education Management and My Learning.', '교육명, 사용 장비, 위험 요인, 교육 마감일을 입력해 주세요.': 'Enter the course name, equipment, risk factors, and due date.',
   '생성된 교육 영상 검토': 'Review generated training video', '생성 결과 검토': 'Review result', '등록 전 영상을 확인해 주세요': 'Review the video before publishing.', '주의': 'Warning', '생성된 교육 영상 미리보기': 'Generated training video preview', '재생성 요청 사항': 'Regeneration request', '수정하고 싶은 장면, 강조할 내용, 말투 등을 입력해 주세요.': 'Enter scenes, points of emphasis, or tone you want to change.', '영상 재생성': 'Regenerate video', '취소하는 중...': 'Cancelling...', '등록 취소': 'Cancel registration', '등록 중...': 'Publishing...', '교육 목록에 등록 ▶': 'Add to training list ▶', '교육 영상을 재생성하고 있습니다': 'Regenerating training video', 'AI 교육 영상을 생성하고 있습니다': 'Generating AI training video', '자료를 분석하고 장면을 제작 중입니다.': 'Analyzing materials and creating scenes.',
   '교육 영상 추가 방식': 'Training video action', '등록': 'Register', '생성': 'Generate', '이름 또는 부서 검색': 'Search by name or department', '대상자': 'Audience member', '소속': 'Department', '이수 상태': 'Completion status', '이수 일시': 'Completion date', '조건에 맞는 대상자가 없습니다.': 'No audience members match the selected conditions.',
+  '교육 대상자 현황': 'Training audience status', '전체 이수': 'Fully completed', '진도': 'Progress', '최근 이수일': 'Latest completion', '상세 창 닫기': 'Close details',
   '교육 영상 생성 탭': 'Generate',
   '소방안전': 'Fire safety', '시설안전': 'Facility safety', '산업안전': 'Industrial safety', '기타': 'Other', '비율': 'Ratio',
   '카테고리': 'Category', '위험도': 'Risk level', '위험도 전체': 'All risk levels', '신고일 기간': 'Reported date range', '제목, 내용, 장소 검색': 'Search title, content, or location', '높음': 'High', '보통': 'Medium', '낮음': 'Low',
@@ -146,7 +159,7 @@ Object.assign(enFlat, {
   '조건에 맞는 회사 코드가 없습니다.': 'No company codes match the selected conditions.', '조건에 맞는 근무자가 없습니다.': 'No workers match the selected conditions.',
   '권한을 확인하고 있습니다.': 'Checking permissions.', '안전관리자만 회사 코드와 사용자 역할을 관리할 수 있습니다.': 'Only safety managers can manage company codes and user roles.', '안전관리 설정을 불러오지 못했습니다.': 'Unable to load safety-management settings.',
   '교육 현황': 'Training overview', '교육 이수 현황': 'Learning progress', '이수율': 'Completion rate', '선택 대상': 'Selected audience', '대상 교육': 'Assigned courses', '개 과정': ' courses', '대상자별 교육 리스트': 'Training list by audience', '교육 대상자': 'Training audience', '총': 'Total', '교육명 검색': 'Search course name', '교육 대상 필터': 'Training audience filter', '대상': 'Audience', '이수 완료': 'Completed', '상태': 'Status', '최근 등록순': 'Most recently added', '개 표시': ' shown', '이전 교육 목록': 'Previous training list', '다음 교육 목록': 'Next training list',
-  '이수': 'Completed', '미이수': 'Not completed', '진행 중': 'In progress', '대기': 'Pending', '필수': 'Required', '정기': 'Recurring', '공통': 'Common', '안전관리자': 'Safety manager', '관제사': 'Control room operator', '현장관리자': 'Field manager', '일반유저': 'General user', '전체': 'All', '지게차': 'Forklift', '화물트럭': 'Cargo truck', '토잉카': 'Tow truck', '팔레트': 'Pallet', '적재': 'Loading', '현장보조': 'Site support', '유지보수': 'Maintenance', '재고': 'Inventory', '위험물': 'Hazardous materials',
+  '이수': 'Completed', '미이수': 'Not completed', '진행 중': 'In progress', '대기': 'Pending', '필수': 'Required', '정기': 'Recurring', '공통': 'Common', '안전관리자': 'Safety manager', '관제사': 'Control room operator', '현장관리자': 'Field manager', '일반유저': 'General user', '전체': 'All', '전체 임직원': 'All employees', '신규 근로자': 'New workers', '일반 작업자': 'General workers', '특수 작업자': 'Specialized workers', '안전 관리자': 'Safety managers', '지게차': 'Forklift', '화물트럭': 'Cargo truck', '토잉카': 'Tow truck', '팔레트': 'Pallet', '적재': 'Loading', '현장보조': 'Site support', '유지보수': 'Maintenance', '재고': 'Inventory', '위험물': 'Hazardous materials',
   // Reports
   '보고서': 'Reports', '보고서 생성': 'Generate report', '위험성평가표': 'Risk assessment form', '위험성평가 보고서': 'Risk assessment report', '경영책임자 검토지시서': 'Management review order', '종사자에 의한 유해 위험요인 보고서': 'Worker hazard report',
   '위험성평가표는 매일 자동으로 생성됩니다.': 'The risk assessment form is generated automatically every day.', '보고서 유형': 'Report type', '작성 기간': 'Reporting period', '시작일': 'Start date', '종료일': 'End date', '생성자': 'Created by', '계정 정보를 불러오는 중입니다': 'Loading account information',
@@ -225,3 +238,41 @@ Object.assign(enFlat, {
   '리포트 생성': 'Generate report', '다운로드': 'Download', '사진 없음': 'No photo',
   '점검': 'Inspection', '조치': 'Action', '전체': 'All',
 })
+
+const notificationTitleTranslations = {
+  '위험 신고 접수': 'Risk report received',
+  '조치 완료': 'Action completed',
+  '근로자 피드백 보고서 생성 완료': 'Worker feedback report completed',
+  '점검 완료': 'Inspection completed',
+  '점검 배정': 'Inspection assigned',
+  '조치 배정': 'Action assigned',
+  '승인 요청': 'Approval requested',
+  '승인 완료': 'Approval completed',
+  '교육 이수 완료': 'Training completed',
+  '교육 알림': 'Training notification',
+}
+
+const notificationTextReplacements = [
+  ['위험 신고 게시글이 등록되었습니다.', 'A risk report has been submitted.'],
+  ['조치를 완료했습니다.', 'The action has been completed.'],
+  ['근로자 피드백 개선 보고서 생성이 완료되었습니다.', 'The worker feedback improvement report has been generated.'],
+  ['점검이 완료되었습니다.', 'The inspection has been completed.'],
+  ['점검이 배정되었습니다.', 'An inspection has been assigned.'],
+  ['조치가 배정되었습니다.', 'An action has been assigned.'],
+  ['승인 요청이 등록되었습니다.', 'An approval request has been submitted.'],
+  ['승인이 완료되었습니다.', 'Approval has been completed.'],
+  ['교육을 이수했습니다.', 'Training has been completed.'],
+]
+
+export function translateNotificationText(value, language) {
+  if (language !== 'en' || typeof value !== 'string') return value
+  if (notificationTitleTranslations[value]) return notificationTitleTranslations[value]
+
+  let translated = value
+  for (const [korean, english] of notificationTextReplacements) translated = translated.replace(korean, english)
+  return translated
+    .replace(/(\d+)시간 전/g, '$1 hours ago')
+    .replace(/(\d+)분 전/g, '$1 minutes ago')
+    .replace(/(\d+)일 전/g, '$1 days ago')
+    .replace('방금 전', 'Just now')
+}

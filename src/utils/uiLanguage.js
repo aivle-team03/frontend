@@ -2,9 +2,27 @@ import { useEffect, useState } from 'react'
 import { enFlat } from './en.js'
 
 const STORAGE_KEY = 'boss-user-preferences'
+const LANGUAGE_STORAGE_KEY = 'boss-ui-language'
 
 export function getUiLanguage() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}').language || 'ko' } catch { return 'ko' }
+  const storedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY)
+  if (storedLanguage === 'en' || storedLanguage === 'ko') return storedLanguage
+  try {
+    const preferenceLanguage = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}').language
+    return preferenceLanguage === 'en' ? 'en' : 'ko'
+  } catch {
+    return 'ko'
+  }
+}
+
+export function setUiLanguage(language) {
+  const nextLanguage = language === 'en' ? 'en' : 'ko'
+  let preferences
+  try { preferences = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') } catch { preferences = {} }
+  localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...preferences, language: nextLanguage }))
+  document.documentElement.lang = nextLanguage
+  window.dispatchEvent(new CustomEvent('boss-language-change', { detail: nextLanguage }))
 }
 
 export function translateUi(value, language = getUiLanguage()) {
@@ -59,8 +77,15 @@ export function useUiLanguage() {
   const [language, setLanguage] = useState(getUiLanguage)
   useEffect(() => {
     const onChange = (event) => setLanguage(event.detail || getUiLanguage())
+    const onStorage = (event) => {
+      if (event.key === STORAGE_KEY || event.key === LANGUAGE_STORAGE_KEY) setLanguage(getUiLanguage())
+    }
     window.addEventListener('boss-language-change', onChange)
-    return () => window.removeEventListener('boss-language-change', onChange)
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener('boss-language-change', onChange)
+      window.removeEventListener('storage', onStorage)
+    }
   }, [])
   return { language, t: (value) => translateUi(value, language) }
 }

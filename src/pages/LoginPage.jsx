@@ -1,267 +1,29 @@
-import React, { useState } from 'react';
-import ReactDOM from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react'
+import ReactDOM from 'react-dom'
+import { useNavigate } from 'react-router-dom'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
+import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded'
 import { BACKEND_API_URL } from '../config/api.js'
-import '../styles/login.css';
+import { setUiLanguage, useUiLanguage } from '../utils/uiLanguage.js'
+import '../styles/login.css'
 
-function LoginPage({ setIsLoggedIn }) {
-  const [id, setId] = useState('');
-  const [pw, setPw] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  // 비밀번호 재설정 모달 상태
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [resetUserId, setResetUserId] = useState('');
-  const [resetName, setResetName] = useState('');
-  const [resetNewPw, setResetNewPw] = useState('');
-  const [resetConfirmPw, setResetConfirmPw] = useState('');
-  const [modalMessage, setModalMessage] = useState('');
-  const [isModalError, setIsModalError] = useState(false);
-  const [isResetLoading, setIsResetLoading] = useState(false);
-
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setErrorMessage('');
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(`${BACKEND_API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: id,
-          password: pw
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('token', data.access_token);
-        localStorage.setItem('refresh_token', data.refresh_token);
-        localStorage.setItem('isLoggedIn', 'true');
-
-        const userRole = data.role || '일반유저'; // 기본값을 '일반유저'로 설정
-        localStorage.setItem('userRole', userRole);
-
-        window.dispatchEvent(new CustomEvent('roleUpdated', { detail: userRole }));
-
-        setIsLoggedIn(true);
-        navigate('/')
-      } else {
-        setErrorMessage(data.detail || 'ID 또는 비밀번호가 일치하지 않습니다.');
-      }
-    } catch (error) {
-      setErrorMessage('서버와 통신할 수 없습니다. FastAPI 서버 상태를 확인해주세요.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    setModalMessage('');
-    setIsModalError(false);
-
-    if (!resetUserId.trim() || !resetName.trim() || !resetNewPw.trim() || !resetConfirmPw.trim()) {
-      setIsModalError(true);
-      setModalMessage('모든 필드를 입력해주세요.');
-      return;
-    }
-
-    if (resetNewPw !== resetConfirmPw) {
-      setIsModalError(true);
-      setModalMessage('새 비밀번호와 비밀번호 확인이 일치하지 않습니다.');
-      return;
-    }
-
-    setIsResetLoading(true);
-
-    try {
-      const response = await fetch(`${BACKEND_API_URL}/api/auth/find/password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: resetUserId,
-          name: resetName,
-          new_password: resetNewPw
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setModalMessage('비밀번호가 성공적으로 변경되었습니다! 로그인 해주세요.');
-        setTimeout(() => {
-          closeModal();
-        }, 1500);
-      } else {
-        setIsModalError(true);
-        setModalMessage(data.detail || '일치하는 사용자 정보를 찾을 수 없습니다.');
-      }
-    } catch (error) {
-      setIsModalError(true);
-      setModalMessage('서버와 통신 중 에러가 발생했습니다.');
-    } finally {
-      setIsResetLoading(false);
-    }
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setResetUserId('');
-    setResetName('');
-    setResetNewPw('');
-    setResetConfirmPw('');
-    setModalMessage('');
-    setIsModalError(false);
-  };
-
-  return (
-    <div className="container">
-      <div className="logo-area">
-        <h2 className="sub-title">AI 소방안전관리 비서</h2>
-        <p className="desc">Intelligent Fire Safety Management Assistant</p>
-      </div>
-
-      <div className="login-box">
-        <h3 className="main-title">시설안전 관리 자동화 AI 시스템</h3>
-
-        <form onSubmit={handleSubmit} className="form">
-          <input
-            type="text"
-            placeholder="ID를 입력해주세요"
-            value={id}
-            onChange={(e) => setId(e.target.value)}
-            className="input"
-            disabled={isLoading}
-          />
-          <input
-            type="password"
-            placeholder="PW를 입력해주세요"
-            value={pw}
-            onChange={(e) => setPw(e.target.value)}
-            className="input"
-            disabled={isLoading}
-          />
-
-          {errorMessage && <p className="error">{errorMessage}</p>}
-
-          <button type="submit" className="button" disabled={isLoading}>
-            {isLoading ? '로그인 중...' : '로그인'}
-          </button>
-        </form>
-
-        <div className="links">
-          <span onClick={() => navigate('/signup')}>회원가입</span> |{' '}
-          <span onClick={() => setIsModalOpen(true)} className="find-pw-link">
-            비밀번호 찾기
-          </span>
-        </div>
-      </div>
-
-      {isModalOpen &&
-        ReactDOM.createPortal(
-          <div
-            className="approval-modal-backdrop"
-            role="presentation"
-            onMouseDown={closeModal}
-          >
-            <section
-              className="login-password-modal"
-              role="dialog"
-              aria-modal="true"
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <div className="modal-v2-header">
-                <h2>비밀번호 재설정</h2>
-                <button type="button" className="modal-v2-close" onClick={closeModal}>
-                  ✕
-                </button>
-              </div>
-
-              <form onSubmit={handleResetPassword} className="login-modal-body">
-                <div className="input-group">
-                  <label>가입 ID</label>
-                  <input
-                    type="text"
-                    placeholder="가입한 ID"
-                    value={resetUserId}
-                    onChange={(e) => setResetUserId(e.target.value)}
-                    disabled={isResetLoading}
-                  />
-                </div>
-
-                <div className="input-group">
-                  <label>가입자 이름</label>
-                  <input
-                    type="text"
-                    placeholder="가입자 이름"
-                    value={resetName}
-                    onChange={(e) => setResetName(e.target.value)}
-                    disabled={isResetLoading}
-                  />
-                </div>
-
-                <div className="input-group">
-                  <label>새 비밀번호</label>
-                  <input
-                    type="password"
-                    placeholder="새로운 비밀번호"
-                    value={resetNewPw}
-                    onChange={(e) => setResetNewPw(e.target.value)}
-                    disabled={isResetLoading}
-                  />
-                </div>
-
-                <div className="input-group">
-                  <label>새 비밀번호 확인</label>
-                  <input
-                    type="password"
-                    placeholder="새로운 비밀번호 확인"
-                    value={resetConfirmPw}
-                    onChange={(e) => setResetConfirmPw(e.target.value)}
-                    disabled={isResetLoading}
-                  />
-                </div>
-
-                {modalMessage && (
-                  <p className={`modal-msg ${isModalError ? 'error' : 'success'}`}>
-                    {modalMessage}
-                  </p>
-                )}
-
-                <div className="modal-v2-footer">
-                  <button
-                    type="button"
-                    className="btn-v2-list"
-                    onClick={closeModal}
-                    disabled={isResetLoading}
-                  >
-                    취소
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-v2-approve"
-                    disabled={isResetLoading}
-                  >
-                    {isResetLoading ? '변경 중...' : '비밀번호 변경'}
-                  </button>
-                </div>
-              </form>
-            </section>
-          </div>,
-          document.body
-        )}
-    </div>
-  );
+const COPY = {
+  ko: { brand:'BOSS : 안전관리 서비스',subtitle:'Industrial Fire Safety Management Service',welcome:'환영합니다!',guide:'계정 정보를 입력해 업무 화면으로 이동하세요.',id:'아이디',idPlaceholder:'아이디를 입력하세요',password:'비밀번호',passwordPlaceholder:'비밀번호를 입력하세요',login:'로그인',loggingIn:'로그인 중...',signup:'회원가입',forgot:'비밀번호 찾기',resetTitle:'비밀번호 재설정',resetGuide:'가입 정보를 확인한 뒤 새로운 비밀번호를 설정합니다.',joinedId:'가입 아이디',joinedIdPlaceholder:'가입한 아이디',name:'가입자 이름',namePlaceholder:'가입자 이름',newPassword:'새 비밀번호',newPasswordPlaceholder:'새로운 비밀번호',confirmPassword:'새 비밀번호 확인',confirmPasswordPlaceholder:'새로운 비밀번호를 다시 입력하세요',cancel:'취소',change:'비밀번호 변경',changing:'변경 중...',show:'비밀번호 표시',hide:'비밀번호 숨기기',required:'모든 필드를 입력해주세요.',mismatch:'새 비밀번호와 비밀번호 확인이 일치하지 않습니다.',changed:'비밀번호가 변경되었습니다. 새 비밀번호로 로그인해주세요.',notFound:'일치하는 사용자 정보를 찾을 수 없습니다.',server:'서버와 통신할 수 없습니다. 잠시 후 다시 시도해주세요.',loginFail:'아이디 또는 비밀번호가 일치하지 않습니다.' },
+  en: { brand:'BOSS : Industrial Fire Safety Management Service',subtitle:'Industrial Fire and Workplace Safety Platform',welcome:'Welcome!',guide:'Enter your account details to continue to your workspace.',id:'User ID',idPlaceholder:'Enter your user ID',password:'Password',passwordPlaceholder:'Enter your password',login:'Sign in',loggingIn:'Signing in...',signup:'Create account',forgot:'Forgot password?',resetTitle:'Reset password',resetGuide:'Verify your account information and set a new password.',joinedId:'Registered user ID',joinedIdPlaceholder:'Enter your registered user ID',name:'Account holder name',namePlaceholder:'Enter the account holder name',newPassword:'New password',newPasswordPlaceholder:'Enter a new password',confirmPassword:'Confirm new password',confirmPasswordPlaceholder:'Enter the new password again',cancel:'Cancel',change:'Change password',changing:'Changing...',show:'Show password',hide:'Hide password',required:'Please complete every field.',mismatch:'The new passwords do not match.',changed:'Your password has been changed. Sign in with the new password.',notFound:'No matching account information was found.',server:'Unable to connect to the server. Please try again shortly.',loginFail:'The user ID or password is incorrect.' },
 }
 
-export default LoginPage;
+function LanguageSwitch({ language }) { return <div className="auth-language" role="group" aria-label="Language"><button type="button" className={language==='ko'?'is-active':''} onClick={()=>setUiLanguage('ko')}>한국어</button><button type="button" className={language==='en'?'is-active':''} onClick={()=>setUiLanguage('en')}>EN</button></div> }
+function PasswordInput({label,placeholder,value,onChange,disabled,copy,autoComplete}) { const [visible,setVisible]=useState(false); return <label className="auth-field"><span>{label}</span><span className="auth-input-wrap"><LockOutlinedIcon/><input type={visible?'text':'password'} placeholder={placeholder} value={value} onChange={onChange} disabled={disabled} autoComplete={autoComplete}/><button type="button" aria-label={visible?copy.hide:copy.show} title={visible?copy.hide:copy.show} onClick={()=>setVisible(v=>!v)}>{visible?<VisibilityOffOutlinedIcon/>:<VisibilityOutlinedIcon/>}</button></span></label> }
+
+function LoginPage({setIsLoggedIn}) {
+  const {language}=useUiLanguage(), copy=COPY[language], navigate=useNavigate()
+  const [id,setId]=useState(''),[pw,setPw]=useState(''),[errorMessage,setErrorMessage]=useState(''),[isLoading,setIsLoading]=useState(false),[isModalOpen,setIsModalOpen]=useState(false)
+  const [resetUserId,setResetUserId]=useState(''),[resetName,setResetName]=useState(''),[resetNewPw,setResetNewPw]=useState(''),[resetConfirmPw,setResetConfirmPw]=useState(''),[modalMessage,setModalMessage]=useState(''),[isModalError,setIsModalError]=useState(false),[isResetLoading,setIsResetLoading]=useState(false)
+  const handleSubmit=async(e)=>{e.preventDefault();setErrorMessage('');setIsLoading(true);try{const response=await fetch(`${BACKEND_API_URL}/api/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:id,password:pw})});const data=await response.json();if(!response.ok)throw new Error(language==='en'?copy.loginFail:(data.detail||copy.loginFail));localStorage.setItem('token',data.access_token);localStorage.setItem('refresh_token',data.refresh_token);localStorage.setItem('isLoggedIn','true');const role=data.role||'일반유저';localStorage.setItem('userRole',role);window.dispatchEvent(new CustomEvent('roleUpdated',{detail:role}));setIsLoggedIn(true);navigate('/')}catch(error){setErrorMessage(error.message||copy.server)}finally{setIsLoading(false)}}
+  const closeModal=()=>{setIsModalOpen(false);setResetUserId('');setResetName('');setResetNewPw('');setResetConfirmPw('');setModalMessage('');setIsModalError(false)}
+  const handleResetPassword=async(e)=>{e.preventDefault();setModalMessage('');setIsModalError(false);if(![resetUserId,resetName,resetNewPw,resetConfirmPw].every(v=>v.trim())){setIsModalError(true);setModalMessage(copy.required);return}if(resetNewPw!==resetConfirmPw){setIsModalError(true);setModalMessage(copy.mismatch);return}setIsResetLoading(true);try{const response=await fetch(`${BACKEND_API_URL}/api/auth/find/password`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:resetUserId,name:resetName,new_password:resetNewPw})});const data=await response.json();if(!response.ok)throw new Error(language==='en'?copy.notFound:(data.detail||copy.notFound));setModalMessage(copy.changed);window.setTimeout(closeModal,1500)}catch(error){setIsModalError(true);setModalMessage(error.message||copy.server)}finally{setIsResetLoading(false)}}
+  return <main className="auth-page"><div className="auth-glow auth-glow-one"/><div className="auth-glow auth-glow-two"/><LanguageSwitch language={language}/><section className="auth-shell"><header className="auth-brand"><div><h1>{copy.brand}</h1><p>{copy.subtitle}</p></div></header><article className="auth-card login-box"><div className="auth-card-heading"><span>SECURE ACCESS</span><h2>{copy.welcome}</h2><p>{copy.guide}</p></div><form onSubmit={handleSubmit} className="auth-form"><label className="auth-field"><span>{copy.id}</span><span className="auth-input-wrap"><PersonOutlineRoundedIcon/><input type="text" placeholder={copy.idPlaceholder} value={id} onChange={e=>setId(e.target.value)} disabled={isLoading} autoComplete="username"/></span></label><PasswordInput label={copy.password} placeholder={copy.passwordPlaceholder} value={pw} onChange={e=>setPw(e.target.value)} disabled={isLoading} copy={copy} autoComplete="current-password"/>{errorMessage&&<p className="auth-message is-error">{errorMessage}</p>}<button type="submit" className="auth-primary" disabled={isLoading}>{isLoading?copy.loggingIn:copy.login}</button></form><div className="auth-links"><button type="button" onClick={()=>navigate('/signup')}>{copy.signup}</button><i/><button type="button" onClick={()=>setIsModalOpen(true)}>{copy.forgot}</button></div></article></section>{isModalOpen&&ReactDOM.createPortal(<div className="approval-modal-backdrop auth-modal-backdrop" onMouseDown={closeModal}><section className="login-password-modal auth-reset-modal" role="dialog" aria-modal="true" onMouseDown={e=>e.stopPropagation()}><header><div><span>ACCOUNT RECOVERY</span><h2>{copy.resetTitle}</h2><p>{copy.resetGuide}</p></div><button type="button" onClick={closeModal}>×</button></header><form onSubmit={handleResetPassword} className="login-modal-body auth-form"><label className="auth-field"><span>{copy.joinedId}</span><span className="auth-input-wrap"><PersonOutlineRoundedIcon/><input value={resetUserId} onChange={e=>setResetUserId(e.target.value)} placeholder={copy.joinedIdPlaceholder}/></span></label><label className="auth-field"><span>{copy.name}</span><span className="auth-input-wrap"><PersonOutlineRoundedIcon/><input value={resetName} onChange={e=>setResetName(e.target.value)} placeholder={copy.namePlaceholder}/></span></label><PasswordInput label={copy.newPassword} placeholder={copy.newPasswordPlaceholder} value={resetNewPw} onChange={e=>setResetNewPw(e.target.value)} copy={copy} autoComplete="new-password"/><PasswordInput label={copy.confirmPassword} placeholder={copy.confirmPasswordPlaceholder} value={resetConfirmPw} onChange={e=>setResetConfirmPw(e.target.value)} copy={copy} autoComplete="new-password"/>{modalMessage&&<p className={`auth-message ${isModalError?'is-error':'is-success'}`}>{modalMessage}</p>}<footer><button type="button" className="auth-secondary" onClick={closeModal}>{copy.cancel}</button><button type="submit" className="auth-primary" disabled={isResetLoading}>{isResetLoading?copy.changing:copy.change}</button></footer></form></section></div>,document.body)}</main>
+}
+export default LoginPage

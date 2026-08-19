@@ -1,12 +1,9 @@
 import "../styles/ActionHistoryPage.css";
-import { useState, useEffect, useMemo } from "react";
-import PeriodSelector from "../components/dashboard/PeriodSelector";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { BACKEND_API_URL } from '../config/api.js'
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded'
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
-import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
 import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded'
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
@@ -27,11 +24,7 @@ function ActionHistoryPage() {
   const { t } = useUiLanguage()
   const [loading, setLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true)
-  const [selectedPeriod, setSelectedPeriod] = useState('전체')
-  const [customPeriod, setCustomPeriod] = useState(null)
   const [historyType, setHistoryType] = useState('점검')
-
-  const [reportSnapshot, setReportSnapshot] = useState(null)
   const [records, setRecords] = useState([])
   const [inspectionhistory, setinspectionHistory] = useState([])
   const [selectedRecord, setSelectedRecord] = useState()
@@ -253,93 +246,6 @@ function ActionHistoryPage() {
     }
   }
 
-  const filteredRecords = useMemo(() => records.filter((record) => {
-    if (!record.completedAt || record.completedAt === '-') return true;
-    const recordDate = new Date(record.completedAt.replace(' ', 'T'))
-    const today = new Date()
-
-    if (selectedPeriod === '이번 달') {
-      return recordDate.getMonth() === today.getMonth() && recordDate.getFullYear() === today.getFullYear()
-    }
-
-    if (selectedPeriod === '지난달') {
-      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
-      return recordDate.getMonth() === lastMonth.getMonth() && recordDate.getFullYear() === lastMonth.getFullYear()
-    }
-
-    if (selectedPeriod === '직접 설정' && customPeriod) {
-      const startDate = new Date(`${customPeriod.startDate}T00:00:00`)
-      const endDate = new Date(`${customPeriod.endDate}T23:59:59.999`)
-      return recordDate >= startDate && recordDate <= endDate
-    }
-
-    return true
-  }), [customPeriod, records, selectedPeriod])
-
-  const filteredInspectionRecords = useMemo(() => inspectionhistory.filter((record) => {
-    if (!record.completedAt || record.completedAt === '-') return true
-    const recordDate = new Date(record.completedAt.replace(' ', 'T'))
-    const today = new Date()
-
-    if (selectedPeriod === '이번 달') {
-      return recordDate.getMonth() === today.getMonth() && recordDate.getFullYear() === today.getFullYear()
-    }
-    if (selectedPeriod === '지난달') {
-      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
-      return recordDate.getMonth() === lastMonth.getMonth() && recordDate.getFullYear() === lastMonth.getFullYear()
-    }
-    if (selectedPeriod === '직접 설정' && customPeriod) {
-      const startDate = new Date(`${customPeriod.startDate}T00:00:00`)
-      const endDate = new Date(`${customPeriod.endDate}T23:59:59.999`)
-      return recordDate >= startDate && recordDate <= endDate
-    }
-    return true
-  }), [customPeriod, inspectionhistory, selectedPeriod])
-
-  const createReport = () => {
-    setReportSnapshot({
-      type: historyType,
-      records: historyType === '점검' ? filteredInspectionRecords : filteredRecords,
-      period: selectedPeriod === '직접 설정' && customPeriod
-        ? `${customPeriod.startDate} ~ ${customPeriod.endDate}`
-        : selectedPeriod,
-      generatedAt: new Date(),
-    })
-  }
-
-  const downloadReport = () => {
-    if (!reportSnapshot) return
-    const reportValue = (value) => value === undefined || value === null || value === '' ? '-' : value
-
-    const rows = [
-      [reportSnapshot.type === '점검' ? '점검 완료 리포트' : '조치 완료 승인 리포트'],
-      ['조회 기간', reportSnapshot.period],
-      ['생성 일시', reportSnapshot.generatedAt.toLocaleString('ko-KR')],
-      [],
-      ...(reportSnapshot.type === '점검'
-        ? [
-          ['inspection_id', 'name', 'content', '완료 일시', '위치', '유형', '점검 담당자', '점검 사진', '점검 상태'],
-          ...reportSnapshot.records.map((record) => [reportValue(record.inspectionId), reportValue(record.name), reportValue(record.content), reportValue(record.completedAt), reportValue(record.location), reportValue(record.type), reportValue(record.assignee), record.imageUrl ? '첨부 완료' : '사진 없음', reportValue(record.statusRaw)]),
-        ]
-        : [
-          ['event_id', 'inspection_history_id', 'action_name', 'type', 'content', 'image_url', '완료 일시', '위치', '조치 담당자', '승인 상태', 'AI 검증 여부', '승인자', '승인 일시'],
-          ...reportSnapshot.records.map((record) => [record.eventId, record.inspectionHistoryId, record.actionName, record.type, record.content, record.imageUrl, record.completedAt, record.location, record.assignee, record.approvalStatus === 'approved' ? '승인 완료' : record.approvalStatus === 'rejected' ? '반려됨' : '승인 대기', record.aiVerified === 1 ? '해소 (승인)' : record.aiVerified === 0 ? '미해소 (거부)' : '미검증', record.approver, record.approvedAt]),
-        ]),
-    ]
-    const csv = rows.map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n')
-    const file = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8;' })
-    const downloadUrl = URL.createObjectURL(file)
-    const link = document.createElement('a')
-    link.href = downloadUrl
-    link.download = reportSnapshot.type === '점검'
-      ? '점검완료_리포트.csv'
-      : '조치완료_승인리포트.csv'
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(downloadUrl)
-  }
-
   return (
     <section className="approval-history-page" aria-label="조치 이력">
       <div className="approval-summary-row">
@@ -434,7 +340,7 @@ function ActionHistoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {isInitialLoading ? <HistoryTableSkeletonRows columns={7} /> : filteredRecords.map((record) => (
+                    {isInitialLoading ? <HistoryTableSkeletonRows columns={7} /> : records.map((record) => (
                       <tr
                         key={record.id}
                         className="inspection-history-row"
@@ -492,42 +398,10 @@ function ActionHistoryPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="approval-history-footer">{t('전체')} {filteredRecords.length}{t('건')}</div>
+              <div className="approval-history-footer">{t('전체')} {records.length}{t('건')}</div>
             </>
           )}
         </article>
-        <aside className="approval-control-panel">
-          <div>
-            <span className="approval-control-eyebrow">{t('조회 기간')}</span>
-            <h2>{t('기간 설정')}</h2>
-            <PeriodSelector
-              selectedPeriod={selectedPeriod}
-              onSelectPeriod={setSelectedPeriod}
-              onApplyCustomPeriod={setCustomPeriod}
-              options={['전체', '이번 달', '지난달', '직접 설정']}
-            />
-          </div>
-          <div className="approval-control-divider" />
-          <div>
-            <span className="approval-control-eyebrow">{t('승인 리포트')}</span>
-            <h2>{t('리포트 관리')}</h2>
-            <p>{t('현재 조회 결과를 기준으로 리포트를 생성합니다.')}</p>
-            <div className="approval-report-actions">
-              <button className="approval-report-generate" type="button" onClick={createReport}>
-                <DescriptionOutlinedIcon /> {t('리포트 생성')}
-              </button>
-              <button
-                className="approval-report-download"
-                type="button"
-                onClick={downloadReport}
-                disabled={!reportSnapshot}
-                title={reportSnapshot ? '생성된 리포트 다운로드' : '먼저 리포트를 생성해 주세요'}
-              >
-                <DownloadRoundedIcon /> {t('다운로드')}
-              </button>
-            </div>
-          </div>
-        </aside>
       </div>
 
       {/* 점검 완료 상세 모달 */}
