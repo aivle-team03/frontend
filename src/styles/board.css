@@ -258,7 +258,6 @@
   white-space: nowrap;
 }
 
-.board-risk-badge,
 .board-status-badge {
   display: inline-flex;
   min-width: 70px;
@@ -270,24 +269,6 @@
   font-size: 13px;
   font-weight: 900;
   white-space: nowrap;
-}
-
-.risk-high {
-  border-color: #ef4444;
-  color: #b91c1c;
-  background: #fff1f2;
-}
-
-.risk-medium {
-  border-color: #f59e0b;
-  color: #b45309;
-  background: #fffbeb;
-}
-
-.risk-low {
-  border-color: #22c55e;
-  color: #15803d;
-  background: #f0fdf4;
 }
 
 .status-registered {
@@ -622,7 +603,6 @@
   color: #172033;
 }
 
-.board-risk-badge,
 .board-status-badge,
 .board-status-select {
   border-radius: 999px;
@@ -897,12 +877,6 @@
 }
 
 .board-title-cell span {
-  font-size: 12px;
-}
-
-.board-risk-badge {
-  min-width: 58px;
-  min-height: 28px;
   font-size: 12px;
 }
 
@@ -1544,11 +1518,6 @@
   font-size: 14px;
   font-weight: 900;
   line-height: 1.4;
-}
-
-.board-detail-grid dd .board-risk-badge {
-  min-height: 28px;
-  vertical-align: middle;
 }
 
 .board-detail-description {

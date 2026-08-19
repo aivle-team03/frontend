@@ -42,14 +42,6 @@ function ReportDetail({ report, onClose }) {
               <dt>신고일</dt>
               <dd>{report.reportedAt}</dd>
             </div>
-            <div>
-              <dt>위험도</dt>
-              <dd>
-                <span className={`board-risk-badge risk-${report.riskLevel}`}>
-                  {report.riskLabel}
-                </span>
-              </dd>
-            </div>
           </dl>
 
           <section className="board-detail-description" aria-label="신고 내용">

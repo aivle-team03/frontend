@@ -5,14 +5,13 @@ const initialReportForm = {
   categoryId: null,
   title: '',
   description: '',
-  riskLevel: '',
   location: '',
   photoName: '',
   photoUrl: '',
   photoFile: null,
 }
 
-function FormModal({ categories, riskOptions, reporterName, onClose, onSubmit }) {
+function FormModal({ categories, reporterName, onClose, onSubmit }) {
   const [reportForm, setReportForm] = useState(initialReportForm)
   const reportPhotoInputRef = useRef(null)
 
@@ -105,39 +104,23 @@ function FormModal({ categories, riskOptions, reporterName, onClose, onSubmit })
         </div>
 
         <form className="board-report-form" onSubmit={submitReport}>
-          <div className="board-form-grid">
-            <label>
-              <span>카테고리</span>
-              <select
-                value={String(reportForm.categoryId ?? reportForm.category)}
-                onChange={(event) => {
-                  const selectedCategory = categories.find((category) => String(category.id ?? category.name) === event.target.value)
-                  if (selectedCategory) {
-                    setReportForm((currentForm) => ({ ...currentForm, category: selectedCategory.name, categoryId: selectedCategory.id }))
-                  }
-                }}
-                required
-              >
-                {categories.map((category) => (
-                  <option key={category.id ?? category.name} value={String(category.id ?? category.name)}>{category.name}</option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>위험도 <em>*</em></span>
-              <select
-                value={reportForm.riskLevel}
-                onChange={(event) => updateReportForm('riskLevel', event.target.value)}
-                required
-              >
-                <option value="">위험도 선택</option>
-                {riskOptions.map((risk) => (
-                  <option key={risk.level} value={risk.level}>{risk.label}</option>
-                ))}
-              </select>
-            </label>
-          </div>
+          <label>
+            <span>카테고리</span>
+            <select
+              value={String(reportForm.categoryId ?? reportForm.category)}
+              onChange={(event) => {
+                const selectedCategory = categories.find((category) => String(category.id ?? category.name) === event.target.value)
+                if (selectedCategory) {
+                  setReportForm((currentForm) => ({ ...currentForm, category: selectedCategory.name, categoryId: selectedCategory.id }))
+                }
+              }}
+              required
+            >
+              {categories.map((category) => (
+                <option key={category.id ?? category.name} value={String(category.id ?? category.name)}>{category.name}</option>
+              ))}
+            </select>
+          </label>
 
           <label>
             <span>제목</span>
