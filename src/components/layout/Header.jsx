@@ -332,7 +332,10 @@ function Header({ items }) {
                     type="button"
                     onClick={handleClearAllNotifications}
                     disabled={notifications.length === 0}
-                    style={{ color: '#ef4444' }}
+                    style={{
+                      color: notifications.length === 0 ? undefined : '#ef4444',
+                      cursor: notifications.length === 0 ? 'not-allowed' : 'pointer',
+                    }}
                   >
                     <DeleteSweepOutlinedIcon fontSize="small" />모두 삭제
                   </button>
@@ -397,11 +400,6 @@ function Header({ items }) {
                   })
                 )}
               </div>
-
-              <button className="notification-settings-link" type="button" onClick={handleMoveToMyPage}>
-                알림 설정 관리
-                <ArrowForwardIosRoundedIcon />
-              </button>
             </div>
           )}
         </div>

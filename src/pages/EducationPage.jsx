@@ -15,7 +15,7 @@ const API_BASE_URL = BACKEND_API_URL
 const completionRingColors = ['#4f78d1', '#2f9d75', '#8b63d6', '#e18a3f']
 
 function EducationPage({ addedCourses = [] }) {
-  const { t } = useUiLanguage()
+  const { t, language } = useUiLanguage()
   const [apiCourses, setApiCourses] = useState(null)
   const [apiSummary, setApiSummary] = useState(null)
   const [apiRates, setApiRates] = useState(null)
@@ -58,6 +58,7 @@ function EducationPage({ addedCourses = [] }) {
       category: course.category,
       duration: course.type ?? '교육 영상',
       videoUrl: course.video_url,
+      videoUrlEn: course.video_url_en,
       progressPercent: course.progress_percent ?? (course.status === '이수' ? 100 : 0),
       lastPositionSeconds: course.last_position_seconds ?? 0,
       isApiCourse: true,
@@ -82,6 +83,7 @@ function EducationPage({ addedCourses = [] }) {
     category: course.category,
     duration: course.duration,
     videoUrl: course.videoUrl,
+    videoUrlEn: course.videoUrlEn,
     educationId: course.educationId,
     status: course.status,
     progressPercent: course.progressPercent,
@@ -97,7 +99,11 @@ function EducationPage({ addedCourses = [] }) {
   const [summaryModal, setSummaryModal] = useState(null)
 
   const currentContent = allContent.find((item) => item.id === contentId) ?? allContent[0] ?? {}
-  const currentYouTubeEmbedUrl = getYouTubeEmbedUrl(currentContent?.videoUrl)
+  // 영어 더빙판이 있으면 그걸 재생한다. 없는 교육(더빙 실패·이 기능 이전 자료)은 한국어로 돌아간다.
+  const currentVideoUrl = language === 'en' && currentContent?.videoUrlEn
+    ? currentContent.videoUrlEn
+    : currentContent?.videoUrl
+  const currentYouTubeEmbedUrl = getYouTubeEmbedUrl(currentVideoUrl)
 
   const getCourseProgress = (course) => {
     if (course?.status === '이수') return 100
@@ -285,7 +291,7 @@ function EducationPage({ addedCourses = [] }) {
             <span className="content-category">{currentContent.category ?? t('안전 교육')}</span>
           </div>
 
-          {currentContent.videoUrl ? (
+          {currentVideoUrl ? (
             <div className="uploaded-video-player">
               {currentYouTubeEmbedUrl ? (
                 <iframe
@@ -297,7 +303,7 @@ function EducationPage({ addedCourses = [] }) {
               ) : (
                 <video
                   ref={videoRef}
-                  src={resolveMediaUrl(currentContent.videoUrl)}
+                  src={resolveMediaUrl(currentVideoUrl)}
                   controls
                   controlsList="nodownload"
                   disablePictureInPicture
