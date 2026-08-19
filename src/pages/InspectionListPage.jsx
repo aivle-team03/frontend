@@ -13,6 +13,7 @@ import {
   saveChecklistManagementRecords,
   saveInspectionCatalogRecords,
 } from '../utils/checklistStatusStorage'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const CATEGORIES = ['소방안전', '산업안전', '시설안전', '기타']
 export const BASE_INSPECTION_RECORDS = [
@@ -60,6 +61,7 @@ function getAreaLatestInspectionHistories(record) {
 }
 
 function InspectionListPage() {
+  const { language, t } = useUiLanguage()
   const [catalogRecords, setCatalogRecords] = useState([])
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('전체 카테고리')

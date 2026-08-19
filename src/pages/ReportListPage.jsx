@@ -1,14 +1,14 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
-import { useEffect, useMemo, useRef, useState } from 'react'
 import axios from 'axios'
-import { renderAsync } from 'docx-preview'
+import { useEffect, useMemo, useRef, useState } from 'react'
+// import { renderAsync } from 'docx-preview'
 import Filtering from '../components/Report/Filtering.jsx'
 import { BACKEND_API_URL } from '../config/api.js'
 import '../styles/report.css'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 const REPORT_TYPE_OPTIONS = [
   { key: 'risk-assessment-form', label: '위험성평가표' },
@@ -63,11 +63,14 @@ const getReportDateRangeFilters = (reports) => {
 }
 
 const fetchReportFileUrl = async (reportId, signal) => {
-  const response = await axios.get(`${BACKEND_API_URL}/api/report/${reportId}/file-url`, { signal })
+  const token = localStorage.getItem('token')
+  const headers = token ? { Authorization: `Bearer ${token}` } : {}
+  const response = await axios.get(`${BACKEND_API_URL}/api/report/${reportId}/file-url`, { headers, signal })
   return response.data?.file_url ?? ''
 }
 
 function DocxPreview({ report }) {
+  const { t } = useUiLanguage()
   const containerRef = useRef(null)
   const [renderState, setRenderState] = useState('idle')
   const [docxUrl, setDocxUrl] = useState('')
@@ -145,14 +148,14 @@ function DocxPreview({ report }) {
   }
 
   return (
-    <section className="report-docx-preview-card report-docx-preview-full" aria-label="보고서 문서 미리보기">
+    <section className="report-docx-preview-card report-docx-preview-full" aria-label={t('보고서 문서 미리보기')}>
       <div className="report-card-heading">
         <div className="report-heading-title">
           <div>
             <span>Preview</span>
-            <h2>{report?.title ?? '보고서 미리보기'}</h2>
+            <h2>{report?.title ?? t('보고서 미리보기')}</h2>
           </div>
-          <small>생성 {report?.createdAt ?? '-'}</small>
+          <small>{t('생성')} {report?.createdAt ?? '-'}</small>
         </div>
         <button
           className="report-preview-download"
@@ -161,14 +164,14 @@ function DocxPreview({ report }) {
           disabled={!docxUrl}
         >
           <DownloadRoundedIcon />
-          다운로드
+          {t('다운로드')}
         </button>
       </div>
 
       <div className="report-docx-preview-body">
-        {status === 'loading' && <p className="report-docx-message">문서를 불러오는 중입니다.</p>}
-        {status === 'empty' && <p className="report-docx-message">이 보고서에는 연결된 Word 파일이 없습니다.</p>}
-        {status === 'error' && <p className="report-docx-message">Word 파일 미리보기를 표시하지 못했습니다.</p>}
+        {status === 'loading' && <p className="report-docx-message">{t('문서를 불러오는 중입니다.')}</p>}
+        {status === 'empty' && <p className="report-docx-message">{t('이 보고서에는 연결된 Word 파일이 없습니다.')}</p>}
+        {status === 'error' && <p className="report-docx-message">{t('Word 파일 미리보기를 표시하지 못했습니다.')}</p>}
         <div className="report-docx-renderer" ref={containerRef} />
       </div>
     </section>
@@ -176,6 +179,7 @@ function DocxPreview({ report }) {
 }
 
 function ReportListPage() {
+  const { t } = useUiLanguage()
   const [reports, setReports] = useState([])
   const [filters, setFilters] = useState(getInitialFilters)
   const [selectedReportId, setSelectedReportId] = useState(null)
@@ -191,7 +195,9 @@ function ReportListPage() {
   })
 
   const loadReports = () => {
-    return axios.get(`${BACKEND_API_URL}/api/report`, { params: { page: 1, size: 100 } })
+    const token = localStorage.getItem('token')
+    const headers = token ? { Authorization: `Bearer ${token}` } : {}
+    return axios.get(`${BACKEND_API_URL}/api/report`, { headers, params: { page: 1, size: 100 } })
       .then((response) => {
         const items = response.data?.items ?? []
         const mappedReports = items.map(mapReport)
@@ -269,10 +275,6 @@ function ReportListPage() {
     [reports, selectedReportId],
   )
 
-  const selectedTypeOption = useMemo(
-    () => REPORT_TYPE_OPTIONS.find((item) => item.key === reportForm.type),
-    [reportForm.type],
-  )
   const isRiskAssessmentForm = reportForm.type === 'risk-assessment-form'
   const isManagementOrderReport = reportForm.type === 'management-order-report'
   const isWorkerRiskReport = reportForm.type === 'worker-risk-report'
@@ -296,6 +298,7 @@ function ReportListPage() {
   }
 
   const openReportPreview = (report) => {
+    if (isDeleteMode) return
     setSelectedReportId(report.id)
   }
 
@@ -305,19 +308,24 @@ function ReportListPage() {
     setIsCreatingReport(true)
 
     try {
+      const token = localStorage.getItem('token')
+      const headers = token ? { Authorization: `Bearer ${token}` } : {}
+
       if (isRiskAssessmentForm) {
-        await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/form/generate`)
+        await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/form/generate`, null, { headers })
       } else if (isManagementOrderReport) {
         await axios.post(`${BACKEND_API_URL}/api/report/management-review-order/generate`, null, {
+          headers,
           params: {
             start_date: reportForm.startDate,
             end_date: reportForm.endDate,
           },
         })
       } else if (isWorkerRiskReport) {
-        await axios.post(`${BACKEND_API_URL}/api/report/worker-feedback/generate`)
+        await axios.post(`${BACKEND_API_URL}/api/report/worker-feedback/generate`, null, { headers })
       } else if (isRiskAssessmentReport) {
         await axios.post(`${BACKEND_API_URL}/api/report/risk-assessment/report/generate`, null, {
+          headers,
           params: {
             start_date: reportForm.startDate,
             end_date: reportForm.endDate,
@@ -357,7 +365,13 @@ function ReportListPage() {
       const token = localStorage.getItem('token')
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
       await axios.delete(`${BACKEND_API_URL}/api/report/${report.id}`, { headers })
-      await loadReports()
+
+      setReports((current) => current.filter((item) => item.id !== report.id))
+      try {
+        await loadReports()
+      } catch (e) {
+        console.warn('목록 갱신 실패:', e)
+      }
     } catch (error) {
       console.error('보고서 삭제 실패:', error)
       alert(error.response?.data?.detail ?? '보고서 삭제에 실패했습니다.')
@@ -366,10 +380,10 @@ function ReportListPage() {
 
   if (selectedReport) {
     return (
-      <section className="report-page report-preview-page" aria-label="보고서 미리보기">
+      <section className="report-page report-preview-page" aria-label={t('보고서 미리보기')}>
         <button className="report-preview-back" type="button" onClick={() => setSelectedReportId(null)}>
           <ArrowBackRoundedIcon />
-          목록으로
+          {t('목록으로')}
         </button>
         <DocxPreview report={selectedReport} />
       </section>
@@ -377,31 +391,31 @@ function ReportListPage() {
   }
 
   return (
-    <section className="report-page" aria-label="보고서">
+    <section className="report-page" aria-label={t('보고서')}>
       <section className="report-basic-card">
         <div className="report-card-heading compact">
           <div>
             <span>Report</span>
-            <h2>보고서 생성</h2>
-            <p className="report-heading-description">위험성평가표는 매일 자동으로 생성됩니다.</p>
+            <h2>{t('보고서 생성')}</h2>
+            <p className="report-heading-description">{t('위험성평가표는 매일 자동으로 생성됩니다.')}</p>
           </div>
         </div>
 
         <div className="report-basic-grid">
           <label className="report-field">
-            <span>보고서 유형 <em>*</em></span>
+            <span>{t('보고서 유형')} <em>*</em></span>
             <select value={reportForm.type} onChange={(event) => updateReportForm('type', event.target.value)}>
               {REPORT_TYPE_OPTIONS.map((type) => (
-                <option key={type.key} value={type.key}>{type.label}</option>
+                <option key={type.key} value={type.key}>{t(type.label)}</option>
               ))}
             </select>
           </label>
 
           <div className={`report-field${isPeriodDisabled ? ' is-disabled' : ''}`}>
-            <span>작성 기간 <em>*</em></span>
+            <span>{t('작성 기간')} <em>*</em></span>
             <div className="report-range-field">
               <input
-                aria-label="시작일"
+                aria-label={t('시작일')}
                 type="date"
                 value={reportForm.startDate}
                 disabled={isPeriodDisabled}
@@ -409,7 +423,7 @@ function ReportListPage() {
               />
               <b>~</b>
               <input
-                aria-label="종료일"
+                aria-label={t('종료일')}
                 type="date"
                 value={reportForm.endDate}
                 disabled={isPeriodDisabled}
@@ -419,11 +433,11 @@ function ReportListPage() {
           </div>
 
           <label className="report-field">
-            <span>생성자</span>
+            <span>{t('생성자')}</span>
             <input
               type="text"
               value=""
-              placeholder={creatorName || '계정 정보를 불러오는 중입니다'}
+              placeholder={creatorName || t('계정 정보를 불러오는 중입니다')}
               disabled
               readOnly
             />
@@ -431,14 +445,14 @@ function ReportListPage() {
         </div>
 
         <div className="report-form-action">
-          <p className="report-form-note">보고서 생성에는 약 1~10분이 소요될 수 있습니다.</p>
+          <p className="report-form-note">{t('보고서 생성에는 약 1~10분이 소요될 수 있습니다.')}</p>
           <button
             className="report-create-button"
             type="button"
             onClick={createReport}
             disabled={isCreatingReport}
           >
-            <DescriptionOutlinedIcon /> {isCreatingReport ? '생성 중...' : '리포트 생성'}
+            <DescriptionOutlinedIcon /> {isCreatingReport ? t('생성 중...') : t('리포트 생성')}
           </button>
         </div>
       </section>
@@ -448,33 +462,29 @@ function ReportListPage() {
           <div className="report-card-heading">
             <div>
               <span>Archive</span>
-              <h2>보고서 목록</h2>
-              <p className="report-heading-description">보고서 항목을 선택하면 문서 미리보기를 확인할 수 있습니다.</p>
+              <h2>{t('보고서 목록')}</h2>
+              <p className="report-heading-description">{t('보고서 항목을 선택하면 문서 미리보기를 확인할 수 있습니다.')}</p>
             </div>
-            <strong>{filteredReports.length}건</strong>
+            <strong>{filteredReports.length}{t('건')}</strong>
           </div>
 
           <div className="report-table-wrap">
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-              <div style={{ flex: 1 }}>
-                <Filtering
-                  filters={filters}
-                  onChange={updateFilter}
-                  onReset={resetFilters}
-                  isDeleteMode={isDeleteMode}
-                  onToggleDeleteMode={() => setIsDeleteMode((prev) => !prev)}
-                />
-              </div>
-            </div>
+            <Filtering
+              filters={filters}
+              onChange={updateFilter}
+              onReset={resetFilters}
+              isDeleteMode={isDeleteMode}
+              onToggleDeleteMode={() => setIsDeleteMode((prev) => !prev)}
+            />
 
             <table className="report-table">
               <thead>
                 <tr>
-                  <th>제목</th>
-                  <th>기간</th>
-                  <th>생성자</th>
-                  <th style={{ textAlign: 'center', width: isDeleteMode ? '120px' : '90px' }}>
-                    {isDeleteMode ? '삭제' : '다운로드'}
+                  <th>{t('제목')}</th>
+                  <th>{t('기간')}</th>
+                  <th>{t('생성자')}</th>
+                  <th style={{ textAlign: 'center', width: '90px' }}>
+                    {isDeleteMode ? t('삭제') : t('다운로드')}
                   </th>
                 </tr>
               </thead>
@@ -488,30 +498,32 @@ function ReportListPage() {
                     <td>
                       <div className="report-title-cell">
                         <strong>{report.title}</strong>
-                        <span>생성 {report.createdAt} · 보관 {report.retentionUntil}</span>
+                        <span>{t('생성')} {report.createdAt} · {t('보관')} {report.retentionUntil}</span>
                       </div>
                     </td>
                     <td>{report.period ?? report.createdAt}</td>
                     <td>{report.owner}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {/* 💡 기본 모드: 다운로드 버튼 */}
                         {!isDeleteMode && (
                           <button
                             className="report-download-button"
                             type="button"
-                            title="다운로드"
-                            aria-label={`${report.title} 다운로드`}
+                            title={t('다운로드')}
+                            aria-label={`${report.title} ${t('다운로드')}`}
                             onClick={(event) => downloadReport(event, report)}
                           >
                             <DownloadRoundedIcon />
                           </button>
                         )}
 
+                        {/* 💡 삭제 모드: 빨간색 삭제 버튼 */}
                         {isDeleteMode && (
                           <button
                             type="button"
-                            title="삭제"
-                            aria-label={`${report.title} 삭제`}
+                            title={t('삭제')}
+                            aria-label={`${report.title} ${t('삭제')}`}
                             onClick={(event) => deleteReport(event, report)}
                             style={{
                               width: '36px',
@@ -545,21 +557,21 @@ function ReportListPage() {
                 ))}
                 {!filteredReports.length && (
                   <tr>
-                    <td className="report-empty-cell" colSpan={4}>조건에 맞는 보고서가 없습니다.</td>
+                    <td className="report-empty-cell" colSpan={4}>{t('조건에 맞는 보고서가 없습니다.')}</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
 
-          <div className="report-pagination" aria-label="보고서 목록 페이지 이동">
-            <span>페이지 {currentReportPage} / {reportPageCount}</span>
+          <div className="report-pagination" aria-label={t('보고서 목록 페이지 이동')}>
+            <span>{t('페이지')} {currentReportPage} / {reportPageCount}</span>
             <div>
               <button type="button" disabled={currentReportPage === 1} onClick={() => moveReportPage(currentReportPage - 1)}>
-                이전
+                {t('이전')}
               </button>
               <button type="button" disabled={currentReportPage === reportPageCount} onClick={() => moveReportPage(currentReportPage + 1)}>
-                다음
+                {t('다음')}
               </button>
             </div>
           </div>

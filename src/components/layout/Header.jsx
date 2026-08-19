@@ -29,6 +29,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { clearAuthSession } from '../../api/authInterceptor.js'
 import { synchronizeStaticUiLanguage, translateUi } from '../../utils/uiLanguage.js'
+import { maskName } from '../../utils/userPrivacy.js'
 import '../../styles/Header.css'
 
 const NOTIFICATION_STORAGE_KEY = 'boss-read-notification-ids'
@@ -129,7 +130,9 @@ function Header({ items }) {
           setUser({
             name: userData.name || userData.user_id || '관리자',
             role: userData.role || '소방안전 관리자',
-            department: userData.department || '시설관리팀',
+            // Department is not part of the current profile contract; avoid showing
+            // the legacy mock value returned by older API responses.
+            department: '',
             email: userData.email || '',
           })
         }
@@ -148,7 +151,7 @@ function Header({ items }) {
     window.dispatchEvent(new CustomEvent('boss-language-change', { detail: preferences.language }))
   }, [preferences])
 
-  useEffect(() => synchronizeStaticUiLanguage(preferences.language), [preferences.language])
+  useEffect(() => synchronizeStaticUiLanguage(preferences.language), [preferences.language, location.pathname])
 
 
   const fetchNotifications = useCallback(async () => {
@@ -279,6 +282,11 @@ function Header({ items }) {
     navigate('/mypage')
   }
 
+  const handleMoveToNotificationHistory = () => {
+    setActiveMenu(null)
+    navigate('/mypage#notification-history')
+  }
+
   const handleMoveToSafetyManagement = () => {
     setActiveMenu(null)
     navigate('/safety-management')
@@ -345,7 +353,7 @@ function Header({ items }) {
                     알림이 없습니다.
                   </div>
                 ) : (
-                  notifications.map((notification) => {
+                  notifications.slice(0, 10).map((notification) => {
                     const NotificationIcon = notificationIconMap[notification.category] ?? NotificationsNoneOutlinedIcon
                     return (
                       <div
@@ -397,6 +405,10 @@ function Header({ items }) {
                   })
                 )}
               </div>
+              <button className="notification-settings-link" type="button" onClick={handleMoveToNotificationHistory}>
+                {preferences.language === 'en' ? 'Manage notification history' : '알림 내역 관리'}
+                <ArrowForwardIosRoundedIcon />
+              </button>
             </div>
           )}
         </div>
@@ -413,7 +425,7 @@ function Header({ items }) {
               <AccountCircleRoundedIcon />
             </span>
             <span className="profile-button-copy">
-              <strong>{user.name}</strong>
+              <strong>{maskName(user.name)}</strong>
               <small>{user.role}</small>
             </span>
             <KeyboardArrowDownRoundedIcon className="profile-chevron" />
@@ -431,9 +443,9 @@ function Header({ items }) {
                   role="menuitem"
                   onClick={handleMoveToSafetyManagement}
                 >
-                  <strong>{user.name}</strong>
-                  <span>
-                    {user.department} · {user.role}
+                  <strong>{maskName(user.name)}</strong>
+                <span>
+                  {[user.department, translateUi(user.role, preferences.language)].filter(Boolean).join(' · ')}
                   </span>
                   <small>{user.email}</small>
                 </button>
@@ -451,7 +463,8 @@ function Header({ items }) {
               <button className="profile-dropdown-link" type="button" role="menuitem" onClick={handleMoveToMyPage}>
                 <ManageAccountsOutlinedIcon />
                 <span>
-                  <strong>마이페이지</strong>
+                  <strong>{translateUi('마이페이지', preferences.language)}</strong>
+                  <small>{preferences.language === 'en' ? 'View your account details and manage your password.' : '내 정보와 비밀번호를 확인하고 관리할 수 있습니다.'}</small>
                 </span>
                 <ArrowForwardIosRoundedIcon />
               </button>
@@ -459,7 +472,7 @@ function Header({ items }) {
                 <SettingsOutlinedIcon />
                 <span>
                   <strong>{preferences.language === 'en' ? 'Settings' : '설정'}</strong>
-                  <small>{preferences.language === 'en' ? 'Language settings' : '언어 설정'}</small>
+                  <small>{preferences.language === 'en' ? 'Change the display language for the service.' : '서비스의 표시 언어를 변경할 수 있습니다.'}</small>
                 </span>
                 <ArrowForwardIosRoundedIcon />
               </button>

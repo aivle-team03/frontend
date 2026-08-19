@@ -13,6 +13,7 @@ import DetectionAlertDialog from '../components/monitoring/DetectionAlertDialog.
 import { readAiEventSession, saveAiEventSession } from '../utils/aiEventSession.js'
 import { toMonitoringCamera } from '../utils/cctvCamera.js'
 import { BACKEND_API_URL, VISION_API_URL } from '../config/api.js'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 function getAiPreviewUrl(aiStreamUrl, nonce) {
   const url = new URL(aiStreamUrl)
@@ -96,6 +97,7 @@ function MonitoringDetailLoadingSkeleton() {
 }
 
 function MonitoringDetailPage() {
+  const { t } = useUiLanguage()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -232,8 +234,8 @@ function MonitoringDetailPage() {
         <div className="cctv-main-Layout">
           <section className="subCard cctv-primary-view">
             <div className="primary-view-header">
-              <div><VideocamOutlinedIcon /><span>실시간 영상</span></div>
-              <small>연결 상태 정상 · 1080p</small>
+              <div><VideocamOutlinedIcon /><span>{t('실시간 영상')}</span></div>
+              <small>{t('연결 상태 정상')} · 1080p</small>
             </div>
 
             <div className="primary-video-placeholder" style={{ position: 'relative', overflow: 'hidden', height: '420px', background: '#0f172a' }}>
@@ -244,15 +246,15 @@ function MonitoringDetailPage() {
               <StreamViewer streamUrl={activeCamera.streamUrl} aiStreamUrl={activeCamera.aiStreamUrl} cameraId={activeCamera.id} initialTime={Number(searchParams.get('t') || 0)} onTimeUpdate={handleDemoVideoTimeUpdate} />
 
               <span className="primary-video-time" style={{ zIndex: 2 }}>
-                <AccessTimeRoundedIcon />실시간 스트리밍 중
+                <AccessTimeRoundedIcon />{t('실시간 스트리밍 중')}
               </span>
             </div>
           </section>
 
           <section className="subCard camera-thumbnail-panel">
             <div className="detail-section-heading">
-              <strong>카메라 전환</strong>
-              <span>전체 {cameraList.length}대</span>
+              <strong>{t('카메라 전환')}</strong>
+              <span>{t('전체')} {cameraList.length}{t('대')}</span>
             </div>
             <div className="detail-thumbnail-list">
               {cameraList.map((camera) => {
@@ -284,29 +286,29 @@ function MonitoringDetailPage() {
           <div className="detection-Section">
             <article className="subCard detection-status-card">
               <span className="detail-status-icon success"><CheckCircleRoundedIcon /></span>
-              <div><small>카메라 상태</small><strong>정상 연결</strong><p>신호와 녹화 상태가 정상입니다.</p></div>
+              <div><small>{t('카메라 상태')}</small><strong>{t('정상 연결')}</strong><p>{t('신호와 녹화 상태가 정상입니다.')}</p></div>
             </article>
             <article className="subCard detection-status-card">
               <span className="detail-status-icon warning"><WarningAmberRoundedIcon /></span>
-              <div><small>오늘 감지</small><strong>3건</strong><p>확인이 필요한 이벤트 1건</p></div>
+              <div><small>{t('오늘 감지')}</small><strong>3{t('건')}</strong><p>{t('확인이 필요한 이벤트 1건')}</p></div>
             </article>
           </div>
 
           <section className="subCard detail-event-card">
             <div className="detail-section-heading">
-              <strong>최근 감지 이벤트</strong>
+              <strong>{t('최근 감지 이벤트')}</strong>
               <span>14:28</span>
             </div>
             <div className="detail-event-preview">
               <WarningAmberRoundedIcon />
-              <div><span>조치 대기</span><strong>적재물 과다 적재 감지</strong></div>
+              <div><span>{t('조치 대기')}</span><strong>{t('적재물 과다 적재 감지')}</strong></div>
             </div>
             <dl>
-              <div><dt><LocationOnOutlinedIcon />위치</dt><dd>{activeCamera.location}</dd></div>
-              <div><dt><AccessTimeRoundedIcon />감지 시간</dt><dd>14:28:32</dd></div>
-              <div><dt>위험도</dt><dd className="detail-risk-level">주의</dd></div>
+              <div><dt><LocationOnOutlinedIcon />{t('위치')}</dt><dd>{activeCamera.location}</dd></div>
+              <div><dt><AccessTimeRoundedIcon />{t('감지 시간')}</dt><dd>14:28:32</dd></div>
+              <div><dt>{t('위험도')}</dt><dd className="detail-risk-level">{t('주의')}</dd></div>
             </dl>
-            <button type="button" onClick={() => navigate('/checklists/management')}>체크리스트 확인</button>
+            <button type="button" onClick={() => navigate('/checklists/management')}>{t('담당자 배정')}</button>
           </section>
         </aside>
       </div>

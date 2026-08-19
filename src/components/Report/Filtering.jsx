@@ -1,31 +1,34 @@
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 function Filtering({ filters, onChange, onReset, isDeleteMode, onToggleDeleteMode }) {
+  const { t } = useUiLanguage()
+
   return (
-    <section className="report-filter-panel" aria-label="보고서 필터">
+    <section className="report-filter-panel" aria-label={t('보고서 필터')}>
       <label className="report-filter-field report-filter-search">
-        <span>제목 검색</span>
+        <span>{t('제목 검색')}</span>
         <input
           type="search"
           value={filters.keyword}
-          placeholder="보고서 제목 검색"
+          placeholder={t('보고서 제목 검색')}
           onChange={(event) => onChange('keyword', event.target.value)}
         />
       </label>
 
       <div className="report-filter-field">
-        <span>기간</span>
+        <span>{t('기간')}</span>
         <div className="report-filter-range">
           <input
-            aria-label="시작일"
+            aria-label={t('시작일')}
             type="date"
             value={filters.startDate}
             onChange={(event) => onChange('startDate', event.target.value)}
           />
           <b>~</b>
           <input
-            aria-label="종료일"
+            aria-label={t('종료일')}
             type="date"
             value={filters.endDate}
             onChange={(event) => onChange('endDate', event.target.value)}
@@ -34,11 +37,11 @@ function Filtering({ filters, onChange, onReset, isDeleteMode, onToggleDeleteMod
       </div>
 
       <label className="report-filter-field">
-        <span>생성자</span>
+        <span>{t('생성자')}</span>
         <input
           type="text"
           value={filters.author}
-          placeholder="생성자 검색"
+          placeholder={t('생성자 검색')}
           onChange={(event) => onChange('author', event.target.value)}
         />
       </label>
@@ -46,7 +49,7 @@ function Filtering({ filters, onChange, onReset, isDeleteMode, onToggleDeleteMod
       {/* 💡 초기화 버튼과 삭제 버튼을 나란히 배치 */}
       <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end' }}>
         <button className="report-filter-reset" type="button" onClick={onReset}>
-          초기화
+          {t('초기화')}
         </button>
         <button
           type="button"
@@ -83,12 +86,12 @@ function Filtering({ filters, onChange, onReset, isDeleteMode, onToggleDeleteMod
           {isDeleteMode ? (
             <>
               <CheckRoundedIcon style={{ fontSize: '18px' }} />
-              완료
+              {t('완료')}
             </>
           ) : (
             <>
               <DeleteOutlineRoundedIcon style={{ fontSize: '18px' }} />
-              삭제
+              {t('삭제')}
             </>
           )}
         </button>

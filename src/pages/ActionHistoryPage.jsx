@@ -13,6 +13,7 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import WarningRoundedIcon from '@mui/icons-material/WarningRounded'
 import HourglassEmptyRoundedIcon from '@mui/icons-material/HourglassEmptyRounded'
 import { formatLocationSummary } from '../utils/locationSummary.js'
+import { useUiLanguage } from '../utils/uiLanguage.js'
 
 function sortByLatestCompletedAt(records) {
   return [...records].sort((left, right) => {
@@ -23,6 +24,7 @@ function sortByLatestCompletedAt(records) {
 }
 
 function ActionHistoryPage() {
+  const { t } = useUiLanguage()
   const [loading, setLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [selectedPeriod, setSelectedPeriod] = useState('전체')
@@ -345,18 +347,18 @@ function ActionHistoryPage() {
           <article className="approval-summary-card pending-summary">
             <span className="approval-summary-icon"><CheckCircleOutlineRoundedIcon /></span>
             <div>
-              <span>전체 점검</span>
-              <strong>{inspectionhistory.length}건</strong>
-              <small>점검 완료 건수</small>
+              <span>{t('전체 점검')}</span>
+              <strong>{inspectionhistory.length}{t('건')}</strong>
+              <small>{t('점검 완료 건수')}</small>
             </div>
           </article>
 
           <article className="approval-summary-card total-summary">
             <span className="approval-summary-icon"><AssignmentTurnedInRoundedIcon /></span>
             <div className="summary-text-wrap">
-              <span className="summary-label">전체 조치</span>
-              <strong className="summary-count">{records.length}건</strong>
-              <small>조치 완료 건수</small>
+              <span className="summary-label">{t('전체 조치')}</span>
+              <strong className="summary-count">{records.length}{t('건')}</strong>
+              <small>{t('조치 완료 건수')}</small>
             </div>
           </article>
         </div>
@@ -366,8 +368,8 @@ function ActionHistoryPage() {
         <article className="approval-history-card">
           <div className="approval-history-heading">
             <div>
-              <h2>{historyType === '점검' ? '점검 완료 내역' : '조치 완료 내역'}</h2>
-              <p>{historyType === '점검' ? '현장 담당자가 점검을 완료한 것만 확인합니다.' : '현장 담당자가 조치 사진을 첨부해 완료한 건만 확인하고 승인합니다.'}</p>
+              <h2>{t(historyType === '점검' ? '점검 완료 내역' : '조치 완료 내역')}</h2>
+              <p>{t(historyType === '점검' ? '현장 담당자가 점검을 완료한 것만 확인합니다.' : '현장 담당자가 조치 사진을 첨부해 완료한 건만 확인하고 승인합니다.')}</p>
             </div>
             <div className="approval-history-toggle" role="group" aria-label="조치 점검 선택">
               {['점검', '조치'].map((type) => (
@@ -377,7 +379,7 @@ function ActionHistoryPage() {
                   type="button"
                   onClick={() => setHistoryType(type)}
                 >
-                  {type}
+                  {t(type)}
                 </button>
               ))}
             </div>
@@ -389,12 +391,7 @@ function ActionHistoryPage() {
                 <table className="approval-history-table">
                   <thead>
                     <tr>
-                      <th>완료 일시</th>
-                      <th>위치</th>
-                      <th>유형</th>
-                      <th>점검 담당자</th>
-                      <th>점검 사진</th>
-                      <th>점검 상태</th>
+                      {['완료 일시', '위치', '유형', '점검 담당자', '점검 사진', '점검 상태'].map((label) => <th key={label}>{t(label)}</th>)}
                     </tr>
                   </thead>
                   <tbody>
@@ -412,7 +409,7 @@ function ActionHistoryPage() {
                             onClick={(event) => { event.stopPropagation(); setPhotoPreviewRecord(record) }}
                             aria-label={`${record.location} 점검 사진 크게 보기`}
                           >
-                            {record.imageUrl ? <img className="approval-photo-thumbnail" src={record.imageUrl} alt="" /> : <span className="no-photo">사진 없음</span>}
+                            {record.imageUrl ? <img className="approval-photo-thumbnail" src={record.imageUrl} alt="" /> : <span className="no-photo">{t('사진 없음')}</span>}
                           </button>
                         </td>
                         <td>
@@ -425,7 +422,7 @@ function ActionHistoryPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="approval-history-footer">전체 {inspectionhistory.length}건</div>
+              <div className="approval-history-footer">{t('전체')} {inspectionhistory.length}{t('건')}</div>
             </>
           ) : (
             <>
@@ -433,13 +430,7 @@ function ActionHistoryPage() {
                 <table className="approval-history-table">
                   <thead>
                     <tr>
-                      <th>완료 일시</th>
-                      <th>위치</th>
-                      <th>유형</th>
-                      <th>조치 담당자</th>
-                      <th>조치 사진</th>
-                      <th>승인 상태</th>
-                      <th>승인자 / 승인 일시</th>
+                      {['완료 일시', '위치', '유형', '조치 담당자', '조치 사진', '승인 상태', '승인자 / 승인 일시'].map((label) => <th key={label}>{t(label)}</th>)}
                     </tr>
                   </thead>
                   <tbody>
@@ -468,7 +459,7 @@ function ActionHistoryPage() {
                             onClick={(event) => { event.stopPropagation(); setPhotoPreviewRecord(record) }}
                             aria-label={`${record.location} 조치 사진 크게 보기`}
                           >
-                            {record.imageUrl ? <img className="approval-photo-thumbnail" src={record.imageUrl} alt="" /> : <span className="no-photo">사진 없음</span>}
+                            {record.imageUrl ? <img className="approval-photo-thumbnail" src={record.imageUrl} alt="" /> : <span className="no-photo">{t('사진 없음')}</span>}
                           </button>
                         </td>
                         <td>
@@ -501,14 +492,14 @@ function ActionHistoryPage() {
                   </tbody>
                 </table>
               </div>
-              <div className="approval-history-footer">전체 {filteredRecords.length}건</div>
+              <div className="approval-history-footer">{t('전체')} {filteredRecords.length}{t('건')}</div>
             </>
           )}
         </article>
         <aside className="approval-control-panel">
           <div>
-            <span className="approval-control-eyebrow">조회 기간</span>
-            <h2>기간 설정</h2>
+            <span className="approval-control-eyebrow">{t('조회 기간')}</span>
+            <h2>{t('기간 설정')}</h2>
             <PeriodSelector
               selectedPeriod={selectedPeriod}
               onSelectPeriod={setSelectedPeriod}
@@ -518,12 +509,12 @@ function ActionHistoryPage() {
           </div>
           <div className="approval-control-divider" />
           <div>
-            <span className="approval-control-eyebrow">승인 리포트</span>
-            <h2>리포트 관리</h2>
-            <p>현재 조회 결과를 기준으로 리포트를 생성합니다.</p>
+            <span className="approval-control-eyebrow">{t('승인 리포트')}</span>
+            <h2>{t('리포트 관리')}</h2>
+            <p>{t('현재 조회 결과를 기준으로 리포트를 생성합니다.')}</p>
             <div className="approval-report-actions">
               <button className="approval-report-generate" type="button" onClick={createReport}>
-                <DescriptionOutlinedIcon /> 리포트 생성
+                <DescriptionOutlinedIcon /> {t('리포트 생성')}
               </button>
               <button
                 className="approval-report-download"
@@ -532,7 +523,7 @@ function ActionHistoryPage() {
                 disabled={!reportSnapshot}
                 title={reportSnapshot ? '생성된 리포트 다운로드' : '먼저 리포트를 생성해 주세요'}
               >
-                <DownloadRoundedIcon /> 다운로드
+                <DownloadRoundedIcon /> {t('다운로드')}
               </button>
             </div>
           </div>
@@ -596,7 +587,7 @@ function ActionHistoryPage() {
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="modal-v2-header">
-              <h2 id="approval-review-title">조치 내역 관리자 승인</h2>
+              <h2 id="approval-review-title">{t('조치 내역 관리자 승인')}</h2>
               <button type="button" className="modal-v2-close" onClick={() => setSelectedRecord(null)}>
                 <CloseRoundedIcon />
               </button>
@@ -605,25 +596,25 @@ function ActionHistoryPage() {
             <div className="modal-v2-body">
               <div className="modal-v2-summary-bar">
                 <div className="summary-item">
-                  <span>위험 유형</span>
+                  <span>{t('위험 유형')}</span>
                   <strong>{selectedRecord.type}</strong>
                 </div>
                 <div className="summary-item">
-                  <span>위치</span>
+                  <span>{t('위치')}</span>
                   <strong>{selectedRecord.location}</strong>
                 </div>
                 <div className="summary-item">
-                  <span>담당자</span>
+                  <span>{t('담당자')}</span>
                   <strong>{selectedRecord.assignee}</strong>
                 </div>
                 <div className="summary-item">
-                  <span>상태</span>
+                  <span>{t('상태')}</span>
                   <strong className="badge-pending">
                     {selectedRecord.approvalStatus === 'approved' ? '승인 완료' : selectedRecord.approvalStatus === 'rejected' ? '반려됨' : '승인 대기'}
                   </strong>
                 </div>
                 <div className="summary-item">
-                  <span>조치완료 시간</span>
+                  <span>{t('조치완료 시간')}</span>
                   <small>{selectedRecord.completedAt}</small>
                 </div>
               </div>
@@ -657,7 +648,7 @@ function ActionHistoryPage() {
                 </div>
 
                 <div className="modal-v2-card ai-result-card">
-                  <h3>AI 재확인 결과</h3>
+                  <h3>{t('AI 재확인 결과')}</h3>
                   {selectedRecord.aiVerified === 1 ? (
                     <>
                       <div className="ai-success-box">

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useUiLanguage } from '../../utils/uiLanguage.js'
 
 const initialRiskForm = {
   type: '',
@@ -10,6 +11,7 @@ const initialRiskForm = {
 const CATEGORIES = ['소방안전', '시설안전', '산업안전','기타']
  
 function RiskFormModal({ onClose, onSubmit }) {
+  const { t } = useUiLanguage()
   const [riskForm, setRiskForm] = useState(initialRiskForm)
 
   const updateRiskForm = (field, value) => {
@@ -36,41 +38,41 @@ function RiskFormModal({ onClose, onSubmit }) {
       >
         <div className="risk-modal-header">
           <div>
-            <span>위험 요인 편집</span>
-            <h2 id="risk-form-modal-title">항목 추가</h2>
+            <span>{t('위험 요인 편집')}</span>
+            <h2 id="risk-form-modal-title">{t('위험도 항목 추가')}</h2>
           </div>
           <button type="button" aria-label="닫기" onClick={onClose}>×</button>
         </div>
 
         <form className="risk-form" onSubmit={submitRisk}>
           <label>
-            <span>유형</span>
+            <span>{t('유형')}</span>
             <select
               value={riskForm.type}
               onChange={(event) => updateRiskForm('type', event.target.value)}
               required
             >
-              <option value="">유형 선택</option>
+              <option value="">{t('유형 선택')}</option>
               {CATEGORIES.map((category) => (
-                <option key={category} value={category}>{category}</option>
+                <option key={category} value={category}>{t(category)}</option>
               ))}
             </select>
           </label>
 
           <label>
-            <span>항목</span>
+            <span>{t('항목')}</span>
             <input
               type="text"
               value={riskForm.item}
               onChange={(event) => updateRiskForm('item', event.target.value)}
-              placeholder="예: 화재"
+              placeholder={t('예: 화재')}
               required
             />
           </label>
 
           <div className="risk-form-grid">
             <label>
-              <span>강도</span>
+              <span>{t('강도')}</span>
               <select
                 value={riskForm.severity}
                 onChange={(event) => updateRiskForm('severity', event.target.value)}
@@ -84,8 +86,8 @@ function RiskFormModal({ onClose, onSubmit }) {
           </div>
 
           <div className="risk-modal-actions">
-            <button className="risk-modal-cancel" type="button" onClick={onClose}>취소</button>
-            <button className="risk-modal-submit" type="submit">등록</button>
+            <button className="risk-modal-cancel" type="button" onClick={onClose}>{t('취소')}</button>
+            <button className="risk-modal-submit" type="submit">{t('등록')}</button>
           </div>
         </form>
       </section>
