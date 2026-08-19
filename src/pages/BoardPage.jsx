@@ -687,17 +687,17 @@ function BoardPage() {
           <section className="board-report-modal board-receive-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="board-receive-confirm-title" onMouseDown={(event) => event.stopPropagation()}>
             <div className="board-modal-header">
               <div>
-                <span>위험 신고</span>
-                <h2 id="board-receive-confirm-title">위험요인 선택</h2>
+                <span>{t('위험 신고')}</span>
+                <h2 id="board-receive-confirm-title">{t('위험요인 선택')}</h2>
               </div>
             </div>
             <div className="board-receive-confirm-body">
               {riskCategoryItems.length ? (
                 <div className="board-risk-category-list">
                   <div className="board-risk-category-head">
-                    <span>카테고리</span>
-                    <span>위험요인</span>
-                    <span>위험도</span>
+                    <span>{t('카테고리')}</span>
+                    <span>{t('위험요인')}</span>
+                    <span>{t('위험도')}</span>
                   </div>
                   {visibleRiskCategoryItems.map((item) => (
                     <button
@@ -706,31 +706,31 @@ function BoardPage() {
                       key={item.category_id ?? `${item.category}-${item.category_name}`}
                       onClick={() => setSelectedRiskCategoryId(item.category_id)}
                     >
-                      <span>{item.category || '-'}</span>
-                      <strong>{item.category_name || '-'}</strong>
-                      <em>{item.risk_level || '-'}</em>
+                      <span>{t(item.category || '-')}</span>
+                      <strong>{t(item.category_name || '-')}</strong>
+                      <em>{t(item.risk_level || '-')}</em>
                     </button>
                   ))}
                 </div>
               ) : (
-                <p className="board-risk-category-empty">위험요인 목록이 없습니다.</p>
+                <p className="board-risk-category-empty">{t('위험요인 목록이 없습니다.')}</p>
               )}
               <div className="board-risk-category-pagination">
                 <button type="button" disabled={activeRiskCategoryPage === 0} onClick={() => setRiskCategoryPage((page) => Math.max(0, page - 1))}>
-                  이전
+                  {t('이전')}
                 </button>
                 <span>{activeRiskCategoryPage + 1} / {riskCategoryPageCount}</span>
                 <button type="button" disabled={activeRiskCategoryPage === riskCategoryPageCount - 1} onClick={() => setRiskCategoryPage((page) => Math.min(riskCategoryPageCount - 1, page + 1))}>
-                  다음
+                  {t('다음')}
                 </button>
               </div>
             </div>
             <div className="board-modal-actions board-receive-confirm-actions">
               <button className="board-modal-cancel" type="button" onClick={() => setIsReceiveConfirmOpen(false)}>
-                취소
+                {t('취소')}
               </button>
               <button className="board-modal-submit" type="button" disabled={!selectedRiskCategoryId || isReceivingReports} onClick={receiveSelectedReports}>
-                확인
+                {t('확인')}
               </button>
             </div>
           </section>
