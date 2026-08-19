@@ -3,6 +3,7 @@ import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
+import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { clearAuthSession } from '../api/authInterceptor.js'
@@ -13,7 +14,7 @@ import '../styles/MyPage.css'
 const API_BASE_URL = BACKEND_API_URL
 
 function MyPage() {
-  const { t } = useUiLanguage()
+  const { language, t } = useUiLanguage()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('password')
@@ -26,6 +27,7 @@ function MyPage() {
   const [withdrawalError, setWithdrawalError] = useState('')
   const [isWithdrawing, setIsWithdrawing] = useState(false)
   const [withdrawalComplete, setWithdrawalComplete] = useState(false)
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
 
   useEffect(() => {
     const fetchMyProfile = async () => {
@@ -48,6 +50,29 @@ function MyPage() {
     }
 
     fetchMyProfile()
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchUnreadNotificationCount = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/notifications`)
+        if (isMounted) {
+          const notifications = Array.isArray(response.data) ? response.data : []
+          setUnreadNotificationCount(notifications.filter((notification) => !notification.read).length)
+        }
+      } catch (error) {
+        console.error('알림 수 조회 실패:', error)
+      }
+    }
+
+    fetchUnreadNotificationCount()
+    const interval = window.setInterval(fetchUnreadNotificationCount, 15000)
+    return () => {
+      isMounted = false
+      window.clearInterval(interval)
+    }
   }, [])
 
   const selectTab = (tab) => {
@@ -136,6 +161,13 @@ function MyPage() {
             <h2>{maskName(user.name)}</h2>
             {user.department && <p>{user.department}</p>}
             {user.email && <span className="my-email">{user.email}</span>}
+          </div>
+        </div>
+        <div className="my-profile-stats" aria-live="polite">
+          <div>
+            <NotificationsNoneOutlinedIcon aria-hidden="true" />
+            <span>{language === 'en' ? 'Unread notifications' : '미확인 알림'}</span>
+            <strong>{language === 'en' ? `${unreadNotificationCount} unread` : `${unreadNotificationCount}건`}</strong>
           </div>
         </div>
       </article>
