@@ -4,6 +4,7 @@ import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useUiLanguage } from '../utils/uiLanguage.js'
+import { maskName } from '../utils/userPrivacy.js'
 import '../styles/SafetyManagementPage.css'
 
 const API_BASE_URL = `${BACKEND_API_URL}/api`
@@ -202,7 +203,7 @@ function SafetyManagementPage() {
         <div className="safety-card-heading safety-heading-row"><div><span><GroupsOutlinedIcon /> {t('근무자 역할')}</span><h2>{t('유저 리스트 및 카테고리 변경')}</h2></div><button className="safety-add-button" type="button" onClick={() => setIsWorkerRoleEditMode((current) => !current)}><AddRoundedIcon /> {t(isWorkerRoleEditMode ? '변경 완료' : '역할/카테고리 변경')}</button></div>
         <div className="safety-role-table safety-worker-role-table">
           <div className="safety-role-head"><span>ID</span><span>{t('이름')}</span><span>{t('역할')}</span><span>{t('유저카테고리')}</span></div>
-          {pagedUsers.map((user) => <div className="safety-role-row" key={user.uid}><input value={user.user_id} readOnly /><input value={user.name} readOnly />{isWorkerRoleEditMode ? <select value={user.role} onChange={(event) => updateUserCategory(user.uid, 'role', event.target.value)}>{COMPANY_ROLE_OPTIONS.map((option) => <option key={option} value={option}>{t(option)}</option>)}</select> : <input value={t(user.role)} readOnly />}{isWorkerRoleEditMode && user.role === GENERAL_USER_ROLE ? <select value={user.category ?? ''} onChange={(event) => updateUserCategory(user.uid, 'category', event.target.value)}><option value="">{t('미지정')}</option>{categories.map((option) => <option key={option} value={option}>{t(option)}</option>)}</select> : <input value={t(user.category || '-')} readOnly />}</div>)}
+          {pagedUsers.map((user) => <div className="safety-role-row" key={user.uid}><input value={user.user_id} readOnly /><input value={maskName(user.name)} readOnly />{isWorkerRoleEditMode ? <select value={user.role} onChange={(event) => updateUserCategory(user.uid, 'role', event.target.value)}>{COMPANY_ROLE_OPTIONS.map((option) => <option key={option} value={option}>{t(option)}</option>)}</select> : <input value={t(user.role)} readOnly />}{isWorkerRoleEditMode && user.role === GENERAL_USER_ROLE ? <select value={user.category ?? ''} onChange={(event) => updateUserCategory(user.uid, 'category', event.target.value)}><option value="">{t('미지정')}</option>{categories.map((option) => <option key={option} value={option}>{t(option)}</option>)}</select> : <input value={t(user.category || '-')} readOnly />}</div>)}
           {!pagedUsers.length && <div className="worker-role-empty">{t('조건에 맞는 근무자가 없습니다.')}</div>}
         </div>
         <div className="worker-role-pagination"><span>{t('총')} {users.length}{t('명')}</span><div><button type="button" disabled={currentUserPage === 1} onClick={() => setUserPage((page) => Math.max(1, page - 1))}>{t('이전')}</button><strong>{currentUserPage} / {userPageCount}</strong><button type="button" disabled={currentUserPage === userPageCount} onClick={() => setUserPage((page) => Math.min(userPageCount, page + 1))}>{t('다음')}</button></div></div>

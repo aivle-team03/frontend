@@ -47,7 +47,8 @@
 
 .policy-page-head p {
     flex: 0 0 auto;
-    margin: 0;
+    /* Keep the effective date below the fixed back button. */
+    margin: 62px 0 0;
     padding: 10px 13px;
     border: 1px solid #edf0f2;
     border-radius: 10px;
