@@ -21,6 +21,12 @@ import {
 
 const API_BASE_URL = BACKEND_API_URL
 
+const LOCAL_LATEST_EDUCATION_FALLBACK = [
+  { education_id: 9, title: 'eng test', created_at: '2026-08-18', attendees: [] },
+  { education_id: 8, title: '\uC548\uC804\uC0AC\uACE0 \uC608\uBC29 \uAD50\uC721', created_at: '2026-08-14', attendees: [] },
+  { education_id: 7, title: '\uD654\uC7AC \uC608\uBC29 \uC548\uC804 \uAD50\uC721', created_at: '2026-08-13', attendees: [] },
+]
+
 function isCompleteStatus(status) {
   return status === '조치 완료' || status === '점검 완료'
 }
@@ -47,7 +53,7 @@ function countSummaryEvents(events, summaryId) {
 
 function formatTime(value) {
   if (!value) return '-'
-  return String(value).replace('T', ' ')
+  return String(value).replace('T', ' ').slice(0, 16)
 }
 
 function getTimeByStatus(item, status) {
@@ -146,6 +152,7 @@ function HomePage() {
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [riskFactors, setRiskFactors] = useState(EVENT_CATEGORY_MOCKUP_DATA)
   const [educationChartData, setEducationChartData] = useState([])
+  const [isUsingEducationFallback, setIsUsingEducationFallback] = useState(false)
   const [userData, setUserData] = useState([])
   const [inspectionHistoryData, setInspectionHistoryData] = useState([])
   const [actionHistoryData, setActionHistoryData] = useState([])
@@ -177,8 +184,11 @@ function HomePage() {
         const courses = Array.isArray(response.data?.courses) ? response.data.courses : []
         setHomeDebugData((current) => ({ ...current, education: response.data }))
         setEducationChartData(courses)
+        setIsUsingEducationFallback(false)
       })
       .catch((error) => {
+        setEducationChartData(LOCAL_LATEST_EDUCATION_FALLBACK)
+        setIsUsingEducationFallback(true)
         console.error('홈 교육 이수 데이터 조회 실패:', error)
       })
   }, [])
@@ -265,7 +275,7 @@ function HomePage() {
           onClose={() => setSelectedEvent(null)}
         />
 
-        <EducationPieChart eduData={educationChartData} userData={userData}></EducationPieChart>
+        <EducationPieChart eduData={educationChartData} userData={userData} useLatestCourses={isUsingEducationFallback} />
 
       </section>
 
