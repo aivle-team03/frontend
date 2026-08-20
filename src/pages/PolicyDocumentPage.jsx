@@ -1,4 +1,5 @@
 import '../styles/policy-document.css'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
 import { useUiLanguage } from '../utils/uiLanguage.js'
@@ -59,6 +60,13 @@ const englishDocuments = {
 
 function PolicyDocumentPage({ type }) {
   const navigate = useNavigate()
+
+  // 푸터가 이 페이지에도 있어서, 문서 끝까지 읽고 다른 문서를 누르면
+  // 라우터가 스크롤을 그대로 둔 채 새 문서를 그려 중간부터 보인다.
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [type])
+
   const { language, t } = useUiLanguage()
   const isPrivacy = type === 'privacy'
   const sections = language === 'en' ? englishDocuments[type] : (isPrivacy ? privacy : terms)
