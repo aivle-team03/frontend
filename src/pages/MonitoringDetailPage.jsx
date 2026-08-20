@@ -196,8 +196,8 @@ function MonitoringDetailPage() {
           <ArrowBackRoundedIcon />
         </button>
         <div>
-          <span>{activeCamera.cctv_name}</span>
-          <strong>{activeCamera.area} · {activeCamera.location}</strong>
+          <span>{t('CCTV 모니터링')}</span>
+          <strong>CAM #{activeCamera.id}</strong>
         </div>
         <span className="detail-live-status"><i />LIVE</span>
       </header>
@@ -244,8 +244,7 @@ function MonitoringDetailPage() {
                     </div>
 
                     <div className="detail-thumb-info">
-                      <strong>{camera.area}</strong>
-                      <small>CAM #{camera.id}</small>
+                      <strong>CAM #{camera.id}</strong>
                     </div>
                   </button>
                 );
