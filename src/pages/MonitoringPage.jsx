@@ -112,7 +112,7 @@ function MonitoringPage() {
         const response = await axios.get(`${BACKEND_API_URL}/api/monitoring/events`, { headers })
         setServerEvents((response.data || []).map((event) => ({
           id: event.event_id ?? event.id,
-          time: event.date ? String(event.date).replace('T', ' ').substring(0, 16) : '-',
+          time: event.date ? String(event.date).replace('T', ' ').substring(2, 16) : '-',
           location: event.cctv?.location || event.location || '위치 미지정',
           type: event.category?.category_name || event.event_type || '위험 요소 감지',
           // monitoring API가 event와 연결된 최신 action_history의 상태를

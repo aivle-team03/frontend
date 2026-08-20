@@ -90,7 +90,7 @@
 
 .cctvemptyarea {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(430px, 1fr);
+  grid-template-columns: minmax(0, 1.62fr) minmax(360px, 0.82fr);
   gap: 18px;
   min-width: 0;
 }
@@ -638,34 +638,12 @@
 
 .liveEvent :global(.events-table-wrap) {
   margin-top: 0;
-  overflow-x: hidden;
-}
-
-.liveEvent :global(.events-table-wrap .MuiTable-root) {
-  width: 100%;
-  table-layout: fixed;
 }
 
 .liveEvent :global(.events-table-wrap .MuiTableCell-root) {
   padding-right: 8px;
   padding-left: 8px;
   white-space: nowrap;
-}
-
-.liveEvent :global(.events-table-wrap .MuiTableCell-root:nth-child(1)) {
-  width: 31%;
-}
-
-.liveEvent :global(.events-table-wrap .MuiTableCell-root:nth-child(2)) {
-  width: 10%;
-}
-
-.liveEvent :global(.events-table-wrap .MuiTableCell-root:nth-child(3)) {
-  width: 36%;
-}
-
-.liveEvent :global(.events-table-wrap .MuiTableCell-root:nth-child(4)) {
-  width: 23%;
 }
 
 .liveEvent :global(.monitoring-event-row) {
