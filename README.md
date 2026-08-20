@@ -1,14 +1,14 @@
-# BOSS Frontend
-
-BOSS 산업 소방 안전관리 서비스의 웹 프론트엔드 저장소입니다.
-현장 CCTV 모니터링부터 점검·조치, 위험 신고, 안전 교육, 보고서, AI 비서까지 BOSS의 업무 화면을 하나의 React 애플리케이션으로 제공합니다.
-
-<p align="center">
+# <img src="public/favicon.png" width="32" alt="BOSS" style="vertical-align: -0.12em;"> **BOSS Frontend**
+<p align=" left">
   <a href="#1-통합-대시보드"><img src="https://img.shields.io/badge/Dashboard-안전%20현황-4F6FBF?style=for-the-badge&logo=googleanalytics&logoColor=white" alt="Dashboard"></a>
   <a href="#2-cctv-모니터링"><img src="https://img.shields.io/badge/CCTV-실시간%20모니터링-385A9F?style=for-the-badge&logo=opencv&logoColor=white" alt="CCTV monitoring"></a>
   <a href="#3-점검과-조치"><img src="https://img.shields.io/badge/Checklist-점검과%20조치-5B7FC8?style=for-the-badge&logo=checkmarx&logoColor=white" alt="Inspection and action"></a>
   <a href="#4-안전-교육"><img src="https://img.shields.io/badge/Education-안전%20교육-6A63B8?style=for-the-badge&logo=googleclassroom&logoColor=white" alt="Safety education"></a>
 </p>
+
+> BOSS 산업 소방 안전관리 서비스의 웹 프론트엔드 저장소입니다.
+> 현장 CCTV 모니터링부터 점검·조치, 위험 신고, 안전 교육, 보고서, AI 비서까지 
+> BOSS의 업무 화면을 하나의 React 애플리케이션으로 제공합니다.
 
 | 바로가기 | 담당 화면 | 주요 기능 |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ BOSS 산업 소방 안전관리 서비스의 웹 프론트엔드 저장소입니
 | **Education** | 안전 교육 | 교육 수강·이수, 관리자 등록, AI 교육 영상 생성 |
 | **Reports & Assistant** | 보고서·AI 비서 | 문서 생성·미리보기, 안전 데이터 질의 응답 |
 
-## 기술 스택
+## 🛠️ **기술 스택**
 
 <p>
   <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=111111" alt="React">
@@ -43,7 +43,7 @@ BOSS 산업 소방 안전관리 서비스의 웹 프론트엔드 저장소입니
 | 문서 미리보기 | docx-preview | 생성된 Word 보고서 브라우저 미리보기 |
 | 다국어 | 자체 UI language layer | 한국어·영어 UI 및 알림 문구 전환 |
 
-## 애플리케이션 구성
+## 🔎 **애플리케이션 구성**
 
 ```text
 Browser / React SPA
@@ -63,7 +63,7 @@ Browser / React SPA
 
 프론트는 업무 데이터의 원본을 보관하지 않습니다. 인증과 영속 데이터는 Backend가 담당하고, Chatbot과 Vision은 각각 질의 응답과 영상 분석 결과를 제공합니다. 브라우저에 저장되는 토큰·언어·일부 UI 상태는 세션 복구와 화면 상태 유지에만 사용합니다.
 
-## 주요 라우트
+## 🔑 **주요 라우트**
 
 | 경로 | 화면 | 비고 |
 | --- | --- | --- |
@@ -81,7 +81,7 @@ Browser / React SPA
 | `/mypage` | 마이페이지 | 계정·알림 관리 |
 | `/privacy-policy`, `/terms` | 정책 문서 | 공개 라우트 |
 
-## 디렉터리 구조
+## 📁 **디렉터리 구조**
 
 ```text
 frontend/
@@ -102,7 +102,7 @@ frontend/
 └─ vite.config.js
 ```
 
-## 주요 기능
+## 💡 **주요 기능**
 
 | 번호 | 기능 | 설명 |
 | --- | --- | --- |
@@ -222,7 +222,7 @@ frontend/
   </tr>
 </table>
 
-## 로컬 개발 실행
+## 💻 **로컬 개발 실행**
 
 ### 요구 사항
 
@@ -253,7 +253,7 @@ npm run dev
 
 기본 개발 서버 주소는 Vite가 출력하는 URL을 사용합니다. 일반적으로 `http://localhost:5173`입니다. 환경 변수를 설정하지 않으면 `src/config/api.js`의 위 로컬 주소가 기본값으로 사용되며 URL 끝의 `/`는 설정 과정에서 제거됩니다.
 
-## 환경 변수
+## ⚙️ **환경 변수**
 
 | 변수 | 기본값 | 용도 |
 | --- | --- | --- |
@@ -263,7 +263,7 @@ npm run dev
 
 `VITE_` 환경 변수는 브라우저 bundle에 포함됩니다. API key, DB 비밀번호, AWS secret 같은 비밀값을 넣거나 Git에 커밋하지 않습니다.
 
-## 개발 명령
+## ⌨️ **개발 명령**
 
 | 명령 | 설명 |
 | --- | --- |
@@ -279,7 +279,7 @@ npm run lint
 npm run build
 ```
 
-## 인증과 API 처리
+## 🔐 **인증과 API 처리**
 
 - 로그인 성공 시 access token, refresh token, 로그인 상태, 사용자 역할을 브라우저 저장소에 기록합니다.
 - 공통 인증 interceptor가 Backend 요청의 인증 만료 흐름을 처리합니다.
@@ -287,7 +287,7 @@ npm run build
 - 메뉴와 일부 관리 기능은 Backend가 반환한 역할 정보를 기준으로 표시합니다.
 - 사용자 입력·API 데이터와 정적 UI 번역을 구분합니다. 정적 문구는 `src/utils/en.js`, 알림 문구 변환은 같은 모듈의 알림 번역 규칙에서 관리합니다.
 
-## 운영 배포
+## 🚀 **운영 배포**
 
 운영 배포는 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)에서 처리합니다. `main` 브랜치 push 또는 수동 실행(`workflow_dispatch`)을 트리거로 GitHub-hosted runner가 빌드하고, 결과물만 EC2의 정적 파일 경로로 전송합니다.
 
@@ -324,7 +324,7 @@ location / {
 
 Vision을 같은 도메인의 하위 경로로 전달하는 경우에는 스트림 응답을 위해 proxy buffering과 timeout 설정을 별도로 확인합니다.
 
-## 연동 점검 순서
+## **연동 점검 순서**
 
 1. 로그인 후 Backend 인증 요청과 사용자 역할을 확인합니다.
 2. 홈에서 점검·조치·교육 통계가 정상 조회되는지 확인합니다.
@@ -335,7 +335,7 @@ Vision을 같은 도메인의 하위 경로로 전달하는 경우에는 스트�
 7. 보고서 문서 URL과 Word 미리보기, AI 비서 응답을 확인합니다.
 8. 한국어·영어 전환 후 로그인 전·후 언어 설정과 모달·알림·정책 문서를 확인합니다.
 
-## 화면 이미지
+## **화면 이미지**
 
 - [홈 대시보드](docs/home_dash.png)
 - [CCTV 모니터링](docs/cctv_01.png)
