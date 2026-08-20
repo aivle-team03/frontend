@@ -484,6 +484,27 @@
   grid-template-columns: minmax(130px, .9fr) minmax(160px, 1fr) minmax(180px, 1.1fr) minmax(180px, 1.1fr);
 }
 
+.safety-heading-actions { display: flex; align-items: center; gap: 8px; }
+
+/* 조회 모드에서만 행을 고를 수 있다. 수정 모드에서는 select 조작과 겹친다. */
+.safety-role-row { cursor: pointer; }
+.safety-role-row.is-selected { background: #eaf2fd; box-shadow: inset 3px 0 0 #3a6fc2; }
+.safety-role-row.is-selected input { background: transparent; }
+
+.safety-reset-code-button {
+  padding: 9px 14px;
+  border: 1px solid #cddcee;
+  border-radius: 7px;
+  background: #f4f8fd;
+  color: #3a6fc2;
+  font-size: 11px;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.safety-reset-code-button:hover:not(:disabled) { background: #e8f1fc; }
+.safety-reset-code-button:disabled { color: #9aabbf; cursor: not-allowed; }
+
 .safety-role-row select {
   width: 100%;
   min-height: 42px;
@@ -650,3 +671,56 @@
     border-radius: 8px;
   }
 }
+
+/* 발급된 재설정 코드 안내. 닫으면 다시 볼 수 없으므로 값이 크게 보여야 한다. */
+.safety-reset-modal-backdrop {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(20, 35, 56, .5);
+  backdrop-filter: blur(6px);
+}
+
+.safety-reset-modal {
+  width: min(420px, 100%);
+  padding: 26px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 22px 48px rgba(28, 48, 78, .22);
+  text-align: center;
+}
+
+.safety-reset-modal h3 { margin: 0 0 8px; color: #24374f; font-size: 17px; font-weight: 900; }
+.safety-reset-modal p { margin: 0; color: #63748a; font-size: 13px; font-weight: 700; }
+
+.safety-reset-code {
+  display: block;
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px dashed #b9cee8;
+  border-radius: 10px;
+  background: #f4f8fd;
+  color: #2b5fa8;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+}
+
+.safety-reset-note { color: #8493a5 !important; font-size: 11.5px !important; line-height: 1.6; }
+
+.safety-reset-actions { display: flex; gap: 8px; margin-top: 20px; }
+.safety-reset-actions button {
+  flex: 1;
+  padding: 11px;
+  border: 1px solid #cddcee;
+  border-radius: 8px;
+  background: #fff;
+  color: #50657f;
+  font-size: 13px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.safety-reset-actions button.is-primary { border-color: #3a6fc2; background: #3a6fc2; color: #fff; }
