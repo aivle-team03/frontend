@@ -41,6 +41,9 @@ function SafetyManagementPage() {
   const [isCodeLoading, setIsCodeLoading] = useState(false)
   const [codeMessage, setCodeMessage] = useState('')
   const [isCodeError, setIsCodeError] = useState(false)
+  const [resetCodeInfo, setResetCodeInfo] = useState(null)
+  const [selectedResetUid, setSelectedResetUid] = useState(null)
+  const [issuingResetUid, setIssuingResetUid] = useState(null)
   const [companyCodeForms, setCompanyCodeForms] = useState([
     { id: crypto.randomUUID(), role: '', category: '', code: '' },
   ])
@@ -51,6 +54,8 @@ function SafetyManagementPage() {
   const userPageCount = Math.max(1, Math.ceil(users.length / userPageSize))
   const currentUserPage = Math.min(userPage, userPageCount)
   const pagedUsers = users.slice((currentUserPage - 1) * userPageSize, currentUserPage * userPageSize)
+  // 현재 페이지에 보이는 사람만 발급 대상이 된다. 페이지를 넘기면 선택이 자연히 풀린다.
+  const selectedResetUser = pagedUsers.find((user) => user.uid === selectedResetUid) ?? null
   const codePageSize = 10
   const filteredInviteCodes = inviteCodes.filter((inviteCode) => {
     const matchesRole = codeRoleFilter === '전체 역할' || inviteCode.role === codeRoleFilter
@@ -143,6 +148,21 @@ function SafetyManagementPage() {
     }
   }
 
+  // 관리자가 특정 사용자에게 1회용 비밀번호 재설정 코드를 발급한다.
+  // 기존 가입 코드를 다시 알려주지 않는다. 그 값은 이미 전달돼 회수할 수 없다.
+  const issueResetCode = async (user) => {
+    setIssuingResetUid(user.uid)
+    try {
+      const response = await axios.post(`${API_BASE_URL}/admin/users/${user.uid}/password-reset-code`, {}, authConfig)
+      setResetCodeInfo({ name: user.name, ...response.data })
+      setSelectedResetUid(null)
+    } catch (error) {
+      window.alert(error.response?.data?.detail || t('재설정 코드 발급에 실패했습니다.'))
+    } finally {
+      setIssuingResetUid(null)
+    }
+  }
+
   const updateUserCategory = async (userUid, field, value) => {
     try {
       const response = await axios.patch(`${API_BASE_URL}/admin/users/${userUid}`, { [field]: value || null }, authConfig)
@@ -200,14 +220,33 @@ function SafetyManagementPage() {
       </section>
 
       <section className="safety-policy-card">
-        <div className="safety-card-heading safety-heading-row"><div><span><GroupsOutlinedIcon /> {t('근무자 역할')}</span><h2>{t('유저 리스트 및 카테고리 변경')}</h2></div><button className="safety-add-button" type="button" onClick={() => setIsWorkerRoleEditMode((current) => !current)}><AddRoundedIcon /> {t(isWorkerRoleEditMode ? '변경 완료' : '역할/카테고리 변경')}</button></div>
+        <div className="safety-card-heading safety-heading-row"><div><span><GroupsOutlinedIcon /> {t('근무자 역할')}</span><h2>{t('유저 리스트 및 카테고리 변경')}</h2></div><div className="safety-heading-actions"><button className="safety-reset-code-button" type="button" disabled={!selectedResetUser || issuingResetUid !== null} onClick={() => issueResetCode(selectedResetUser)}>{issuingResetUid !== null ? t('발급 중...') : selectedResetUser ? `${t('재설정 코드 발급')} · ${maskName(selectedResetUser.name)}` : t('재설정 코드 발급')}</button><button className="safety-add-button" type="button" onClick={() => { setSelectedResetUid(null); setIsWorkerRoleEditMode((current) => !current) }}><AddRoundedIcon /> {t(isWorkerRoleEditMode ? '변경 완료' : '역할/카테고리 변경')}</button></div></div>
         <div className="safety-role-table safety-worker-role-table">
           <div className="safety-role-head"><span>ID</span><span>{t('이름')}</span><span>{t('역할')}</span><span>{t('유저카테고리')}</span></div>
-          {pagedUsers.map((user) => <div className="safety-role-row" key={user.uid}><input value={user.user_id} readOnly /><input value={maskName(user.name)} readOnly />{isWorkerRoleEditMode ? <select value={user.role} onChange={(event) => updateUserCategory(user.uid, 'role', event.target.value)}>{COMPANY_ROLE_OPTIONS.map((option) => <option key={option} value={option}>{t(option)}</option>)}</select> : <input value={t(user.role)} readOnly />}{isWorkerRoleEditMode && user.role === GENERAL_USER_ROLE ? <select value={user.category ?? ''} onChange={(event) => updateUserCategory(user.uid, 'category', event.target.value)}><option value="">{t('미지정')}</option>{categories.map((option) => <option key={option} value={option}>{t(option)}</option>)}</select> : <input value={t(user.category || '-')} readOnly />}</div>)}
+          {pagedUsers.map((user) => <div className={`safety-role-row${selectedResetUid === user.uid ? ' is-selected' : ''}`} key={user.uid} onClick={() => !isWorkerRoleEditMode && setSelectedResetUid((current) => current === user.uid ? null : user.uid)}><input value={user.user_id} readOnly /><input value={maskName(user.name)} readOnly />{isWorkerRoleEditMode ? <select value={user.role} onChange={(event) => updateUserCategory(user.uid, 'role', event.target.value)}>{COMPANY_ROLE_OPTIONS.map((option) => <option key={option} value={option}>{t(option)}</option>)}</select> : <input value={t(user.role)} readOnly />}{isWorkerRoleEditMode && user.role === GENERAL_USER_ROLE ? <select value={user.category ?? ''} onChange={(event) => updateUserCategory(user.uid, 'category', event.target.value)}><option value="">{t('미지정')}</option>{categories.map((option) => <option key={option} value={option}>{t(option)}</option>)}</select> : <input value={t(user.category || '-')} readOnly />}</div>)}
           {!pagedUsers.length && <div className="worker-role-empty">{t('조건에 맞는 근무자가 없습니다.')}</div>}
         </div>
         <div className="worker-role-pagination"><span>{t('총')} {users.length}{t('명')}</span><div><button type="button" disabled={currentUserPage === 1} onClick={() => setUserPage((page) => Math.max(1, page - 1))}>{t('이전')}</button><strong>{currentUserPage} / {userPageCount}</strong><button type="button" disabled={currentUserPage === userPageCount} onClick={() => setUserPage((page) => Math.min(userPageCount, page + 1))}>{t('다음')}</button></div></div>
       </section>
+
+      {resetCodeInfo && (
+        <div className="safety-reset-modal-backdrop" role="presentation" onMouseDown={() => setResetCodeInfo(null)}>
+          <section className="safety-reset-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
+            <h3>{t('비밀번호 재설정 코드')}</h3>
+            <p>{resetCodeInfo.target_name} {t('님에게 아래 코드를 전달하세요.')}</p>
+            <strong className="safety-reset-code">{resetCodeInfo.code}</strong>
+            <p className="safety-reset-note">
+              {t('발급 후')} {resetCodeInfo.expires_in_hours}{t('시간 동안 한 번만 사용할 수 있으며, 이 계정에만 적용됩니다.')}
+              <br />
+              {t('창을 닫으면 다시 볼 수 없습니다.')}
+            </p>
+            <div className="safety-reset-actions">
+              <button type="button" onClick={() => navigator.clipboard?.writeText(resetCodeInfo.code)}>{t('코드 복사')}</button>
+              <button type="button" className="is-primary" onClick={() => setResetCodeInfo(null)}>{t('확인')}</button>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   )
 }
