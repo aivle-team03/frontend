@@ -21,8 +21,8 @@ BOSS 산업 소방 안전관리 서비스의 웹 프론트엔드 저장소입니
 ## 기술 스택
 
 <p>
-  <img src="https://img.shields.io/badge/React%2019-61DAFB?style=for-the-badge&logo=react&logoColor=111111" alt="React 19">
-  <img src="https://img.shields.io/badge/Vite%208-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite 8">
+  <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=111111" alt="React">
+  <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite">
   <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=111111" alt="JavaScript">
   <img src="https://img.shields.io/badge/React%20Router-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white" alt="React Router">
 </p>
@@ -35,8 +35,8 @@ BOSS 산업 소방 안전관리 서비스의 웹 프론트엔드 저장소입니
 
 | 영역 | 사용 기술 | 적용 내용 |
 | --- | --- | --- |
-| 애플리케이션 | React 19, React Router | SPA 화면 구성, 인증 상태 기반 라우팅 |
-| 개발·빌드 | Vite 8 | 개발 서버, production bundle, vendor chunk 분리 |
+| 애플리케이션 | React, React Router | SPA 화면 구성, 인증 상태 기반 라우팅 |
+| 개발·빌드 | Vite | 개발 서버, production bundle, vendor chunk 분리 |
 | UI | Material UI, Emotion, CSS | 아이콘, 테마, 반응형 업무 화면과 모달 |
 | 데이터 시각화 | Recharts | 위험 추이, 유형 비율, 교육 이수 현황 |
 | API | Axios, Fetch API | Backend·Chatbot·Vision 서비스 연동 |
@@ -57,30 +57,50 @@ BOSS 산업 소방 안전관리 서비스의 웹 프론트엔드 저장소입니
 
 ### 1. 통합 대시보드
 
-![BOSS 홈 화면](docs/home_readme.png)
-
 - 전체 점검·조치 건수와 처리 현황을 요약합니다.
 - 최근 이상 발생, 구역별 위험도, 기간별 위험 추이를 시각화합니다.
 - 교육 이수 현황과 사용자·업무 데이터를 권한 범위에 맞게 표시합니다.
 - Backend의 점검·조치·교육 API를 조회하며, 임의의 통계 값을 생성하지 않습니다.
 
-### 2. CCTV 모니터링
+![BOSS 홈 화면](docs/home_dash.png)
 
-![BOSS CCTV 모니터링 화면](docs/cctv.png)
+### 2. CCTV 모니터링
 
 - Backend에서 CCTV 구성과 저장된 이벤트를 조회합니다.
 - Vision 서비스의 실시간 스트림·장비 상태·신규 감지 이벤트를 표시합니다.
 - 감지 결과 상세에서 위치와 시간을 확인하고 위험요인을 선택하여 담당자 배정 흐름으로 연결합니다.
 - 운영 환경에서는 브라우저가 GPU 서버에 직접 접근하지 않고 reverse proxy를 통해 Vision API를 호출할 수 있습니다.
 
-### 3. 점검과 조치
+<table>
+  <tr>
+    <td width="50%"><img src="docs/cctv_01.png" alt="BOSS CCTV 모니터링 화면"></td>
+  </tr>
+</table>
 
-![BOSS 체크리스트 화면](docs/checklist.png)
+### 3. 점검과 조치
 
 - 사용자별 점검·조치 목록과 전체 진행률을 제공합니다.
 - 점검 메모와 현장 사진을 등록하고, 필요한 항목을 조치 요청으로 전환합니다.
 - 관리자는 점검·조치 담당자를 배정하고 주기·적용 구역·진행 상태를 관리합니다.
 - 완료 이력에서는 작업 사진, 담당자 입력 내용, AI 사진 재검증 결과를 확인하고 승인 또는 반려합니다.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/checklist_today.png" alt="BOSS 오늘의 할일 화면"></td>
+    <td width="50%"><img src="docs/checklist_assign.png" alt="BOSS 담당자 배정 화면"></td>
+  </tr>
+</table>
+
+### 3-1. 이력 관리
+
+- 점검 완료 내역에서 현장 담당자가 완료한 점검의 위치, 유형, 담당자, 사진과 완료 상태를 확인합니다.
+- 조치 완료 내역에서 조치 사진을 검토하고 승인 대기·승인 완료 상태와 승인 이력을 관리합니다.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/action_01.png" alt="BOSS 점검 완료 내역 화면"></td>
+  </tr>
+</table>
 
 ### 4. 안전 교육
 
@@ -89,6 +109,13 @@ BOSS 산업 소방 안전관리 서비스의 웹 프론트엔드 저장소입니
 - 교육 이수 현황 모달에서 대상자별 완료 건수와 최근 이수일을 조회합니다.
 - AI 교육 영상 생성은 Backend를 통해 비동기 작업을 요청하고, 진행 상태를 폴링하여 결과 검토와 최종 등록을 처리합니다.
 
+<table>
+  <tr>
+    <td width="50%"><img src="docs/education_learning.png" alt="BOSS 교육 이수 화면"></td>
+    <td width="50%"><img src="docs/education_management_01.png" alt="BOSS 교육 관리 현황 화면"></td>
+  </tr>
+</table>
+
 ### 5. 위험 신고와 위험도 관리
 
 - 현장 사용자는 소방안전·시설안전·산업안전·기타 카테고리로 위험 상황과 사진을 등록합니다.
@@ -96,23 +123,44 @@ BOSS 산업 소방 안전관리 서비스의 웹 프론트엔드 저장소입니
 - 신고 카테고리는 원래 분류를 유지하고, 선택한 위험요인은 이후 담당자 배정과 조치 이력의 업무명으로 연결됩니다.
 - 위험도 관리에서는 위험요인의 유형·강도·빈도 기반 정보를 조회하고 항목을 추가하거나 관리합니다.
 
-### 6. 보고서와 AI 비서
+<table>
+  <tr>
+    <td width="50%"><img src="docs/board.png" alt="BOSS 위험 신고 게시판 화면"></td>
+    <td width="50%"><img src="docs/risk_management.png" alt="BOSS 위험도 관리 화면"></td>
+  </tr>
+</table>
 
-![BOSS AI 비서 화면](docs/qa.png)
+### 6. 보고서와 AI 비서
 
 - 위험성 평가와 안전 관리 보고서 생성을 Backend에 요청합니다.
 - 생성된 보고서 목록을 조회하고 Word 문서를 브라우저에서 미리 봅니다.
 - AI 비서는 Chatbot API에 질문과 대화 ID를 전달하여 안전 관리·교육·법령 정보를 질의합니다.
 - AI 응답은 서비스가 조회한 업무 데이터와 법령 정보에 기반하며, 프론트는 응답과 오류·대기 상태를 표시합니다.
 
-### 7. 계정·알림·다국어
+<table>
+  <tr>
+    <td width="50%"><img src="docs/report.png" alt="BOSS 보고서 화면"></td>
+    <td width="50%"><img src="docs/ai_chat.png" alt="BOSS AI 비서 화면"></td>
+  </tr>
+</table>
 
-![BOSS 마이페이지 화면](docs/mypage.png)
+### 7. 계정·알림·다국어
 
 - 로그인·회원가입·비밀번호 재설정과 JWT 기반 인증 상태를 관리합니다.
 - 헤더에서 미확인 알림 건수와 최근 알림을 확인하고, 마이페이지에서 전체 알림 내역을 조회합니다.
 - 이름은 화면 노출 시 마지막 글자를 마스킹합니다.
 - 로그인 전·후 언어 설정을 유지하며 주요 업무 화면, 모달, 알림, 개인정보 처리방침과 이용약관을 한국어·영어로 제공합니다.
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/language_01.png" alt="BOSS 언어 설정 화면"></td>
+    <td width="50%"><img src="docs/language_02.png" alt="BOSS AI Assistant 영어 화면"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/mypage01.png" alt="BOSS 마이페이지 화면"></td>
+    <td width="50%"><img src="docs/mypage02.png" alt="BOSS 마이페이지 회원탈퇴 화면"></td>
+  </tr>
+</table>
 
 ## 애플리케이션 구성
 
@@ -290,10 +338,10 @@ Vision을 같은 도메인의 하위 경로로 전달하는 경우에는 스트�
 
 ## 화면 이미지
 
-- [홈 대시보드](docs/home_readme.png)
-- [CCTV 모니터링](docs/cctv.png)
-- [체크리스트](docs/checklist.png)
-- [AI 비서](docs/qa.png)
-- [마이페이지](docs/mypage.png)
+- [홈 대시보드](docs/home_dash.png)
+- [CCTV 모니터링](docs/cctv_01.png)
+- [체크리스트](docs/checklist_today.png)
+- [안전 교육](docs/education_learning.png)
+- [AI 비서](docs/ai_chat.png)
 
 화면 이미지는 문서 작성 시점의 예시이며, 실제 데이터와 권한에 따라 카드·메뉴·목록 구성이 달라질 수 있습니다.
