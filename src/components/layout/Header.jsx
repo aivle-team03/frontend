@@ -132,7 +132,7 @@ function Header({ items }) {
             name: userData.name || userData.user_id || '관리자',
             role: userData.role || '소방안전 관리자',
             // Department is not part of the current profile contract; avoid showing
-            // the legacy mock value returned by older API responses.
+            // an unverified field returned by older API responses.
             department: '',
             email: userData.email || '',
           })

@@ -94,7 +94,7 @@ function ActionHistoryPage() {
       }
     } catch (error) {
       console.error("조치 이력 로드 실패:", error);
-      alert("조치 이력 데이터를 불러오지 못했습니다. 로그인 상태를 확인하세요.");
+      alert(t('조치 이력 데이터를 불러오지 못했습니다. 로그인 상태를 확인하세요.'));
     } finally {
       setLoading(false);
     }
@@ -136,7 +136,7 @@ function ActionHistoryPage() {
       }
     } catch (error) {
       console.error("점검 이력 로드 실패:", error);
-      alert("점검 이력 데이터를 불러오지 못했습니다. 로그인 상태를 확인하세요.");
+      alert(t('점검 이력 데이터를 불러오지 못했습니다. 로그인 상태를 확인하세요.'));
     } finally {
       setLoading(false);
     }
@@ -156,7 +156,7 @@ function ActionHistoryPage() {
         { headers }
       );
 
-      alert('승인 처리가 완료되었습니다.');
+      alert(t('승인 처리가 완료되었습니다.'));
       setSelectedRecord(null);
       fetchActionHistory(); // 목록 최신화
     } catch (error) {
@@ -170,7 +170,7 @@ function ActionHistoryPage() {
     if (!selectedRecord) return;
 
     if (!rejectReason.trim()) {
-      alert('반려 사유를 입력해주세요.');
+      alert(t('반려 사유를 입력해주세요.'));
       return;
     }
 
@@ -186,7 +186,7 @@ function ActionHistoryPage() {
         { headers }
       );
 
-      alert('반려 처리가 완료되었습니다. 해당 항목이 현장 작업자 조치 리스트로 되돌아갑니다.');
+      alert(t('반려 처리가 완료되었습니다. 해당 항목이 현장 작업자 조치 리스트로 되돌아갑니다.'));
       setSelectedRecord(null);
       setRejectReason('');
       fetchActionHistory(); // 목록 최신화

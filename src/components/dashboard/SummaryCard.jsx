@@ -51,10 +51,10 @@ function SummaryCard({ item, isSelected, onSelect }) {
           <span className="summary-unit">{t('건')}</span>
         </div>
         <div className="summary-footer">
-          <span className="summary-change">
+          {item.change != null && <span className="summary-change">
             <ArrowUpwardIcon fontSize="inherit" />
             {item.change}
-          </span>
+          </span>}
           <span className="summary-description">{t(item.description)}</span>
         </div>
       </CardActionArea>

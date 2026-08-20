@@ -41,99 +41,6 @@ const SUMMARY_OPTIONS = [
   { key: 'done', label: '완료' },
 ]
 
-const REGISTERED_BOARD_MOCK_REPORT = {
-  id: 3,
-  category: '피난동선',
-  title: '비상구 앞 적치물 신고',
-  description: '비상구 앞에 박스가 쌓여 있어 통행 공간 확보가 필요합니다.',
-  location: 'A동 2층 복도',
-  reporter: '목업신고자',
-  reportedAt: '2026-07-20',
-  status: '등록',
-  statusKey: 'registered',
-  actionContent: '',
-}
-
-const MOCK_REPORTS = [
-  {
-    id: 24,
-    category: '피난동선',
-    title: '비상구 적치물 확인 요청',
-    description: '비상구 진입로에 박스가 쌓여 있어 대피 동선 확보가 필요합니다.',
-    location: 'A동 2층 복도',
-    reporter: '김민수',
-    reportedAt: '2026-07-20',
-    status: '등록',
-    statusKey: 'registered',
-    actionContent: '',
-  },
-  {
-    id: 23,
-    category: '소방시설',
-    title: '소화기 위치 표시 훼손',
-    description: '소화기 표지 일부가 떨어져 위치 확인이 어렵습니다.',
-    location: 'B동 1층 출입구',
-    reporter: '이서연',
-    reportedAt: '2026-07-20',
-    status: '접수',
-    statusKey: 'received',
-    actionContent: '',
-  },
-  {
-    id: 21,
-    category: '위험물',
-    title: '인화성 물질 보관함 잠금 확인',
-    description: '보관함 잠금 장치가 느슨해져 점검이 필요합니다.',
-    location: 'A동 1층 창고',
-    reporter: '최유진',
-    reportedAt: '2026-07-19',
-    status: '완료',
-    statusKey: 'done',
-    actionContent: '보관함 잠금 장치를 교체했습니다.',
-  },
-
-
-  {
-    id: 60,
-    category: '소방안전',
-    title: '인화성 물질 보관함 잠금 확인',
-    description: '보관함 잠금 장치가 느슨해져 점검이 필요합니다.',
-    location: 'A동 1층 창고',
-    reporter: '최유진',
-    reportedAt: '2026-07-19',
-    status: '완료',
-    statusKey: 'done',
-    actionContent: '보관함 잠금 장치를 교체했습니다.',
-  },
-
-  {
-    id: 61,
-    category: '시설안전',
-    title: '인화성 물질 보관함 잠금 확인',
-    description: '보관함 잠금 장치가 느슨해져 점검이 필요합니다.',
-    location: 'A동 1층 창고',
-    reporter: '최유진',
-    reportedAt: '2026-07-19',
-    status: '완료',
-    statusKey: 'done',
-    actionContent: '보관함 잠금 장치를 교체했습니다.',
-  },
-
-  {
-    id: 62,
-    category: '산업안전',
-    title: '인화성 물질 보관함 잠금 확인',
-    description: '보관함 잠금 장치가 느슨해져 점검이 필요합니다.',
-    location: 'A동 1층 창고',
-    reporter: '최유진',
-    reportedAt: '2026-07-19',
-    status: '완료',
-    statusKey: 'done',
-    actionContent: '보관함 잠금 장치를 교체했습니다.',
-  },
-  REGISTERED_BOARD_MOCK_REPORT,
-]
-
 function getStatusKey(status) {
   if (status === '등록' || status === 'registered') return 'registered'
   if (status === '접수' || status === 'received') return 'received'
@@ -425,13 +332,13 @@ function BoardPage() {
       const headers = token ? { Authorization: `Bearer ${token}` } : {}
       await axios.delete(`${API_BASE_URL}/api/boards/${reportId}`, { headers })
 
-      alert('게시글이 삭제되었습니다.')
+      alert(t('게시글이 삭제되었습니다.'))
       setSelectedReportId(null)
       setSelectedReportIds((current) => current.filter((id) => id !== reportId))
       await fetchBoards()
     } catch (error) {
       console.error('게시글 삭제 실패:', error)
-      alert(error.response?.data?.detail || '게시글 삭제에 실패했습니다.')
+      alert(error.response?.data?.detail || t('게시글 삭제에 실패했습니다.'))
     }
   }
 
@@ -451,12 +358,12 @@ function BoardPage() {
         selectedReportIds.map((id) => axios.delete(`${API_BASE_URL}/api/boards/${id}`, { headers }))
       )
 
-      alert('선택한 게시글이 삭제되었습니다.')
+      alert(t('선택한 게시글이 삭제되었습니다.'))
       setSelectedReportIds([])
       await fetchBoards()
     } catch (error) {
       console.error('일괄 삭제 실패:', error)
-      alert('일부 게시글 삭제에 실패했습니다.')
+      alert(t('일부 게시글 삭제에 실패했습니다.'))
       await fetchBoards()
     } finally {
       setIsDeletingReports(false)
@@ -525,7 +432,7 @@ function BoardPage() {
         },
       })
 
-      alert('위험 신고가 등록되었습니다.')
+      alert(t('위험 신고가 등록되었습니다.'))
       setIsReportModalOpen(false)
       fetchBoards()
     } catch (error) {

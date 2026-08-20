@@ -11,21 +11,16 @@ import RiskSectionStackChart from '../components/dashboard/RiskSectionStackChart
 import EducationPieChart from '../components/dashboard/EducationPieChart.jsx'
 import ActionHistoryTable from '../components/dashboard/ActionHistoryTable.jsx'
 import { useUiLanguage } from '../utils/uiLanguage.js'
-import {
-  EVENT_CATEGORY_MOCKUP_DATA,
-  EDUCATION_INFO_MOCKUP_DATA,
-} from '../mocks/mockData.js'
-import {
-  summaryCards,
-} from '../data/dashboardMock.js'
 
 const API_BASE_URL = BACKEND_API_URL
 
-const LOCAL_LATEST_EDUCATION_FALLBACK = [
-  { education_id: 9, title: 'eng test', created_at: '2026-08-18', attendees: [] },
-  { education_id: 8, title: '\uC548\uC804\uC0AC\uACE0 \uC608\uBC29 \uAD50\uC721', created_at: '2026-08-14', attendees: [] },
-  { education_id: 7, title: '\uD654\uC7AC \uC608\uBC29 \uC548\uC804 \uAD50\uC721', created_at: '2026-08-13', attendees: [] },
+const SUMMARY_CARD_DEFINITIONS = [
+  { id: 'realtime', title: '점검 대기', description: '점검 대기 건수' },
+  { id: 'violation', title: '점검 완료', description: '점검 완료 건수' },
+  { id: 'pending', title: '조치 대기', description: '미완료 조치 항목' },
+  { id: 'complete', title: '조치 완료', description: '완료된 조치 항목' },
 ]
+
 
 function isCompleteStatus(status) {
   return status === '조치 완료' || status === '점검 완료'
@@ -150,9 +145,8 @@ function HomePage() {
   const [selectedPeriod, setSelectedPeriod] = useState('오늘')
   const [selectedSummaryId, setSelectedSummaryId] = useState('realtime')
   const [selectedEvent, setSelectedEvent] = useState(null)
-  const [riskFactors, setRiskFactors] = useState(EVENT_CATEGORY_MOCKUP_DATA)
+  const [riskFactors, setRiskFactors] = useState([])
   const [educationChartData, setEducationChartData] = useState([])
-  const [isUsingEducationFallback, setIsUsingEducationFallback] = useState(false)
   const [userData, setUserData] = useState([])
   const [inspectionHistoryData, setInspectionHistoryData] = useState([])
   const [actionHistoryData, setActionHistoryData] = useState([])
@@ -184,11 +178,9 @@ function HomePage() {
         const courses = Array.isArray(response.data?.courses) ? response.data.courses : []
         setHomeDebugData((current) => ({ ...current, education: response.data }))
         setEducationChartData(courses)
-        setIsUsingEducationFallback(false)
       })
       .catch((error) => {
-        setEducationChartData(LOCAL_LATEST_EDUCATION_FALLBACK)
-        setIsUsingEducationFallback(true)
+        setEducationChartData([])
         console.error('홈 교육 이수 데이터 조회 실패:', error)
       })
   }, [])
@@ -242,7 +234,7 @@ function HomePage() {
   ], [inspectionHistoryData, actionHistoryData])
 
   const dashboardSummaryCards = useMemo(() => {
-    return summaryCards.map((card) => ({
+    return SUMMARY_CARD_DEFINITIONS.map((card) => ({
       ...card,
       value: countSummaryEvents(mergedEvents, card.id),
     }))
@@ -275,7 +267,7 @@ function HomePage() {
           onClose={() => setSelectedEvent(null)}
         />
 
-        <EducationPieChart eduData={educationChartData} userData={userData} useLatestCourses={isUsingEducationFallback} />
+        <EducationPieChart eduData={educationChartData} userData={userData} />
 
       </section>
 

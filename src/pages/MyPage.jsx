@@ -45,7 +45,7 @@ function MyPage() {
           name: userData.name || userData.user_id || '관리자',
           email: userData.email || '',
           role: userData.role || '안전관리자',
-          // Hide the legacy mock department until a verified profile field is available.
+          // Hide the department until a verified profile field is available.
           department: '',
         })
       } catch (error) {

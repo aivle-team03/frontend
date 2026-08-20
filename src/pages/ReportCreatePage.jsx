@@ -3,8 +3,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import ReportPreview from '../components/Report/ReportPreview.jsx'
-import { REPORT_PAGE_MOCK_DATA } from '../mocks/mockData.js'
-import { loadGeneratedReports, saveGeneratedReport } from '../utils/reportArchiveStorage.js'
 import { BACKEND_API_URL } from '../config/api.js'
 import '../styles/report.css'
 
@@ -27,7 +25,7 @@ function ReportCreatePage() {
   const [creatorName, setCreatorName] = useState('')
   const [reportForm, setReportForm] = useState({
     type: 'risk-assessment-form',
-    startDate: '2026-07-21',
+    startDate: formatLocalDate(new Date()),
     endDate: formatLocalDate(new Date()),
     customTitle: '',
     incidentOverview: '',
@@ -102,27 +100,6 @@ function ReportCreatePage() {
       })
 
 
-    const isEtcReport = reportForm.type === 'etc'
-    const isIncidentReport = reportForm.type === 'incident-investigation'
-    const reportTitle = isEtcReport && reportForm.customTitle.trim()
-      ? reportForm.customTitle.trim()
-      : `${selectedPeriodLabel} ${selectedTypeOption?.label ?? '보고서'}`
-    const allReports = [...loadGeneratedReports(), ...REPORT_PAGE_MOCK_DATA.reports]
-    const nextId = Math.max(...allReports.map((report) => report.id), 0) + 1
-    const today = new Date().toISOString().slice(0, 10)
-
-    saveGeneratedReport({
-      id: nextId,
-      title: reportTitle,
-      type: selectedTypeOption?.label ?? '리포트',
-      createdAt: today,
-      period: selectedPeriodLabel,
-      owner: creatorName || '관리자',
-      attachments: 1,
-      retentionUntil: '2026-10-21',
-      retentionStatus: 'normal',
-      overview: isIncidentReport ? reportForm.incidentOverview.trim() : '',
-    })
     navigate('/report/list')
   }
 
