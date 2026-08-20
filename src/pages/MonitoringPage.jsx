@@ -33,7 +33,7 @@ function getAiPreviewUrl(aiStreamUrl, nonce) {
   return url.toString()
 }
 
-function StreamViewer({ streamUrl, aiStreamUrl, cameraId, onTimeUpdate, demoRun, waitingForAiStart = false }) {
+function StreamViewer({ streamUrl, aiStreamUrl, cameraId, waitingForAiStart = false }) {
   const { t } = useUiLanguage()
   const [hasError, setHasError] = useState(false)
   const [previewNonce, setPreviewNonce] = useState(0)
@@ -64,9 +64,8 @@ function StreamViewer({ streamUrl, aiStreamUrl, cameraId, onTimeUpdate, demoRun,
       <img src={previewUrl} alt="" aria-hidden="true" onError={() => window.setTimeout(() => setPreviewNonce(Date.now()), 200)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       <img src={aiStreamUrl} alt={`CAM #${cameraId} AI stream`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={() => setHasError(true)} />
     </span>
-    return <img src={aiStreamUrl} alt={`CAM #${cameraId} AI 분석 스트림`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={() => setHasError(true)} />
   }
-  return <video ref={videoRef} key={`${streamUrl}-${demoRun}`} src={resolveMediaUrl(streamUrl)} autoPlay loop muted playsInline onTimeUpdate={onTimeUpdate} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={() => setHasError(true)} />
+  return <video ref={videoRef} src={resolveMediaUrl(streamUrl)} autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={() => setHasError(true)} />
 }
 
 function formatInspectionTime(timestamp) {
@@ -82,16 +81,13 @@ function MonitoringPage() {
   const { t } = useUiLanguage()
   const emittedDetectionKeys = useRef(new Set())
   const [serverEvents, setServerEvents] = useState([])
-  const [demoEvents, setDemoEvents] = useState([])
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [alertQueue, setAlertQueue] = useState([])
   const [activeAlert, setActiveAlert] = useState(null)
-  const [demoRun, setDemoRun] = useState(0)
   const [riskCategories, setRiskCategories] = useState([])
   const [aiSessionReady, setAiSessionReady] = useState(false)
   const [cameras, setCameras] = useState([])
   const [equipmentInspections, setEquipmentInspections] = useState(EQUIPMENT_CARDS)
-  const playbackTimes = useRef({})
   const savedAiEventSession = useRef(readAiEventSession())
   const lastAiEventId = useRef(savedAiEventSession.current.cursor)
   const aiServerInstanceId = useRef(savedAiEventSession.current.serverInstanceId)
@@ -101,13 +97,13 @@ function MonitoringPage() {
   // AI 서버에서 즉시 받은 이벤트와 DB에 저장된 같은 이벤트가 잠시 함께 있어도 한 건만 보인다.
   const events = useMemo(() => {
     const keys = new Set()
-    return [...demoEvents, ...serverEvents].filter((event) => {
+    return serverEvents.filter((event) => {
       const key = `${event.time}|${event.location}|${event.type}`
       if (keys.has(key)) return false
       keys.add(key)
       return true
     }).sort((left, right) => String(right.time).localeCompare(String(left.time)))
-  }, [demoEvents, serverEvents])
+  }, [serverEvents])
 
   useEffect(() => {
     const loadMonitoringData = async () => {
@@ -237,7 +233,6 @@ function MonitoringPage() {
             categoryName: category?.category_name ?? aiEvent.categoryName,
             riskLevel: category?.risk_level ?? '확인 필요',
             level: category?.level ?? null,
-            isDemo: false,
           }
           setAlertQueue((queue) => [...queue, event])
         }
@@ -271,53 +266,14 @@ function MonitoringPage() {
     }
   }, [activeAlert, alertQueue])
 
-  const emitDemoDetection = (camera, detection, videoTime) => {
-    const key = `${demoRun}-${camera.id}-${detection.id}`
-    if (emittedDetectionKeys.current.has(key)) return
-    emittedDetectionKeys.current.add(key)
-    const now = new Date()
-    const category = riskCategories.find((item) => item.category_name === detection.categoryName)
-    const event = {
-      id: `demo-${key}`,
-      time: now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
-      location: camera.location,
-      type: detection.type,
-      status: '조치 필요',
-      manager: '데모 담당자',
-      cameraId: camera.id,
-      cameraName: camera.name,
-      streamUrl: camera.streamUrl,
-      videoTime,
-      categoryId: category?.category_id ?? null,
-      categoryName: category?.category_name ?? detection.categoryName,
-      riskLevel: category?.risk_level ?? '확인 필요',
-      level: category?.level ?? null,
-      isDemo: true,
-    }
-    setDemoEvents((current) => [event, ...current])
-    setSelectedEvent(event)
-    setAlertQueue((queue) => [...queue, event])
-  }
-
-  const handleVideoTimeUpdate = (camera, event) => {
-    if (!camera.isDemo || camera.aiStreamUrl) return
-    const currentTime = event.currentTarget.currentTime
-    playbackTimes.current[camera.id] = currentTime
-    camera.detections.forEach((detection) => {
-      if (currentTime >= detection.at) emitDemoDetection(camera, detection, currentTime)
-    })
-  }
-
-  const restartDemo = () => {
+  const restartAiMonitoring = () => {
     emittedDetectionKeys.current.clear()
     lastAiEventId.current = 0
     aiServerInstanceId.current = ''
     clearAiEventSession()
-    setDemoEvents([])
     setSelectedEvent(null)
     setAlertQueue([])
     setActiveAlert(null)
-    setDemoRun((run) => run + 1)
     setAiSessionReady(false)
     setAiSessionReady(true)
     axios.post(`${VISION_API_URL}/reset`).catch(() => {
@@ -335,8 +291,8 @@ function MonitoringPage() {
       <div className={styles.cctvemptyarea}>
         <div className={styles.cctvSection}>
           <section className={styles.cctvmonitoringSection}>
-            <header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><span className={styles.sectionIcon}><GridViewRoundedIcon /></span><div><h2 className={styles.title}>{t('실시간 CCTV')}</h2><p>{t('화재 테스트와 지게차·보행자 거리 테스트를 분석합니다.')}</p></div></div><div className={styles.headerActions}><button className={styles.panelAction} type="button" onClick={restartDemo}><ReplayRoundedIcon />{t('데모 재시작')}</button></div></header>
-            <div className={styles.videodashBoard}>{cameras.map((camera) => <button className={styles.video} onClick={() => navigate(`/monitoringdetail?camera=${camera.id}${camera.isDemo ? `&t=${Math.floor(playbackTimes.current[camera.id] || 0)}` : ''}`)} key={camera.id} type="button" aria-label={`${camera.area} 영상 상세 보기`}><span className={styles.cameraTopbar}><span className={styles.cameraLive}><i />LIVE</span>{!camera.isDemo && <span>CAM {camera.id}</span>}</span><StreamViewer streamUrl={camera.streamUrl} aiStreamUrl={camera.aiStreamUrl || ''} cameraId={camera.id} demoRun={camera.isDemo ? demoRun : 0} waitingForAiStart={Boolean(camera.aiStreamUrl) && !aiSessionReady} onTimeUpdate={(event) => handleVideoTimeUpdate(camera, event)} /><span className={styles.cameraFooter}><span><strong>{camera.area || 'CCTV'}</strong></span></span></button>)}</div>
+            <header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><span className={styles.sectionIcon}><GridViewRoundedIcon /></span><div><h2 className={styles.title}>{t('실시간 CCTV')}</h2><p>{t('등록된 CCTV와 AI 감지 결과를 확인합니다.')}</p></div></div><div className={styles.headerActions}><button className={styles.panelAction} type="button" onClick={restartAiMonitoring}><ReplayRoundedIcon />{t('AI 감지 새로고침')}</button></div></header>
+            <div className={styles.videodashBoard}>{cameras.map((camera) => <button className={styles.video} onClick={() => navigate(`/monitoringdetail?camera=${camera.id}`)} key={camera.id} type="button" aria-label={`${camera.area} 영상 상세 보기`}><span className={styles.cameraTopbar}><span className={styles.cameraLive}><i />LIVE</span><span>CAM {camera.id}</span></span><StreamViewer streamUrl={camera.streamUrl} aiStreamUrl={camera.aiStreamUrl || ''} cameraId={camera.id} waitingForAiStart={Boolean(camera.aiStreamUrl) && !aiSessionReady} /></button>)}</div>
           </section>
           <section className={styles.equipmentSection}>
             <header className={styles.sectionHeader}>
@@ -370,7 +326,7 @@ function MonitoringPage() {
 
         <div className={styles.EventSection}>
           <section className={styles.liveEvent}><header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><span className={`${styles.sectionIcon} ${styles.alertIcon}`}><WarningAmberRoundedIcon /></span><div><h2 className={styles.title}>{t('최근 감지 이벤트')}</h2><p>{t('CCTV 감지 이벤트와 연결된 조치 내역을 최근순으로 표시합니다.')}</p></div></div><span className={styles.alertCount}>{events.length}{t('건')}</span></header><RecentEventsTable events={events} selectedEvent={selectedEvent} onSelectEvent={setSelectedEvent} /></section>
-          <section className={styles.emptyBox}><header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><div><h2 className={styles.title}>{t('이벤트 상세')}</h2><p>{t('선택한 감지 결과를 확인합니다.')}</p></div></div></header>{selectedEvent ? <div className={styles.eventDetail}><div className={styles.eventDetailHeadline}><span className={styles.eventWarningIcon}><WarningAmberRoundedIcon /></span><div><span>{selectedEvent.isDemo ? t('AI 데모 감지') : selectedEvent.status}</span><strong>{selectedEvent.type}</strong></div></div><dl><div><dt><LocationOnOutlinedIcon />{t('감지 위치')}</dt><dd>{selectedEvent.location}</dd></div><div><dt><AccessTimeRoundedIcon />{t('감지 시간')}</dt><dd>{selectedEvent.time}</dd></div><div><dt>{t('신뢰도')}</dt><dd>{selectedEvent.confidence ? `${Math.round(selectedEvent.confidence * 100)}%` : '-'}</dd></div></dl><button type="button" onClick={() => navigate('/checklists/management')}>{t('담당자 배정')} <ArrowForwardRoundedIcon /></button></div> : <div className={styles.emptyEvent}>{t('아직 감지된 데모 이벤트가 없습니다.')}</div>}</section>
+          <section className={styles.emptyBox}><header className={styles.sectionHeader}><div className={styles.sectionTitleGroup}><div><h2 className={styles.title}>{t('이벤트 상세')}</h2><p>{t('선택한 감지 결과를 확인합니다.')}</p></div></div></header>{selectedEvent ? <div className={styles.eventDetail}><div className={styles.eventDetailHeadline}><span className={styles.eventWarningIcon}><WarningAmberRoundedIcon /></span><div><span>{selectedEvent.status}</span><strong>{selectedEvent.type}</strong></div></div><dl><div><dt><LocationOnOutlinedIcon />{t('감지 위치')}</dt><dd>{selectedEvent.location}</dd></div><div><dt><AccessTimeRoundedIcon />{t('감지 시간')}</dt><dd>{selectedEvent.time}</dd></div><div><dt>{t('신뢰도')}</dt><dd>{selectedEvent.confidence ? `${Math.round(selectedEvent.confidence * 100)}%` : '-'}</dd></div></dl><button type="button" onClick={() => navigate('/checklists/management')}>{t('담당자 배정')} <ArrowForwardRoundedIcon /></button></div> : <div className={styles.emptyEvent}>{t('감지 이벤트가 없습니다.')}</div>}</section>
         </div>
       </div>
 

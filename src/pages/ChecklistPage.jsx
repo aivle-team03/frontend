@@ -1,23 +1,13 @@
 import axios from 'axios'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import '../styles/checklist.css'
-import {
-  getStoredChecklistManagementRecords,
-  saveChecklistManagementRecords,
-} from '../utils/checklistStatusStorage'
 import { resolveMediaUrl } from '../utils/mediaUrl'
 import { useUiLanguage } from '../utils/uiLanguage.js'
 
-const today = '2026-07-25'
 const API_BASE_URL = BACKEND_API_URL
 
 function createKey(prefix, id) {
   return `${prefix}-${id}`
-}
-
-function normalizeActionStatus(status) {
-  if (status === '조치 완료') return '조치 완료'
-  return '조치 대기'
 }
 
 function isAssignedAction(task) {
@@ -40,99 +30,6 @@ function getActionName(name = '', location = '') {
     .slice(location.length)
     .replace(/^[\s·\-_/|:]+/, '')
     .trim() || name
-}
-
-const ACTION_MOCK_DATA = [
-  {
-    id: 'action-1',
-    taskKey: createKey('action', 'action-1'),
-    inspectionRef: '비상구 앞 적치물 제거',
-    inspectionLocation: 'B동 1층 현관',
-    inspectionDate: today,
-    inspector: '이안전',
-    category: '시설 안전',
-    text: '비상구 앞 적치물 제거',
-    location: 'B동 1층 현관',
-    risk: '높음',
-    date: today,
-    status: '조치 대기',
-    assignee: '미배정',
-    inspectionContent: '피난 동선을 막는 박스와 자재를 이동해야 합니다.',
-    content: '',
-    completed: false,
-  },
-  {
-    id: 'action-2',
-    taskKey: createKey('action', 'action-2'),
-    inspectionRef: '방화문 폐쇄 상태 점검',
-    inspectionLocation: 'A동 2층 복도',
-    inspectionDate: today,
-    inspector: '이안전',
-    category: '소방 안전',
-    text: '방화문 폐쇄 상태 개선',
-    location: 'A동 2층 복도',
-    risk: '중',
-    date: today,
-    status: '조치 완료',
-    assignee: '박동준',
-    inspectionContent: '방화문 주변 장애물이 있어 자동 폐쇄 상태 확인이 필요합니다.',
-    content: '방화문 주변 장애물을 제거하고 자동 폐쇄 상태를 확인했습니다.',
-    completed: true,
-    photoNames: ['fire-door-after.jpg'],
-  },
-]
-
-function toActionTask(record) {
-  const actionName = getActionName(record.name, record.location)
-  const isCompleted = normalizeActionStatus(record.progress) === '조치 완료'
-  const actionHistoryPhotos = (record.actionHistory || [])
-    .map((history) => history.completedPhoto)
-    .filter(Boolean)
-    .map((url, index) => ({ name: record.photoNames?.[index] || `조치완료 사진 ${index + 1}`, url: resolveMediaUrl(url) }))
-  const photos = Array.isArray(record.photos) && record.photos.length
-    ? record.photos.map((photo, index) => ({
-      name: photo.name || record.photoNames?.[index] || `조치완료 사진 ${index + 1}`,
-      url: resolveMediaUrl(typeof photo === 'string' ? photo : photo.url),
-    }))
-    : actionHistoryPhotos
-
-  return {
-    id: record.id,
-    taskKey: createKey('action-record', record.id),
-    inspectionRef: actionName,
-    inspectionLocation: record.location,
-    inspectionDate: record.date,
-    inspector: record.completedBy || '이안전',
-    category: record.category || '미분류',
-    text: actionName,
-    location: record.location,
-    risk: record.level || '-',
-    date: record.date,
-    status: normalizeActionStatus(record.progress),
-    assignee: record.assignee || record.actionAssignee || '미배정',
-    inspectionContent: record.inspectionContent || record.note || '',
-    content: record.actionContent || (isCompleted ? record.note : ''),
-    completed: isCompleted,
-    photoNames: record.photoNames || (photos.length ? photos.map((photo) => photo.name) : (record.photo ? ['attached-photo.jpg'] : [])),
-    photos,
-  }
-}
-
-function toInspectionTask(record) {
-  return {
-    id: record.id,
-    taskKey: createKey('inspection-record', record.id),
-    text: record.name,
-    location: record.location,
-    date: record.dateTime?.slice(0, 10) || today,
-    inspectedAt: record.dateTime?.slice(0, 10) || today,
-    inspector: record.inspectionAssignee || '미배정',
-    category: record.category || '미분류',
-    inspectionStatus: record.progress || '점검 대기',
-    movedToAction: false,
-    description: record.inspectionContent || record.description || record.note || '',
-    inspectorMemo: record.historyContent || '',
-  }
 }
 
 function getInspectionDescription(item) {
@@ -211,38 +108,6 @@ function getCatalogInspection(item, catalog) {
     || catalog.byName.get(item.name)
     || (categoryId != null ? catalog.byCategoryId.get(String(categoryId)) : null)
     || null
-}
-
-function toManagementActionQueueRecord(action) {
-  return {
-    id: `action-queue-${action.id}`,
-    name: action.inspectionRef || action.text,
-    category: action.category || '시설 안전',
-    location: action.inspectionLocation || action.location || '현장 구역',
-    cycle: '매주',
-    inspectionAssignee: action.inspector || '미배정',
-    actionAssignee: '',
-    dateTime: `${action.date || today} 09:00`,
-    progress: '조치 대기',
-    source: 'checklist-action',
-    inspectionContent: action.inspectionContent || action.content || '점검 결과에 따라 조치가 필요한 항목입니다.',
-    actionContent: '',
-    note: action.inspectionContent || action.content || '점검 결과에 따라 조치가 필요한 항목입니다.',
-  }
-}
-
-function getInitialActionTasks() {
-  const managementActions = getStoredChecklistManagementRecords()
-    .filter((record) => ['조치 대기', '조치 완료'].includes(record.progress))
-    .map(toActionTask)
-
-  return managementActions
-}
-
-function getInitialInspectionTasks() {
-  return getStoredChecklistManagementRecords()
-    .filter((record) => record.type === 'inspection' && record.progress === '점검 대기' && record.inspectionAssignee && record.inspectionAssignee !== '미배정')
-    .map(toInspectionTask)
 }
 
 function ChecklistPage() {
@@ -424,7 +289,7 @@ function ChecklistPage() {
       setTaskRefreshKey((current) => current + 1)
     } catch (error) {
       console.error('점검 완료 처리 또는 다음 점검 생성 실패:', error)
-      alert(error.response?.data?.detail || '점검 완료 또는 다음 정기 점검 생성에 실패했습니다.')
+      alert(error.response?.data?.detail || t('점검 완료 또는 다음 정기 점검 생성에 실패했습니다.'))
     } finally {
       completingInspectionIds.current.delete(currentTask.id)
     }
@@ -447,45 +312,13 @@ function ChecklistPage() {
         ? { ...task, movedToAction: true, inspectionStatus: '점검 완료', completed: true, inspectorMemo: content }
         : task))
       setActionContent('')
-      alert('담당자 배정으로 이동되었습니다. 담당자 배정 후 조치목록에 표시됩니다.')
+      alert(t('담당자 배정으로 이동되었습니다. 담당자 배정 후 조치목록에 표시됩니다.'))
       return
     } catch (error) {
       console.error('Action registration failed:', error)
-      alert(error.response?.data?.detail || '조치 등록에 실패했습니다.')
+      alert(error.response?.data?.detail || t('조치 등록에 실패했습니다.'))
       return
     }
-    const actionId = Date.now()
-    const action = {
-      id: actionId,
-      taskKey: createKey('action', actionId),
-      inspectionRef: currentTask.text,
-      inspectionLocation: currentTask.location,
-      inspectionDate: currentTask.inspectedAt,
-      inspector: currentTask.inspector,
-      category: currentTask.category || '미분류',
-      text: currentTask.text,
-      location: currentTask.location,
-      risk: '-',
-      date: today,
-      status: '조치 대기',
-      assignee: '미배정',
-      inspectionContent: currentTask.description || currentTask.inspectorMemo || actionContent.trim(),
-      content: '',
-      completed: false,
-    }
-
-    setActionTasks((current) => [action, ...current])
-    const nextSelectedTask = inspectionTasks.find((task) => task.taskKey !== currentTask.taskKey && task.inspectionStatus !== '점검 완료' && !task.movedToAction)
-    setInspectionTasks((current) => current.map((task) => task.taskKey === currentTask.taskKey
-      ? { ...task, movedToAction: true, inspectionStatus: '조치 등록 완료' }
-      : task))
-    setActionContent('')
-    setSelectedTaskId(nextSelectedTask?.taskKey ?? null)
-    const managementAction = toManagementActionQueueRecord(action)
-    const managementRecords = getStoredChecklistManagementRecords()
-    const remainingRecords = managementRecords.filter((item) => item.id !== managementAction.id)
-    saveChecklistManagementRecords([managementAction, ...remainingRecords])
-    alert('담당자 배정으로 이동되었습니다. 담당자 배정 후 조치목록에 표시됩니다.')
   }
 
   const handleActionPhotoChange = (event) => {
@@ -520,20 +353,20 @@ function ChecklistPage() {
     const completedContent = actionDetailContent.trim()
 
     if (!completedContent) {
-      alert('조치내용을 입력해 주세요.')
+      alert(t('조치내용을 입력해 주세요.'))
       return
     }
 
     const attachedPhotos = actionPhotoFilesByTask[currentTask.taskKey] ?? actionPhotoFiles
 
     if (!attachedPhotos.length) {
-      alert('조치 사진을 첨부해 주세요.')
+      alert(t('조치 사진을 첨부해 주세요.'))
       return
     }
 
     const photoToUpload = attachedPhotos.find((photo) => photo.file)
     if (!photoToUpload) {
-      alert('새로 첨부한 조치 완료 사진이 필요합니다.')
+      alert(t('새로 첨부한 조치 완료 사진이 필요합니다.'))
       return
     }
 
@@ -575,7 +408,7 @@ function ChecklistPage() {
       setActionDetailContent(nextContent)
 
       // 즉시 완료 알림
-      alert('조치가 정상적으로 완료되었습니다.')
+      alert(t('조치가 정상적으로 완료되었습니다.'))
 
       // -------------------------------------------------------------
       // 3단계: AI 비동기 백그라운드 검증 (await 없이 실행)

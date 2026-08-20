@@ -22,7 +22,7 @@ function getAiPreviewUrl(aiStreamUrl, nonce) {
   return url.toString()
 }
 
-function StreamViewer({ streamUrl, aiStreamUrl, cameraId, initialTime = 0, onTimeUpdate }) {
+function StreamViewer({ streamUrl, aiStreamUrl, cameraId }) {
   const [hasError, setHasError] = useState(false);
   const [previewNonce, setPreviewNonce] = useState(0)
   const videoRef = useRef(null)
@@ -59,7 +59,6 @@ function StreamViewer({ streamUrl, aiStreamUrl, cameraId, initialTime = 0, onTim
       <img src={previewUrl} alt="" aria-hidden="true" onError={() => window.setTimeout(() => setPreviewNonce(Date.now()), 200)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
       <img src={aiStreamUrl} alt={`CAM #${cameraId} AI stream`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={() => setHasError(true)} />
     </span>
-    return <img src={aiStreamUrl} alt={`CAM #${cameraId} AI 분석 스트림`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
   }
 
   return (
@@ -71,10 +70,6 @@ function StreamViewer({ streamUrl, aiStreamUrl, cameraId, initialTime = 0, onTim
       loop
       muted
       playsInline
-      onLoadedMetadata={(event) => {
-        if (initialTime > 0) event.currentTarget.currentTime = initialTime
-      }}
-      onTimeUpdate={onTimeUpdate}
       style={{
         width: '100%',
         height: '100%',
@@ -190,29 +185,6 @@ function MonitoringDetailPage() {
     return () => window.clearInterval(intervalId)
   }, [activeCamera, riskCategories])
 
-  const handleDemoVideoTimeUpdate = (event) => {
-    if (!activeCamera?.isDemo) return
-    const currentTime = event.currentTarget.currentTime
-    activeCamera.detections.forEach((detection) => {
-      const key = `${activeCamera.id}-${detection.id}`
-      if (currentTime < detection.at || emittedDetectionKeys.current.has(key)) return
-      emittedDetectionKeys.current.add(key)
-      const category = riskCategories.find((item) => item.category_name === detection.categoryName)
-      const now = new Date()
-      const alert = {
-        id: key,
-        time: now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-        location: activeCamera.location,
-        streamUrl: activeCamera.streamUrl,
-        videoTime: currentTime,
-        categoryName: category?.category_name ?? detection.categoryName,
-        riskLevel: category?.risk_level ?? '확인 필요',
-        level: category?.level ?? null,
-      }
-      setAlertQueue((queue) => [...queue, alert])
-    })
-  }
-
   if (loading) {
     return <MonitoringDetailLoadingSkeleton />
   }
@@ -243,7 +215,7 @@ function MonitoringDetailPage() {
                 <i />CAM #{activeCamera.id}
               </span>
 
-              <StreamViewer streamUrl={activeCamera.streamUrl} aiStreamUrl={activeCamera.aiStreamUrl} cameraId={activeCamera.id} initialTime={Number(searchParams.get('t') || 0)} onTimeUpdate={handleDemoVideoTimeUpdate} />
+              <StreamViewer streamUrl={activeCamera.streamUrl} aiStreamUrl={activeCamera.aiStreamUrl} cameraId={activeCamera.id} />
 
               <span className="primary-video-time" style={{ zIndex: 2 }}>
                 <AccessTimeRoundedIcon />{t('실시간 스트리밍 중')}

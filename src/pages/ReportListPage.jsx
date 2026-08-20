@@ -190,7 +190,7 @@ function ReportListPage() {
   const didSetInitialDateRangeRef = useRef(false)
   const [reportForm, setReportForm] = useState({
     type: 'risk-assessment-form',
-    startDate: '2026-07-21',
+    startDate: formatDate(new Date()),
     endDate: formatDate(new Date()),
   })
 

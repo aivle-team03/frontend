@@ -31,6 +31,8 @@ export function translateUi(value, language = getUiLanguage()) {
 }
 
 const translatedTextNodes = new WeakMap()
+const translatedAttributes = new WeakMap()
+const TRANSLATABLE_ATTRIBUTES = ['aria-label', 'placeholder', 'title', 'alt']
 
 function translateStaticQuantity(value) {
   if (/^총\s+\d+건$/.test(value)) return value.replace('총', 'Total').replace('건', ' items')
@@ -67,10 +69,52 @@ export function synchronizeStaticUiLanguage(language) {
     while (node) { translateNode(node); node = walker.nextNode() }
   }
 
+  const translateAttributes = (element) => {
+    if (!(element instanceof Element)) return
+    const originals = translatedAttributes.get(element) ?? new Map()
+
+    TRANSLATABLE_ATTRIBUTES.forEach((attribute) => {
+      const value = element.getAttribute(attribute)
+      if (!value) return
+      const original = originals.get(attribute) ?? value
+
+      if (language === 'en') {
+        const translated = enFlat[original.trim()]
+        if (!translated) return
+        originals.set(attribute, original)
+        element.setAttribute(attribute, original.replace(original.trim(), translated))
+      } else if (originals.has(attribute)) {
+        element.setAttribute(attribute, original)
+        originals.delete(attribute)
+      }
+    })
+
+    if (originals.size) translatedAttributes.set(element, originals)
+    else translatedAttributes.delete(element)
+  }
+
+  const walkElement = (root) => {
+    if (!(root instanceof Element)) return
+    translateAttributes(root)
+    root.querySelectorAll('*').forEach(translateAttributes)
+  }
+
   walk(document.body)
-  // Do not observe the entire React tree. A global MutationObserver can repeatedly
-  // process React's own text updates and make the page unresponsive.
-  return () => {}
+  walkElement(document.body)
+
+  // Modals and popovers are mounted after the language button is pressed.  Process
+  // only newly-added DOM nodes so dynamic UI is translated without re-walking React's
+  // entire tree on every render.
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        walk(node)
+        walkElement(node)
+      })
+    })
+  })
+  observer.observe(document.body, { childList: true, subtree: true })
+  return () => observer.disconnect()
 }
 
 export function useUiLanguage() {

@@ -13,7 +13,5 @@ export function toMonitoringCamera(cctv) {
     streamUrl,
     aiStreamUrl: aiCameraId ? streamUrl : '',
     aiCameraId,
-    isDemo: false,
-    detections: [],
   }
 }

@@ -8,9 +8,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
 import axios from 'axios'
 import { useEffect, useMemo, useState } from 'react'
 import '../styles/checklist.css'
-import { BASE_INSPECTION_RECORDS } from './InspectionListPage'
 import {
-  getStoredChecklistManagementRecords,
   saveChecklistManagementRecords,
 } from '../utils/checklistStatusStorage'
 import { formatLocationSummary } from '../utils/locationSummary.js'
@@ -23,11 +21,7 @@ const CATEGORY_ID_BY_NAME = {
   산업안전: 3,
   기타: 4,
 }
-const MANAGERS = ['이안전', '김안전', '박점검', '최점검']
 const API_BASE_URL = BACKEND_API_URL
-const rows = [
-  ['비상구 피난 통로 점검', '시설 안전', 'A동 1층 복도', '매일', '이안전', '', '2026-07-10 09:00', '점검 대기'], ['소화기 및 소방설비 점검', '화재 예방', 'A동 2층 복도', '매주', '김안전', '최점검', '2026-07-11 14:00', '조치 대기'], ['운반 장비 방호설비 점검', '작업 안전', 'A동 5층 작업장', '매월', '', '', '2026-07-12 10:00', '점검 대기'], ['전기 분전반 및 차단기 점검', '시설 안전', 'C동 지하 1층', '매월', '최점검', '이안전', '2026-07-13 11:00', '조치 완료'], ['보호구 착용 상태 점검', '작업 안전', 'B동 3층 작업장', '매일', '박점검', '', '2026-07-14 13:00', '점검 완료'], ['적재물 전도 위험 점검', '시설 안전', 'C동 창고', '매주', '이안전', '김안전', '2026-07-15 15:00', '조치 대기'], ['비상 조명 및 유도등 점검', '화재 예방', 'A동 3층 계단', '매월', '', '', '2026-07-16 10:00', '점검 대기'], ['가스 차단 밸브 점검', '시설 안전', '식당 조리실', '매주', '최점검', '김안전', '2026-07-17 08:30', '조치 완료'], ['방화문 폐쇄 상태 점검', '화재 예방', 'B동 2층 복도', '매일', '이안전', '', '2026-07-18 09:30', '점검 대기'], ['비상 방송 설비 점검', '화재 예방', 'A동 안내실', '매주', '김안전', '', '2026-07-19 11:00', '점검 대기'], ['작업장 바닥 미끄럼 점검', '작업 안전', 'B동 1층 포장실', '매일', '박점검', '최점검', '2026-07-20 16:00', '조치 대기'], ['산업용 배터리 보관 점검', '시설 안전', 'C동 충전실', '매월', '최점검', '이안전', '2026-07-21 13:30', '조치 완료'], ['하역장 안전 난간 점검', '작업 안전', 'A동 하역장', '매월', '이안전', '박점검', '2026-07-22 07:30', '조치 완료'], ['환기 설비 필터 점검', '시설 안전', 'B동 지하 기계실', '매월', '', '', '2026-07-23 10:00', '점검 대기'], ['휴게실 소화 설비 점검', '화재 예방', 'C동 휴게실', '매주', '김안전', '박점검', '2026-07-24 12:00', '조치 완료'], ['지게차 충전 구역 점검', '작업 안전', 'B동 1층 충전 구역', '매일', '박점검', '', '2026-07-25 17:00', '점검 대기'],
-]
 const getDateKey = (date = new Date()) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 const addDays = (date, days) => { const next = new Date(date); next.setDate(next.getDate() + days); return next }
 const getInspectionDueDate = (item) => {
@@ -83,22 +77,10 @@ const normalizeRecord = (record) => {
   const inspectionHistory = record.inspectionHistory || (type === 'inspection' && record.progress?.endsWith('완료') ? [{ id: `inspection-history-${record.id}`, inspectionName: record.name, location: record.location, dateTime: record.dateTime, manager: record.inspectionAssignee || '미배정', progress: '점검 완료', movedToAction: false, content: '' }] : [])
   return { ...record, name: type === 'action' ? ACTION_NAME_BY_INSPECTION[record.name] || record.name : record.name, type, nextDue, progress: record.progress, inspectionHistory, actionHistory }
 }
-// eslint-disable-next-line react-refresh/only-export-components
-export const CHECKLIST_MANAGEMENT_MOCK_RECORDS = rows.map(([name, category, location, cycle, inspectionAssignee, actionAssignee, dateTime, progress], index) => {
-  const isAction = progress.startsWith('조치')
-  const actionName = isAction ? ACTION_NAME_BY_INSPECTION[name] || name : name
-  return normalizeRecord({ id: index + 1, name: actionName, category, location, cycle: isAction ? null : cycle, inspectionAssignee, actionAssignee, dateTime, progress, type: isAction ? 'action' : 'inspection', nextDue: isAction ? null : dateTime.slice(0, 10) })
-})
-const getInitialRecords = () => {
-  const stored = getStoredChecklistManagementRecords()
-  const storedIds = new Set(stored.map((item) => String(item.id)))
-  return [...stored.map((item) => normalizeRecord({ ...item, dateTime: item.dateTime?.replace('T', ' ') })), ...CHECKLIST_MANAGEMENT_MOCK_RECORDS.filter((item) => !storedIds.has(String(item.id)))]
-}
 const isInspectionRecord = (item) => getRecordType(item) === 'inspection'
 
 function ChecklistManagementPage() {
   const { t } = useUiLanguage()
-  //const [records, setRecords] = useState(() => getInitialRecords())   -   localStorage/목업을 넣으면 실제 DB 데이터가 표시되기 전 잠깐 목업 목록이 나올 수 있음
   const [records, setRecords] = useState([])
   const [filters, setFilters] = useState({ query: '', category: '분류', status: '진행 상태' })
   const [recordTypeFilter, setRecordTypeFilter] = useState('inspection')
@@ -303,7 +285,7 @@ function ChecklistManagementPage() {
       alert('담당자 배정에 실패했습니다.')
     }
   }
-  const members = (managerOptions.length ? managerOptions : MANAGERS.map((name) => ({ name, userId: null }))).filter((member) => member.name.includes(memberQuery.trim()))
+  const members = managerOptions.filter((member) => member.name.includes(memberQuery.trim()))
   return <section className={`checklist-management-page${isRecordsLoading ? ' is-data-loading' : ''}`} aria-busy={isRecordsLoading}>
     <article className="management-table-card"><div className="management-table-header"><div><span className="section-kicker">CHECKLIST OVERVIEW</span><h3>{t('담당자 배정')}</h3><p>{t('일시를 확인하고 점검·조치 담당자를 배정합니다.')}</p></div><div className="management-header-actions"><button className="checklist-create-button" type="button" onClick={() => setIsCreateOpen(true)}><AddRoundedIcon /> {t('항목 추가')}</button><div className="assignment-type-toggle" role="tablist" aria-label={t('항목 유형')}><button className={recordTypeFilter === 'inspection' ? 'is-active' : ''} type="button" role="tab" aria-selected={recordTypeFilter === 'inspection'} onClick={() => changeRecordType('inspection')}>{t('점검')}</button><button className={recordTypeFilter === 'action' ? 'is-active' : ''} type="button" role="tab" aria-selected={recordTypeFilter === 'action'} onClick={() => changeRecordType('action')}>{t('조치')}</button></div></div></div>
       <div className="management-filters"><Filter value={filters.category} onChange={(value) => changeFilter('category', value)} options={CATEGORY} /><label className="management-search"><SearchRoundedIcon /><input value={filters.query} onChange={(event) => changeFilter('query', event.target.value)} placeholder={t('점검 이름, 구역, 담당자 검색')} /></label><Filter value={filters.status} onChange={(value) => changeFilter('status', value)} options={STATUS_FILTER_OPTIONS[recordTypeFilter]} />{recordTypeFilter === 'inspection' && <div className="assignment-date-toggle" aria-label={t('점검 예정일')}>{DATE_FILTER_OPTIONS.map((option) => <button className={dateOffsetFilter === option.value ? 'is-active' : ''} type="button" key={option.key} onClick={() => { setDateOffsetFilter(option.value); setPage(0) }}>{t(option.label)}</button>)}</div>}<button className="filter-reset" type="button" onClick={reset}><RestartAltRoundedIcon /> {t('초기화')}</button></div>

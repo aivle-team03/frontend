@@ -390,7 +390,6 @@
 .modalLiveBadge i { width: 6px; height: 6px; border-radius: 50%; background: #fff; }
 
 .detectionDialogInfo { min-width: 0; }
-.demoNotice { margin: 0 0 14px; padding: 10px; border-radius: 8px; color: #8a3800; background: #fff8d6; font-size: 12px; font-weight: 700; line-height: 1.45; }
 .detectionDialogInfo dl { display: grid; gap: 0; margin: 0; }
 .detectionDialogInfo dl > div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid #edf1f5; }
 .detectionDialogInfo dt { color: #64748b; font-size: 12px; font-weight: 800; }
