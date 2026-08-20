@@ -43,6 +43,65 @@ BOSS 산업 소방 안전관리 서비스의 웹 프론트엔드 저장소입니
 | 문서 미리보기 | docx-preview | 생성된 Word 보고서 브라우저 미리보기 |
 | 다국어 | 자체 UI language layer | 한국어·영어 UI 및 알림 문구 전환 |
 
+## 애플리케이션 구성
+
+```text
+Browser / React SPA
+  ├─ Backend API
+  │    ├─ 인증·사용자·알림
+  │    ├─ CCTV·이벤트·위험 신고
+  │    ├─ 점검·조치·승인 이력
+  │    ├─ 교육·영상 생성 작업
+  │    └─ 보고서·문서 URL
+  ├─ Chatbot API
+  │    └─ 안전 관리·교육·법령 질의 응답
+  └─ Vision API
+       ├─ CCTV 분석 스트림
+       ├─ 장비 점검 상태
+       └─ 실시간 감지 이벤트
+```
+
+프론트는 업무 데이터의 원본을 보관하지 않습니다. 인증과 영속 데이터는 Backend가 담당하고, Chatbot과 Vision은 각각 질의 응답과 영상 분석 결과를 제공합니다. 브라우저에 저장되는 토큰·언어·일부 UI 상태는 세션 복구와 화면 상태 유지에만 사용합니다.
+
+## 주요 라우트
+
+| 경로 | 화면 | 비고 |
+| --- | --- | --- |
+| `/login`, `/signup` | 로그인·회원가입 | 비로그인 사용자 |
+| `/` | 통합 대시보드 | 로그인 필요 |
+| `/monitoring`, `/monitoringdetail` | CCTV 모니터링 | 스트림·이벤트 상세 |
+| `/checklists` | 오늘의 점검·조치 | 현장 업무 수행 |
+| `/checklists/management`, `/checklists/inspections` | 체크리스트 관리 | 관리자 기능 |
+| `/actions` | 점검·조치 이력 | 완료 이력과 승인 검토 |
+| `/education`, `/education-management` | 안전 교육 | 수강·관리 |
+| `/board` | 위험 신고 게시판 | 신고 등록·접수 |
+| `/risk-management` | 위험도 관리 | 위험요인 관리 |
+| `/report` | 보고서 | 생성·목록·미리보기 |
+| `/law-qa` | AI 비서 | Chatbot 연동 |
+| `/mypage` | 마이페이지 | 계정·알림 관리 |
+| `/privacy-policy`, `/terms` | 정책 문서 | 공개 라우트 |
+
+## 디렉터리 구조
+
+```text
+frontend/
+├─ .github/workflows/       # GitHub Actions 배포
+├─ docs/                    # README 화면 이미지
+├─ public/                  # 정적 파일
+├─ src/
+│  ├─ api/                  # 인증 interceptor 등 API 공통 처리
+│  ├─ assets/               # 애플리케이션 이미지·아이콘 자산
+│  ├─ components/           # 도메인·레이아웃 공통 컴포넌트
+│  ├─ config/               # Backend·Chatbot·Vision URL 설정
+│  ├─ pages/                # 라우트 단위 페이지
+│  ├─ routes/               # React Router 구성
+│  ├─ styles/               # 전역·페이지별 스타일
+│  ├─ theme/                # Material UI 테마
+│  └─ utils/                # 번역, 마스킹, 상태 변환 유틸리티
+├─ package.json
+└─ vite.config.js
+```
+
 ## 주요 기능
 
 | 번호 | 기능 | 설명 |
@@ -60,16 +119,17 @@ BOSS 산업 소방 안전관리 서비스의 웹 프론트엔드 저장소입니
 - 전체 점검·조치 건수와 처리 현황을 요약합니다.
 - 최근 이상 발생, 구역별 위험도, 기간별 위험 추이를 시각화합니다.
 - 교육 이수 현황과 사용자·업무 데이터를 권한 범위에 맞게 표시합니다.
-- Backend의 점검·조치·교육 API를 조회하며, 임의의 통계 값을 생성하지 않습니다.
+- Backend의 점검·조치·교육 API를 조회하여 통계를 생성합니다.
 
 ![BOSS 홈 화면](docs/home_dash.png)
 
 ### 2. CCTV 모니터링
 
-- Backend에서 CCTV 구성과 저장된 이벤트를 조회합니다.
-- Vision 서비스의 실시간 스트림·장비 상태·신규 감지 이벤트를 표시합니다.
-- 감지 결과 상세에서 위치와 시간을 확인하고 위험요인을 선택하여 담당자 배정 흐름으로 연결합니다.
-- 운영 환경에서는 브라우저가 GPU 서버에 직접 접근하지 않고 reverse proxy를 통해 Vision API를 호출할 수 있습니다.
+- Backend에서 CCTV 구성, 스트림 URL 및 DB에 저장된 감지 이벤트를 조회합니다.
+- Vision 서비스에서 실시간 분석 스트림, 장비 상태 및 신규 감지 이벤트를 조회합니다.
+- AI Vision 서비스는 감지 이벤트와 캡처 정보를 Backend API로 전송하여 이벤트 이력으로 저장합니다.
+- 감지 결과 상세에서 위치·시간·신뢰도를 확인하고 체크리스트 담당자 배정 화면으로 이동할 수 있습니다.
+- 운영 환경에서는 reverse proxy를 통해 Vision API를 호출합니다.
 
 <table>
   <tr>
@@ -161,67 +221,6 @@ BOSS 산업 소방 안전관리 서비스의 웹 프론트엔드 저장소입니
     <td width="50%"><img src="docs/mypage02.png" alt="BOSS 마이페이지 회원탈퇴 화면"></td>
   </tr>
 </table>
-
-## 애플리케이션 구성
-
-```text
-Browser / React SPA
-  ├─ Backend API
-  │    ├─ 인증·사용자·알림
-  │    ├─ CCTV·이벤트·위험 신고
-  │    ├─ 점검·조치·승인 이력
-  │    ├─ 교육·영상 생성 작업
-  │    └─ 보고서·문서 URL
-  ├─ Chatbot API
-  │    └─ 안전 관리·교육·법령 질의 응답
-  └─ Vision API
-       ├─ CCTV 분석 스트림
-       ├─ 장비 점검 상태
-       └─ 실시간 감지 이벤트
-```
-
-프론트는 업무 데이터의 원본을 보관하지 않습니다. 인증과 영속 데이터는 Backend가 담당하고, Chatbot과 Vision은 각각 질의 응답과 영상 분석 결과를 제공합니다. 브라우저에 저장되는 토큰·언어·일부 UI 상태는 세션 복구와 화면 상태 유지에만 사용합니다.
-
-## 주요 라우트
-
-| 경로 | 화면 | 비고 |
-| --- | --- | --- |
-| `/login`, `/signup` | 로그인·회원가입 | 비로그인 사용자 |
-| `/` | 통합 대시보드 | 로그인 필요 |
-| `/monitoring`, `/monitoringdetail` | CCTV 모니터링 | 스트림·이벤트 상세 |
-| `/checklists` | 오늘의 점검·조치 | 현장 업무 수행 |
-| `/checklists/management`, `/checklists/inspections` | 체크리스트 관리 | 관리자 기능 |
-| `/actions` | 점검·조치 이력 | 완료 이력과 승인 검토 |
-| `/education`, `/education-management` | 안전 교육 | 수강·관리 |
-| `/board` | 위험 신고 게시판 | 신고 등록·접수 |
-| `/risk-management` | 위험도 관리 | 위험요인 관리 |
-| `/report` | 보고서 | 생성·목록·미리보기 |
-| `/law-qa` | AI 비서 | Chatbot 연동 |
-| `/mypage` | 마이페이지 | 계정·알림 관리 |
-| `/privacy-policy`, `/terms` | 정책 문서 | 공개 라우트 |
-
-## 디렉터리 구조
-
-```text
-frontend/
-├─ .github/workflows/       # GitHub Actions 배포
-├─ docs/                    # README 화면 이미지
-├─ public/                  # 정적 파일
-├─ src/
-│  ├─ api/                  # 인증 interceptor 등 API 공통 처리
-│  ├─ assets/               # 애플리케이션 이미지·아이콘 자산
-│  ├─ components/           # 도메인·레이아웃 공통 컴포넌트
-│  ├─ config/               # Backend·Chatbot·Vision URL 설정
-│  ├─ data/                 # 화면 기본 데이터
-│  ├─ mocks/                # 개발·데모용 목 데이터
-│  ├─ pages/                # 라우트 단위 페이지
-│  ├─ routes/               # React Router 구성
-│  ├─ styles/               # 전역·페이지별 스타일
-│  ├─ theme/                # Material UI 테마
-│  └─ utils/                # 번역, 마스킹, 상태 변환 유틸리티
-├─ package.json
-└─ vite.config.js
-```
 
 ## 로컬 개발 실행
 
