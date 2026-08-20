@@ -14,6 +14,13 @@ export const en = {
   dashboard: {
     '점검 대기 건수': 'Pending inspections', '점검 완료 건수': 'Completed inspections', '미완료 조치 항목': 'Incomplete actions', '완료된 조치 항목': 'Completed actions',
     '최근 이상 발생 리스트': 'Recent incidents', '홈 요약 지표': 'Home summary', '교육 이수 페이지로 이동': 'Go to learning progress',
+    '이상 발생 상세': 'Detection details', '상세 닫기': 'Close details',
+    '확인이 필요한 이벤트': 'Event requires review', '처리가 완료된 이벤트': 'Resolved event',
+    '현장 상태를 확인해 주세요.': 'Please review the on-site status.',
+    '담당자 배정 후 안전 조치를 진행할 수 있습니다.': 'Assign a person in charge to proceed with safety actions.',
+    '처리가 완료되었습니다.': 'This event has been resolved.',
+    '상세 이력에서 처리 내용을 확인할 수 있습니다.': 'View the action details in the history.',
+    '담당자배정 페이지로 이동': 'Go to assignee assignment',
     '대상자별 이수 인원을 확인합니다.': 'View completion counts by audience.', '위험도 관리': 'Risk management',
     '전체 위험도 통계와 유형별 위험도 분포를 확인합니다.': 'View overall risk statistics and the distribution by type.',
     '조치 이력 페이지로 이동': 'Go to action history', '기간별 통계량': 'Statistics by period',
@@ -323,6 +330,9 @@ export function translateNotificationText(value, language) {
   if (notificationTitleTranslations[value]) return notificationTitleTranslations[value]
 
   let translated = value
+  translated = translated
+    .replace(/^(.+?님)이\s*'([^']+)'\s*조치를 완료했습니다\.$/, "$1 completed the action: '$2'.")
+    .replace(/^(.+?님)이\s*\[([^\]]+)\]\s*'([^']+)'\s*점검을 완료했습니다\.$/, "$1 completed the inspection: [$2] '$3'.")
   for (const [korean, english] of notificationTextReplacements) translated = translated.replace(korean, english)
   return translated
     .replace(/(\d+)시간 전/g, '$1 hours ago')
