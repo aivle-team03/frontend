@@ -16,7 +16,7 @@ const API_BASE_URL = `${BACKEND_API_URL}/api`
 
 const COPY = {
   ko: {
-    brand: 'BOSS : 산업 소방 안전관리 서비스', subtitle: 'Industrial Fire Safety Management Service',
+    brand: 'BOSS : 안전관리 서비스', subtitle: 'Industrial Fire Safety Management Service',
     agreement: '서비스 이용 동의', agreementGuide: '안전한 서비스 이용을 위해 필수 항목을 확인해주세요.', signup: '시스템 회원가입', signupGuide: '업무 계정 생성을 위한 정보를 입력해주세요.',
     requiredTerms: '[필수] BOSS 이용약관 동의', requiredPrivacy: '[필수] 개인정보 수집 및 이용 동의', next: '동의하고 계속하기',
     name: '이름', namePlaceholder: '이름을 입력하세요', id: '사용자 ID', idPlaceholder: '사용할 ID를 입력하세요', checkId: '중복 확인',
@@ -29,7 +29,7 @@ const COPY = {
     roleCategory: (role, category) => category ? `${role} · ${category} 카테고리로 가입됩니다.` : `${role} 계정으로 가입됩니다.`,
   },
   en: {
-    brand: 'BOSS : Industrial Fire Safety Management Service', subtitle: 'Industrial Fire and Workplace Safety Platform',
+    brand: 'BOSS : Safety Management Service', subtitle: 'Industrial Fire and Workplace Safety Platform',
     agreement: 'Service agreement', agreementGuide: 'Review the required items before creating your secure account.', signup: 'Create your account', signupGuide: 'Enter the information required for your workplace account.',
     requiredTerms: '[Required] Agree to the BOSS Terms of Service', requiredPrivacy: '[Required] Agree to the collection and use of personal information', next: 'Agree and continue',
     name: 'Name', namePlaceholder: 'Enter your name', id: 'User ID', idPlaceholder: 'Choose a user ID', checkId: 'Check availability',

@@ -1057,6 +1057,32 @@
   font-weight: 800;
 }
 
+.education-chart-legend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.education-chart-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.education-chart-legend i {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 .education-chart-tooltip {
   display: grid;
   gap: 5px;
@@ -1074,6 +1100,19 @@
 .education-chart-tooltip strong {
   color: #172033;
   font-size: 13px;
+}
+
+.education-chart-tooltip .education-tooltip-role {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.education-chart-tooltip hr {
+  width: 100%;
+  height: 1px;
+  margin: 2px 0;
+  border: 0;
+  background: #dbe7f5;
 }
 
 .education-chart-tooltip b {
